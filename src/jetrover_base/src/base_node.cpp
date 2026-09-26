@@ -1,0 +1,406 @@
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "sensor_msgs/msg/battery_state.hpp"
+#include "sensor_msgs/msg/imu.hpp"
+#include "rclcpp/rclcpp.hpp"
+
+#include "jetrover_base/crash_guard.hpp"
+#include "jetrover_base/rrc_protocol.hpp"
+#include "jetrover_base/serial_port.hpp"
+
+using namespace std::chrono_literals;
+
+namespace jetrover_base
+{
+
+// Opens the STM32 serial link, parses RRC frames, publishes the STM32 IMU as
+// sensor_msgs/Imu on imu/data_raw, drives the mecanum chassis from /cmd_vel and
+// publishes open-loop odometry on odom_raw.
+//
+// The STM32 sends no encoder or wheel-speed feedback, so odom_raw integrates the
+// velocity that was commanded (same approach as Hiwonder's odom_publisher). Its pose
+// drifts freely and is for debugging only: the EKF is fed the twist alone through
+// wheel_twist, so an open-loop position can never leak into the filter.
+//
+// The STM32 keeps running the last motor command it received, so a watchdog
+// stops the wheels whenever /cmd_vel goes quiet, and on shutdown.
+class BaseNode : public rclcpp::Node
+{
+public:
+  BaseNode()
+  : Node("base_node")
+  {
+    port_name_ = declare_parameter<std::string>(
+      "port", "/dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00");
+    baudrate_ = declare_parameter<int>("baudrate", 1000000);
+    const int poll_period_ms = declare_parameter<int>("poll_period_ms", 5);
+
+    wheelbase_ = declare_parameter<double>("wheelbase", 0.216);
+    track_width_ = declare_parameter<double>("track_width", 0.195);
+    wheel_diameter_ = declare_parameter<double>("wheel_diameter", 0.097);
+    max_linear_ = declare_parameter<double>("max_linear", 0.2);
+    max_angular_ = declare_parameter<double>("max_angular", 1.0);
+    cmd_vel_timeout_ = declare_parameter<double>("cmd_vel_timeout", 0.5);
+    stm32_timeout_ = declare_parameter<double>("stm32_timeout", 1.0);
+
+    imu_frame_ = declare_parameter<std::string>("imu_frame", "imu_link");
+    gravity_ = declare_parameter<double>("gravity", 9.80665);
+    gyro_bias_ = declare_parameter<std::vector<double>>("gyro_bias", {0.0, 0.0, 0.0});
+    if (gyro_bias_.size() != 3) {
+      RCLCPP_WARN(get_logger(), "gyro_bias must have 3 elements; using zeros");
+      gyro_bias_ = {0.0, 0.0, 0.0};
+    }
+
+    imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("imu/data_raw", rclcpp::SensorDataQoS());
+    battery_pub_ = create_publisher<sensor_msgs::msg::BatteryState>("battery_state", 10);
+    low_battery_volts_ = declare_parameter<double>("low_battery_volts", 10.0);
+
+    odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
+    base_frame_ = declare_parameter<std::string>("base_frame", "base_footprint");
+    odom_linear_scale_ = declare_parameter<double>("odom_linear_scale", 1.0);
+    odom_lateral_scale_ = declare_parameter<double>("odom_lateral_scale", 1.0);
+    odom_angular_scale_ = declare_parameter<double>("odom_angular_scale", 1.0);
+    const double odom_rate = declare_parameter<double>("odom_rate", 50.0);
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom_raw", 10);
+    twist_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+      "wheel_twist", 10);
+    last_odom_time_ = now();
+    odom_timer_ = create_wall_timer(
+      std::chrono::duration<double>(1.0 / odom_rate), [this]() {publish_odom();});
+
+    cmd_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>(
+      "cmd_vel", 1, [this](geometry_msgs::msg::Twist::ConstSharedPtr msg) {on_cmd_vel(*msg);});
+
+    timer_ = create_wall_timer(std::chrono::milliseconds(poll_period_ms), [this]() {poll();});
+    stats_timer_ = create_wall_timer(1s, [this]() {log_stats();});
+    watchdog_timer_ = create_wall_timer(50ms, [this]() {watchdog();});
+  }
+
+  ~BaseNode() override
+  {
+    stop_motors();
+    crash_guard::disarm();
+  }
+
+private:
+  void poll()
+  {
+    if (!serial_.is_open() && !try_open()) {
+      return;
+    }
+
+    uint8_t buffer[512];
+    while (true) {
+      const int n = serial_.read(buffer, sizeof(buffer), 0);
+      if (n < 0) {
+        RCLCPP_ERROR(get_logger(), "Serial error: %s (will reopen)", serial_.last_error().c_str());
+        crash_guard::disarm();
+        serial_.close();
+        return;
+      }
+      if (n == 0) {
+        return;
+      }
+
+      parser_.feed(buffer, static_cast<std::size_t>(n));
+
+      RrcPacket packet;
+      while (parser_.next(packet)) {
+        note_rx();
+        ++packet_counts_[packet.function];
+        handle_packet(packet);
+      }
+    }
+  }
+
+  bool try_open()
+  {
+    if (serial_.open(port_name_, baudrate_)) {
+      RCLCPP_INFO(get_logger(), "Opened %s @ %d", port_name_.c_str(), baudrate_);
+      last_rx_time_ = now();
+      stm32_silent_ = false;
+      stop_motors();
+      const auto stop_frame = build_motor_packet({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
+      crash_guard::arm(serial_.fd(), stop_frame);
+      return true;
+    }
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 2000, "Cannot open serial: %s", serial_.last_error().c_str());
+    return false;
+  }
+
+  // Mecanum inverse kinematics (same wheel order/signs as Hiwonder's mecanum.py):
+  // motors 1,2 = left front/rear, 3,4 = right front/rear; the right side is
+  // mounted mirrored, so its command is negated. Output is wheel rev/s.
+  std::vector<MotorCommand> mecanum_rps(double vx, double vy, double wz) const
+  {
+    const double k = wz * (wheelbase_ + track_width_) / 2.0;
+    const double to_rps = 1.0 / (M_PI * wheel_diameter_);
+
+    return {
+      {1, static_cast<float>((vx - vy - k) * to_rps)},
+      {2, static_cast<float>((vx + vy - k) * to_rps)},
+      {3, static_cast<float>(-(vx + vy + k) * to_rps)},
+      {4, static_cast<float>(-(vx - vy + k) * to_rps)},
+    };
+  }
+
+  void on_cmd_vel(const geometry_msgs::msg::Twist & msg)
+  {
+    const double vx = std::clamp(msg.linear.x, -max_linear_, max_linear_);
+    const double vy = std::clamp(msg.linear.y, -max_linear_, max_linear_);
+    const double wz = std::clamp(msg.angular.z, -max_angular_, max_angular_);
+
+    last_cmd_time_ = now();
+    moving_ = (vx != 0.0 || vy != 0.0 || wz != 0.0);
+    cmd_vx_ = vx;
+    cmd_vy_ = vy;
+    cmd_wz_ = wz;
+    send_motors(mecanum_rps(vx, vy, wz));
+  }
+
+  // Integrates the commanded body velocity (open loop) and publishes it.
+  void publish_odom()
+  {
+    const rclcpp::Time stamp = now();
+    const double dt = (stamp - last_odom_time_).seconds();
+    last_odom_time_ = stamp;
+
+    const bool driving = serial_.is_open() && !stm32_silent_;
+    const double vx = driving ? cmd_vx_ * odom_linear_scale_ : 0.0;
+    const double vy = driving ? cmd_vy_ * odom_linear_scale_ * odom_lateral_scale_ : 0.0;
+    const double wz = driving ? cmd_wz_ * odom_angular_scale_ : 0.0;
+
+    odom_x_ += (vx * std::cos(odom_yaw_) - vy * std::sin(odom_yaw_)) * dt;
+    odom_y_ += (vx * std::sin(odom_yaw_) + vy * std::cos(odom_yaw_)) * dt;
+    odom_yaw_ += wz * dt;
+
+    nav_msgs::msg::Odometry msg;
+    msg.header.stamp = stamp;
+    msg.header.frame_id = odom_frame_;
+    msg.child_frame_id = base_frame_;
+    msg.pose.pose.position.x = odom_x_;
+    msg.pose.pose.position.y = odom_y_;
+    msg.pose.pose.orientation.z = std::sin(odom_yaw_ / 2.0);
+    msg.pose.pose.orientation.w = std::cos(odom_yaw_ / 2.0);
+    msg.twist.twist.linear.x = vx;
+    msg.twist.twist.linear.y = vy;
+    msg.twist.twist.angular.z = wz;
+
+    // Open-loop: the commanded velocity is only a rough guess of the real one.
+    msg.pose.covariance[0] = 0.05;
+    msg.pose.covariance[7] = 0.05;
+    msg.pose.covariance[35] = 0.1;
+    msg.twist.covariance[0] = 0.05;
+    msg.twist.covariance[7] = 0.05;
+    msg.twist.covariance[35] = 0.1;
+
+    odom_pub_->publish(msg);
+
+    geometry_msgs::msg::TwistWithCovarianceStamped twist;
+    twist.header.stamp = stamp;
+    twist.header.frame_id = base_frame_;
+    twist.twist = msg.twist;
+    twist_pub_->publish(twist);
+  }
+
+  void note_rx()
+  {
+    last_rx_time_ = now();
+    if (stm32_silent_) {
+      stm32_silent_ = false;
+      RCLCPP_INFO(get_logger(), "STM32 stream recovered");
+    }
+  }
+
+  // The STM32 streams IMU at ~100 Hz. Silence means its firmware (or power) hung:
+  // the USB-UART bridge stays enumerated, so the port looks fine from the host.
+  void check_heartbeat()
+  {
+    if (!serial_.is_open() || stm32_silent_) {
+      return;
+    }
+    const double silent = (now() - last_rx_time_).seconds();
+    if (silent > stm32_timeout_) {
+      stm32_silent_ = true;
+      RCLCPP_ERROR(
+        get_logger(), "STM32 silent for %.1fs (moving=%d): stopping motors", silent, moving_);
+      stop_motors();
+    }
+  }
+
+  void watchdog()
+  {
+    check_heartbeat();
+    if (moving_ && (now() - last_cmd_time_).seconds() > cmd_vel_timeout_) {
+      RCLCPP_WARN(get_logger(), "cmd_vel timeout (%.2fs), stopping motors", cmd_vel_timeout_);
+      stop_motors();
+    }
+  }
+
+  void stop_motors()
+  {
+    moving_ = false;
+    cmd_vx_ = cmd_vy_ = cmd_wz_ = 0.0;
+    send_motors({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
+  }
+
+  void send_motors(const std::vector<MotorCommand> & motors)
+  {
+    if (!serial_.is_open()) {
+      return;
+    }
+    const auto frame = build_motor_packet(motors);
+    if (!serial_.write(frame.data(), frame.size())) {
+      RCLCPP_ERROR(get_logger(), "Motor write failed: %s", serial_.last_error().c_str());
+    }
+  }
+
+  void handle_packet(const RrcPacket & packet)
+  {
+    uint16_t millivolts = 0;
+    if (decode_battery(packet, millivolts)) {
+      publish_battery(millivolts);
+      return;
+    }
+
+    ImuRaw imu;
+    if (decode_imu(packet, imu)) {
+      publish_imu(imu);
+    }
+  }
+
+  // Battery voltage as reported by the STM32 (about once per second). Kept so a hang can be
+  // correlated with the voltage at that moment.
+  void publish_battery(uint16_t millivolts)
+  {
+    sensor_msgs::msg::BatteryState msg;
+    msg.header.stamp = now();
+    msg.voltage = static_cast<float>(millivolts) / 1000.0f;
+    msg.present = true;
+    msg.power_supply_status = sensor_msgs::msg::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+    msg.power_supply_technology = sensor_msgs::msg::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+    battery_pub_->publish(msg);
+
+    if (msg.voltage < low_battery_volts_) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 30000, "Battery low: %.2f V (charge below %.1f V)",
+        msg.voltage, low_battery_volts_);
+    }
+  }
+
+  // The STM32 reports acceleration in g and angular rate in deg/s (same
+  // conversion as Hiwonder's ros_robot_controller). The board's IMU axes are
+  // mounted as X = robot right, Y = robot back, Z = down (found by tilting the
+  // robot: flat gives az = -g, left side up gives ax = -g, nose down gives
+  // ay = +g), so they are rotated into the base_link convention
+  // (x forward, y left, z up) before publishing. gyro_bias is in that frame, rad/s.
+  void publish_imu(const ImuRaw & imu)
+  {
+    constexpr double kDegToRad = M_PI / 180.0;
+
+    sensor_msgs::msg::Imu msg;
+    msg.header.stamp = now();
+    msg.header.frame_id = imu_frame_;
+
+    // No orientation estimate (REP-145).
+    msg.orientation_covariance[0] = -1.0;
+
+    msg.linear_acceleration.x = -imu.ay * gravity_;
+    msg.linear_acceleration.y = -imu.ax * gravity_;
+    msg.linear_acceleration.z = -imu.az * gravity_;
+
+    msg.angular_velocity.x = -imu.gy * kDegToRad - gyro_bias_[0];
+    msg.angular_velocity.y = -imu.gx * kDegToRad - gyro_bias_[1];
+    msg.angular_velocity.z = -imu.gz * kDegToRad - gyro_bias_[2];
+
+    msg.linear_acceleration_covariance[0] = 0.0004;
+    msg.linear_acceleration_covariance[4] = 0.0004;
+    msg.linear_acceleration_covariance[8] = 0.004;
+    msg.angular_velocity_covariance[0] = 0.01;
+    msg.angular_velocity_covariance[4] = 0.01;
+    msg.angular_velocity_covariance[8] = 0.01;
+
+    imu_pub_->publish(msg);
+  }
+
+  void log_stats()
+  {
+    if (packet_counts_.empty()) {
+      return;
+    }
+    std::string text;
+    for (const auto & [func, count] : packet_counts_) {
+      char item[48];
+      std::snprintf(item, sizeof(item), " 0x%02X:%zu", func, count);
+      text += item;
+    }
+    packet_counts_.clear();
+    RCLCPP_DEBUG(get_logger(), "packets/s%s", text.c_str());
+  }
+
+  std::string port_name_;
+  int baudrate_{1000000};
+
+  double wheelbase_{0.216};
+  double track_width_{0.195};
+  double wheel_diameter_{0.097};
+  double max_linear_{0.2};
+  double max_angular_{1.0};
+  double cmd_vel_timeout_{0.5};
+  double stm32_timeout_{1.0};
+
+  std::string imu_frame_;
+  double gravity_{9.80665};
+  std::vector<double> gyro_bias_;
+
+  std::string odom_frame_;
+  std::string base_frame_;
+  double odom_linear_scale_{1.0};
+  double odom_lateral_scale_{1.0};
+  double odom_angular_scale_{1.0};
+  double cmd_vx_{0.0}, cmd_vy_{0.0}, cmd_wz_{0.0};
+  double odom_x_{0.0}, odom_y_{0.0}, odom_yaw_{0.0};
+  rclcpp::Time last_odom_time_{0, 0, RCL_ROS_TIME};
+
+  bool moving_{false};
+  bool stm32_silent_{false};
+  rclcpp::Time last_rx_time_{0, 0, RCL_ROS_TIME};
+  rclcpp::Time last_cmd_time_{0, 0, RCL_ROS_TIME};
+
+  SerialPort serial_;
+  RrcParser parser_;
+  std::map<uint8_t, std::size_t> packet_counts_;
+
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr stats_timer_;
+  rclcpp::TimerBase::SharedPtr watchdog_timer_;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::BatteryState>::SharedPtr battery_pub_;
+  double low_battery_volts_{10.0};
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub_;
+  rclcpp::TimerBase::SharedPtr odom_timer_;
+};
+
+}  // namespace jetrover_base
+
+int main(int argc, char ** argv)
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<jetrover_base::BaseNode>());
+  rclcpp::shutdown();
+  return 0;
+}

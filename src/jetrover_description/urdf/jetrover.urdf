@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<!--
+  JetRover (mecanum) kinematic tree. Frame layout follows REP-105/120:
+    odom -> base_footprint -> base_link -> {imu_link, lidar_link, arm_base_link, wheels}
+
+  Numbers come from Hiwonder's official jetrover_description (car_mecanum, imu, lidar, connect).
+  Shapes are rough placeholders for RViz only; they are NOT a measured footprint or collision model.
+
+  imu_link: base_node already rotates the STM32 IMU axes into base_link's (x fwd, y left, z up),
+  so this joint has NO rotation (Hiwonder's own imu_joint rpy = (pi, 0, -pi/2) describes the raw
+  sensor axes X=right, Y=back, Z=down, which matches what was measured).
+  lidar_link: pose from Hiwonder; the yaw of the scan frame depends on the LiDAR model/driver and
+  must be checked against a real scan.
+  The depth camera is mounted on the arm (link4), so it is not part of this base description.
+-->
+<robot name="jetrover">
+  <material name="grey"><color rgba="0.55 0.55 0.6 1"/></material>
+  <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
+  <material name="blue"><color rgba="0.2 0.4 0.8 1"/></material>
+  <material name="red"><color rgba="0.8 0.2 0.2 1"/></material>
+
+  <link name="base_footprint"/>
+
+  <!-- wheel radius 0.04825 + 0.06784 from the wheel axis up to base_link -->
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.11609" rpy="0 0 0"/>
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+      <geometry><box size="0.30 0.20 0.06"/></geometry>
+      <material name="grey"/>
+    </visual>
+  </link>
+
+  <!-- wheels: front/back +-0.0975, left/right +-0.1121, axis 0.06784 below base_link -->
+  <link name="wheel_left_front_link">
+    <visual><origin rpy="1.5708 0 0"/><geometry><cylinder radius="0.04825" length="0.04"/></geometry><material name="black"/></visual>
+  </link>
+  <joint name="wheel_left_front_joint" type="fixed">
+    <parent link="base_link"/><child link="wheel_left_front_link"/>
+    <origin xyz="0.0975131 0.1121295 -0.0678411" rpy="0 0 0"/>
+  </joint>
+
+  <link name="wheel_left_back_link">
+    <visual><origin rpy="1.5708 0 0"/><geometry><cylinder radius="0.04825" length="0.04"/></geometry><material name="black"/></visual>
+  </link>
+  <joint name="wheel_left_back_joint" type="fixed">
+    <parent link="base_link"/><child link="wheel_left_back_link"/>
+    <origin xyz="-0.0975131 0.1121295 -0.0678411" rpy="0 0 0"/>
+  </joint>
+
+  <link name="wheel_right_front_link">
+    <visual><origin rpy="1.5708 0 0"/><geometry><cylinder radius="0.04825" length="0.04"/></geometry><material name="black"/></visual>
+  </link>
+  <joint name="wheel_right_front_joint" type="fixed">
+    <parent link="base_link"/><child link="wheel_right_front_link"/>
+    <origin xyz="0.0975131 -0.1121295 -0.0678411" rpy="0 0 0"/>
+  </joint>
+
+  <link name="wheel_right_back_link">
+    <visual><origin rpy="1.5708 0 0"/><geometry><cylinder radius="0.04825" length="0.04"/></geometry><material name="black"/></visual>
+  </link>
+  <joint name="wheel_right_back_joint" type="fixed">
+    <parent link="base_link"/><child link="wheel_right_back_link"/>
+    <origin xyz="-0.0975131 -0.1121295 -0.0678411" rpy="0 0 0"/>
+  </joint>
+
+  <link name="imu_link">
+    <visual><geometry><box size="0.02 0.02 0.005"/></geometry><material name="red"/></visual>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/><child link="imu_link"/>
+    <origin xyz="0.0048416 0.011168 -0.0057398" rpy="0 0 0"/>
+  </joint>
+
+  <link name="lidar_link">
+    <visual><geometry><cylinder radius="0.035" length="0.04"/></geometry><material name="blue"/></visual>
+  </link>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/><child link="lidar_link"/>
+    <origin xyz="0.0900035 0 0.0405196" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Scan frame of the RPLIDAR A1 driver (frame_id of /scan). Hiwonder rotates it by pi relative
+       to lidar_link for the A1; to be confirmed with a real scan (obstacle in front of the robot). -->
+  <link name="lidar_frame"/>
+  <joint name="lidar_frame_joint" type="fixed">
+    <parent link="lidar_link"/><child link="lidar_frame"/>
+    <origin xyz="0 0 0" rpy="0 0 3.14159265"/>
+  </joint>
+
+  <!-- Base of the arm (Hiwonder joint1 origin). Arm links/joints are added with the arm work. -->
+  <link name="arm_base_link"/>
+  <joint name="arm_base_joint" type="fixed">
+    <parent link="base_link"/><child link="arm_base_link"/>
+    <origin xyz="0.0251328 0 0.0774027" rpy="0 0 0"/>
+  </joint>
+</robot>

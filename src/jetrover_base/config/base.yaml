@@ -1,0 +1,25 @@
+base_node:
+  ros__parameters:
+    port: /dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00
+    baudrate: 1000000
+    poll_period_ms: 5
+    wheelbase: 0.216
+    track_width: 0.195
+    wheel_diameter: 0.097
+    max_linear: 0.2
+    max_angular: 1.0
+    cmd_vel_timeout: 0.5
+    stm32_timeout: 1.0
+    low_battery_volts: 10.0
+    imu_frame: imu_link
+    gravity: 9.80665
+    # rad/s in the published (base_link-aligned) axes. Measure with tools/imu_calibration/measure_gyro_bias.py
+    gyro_bias: [0.197, 0.168, -0.017]
+    odom_frame: odom
+    base_frame: base_footprint
+    odom_rate: 50.0
+    # Scale factors to calibrate the open-loop odometry against measured distance/rotation
+    odom_linear_scale: 1.0
+    # Extra factor on vy only. Kept at 1.0: strafing matched the command (tape re-measurement, 0.99)
+    odom_lateral_scale: 1.0
+    odom_angular_scale: 1.0

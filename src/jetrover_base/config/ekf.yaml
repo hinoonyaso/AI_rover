@@ -1,0 +1,33 @@
+# robot_localization EKF: fuses the commanded (open-loop) body velocity with the gyro yaw rate.
+# The wheel input is a twist-only message (wheel_twist), so no open-loop pose reaches the filter;
+# yaw and position come from integrating vx/vy with the gyro yaw rate.
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.2
+    two_d_mode: true
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # x y z | roll pitch yaw | vx vy vz | vroll vpitch vyaw | ax ay az
+    twist0: wheel_twist
+    twist0_config: [false, false, false,
+                    false, false, false,
+                    true,  true,  false,
+                    false, false, false,
+                    false, false, false]
+    twist0_queue_size: 10
+
+    imu0: imu/data_raw
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_differential: false
+    imu0_queue_size: 50
+    imu0_remove_gravitational_acceleration: false

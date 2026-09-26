@@ -1,0 +1,41 @@
+# Orbbec DaBai DCW parameters (values match Hiwonder's dabai_dcw.launch.py defaults).
+# camera_name is set from the launch argument, not here.
+/**:
+  ros__parameters:
+    vendor_id: "0x2bc5"
+    device_num: 1
+    connection_delay: 100
+    depth_registration: true
+    align_mode: HW
+    enable_depth_scale: true
+
+    enable_color: true
+    color_width: 640
+    color_height: 360
+    color_fps: 30
+    color_format: MJPG
+    enable_color_auto_exposure: true
+
+    enable_depth: true
+    depth_width: 640
+    depth_height: 360
+    depth_fps: 30
+    depth_format: "Y11"
+    enable_ldp: true
+    enable_soft_filter: true
+    soft_filter_max_diff: 8
+    soft_filter_speckle_size: 100
+
+    enable_ir: true
+    ir_width: 640
+    ir_height: 480
+    ir_fps: 30
+    ir_format: "Y10"
+    enable_ir_auto_exposure: true
+
+    enable_point_cloud: true
+    enable_colored_point_cloud: false
+    ordered_pc: false
+
+    publish_tf: true
+    tf_publish_rate: 10.0
