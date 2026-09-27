@@ -10,6 +10,48 @@
 4. 작업 대상 패키지의 README/config/launch를 먼저 확인한다.
 5. 새로 만들기 전에 이미 구현된 기능이 있는지 코드를 검색한다.
 6. 아래 "확정된 사실"과 충돌하는 변경이 필요하면 먼저 사용자에게 알린다.
+7. **새 기능(체크리스트의 새 섹션, 또는 기존 섹션의 큰 항목)에 처음 착수할 때는 바로 코딩하지 말고
+   아래 "새 기능 작업 방식(3-File System)"을 따른다.**
+
+## 새 기능 작업 방식 (3-File System: PRD → Task → 실행)
+
+Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을 파일로 고정)을 이 프로젝트 구조에
+맞게 쓴다. 원본은 `create-prd.md`/`generate-tasks.md`/`process-task-list.md` 세 규칙 파일과
+`tasks/prd-*.md`/`tasks/tasks-*.md`를 따로 두지만, 이 프로젝트는 이미 전체 작업을
+`checklist/PROJECT_CHECKLIST.md` 하나로 추적하고 있으므로 **Task 파일을 따로 만들지 않고
+그 체크리스트를 Task 파일로 겸용**한다(두 곳에서 따로 진행 상황을 관리하면 어긋난다 — 실제로
+이번 세션에서 지도 저장 상태가 `troubleshooting/`엔 성공, `checklist/`엔 실패로 어긋나 있던 걸
+겪었다). 3개 역할은 이렇게 대응한다.
+
+| 원본 역할 | 이 프로젝트에서 |
+|---|---|
+| PRD (무엇을 만드는가) | `prd/<슬러그>.md` — 새로 씀. 틀은 `prd/README.md` |
+| Task 목록 (어떤 순서로) | `checklist/PROJECT_CHECKLIST.md`의 해당 섹션 — PRD를 parent task + sub-task로 쪼개 기존 섹션을 확장 |
+| 실행 규칙 (어떻게) | 이 섹션(아래) |
+
+**적용 대상**: 새 checklist 섹션 착수, 또는 기존 섹션의 규모 큰 항목(예: Voice AI 전체, MoveIt2 통합).
+**적용 안 함**: 조사/디버깅(예: STM32 hang 원인 찾기), 한두 줄 수정, 대화로 자연스럽게 풀리는 작업.
+
+### 1) PRD
+범위가 애매하면 코딩 전에 **먼저 사용자에게 명확화 질문**을 한다(목표, 범위, 비범위, 제약, 완료 기준).
+답을 듣고 `prd/<슬러그>.md`를 쓴다.
+
+### 2) Task
+승인된 PRD를 `checklist/PROJECT_CHECKLIST.md`의 해당 섹션에 parent task + sub-task로 옮긴다.
+막연한 문장이 아니라 "지금 할 일이 정확히 뭔지" 하나씩 보이게 쪼갠다(원본 예시의 "1. Audio Input →
+1.1 ALSA device 확인 → 1.2 ..." 수준).
+
+### 3) 실행
+1. **한 번에 sub-task 하나만** 한다. 시작 전에 PRD와 그 sub-task, 관련 코드를 확인한다.
+2. 끝나면 build/test(해당하면 `colcon test`, 호스트 유닛테스트 등)를 돌리고, 실패하면 고친다.
+3. 통과하면 그 sub-task만 `[x]`로 바꾸고 새로 안 사실이 있으면 옆에 적는다. **끝내지 못한 걸 `[x]`로
+   표시하지 않는다.**
+4. 하나 끝낼 때마다 무엇을 했는지 간단히 보고하고, 다음 sub-task로 넘어가기 전에 사용자의 확인을
+   기다린다 — 단, 사용자가 "쭉 진행해"처럼 명시적으로 허락하면 그 지시를 따른다. 안전 규칙 대상
+   (모터, flash 등)이거나 방향이 갈릴 수 있는 지점은 허락을 받았어도 다시 한번 멈춘다.
+5. 작업 중 발견한 새 문제는 그 자리에서 고치지 말고 Task 목록(체크리스트)에 sub-task로 추가한다.
+6. 지금 sub-task와 무관한 리팩토링을 하지 않는다. 기존 동작을 깨뜨리지 않는다.
+7. parent task의 sub-task가 전부 끝나면 그 사실을 명확히 알린다.
 
 ## 프로젝트
 - 로봇: Hiwonder JetRover (Mecanum). 호스트 Jetson Orin Nano 8GB + ROS2 Jazzy. 저수준은 STM32F407(RRC 보드)이 담당한다.
@@ -37,10 +79,11 @@
 | `src/OrbbecSDK_ROS2/` | Orbbec 카메라 드라이버 소스(vendor, `main` 브랜치=SDK v1). 같은 이름(`orbbec_camera`)으로 apt 버전을 오버레이한다 |
 | `drivers/ch341/` | Jetson 커널에 없는 CH340 드라이버 (빌드/설치 스크립트) |
 | `setup/` | `ENVIRONMENT_SETUP.md`: 이 로봇에 한 sudo/apt/시스템 설치 전체 기록 (새 Jetson 재현용) |
-| `checklist/` | 전체 체크리스트와 진행률 |
+| `checklist/` | 전체 체크리스트와 진행률 (3-File System의 Task 파일 역할도 겸함) |
 | `troubleshooting/` | 오류 원인과 해결 기록 |
+| `prd/` | 새 기능 착수 전 PRD (3-File System 1번째 파일). 언제/어떻게 쓰는지는 `prd/README.md` |
 | `tools/` | 시험/진단 스크립트: `parse_stm32.py`, `sniff_stm32.py`, `imu_calibration/`, `stm32_diagnostics/`(NOTES.md에 hang 조사 전체 기록) |
-| `firmware_source/` | Hiwonder 자료(펌웨어 `.hex` ZIP, 프로토콜 PDF). 소스는 없음 |
+| `firmware_source/` | Hiwonder 자료(펌웨어 `.hex` ZIP, 프로토콜 PDF, 실제 칩에서 덤프한 백업 `.bin`). 소스는 없음. `BOARD_CONNECTORS.md`에 커넥터/센서/액추에이터 대응표(확정/추정 구분) |
 
 새 기능을 `jetrover_base`에 무분별하게 넣지 않는다. 기능 영역이 다르면 별도 ROS2 패키지를 만든다
 (예: LiDAR/Nav2 → `jetrover_navigation`, YOLO/Depth → `jetrover_perception`, MoveIt → `jetrover_manipulation`,
@@ -130,3 +173,4 @@ BT → `jetrover_mission`, URDF → `jetrover_description`). 이름과 구성은
 - 재사용할 스크립트는 `/tmp`가 아니라 `tools/`에 둔다 (재부팅하면 `/tmp`가 지워진다: troubleshooting/008).
 - **`sudo apt install`이나 시스템 전역 설치(커널 모듈 등)를 할 때마다** `setup/ENVIRONMENT_SETUP.md`에 날짜·명령·이유·확인 방법을 추가한다. 사용자에게 설치를 요청할 때도 이 파일에 먼저 적어 둔다.
 - 큰 결정이나 수치(보정값, 시험 결과)는 관련 README/NOTES에 남긴다. 확인하지 않은 것을 사실처럼 쓰지 않는다.
+- **새 기능에 처음 착수할 때는** 위 "새 기능 작업 방식(3-File System)"대로 `prd/`에 PRD부터 쓴다.

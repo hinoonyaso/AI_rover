@@ -110,3 +110,18 @@ sudo apt install ros-jazzy-web-video-server
 ```
 - 날짜: 2026-09-23
 - 사용법은 `tools/viz/README.md` 참고.
+
+### 8. STM32 펌웨어 재작성용 ARM 툴체인 + STM32CubeProgrammer
+자체 STM32 펌웨어(`~/.claude/plans/enchanted-chasing-sky.md`)를 빌드/flash하기 위해 사용자가 직접 설치함.
+`sudo apt`가 아니라 `~/.local/opt/stm32/`에 로컬로 설치됨 (설치 스크립트는 기록 안 됨 — 다음에 같은 걸 다시 하려면
+`arm-none-eabi-gcc`, `STM32CubeProgrammer` 공식 배포본을 그 경로에 설치하면 됨).
+
+```bash
+export PATH="$PATH:/home/sang/.local/opt/stm32/bin"
+arm-none-eabi-gcc --version     # 13.2.1
+STM32_Programmer_CLI --version  # 2.23.0
+```
+- 날짜: 2026-09-27
+- 확인: 위 두 명령이 버전을 출력하면 정상.
+- **아직 없음**: `openocd`, `stlink-tools`(`st-info`/`st-flash`) — ST-Link 호환보드 도착 후 `sudo apt install openocd stlink-tools`로 설치 예정 (사용자 승인/sudo 필요).
+- PATH를 매번 export하지 않으려면 `~/.bashrc`에 추가하는 것을 고려.

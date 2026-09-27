@@ -44,20 +44,33 @@
 - [x] crash signal(SEGV/ABRT/BUS/FPE/ILL/HUP/QUIT)에서 stop packet (SIGKILL은 불가)
 
 ### 남은 안전 문제
-- [~] STM32 hang 진단 (**7회 발생**, 7차는 완충(~12 V) 상태에서 주행 직후 idle 몇 분 만에 발생 → 저전압 단독 가설 약화. 6차는 주행 중 배터리 9.47 V 실측, 4·5차는 모터 정지 상태에서 전원 재시작 후 약 20~50분, 전원 재시작으로만 복구, 원인 미확정. 3차는 바닥 6초 주행 직후. 충전 직후 11.5 V였으나 hang 시점 전압 미측정, 재부팅 후 무부하 10.5 V → 저전압 배제 못 함)
+- [~] STM32 hang 진단 (**9회 발생**, 원인 미확정. 저전압 단독 가설은 폐기(9.47 V~완충 12 V 전 범위에서 발생). idle 지속이 가장 일관된 조건으로 추정. **2026-09-23: RST 버튼으로 hang 상태에서도 즉시 복구 가능함을 확인** — 이전 "전원 재시작만 복구" 기록은 정정됨. DTR/RTS 소프트웨어 자동 리셋은 4×4 조합까지 다 시험했지만 없음: `troubleshooting/001-stm32-firmware-hang.md`)
 - [x] STM32 heartbeat monitor (1초 이상 packet 미수신 감지)
-- [~] **완충(12.05 V, 2026-09-22) 확인. 완충 상태 주행 1회(한 바퀴)에서 hang 재현 안 됨** → 저전압 가설 강화(미확정, 1회 관측). 정지 상태 장시간(20~50분) 재시험은 아직
 - [x] `/battery_state` 발행 (STM32 배터리 패킷 → `sensor_msgs/BatteryState`, 10 V 미만이면 경고) — hang 시점 전압을 남기기 위함
 - [x] hang 진단 도구/기록 (`tools/stm32_diagnostics/`)
 - [x] 펌웨어 `.hex` 정적 분석 (IWDG 약 20 ms, `app_task`가 먹이 → 다른 태스크만 막히면 못 잡을 수 있음)
-- [ ] STM32 hang 근본 원인 규명
+- [x] UART1(ISP/flashing) 포트 특정 — 보드 라벨 "USB serial port 1/flashing download"로 확인, `/dev/ttyACM1`. **실제 ROM 부트로더 응답 검증 완료(2026-09-27)**: 0x7F→ACK, GET(부트로더 v0x31, Read/Write/Erase 등 지원), GET ID(`0x0413`=STM32F40x/41x, 예상과 일치)
+- [x] RDP 상태 확인 + 전체 flash 백업 — RDP 없음(512KB 전부 읽기 성공), `firmware_source/RosRobotControllerM4_dumped_backup.bin`에 저장. **`firmware_source/RosRobotControllerM4.hex`와 79,857바이트(약 15%) 다름**(리셋벡터 SP부터 다른 빌드) — 사용자 요청으로 이 vendor hex로 재플래시(mass erase+write+검증 성공, 512KB 바이트 일치). RST로 재부팅 확인, 부저/OLED/IMU/배터리/바퀴 모터/로봇팔 서보 6개(관절1~5+그리퍼10) 전부 정상 동작 확인(2026-09-27)
+- [ ] STM32 hang 근본 원인 규명 — 원인 규명 대신 **자체 펌웨어 재작성으로 방향 전환** (아래 참고)
 - [ ] MCU 자체 motor command timeout (현재 없음, 13초 확인)
 - [ ] task-health 기반 watchdog
 - [ ] UART DMA recovery
-- [ ] encoder feedback packet (공식 프로토콜에 없음 → 펌웨어 개발 필요)
-- [ ] 자체 STM32 firmware 개발 (소스 없음: Hiwonder에 요청 또는 SWD 디버깅). **재플래시 시도는 중단** — 받은 파일이 기존 분석 파일과 동일(효과 없음), ISP UART1 포트 미확인(두 번째 CH340은 게임패드 동글로 확인됨)
+- [ ] encoder feedback packet (공식 프로토콜에 없음 → 펌웨어 개발 필요. 보드 사양상 모터는 물리적으로 "4채널 인코더 모터"라 엔코더 자체는 있고 펌웨어가 내부 폐루프 속도제어에 쓰고 있을 가능성이 높지만(추정), host로는 여전히 안 옴 — 재플래시 후에도 동일 확인)
 - 가장 중요한 미해결 문제는 STM32 firmware hang이다. host 측은 감지·정지 시도까지만 가능하고,
-  STM32 자체가 먹통이면 정지 명령을 처리하지 못하므로 완전한 fail-safe가 아니다.
+  STM32 자체가 먹통이면 정지 명령을 처리하지 못하므로 완전한 fail-safe가 아니다. RST 버튼 복구는 사람이 있어야 한다.
+
+### 자체 STM32 펌웨어 재작성 (2026-09-27 착수, 소스가 없어 원인 규명이 막혀서 방향 전환)
+계획 전체: `~/.claude/plans/enchanted-chasing-sky.md`. 목표는 모터/IMU/배터리(현재 `jetrover_base`와 와이어 호환) +
+보드 PDF에 문서화된 전 기능(LED/부저/PWM서보/버스서보/버튼/SBUS/게임패드)까지 새로 구현.
+- [ ] **ST-Link 호환보드 구매** (주문 완료, 도착 대기 — 도착 전까지는 하드웨어 안 건드리는 준비 단계만 진행)
+- [~] 툴체인 설치 — `arm-none-eabi-gcc`(13.2.1)/`objdump`, `STM32_Programmer_CLI`(2.23.0)는 사용자가 `~/.local/opt/stm32/`에 설치 완료(`setup/ENVIRONMENT_SETUP.md` 8번). `openocd`/`stlink-tools`는 ST-Link 도착 후 설치 예정
+- [x] UART1 ROM 부트로더 응답 검증 (읽기 전용: 0x7F→ACK, GET, GET_ID) — 완료, 위 1번 섹션 참고
+- [x] RDP 상태 확인 + 전체 flash 백업 — 완료, 위 1번 섹션 참고 (덤으로 vendor hex 재플래시까지 실행됨)
+- [~] 정적 리버스엔지니어링으로 GPIO/페리페럴 핀 1차 가설 (`analyze_firmware.py` 확장, 2026-09-27) — MOVW/MOVT로 만들어지는 페리페럴 base 주소만 잡는 방식이라 **정확한 핀은 아직 모름**(1차 활동량 신호만). TIM3/4/5/7/8/9/10/11/12/13/14 다수 사용(PWM/타이밍 후보), USART1/2/3/6+UART5 참조, SPI2 1회(디스플레이 후보), ADC1 1회(배터리 후보), GPIOB/D/H만 잡힘(A/C/E/F/G/I는 이 방식으로 안 잡힘 — LDR 리터럴풀 방식일 가능성, 탐지 방법 한계). **재플래시한 빌드는 IWDG 초기화/refresh 패턴 자체가 안 잡힘**(이전 빌드와 태스크 스택 크기도 다름 — 15% 바이트 차이와 일치, 정말 다른 빌드였다는 재확인). 정확한 핀은 ST-Link 도착 후 SWD로 확정 예정
+- [x] 프로토콜 코덱(CRC8-MAXIM + FUNC 0~9) 순수 C, 호스트 유닛테스트 — `firmware/rrc_m4/lib/protocol/` (완료: FUNC0~9 pack/unpack, 골든벡터=PDF 예제+오늘 실제로 로봇에 보낸 프레임, 호스트 테스트 전부 통과, Cortex-M4 타겟 프리스탠딩 컴파일도 확인. 버스서보 부가 서브커맨드·PWM서보 deviation upload 서브커맨드 값은 미확정으로 남겨둠)
+- [x] `firmware/rrc_m4/` 프로젝트 뼈대 (CMake) — 코덱 라이브러리만 있음, ARM 링크/CMSIS/HAL vendor는 아직
+- [ ] (ST-Link 도착 후) SWD로 정품 펌웨어 관찰하며 핀맵 확정
+- [ ] 신규 펌웨어 단계별 브링업 (LED→UART→프로토콜/IWDG 재설계→IMU→배터리→**모터**→부저/LED→버튼→SBUS→PWM서보→버스서보→OLED/블루투스/게임패드 USB Host)
 
 ## 2. IMU
 - [x] 0x07 packet decoding
@@ -116,7 +129,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [~] RViz(사용자 환경은 VS Code SSH라 화면 없음 → `tools/viz/snapshot.py`로 PNG 저장해서 확인, 실시간은 Foxglove 권장): `jetrover_bringup/rviz/jetrover.rviz`(Grid, RobotModel, TF, LaserScan, Odometry; 고정 프레임 odom)와 `rviz.launch.py`. 로봇 화면(:0)에서 12초 시작해 설정 오류 없음 확인, 실제 화면 확인은 사용자 몫
 - [x] base_link → lidar_link → lidar_frame TF (URDF, 실제 스캔으로 방향 검증: 정면 물체 +9°(배치 오차 추정), 왼쪽 물체 +90°/+89° → 좌우 반전 없음, 재부팅 후 재확인)
 - [ ] 로봇 회전하면서 scan 정합 확인
-- [ ] 장시간 USB 안정성 시험
+- [~] 장시간 USB 안정성 시험 — **2026-09-28: 약 30분 운영 중 USB 재연결 1회 발생**(`ttyUSB0`→`ttyUSB2`), `rplidar_composition`이 자동 복구 안 되고 `/scan` 완전히 끊김(재시작으로 회복). 원인 미확정, `troubleshooting/015` 참고. 재발하는지 계속 관찰 필요
 - 완료 기준: RViz에서 RobotModel + /scan + /odom + TF 모두 정상
 
 ## 6. SLAM (SLAM Toolbox: 2D scan matching + pose graph + loop closure)
@@ -125,19 +138,19 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] /scan, /odom 연결: 정지 상태에서 `slam_toolbox` active, `/map` 발행(0.05 m), `map→base_footprint` TF 정상, 경고 없음
 - [x] map 생성: **키보드 조종 한 바퀴 완주, hang 없이 사각형 방 지도 완성** (`tools/viz/out/lap1_final.png`), 로봇이 출발 지점으로 복귀
 - [ ] loop closure
-- [~] map 저장: `slam_toolbox serialize_map`으로 `~/jetrover_ws/maps/lap1_20260922.{posegraph,data}` 저장 성공. `nav2_map_server` 미설치라 표준 `.pgm/.yaml`(`save_map`)은 실패 — 필요시 `sudo apt install ros-jazzy-nav2-map-server`. map 재로드는 아직
+- [x] map 저장: `slam_toolbox serialize_map`으로 `~/jetrover_ws/maps/lap1_20260922.{posegraph,data}` 저장 성공. **`nav2_map_server` 설치 완료(2026-09-22 22:31) 후 표준 `.pgm/.yaml`도 저장 성공**(`/slam_toolbox/save_map` result=0, `setup/ENVIRONMENT_SETUP.md` 참고) — 이전 기록의 "실패"는 stale이었음(2026-09-28 정정). map 재로드(`deserialize_map`으로 계속 매핑 또는 AMCL용 로드)는 아직
 - [ ] 긴 복도 테스트, 반복 주행 map distortion 확인
 - [ ] 성능 기록: loop closure error, 벽 직선성, 재방문 위치 오차, CPU/RAM
 
 ## 7. Localization (map_server + AMCL, Mecanum이므로 OmniMotionModel 검토)
-- [ ] Map Server
-- [ ] AMCL
-- [ ] Omni motion model
-- [ ] Initial Pose
-- [ ] /amcl_pose
-- [ ] map → odom
-- [ ] kidnap/relocalization test
-- [ ] localization error 측정
+- [x] Map Server — `src/jetrover_navigation/launch/localization.launch.py`. **2026-09-28: 단독 실행으로 확인**: `maps/lap1_20260922.yaml` 로드(67×67 @ 0.05m/cell, yaml과 일치), configure→activate lifecycle 전환 성공
+- [x] AMCL — `config/amcl.yaml`(`robot_model_type: nav2_amcl::OmniMotionModel`), 빌드 성공. **2026-09-28 실제 로봇(base+LiDAR)으로 소프트웨어 연동 검증 완료**: `ros2 launch jetrover_navigation localization.launch.py`로 map_server+amcl+lifecycle_manager 전부 정상 activate, `/scan` 구독·`/amcl_pose` 발행·`map→odom` TF 전부 확인
+- [x] Omni motion model — 실제 activate까지 확인(정지 상태 기준, 회전/횡이동 중 particle filter 반응은 로봇을 움직여야 확인 가능 — 아직)
+- [~] Initial Pose — `amcl.yaml`의 (0,0,0) 기본값으로 정상 설정됨(`Setting pose: 0.000 0.000 0.000` 로그 확인). 이게 실제 로봇 시작 위치와 맞는지는 물리적으로 검증 안 함
+- [x] /amcl_pose — 발행 확인(x=0,y=0, covariance 0, 정지 상태라 당연한 값). **주의**: 이 토픽은 `TRANSIENT_LOCAL` durability라 기본 QoS로 구독하면 조용히 아무것도 안 받는다(`troubleshooting/015` 참고)
+- [x] map → odom — TF 확인(거의 identity, 로봇이 초기 pose에서 안 움직인 상태라 당연)
+- [ ] kidnap/relocalization test — 로봇을 실제로 이동시켜야 함 (물리 시험)
+- [ ] localization error 측정 — 위와 동일, 물리 시험 필요
 
 ## 8. Nav2
 - [ ] SmacPlanner2D (Global, cost-aware A*)
@@ -196,14 +209,15 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [ ] 실제 물체 위치 오차 측정
 
 ## 14. Robot Arm / MoveIt2 (MoveIt2 + OMPL + RRTConnect)
-- [ ] Arm driver
-- [ ] URDF, SRDF, joint limits
+- [~] **버스 서보 ID 확인(2026-09-27, raw 프로토콜 레벨, ROS2 드라이버는 아직 없음)**: FUNC5로 ID 1~5 응답(관절, pulse 0~1000↔0~240°), **ID10 = 그리퍼**(ID 6~9,11~15는 무응답). PWM 서보(FUNC4) 채널 1~4는 응답은 하지만(전부 1500 기본값) 실제로 움직여도 육안으로 아무 변화 없음 — 미사용이거나 연결 안 된 채널로 추정. 각 서보 소폭 이동(±40~60 pulse)→원위치 왕복으로 실제 로봇에서 확인함
+- [ ] Arm driver (jetrover_base처럼 ROS2 패키지화 — 지금은 raw 스크립트로만 확인)
+- [ ] URDF, SRDF, joint limits (서보별 안전 pulse 범위 확정 필요, 특히 ID3은 pulse=5로 끝단 근접)
 - [ ] IK
 - [ ] MoveIt Setup Assistant
 - [ ] PlanningScene, Collision model
 - [ ] RRTConnect, Pose goal
 - [ ] 실제 arm trajectory
-- [ ] Gripper
+- [x] Gripper (ID10으로 확인됨)
 
 ## 15. Grasp (1차: Segmentation + Depth + Geometry + Rule-based)
 - [ ] Object centroid, orientation estimate
@@ -280,7 +294,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [ ] 자연어 검색
 
 ## 26. Voice AI (Mic → VAD → STT → LLM/Intent → BT → Robot → TTS)
-- [ ] Microphone, VAD, STT, Intent Router, LLM, TTS, Speaker
+- [x] **하드웨어 확인(2026-09-28)**: 마이크 어레이 = USB `card 0` (XFM-DP-V0.0.18, iFlytek 원거리 마이크 어레이 보드, `arecord -D hw:0,0`), 스피커 = USB `card 1` (GeneralPlus USB Audio Device, `aplay -D plughw:1,0`, mono는 `plughw` 필요 — `hw`는 채널 수 불일치로 실패). 4초 녹음 후 재생 왕복으로 실사용 확인(목소리 들림, 무음 아님)
+- [ ] VAD, STT, Intent Router, LLM, TTS — **전부 미착수**. STT/TTS 엔진 자체가 아직 하나도 안 깔려 있음(whisper/vosk 등 확인함, 없음)
 - 안전 명령 STOP / CANCEL / HOME은 LLM 없이 deterministic하게 처리한다.
 
 ## 27. Diagnostics / Monitoring

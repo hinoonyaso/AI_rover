@@ -14,7 +14,7 @@
 | IMU | 완료 (gyro scale 97%, accel 스케일 보정은 보류) |
 | Open-loop odom | 거의 완료 (바닥 주행 1차 완료: 전진·옆 이동은 명령과 일치(0.99), 회전은 명령의 81%) |
 | EKF | 구현 완료 / 실주행 검증 남음 |
-| **STM32 안정성** | **미해결 (hang 9회, 원인 미확정. RST 버튼으로 hang 상태에서도 즉시 복구 가능함을 확인(2026-09-23) — 이전 "버튼 안 통함" 기록은 정정됨. UART1에서 DTR=0&RTS=1이면 확실히 멈추지만(ISP 진입, Hiwonder 문서와 일치) 자동으로 정상 앱에 안 돌아와서 hang 자동 복구용으론 못 씀 — 이 경로는 닫음, RST만이 유일한 복구)** |
+| **STM32 안정성** | **미해결 (hang 9회, 원인 미확정. RST 버튼으로 hang 상태에서도 즉시 복구 가능(2026-09-23). DTR/RTS 자동 리셋 경로는 닫음. → 2026-09-27: 원인 규명 대신 자체 펌웨어 재작성 착수(ST-Link 주문, 도착 대기). UART1 ROM 부트로더 검증 완료, 전체 flash 백업 완료, vendor hex로 재플래시(원래 올라가 있던 것과 15% 다른 빌드였음)까지 실행, 재부팅 후 부저/OLED/IMU/배터리/바퀴모터/로봇팔서보 전부 정상 확인. 계획: `~/.claude/plans/enchanted-chasing-sky.md`, 체크리스트: PROJECT_CHECKLIST.md 1번 섹션)** |
 | TF/URDF | 부분 완료 (URDF 기본 트리, `base_footprint` 체계, 실제 로봇 TF 확인. 팔/카메라/실측 footprint 남음) |
 | LiDAR | 동작 (`/scan` 14 Hz, TF·방향 검증 완료, `ch341` 드라이버 설치). 장시간 안정성 시험 남음 |
 | SLAM | **키보드 조종 한 바퀴 완주, hang 없이 지도 완성** (posegraph 저장). loop closure 정량화, 표준 map 저장(nav2_map_server), 반복 주행은 남음 |

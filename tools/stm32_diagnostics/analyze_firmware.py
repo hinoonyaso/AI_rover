@@ -16,8 +16,36 @@ import zipfile
 BASE = 0x08000000
 IWDG = 0x40003000
 
+# STM32F407 peripheral base addresses (reference manual RM0090, memory map).
+# A coarse first pass for "is this peripheral used at all, and how much" --
+# NOT a pin map. Exact GPIO/AF pin assignment needs either deeper decoding of
+# HAL_GPIO_Init's GPIO_InitTypeDef arguments, or (much more reliably) live
+# SWD register reads once the ST-Link arrives (Phase B in
+# ~/.claude/plans/enchanted-chasing-sky.md).
+PERIPHERALS = {
+    "GPIOA": 0x40020000, "GPIOB": 0x40020400, "GPIOC": 0x40020800,
+    "GPIOD": 0x40020C00, "GPIOE": 0x40021000, "GPIOF": 0x40021400,
+    "GPIOG": 0x40021800, "GPIOH": 0x40021C00, "GPIOI": 0x40022000,
+    "RCC": 0x40023800,
+    "TIM1": 0x40010000, "TIM2": 0x40000000, "TIM3": 0x40000400,
+    "TIM4": 0x40000800, "TIM5": 0x40000C00, "TIM6": 0x40001000,
+    "TIM7": 0x40001400, "TIM8": 0x40010400, "TIM9": 0x40014000,
+    "TIM10": 0x40014400, "TIM11": 0x40014800, "TIM12": 0x40001800,
+    "TIM13": 0x40001C00, "TIM14": 0x40002000,
+    "I2C1": 0x40005400, "I2C2": 0x40005800, "I2C3": 0x40005C00,
+    "USART1": 0x40011000, "USART2": 0x40004400, "USART3": 0x40004800,
+    "UART4": 0x40004C00, "UART5": 0x40005000, "USART6": 0x40011400,
+    "SPI1": 0x40013000, "SPI2": 0x40003800, "SPI3": 0x40003C00,
+    "ADC1": 0x40012000, "ADC_COMMON": 0x40012300,
+    "USB_OTG_FS": 0x50000000, "USB_OTG_HS": 0x40040000,
+}
+
 
 def load_hex(path):
+    if path.endswith(".bin"):
+        with open(path, "rb") as f:
+            data = f.read()
+        return BASE, data
     if path.endswith(".zip"):
         z = zipfile.ZipFile(path)
         name = next(n for n in z.namelist() if n.lower().endswith(".hex"))
@@ -129,6 +157,19 @@ def main():
     for a, (n, stack, prio) in sorted(attrs.items()):
         print(f"  {n:15s} stack={stack:5d}  prio={prio}")
     print("\nTask -> entry function: run with objdump around the osThreadNew calls near 0x08006020-0x080060F0.")
+
+    print("\nPeripheral base-address references (coarse presence/activity, NOT a pin map):")
+    by_value = {}
+    for v, a in consts:
+        by_value.setdefault(v, []).append(a)
+    for name, base in sorted(PERIPHERALS.items(), key=lambda kv: kv[1]):
+        sites = by_value.get(base, [])
+        if sites:
+            print(f"  {name:12s} 0x{base:08X}  referenced {len(sites):3d}x  e.g. {[hex(a) for a in sites[:3]]}")
+    unused = [n for n, b in PERIPHERALS.items() if b not in by_value]
+    if unused:
+        print(f"  (no MOVW/MOVT reference found for: {', '.join(sorted(unused))} -- may be accessed via a"
+              f" different constant-loading idiom, e.g. LDR from a literal pool, not detected here)")
 
 
 if __name__ == "__main__":

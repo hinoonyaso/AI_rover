@@ -23,8 +23,13 @@ __pycache__/
 /maps/*.posegraph
 /maps/*.data
 
-# Hiwonder vendor material (firmware .hex ZIP, protocol PDF): license unclear, keep local only
-/firmware_source/
+# Hiwonder vendor material (firmware .hex ZIP, protocol PDF): license unclear, keep local only.
+# Our own docs/backups in this folder (BOARD_CONNECTORS.md, dumped .bin) are NOT ignored.
+/firmware_source/RosRobotControllerM4.zip
+/firmware_source/*.pdf
+
+# CMake build output for the STM32 firmware rewrite project
+/firmware/rrc_m4/build/
 
 # Kernel module build artifacts (keep ch341.c, Makefile, install.sh, README.md)
 /drivers/ch341/*.ko

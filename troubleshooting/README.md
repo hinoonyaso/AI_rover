@@ -41,3 +41,4 @@
 | 012 | [CH340이 있는데 `/dev/ttyUSB*`가 없음 (`ch341` 모듈 없음)](012-ch341-module-missing.md) | 해결 |
 | 013 | [Orbbec DaBai DCW: depth 센서 시리얼 없음 → SDK v2 열거 실패](013-orbbec-sdk-v2-no-serial-bug.md) | 해결 (SDK v1 소스 빌드) |
 | 014 | [colcon build -j6 + 스왑 0B로 SSH가 끊기고 시스템이 멈춤](014-oom-during-build.md) | 해결 (스왑 4G 추가 + -j2) |
+| 015 | [LiDAR USB가 운영 중 재연결되고 rplidar_composition이 스스로 복구 안 됨](015-lidar-usb-reconnect-no-recovery.md) | 우회 (재시작으로 회복) |
