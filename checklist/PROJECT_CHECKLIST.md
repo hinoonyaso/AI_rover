@@ -243,6 +243,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [ ] Emergency abort
 
 ## 18. FastAPI Backend (React → REST/WebSocket → FastAPI → ROS2 Bridge → Robot)
+개발 순서(9단계, 전체 통합 이후)상 아직 착수 안 함. 상세: `prd/jetinspect-m.md` 17절, `prd/jetinspect-m-pipelines.md` 18절.
 - [ ] FastAPI project
 - [ ] /api/status, /api/mission, /api/navigation/goal, /api/mission/cancel, /api/robot/stop
 - [ ] WebSocket
@@ -267,9 +268,12 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [ ] Home, Cancel, Stop
 - [ ] 간단한 음성 상태 표시
 
-## 21. Database (PostgreSQL + SQLAlchemy, RAG용 pgvector)
-- [ ] missions, robot_events, detections, system_metrics, alerts
+## 21. Database (초기 MySQL → 최종 PostgreSQL + VectorDB — 2026-09-28 확정, `prd/jetinspect-m.md` 17절)
+**신뢰수준: 계획.** SQLite 단일DB안(직전 결정)은 폐기. 초기 개발은 MySQL + SQLAlchemy로 빠르게 가고,
+최종 단계에서 PostgreSQL로 이전 + RAG용 별도 VectorDB를 붙인다(제품 미정 — 24번 섹션).
+- [ ] MySQL로 초기 스키마 구현: missions, robot_events, detections, system_metrics, alerts
 - [ ] locations, documents, document_chunks
+- [ ] (최종 단계) PostgreSQL로 마이그레이션
 
 ## 22. Semantic Map (desk, charger, door, delivery_station, storage)
 - [ ] 장소 이름, x, y, yaw, type, description
@@ -280,10 +284,11 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - VLM: [ ] Scene understanding · [ ] Target disambiguation · [ ] 이미지 질의응답 · [ ] object semantic 판단
 - 원칙: VLM → What?, YOLO + Depth → Where?
 
-## 24. RAG (Document → Chunk → Embedding → pgvector → Top-K → LLM)
+## 24. RAG (Document → Chunk → Embedding → VectorDB → Top-K → LLM)
 자료: JetRover manual, STM32 protocol, STM32 hang NOTES, Nav2 config, MoveIt setup, Camera/LiDAR manual, Troubleshooting, Calibration 기록
 - [ ] Document loader, Chunker, Embedding
-- [ ] pgvector, Metadata, Retrieval
+- [ ] **VectorDB 제품 조사·결정** — PostgreSQL `pgvector` 확장으로 21번 DB 안에 통합할지, Qdrant/Milvus/Chroma 등 독립 VectorDB로 분리할지 미정(계획)
+- [ ] Metadata, Retrieval
 - [ ] Reranking 필요 여부 검토
 - [ ] RAG API
 - [ ] 관제 UI Chat
