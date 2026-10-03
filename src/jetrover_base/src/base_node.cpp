@@ -13,6 +13,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/imu.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "jetrover_base/crash_guard.hpp"
@@ -26,7 +27,14 @@ namespace jetrover_base
 
 // Opens the STM32 serial link, parses RRC frames, publishes the STM32 IMU as
 // sensor_msgs/Imu on imu/data_raw, drives the mecanum chassis from /cmd_vel and
-// publishes open-loop odometry on odom_raw.
+// publishes open-loop odometry on odom_raw. Also polls the arm's bus servo
+// positions (FUNC 0x05) at a low rate and publishes them as sensor_msgs/JointState
+// on joint_states, so jetrover_description's URDF (which has real arm/gripper
+// links as of 2026-10-03) reflects the physical arm pose instead of a fixed
+// default. center_ticks/joint_signs/joint_offsets_rad default to a generic
+// guess (center=500 = mid-scale of the servo's 0-1000 pulse range, sign=+1,
+// offset=0) and are NOT yet calibrated against this robot's actual arm -- see
+// checklist/PROJECT_CHECKLIST.md section 14.
 //
 // The STM32 sends no encoder or wheel-speed feedback, so odom_raw integrates the
 // velocity that was commanded (same approach as Hiwonder's odom_publisher). Its pose
@@ -85,6 +93,45 @@ public:
     timer_ = create_wall_timer(std::chrono::milliseconds(poll_period_ms), [this]() {poll();});
     stats_timer_ = create_wall_timer(1s, [this]() {log_stats();});
     watchdog_timer_ = create_wall_timer(50ms, [this]() {watchdog();});
+
+    publish_arm_joint_states_ = declare_parameter<bool>("publish_arm_joint_states", true);
+    if (publish_arm_joint_states_) {
+      arm_joint_names_ = declare_parameter<std::vector<std::string>>(
+        "arm_joint_names", {"joint1", "joint2", "joint3", "joint4", "joint5", "r_joint"});
+      const auto servo_ids_param = declare_parameter<std::vector<int64_t>>(
+        "arm_servo_ids", {1, 2, 3, 4, 5, 10});
+      arm_servo_ids_.assign(servo_ids_param.begin(), servo_ids_param.end());
+      arm_center_ticks_ = declare_parameter<std::vector<double>>(
+        "arm_center_ticks", {500.0, 500.0, 500.0, 500.0, 500.0, 500.0});
+      arm_joint_signs_ = declare_parameter<std::vector<double>>(
+        "arm_joint_signs", {1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+      arm_joint_offsets_rad_ = declare_parameter<std::vector<double>>(
+        "arm_joint_offsets_rad", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+      const double servo_range_deg = declare_parameter<double>("arm_servo_range_deg", 240.0);
+      const double servo_ticks_range = declare_parameter<double>("arm_servo_ticks_range", 1000.0);
+      arm_rad_per_tick_ = (servo_range_deg * M_PI / 180.0) / servo_ticks_range;
+      const double arm_poll_hz = declare_parameter<double>("arm_poll_hz", 5.0);
+
+      if (arm_joint_names_.size() != arm_servo_ids_.size() ||
+        arm_joint_names_.size() != arm_center_ticks_.size() ||
+        arm_joint_names_.size() != arm_joint_signs_.size() ||
+        arm_joint_names_.size() != arm_joint_offsets_rad_.size())
+      {
+        RCLCPP_ERROR(
+          get_logger(),
+          "arm_joint_names/arm_servo_ids/arm_center_ticks/arm_joint_signs/"
+          "arm_joint_offsets_rad length mismatch; disabling arm joint state publishing");
+        publish_arm_joint_states_ = false;
+      } else {
+        joint_state_pub_ = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
+        arm_poll_timer_ = create_wall_timer(
+          std::chrono::duration<double>(1.0 / std::max(1.0, arm_poll_hz)),
+          [this]() {poll_next_arm_servo();});
+        joint_state_timer_ = create_wall_timer(
+          std::chrono::duration<double>(1.0 / std::max(1.0, arm_poll_hz)),
+          [this]() {publish_arm_joint_states();});
+      }
+    }
   }
 
   ~BaseNode() override
@@ -278,6 +325,56 @@ private:
     ImuRaw imu;
     if (decode_imu(packet, imu)) {
       publish_imu(imu);
+      return;
+    }
+
+    BusServoPosition servo_pos;
+    if (decode_bus_servo_position(packet, servo_pos)) {
+      if (servo_pos.success == 0) {
+        arm_servo_ticks_[servo_pos.id] = servo_pos.pulse;
+      }
+    }
+  }
+
+  // Bus servo positions are request/response (the STM32 doesn't stream them on its
+  // own), unlike IMU/battery. Cycle through the configured servo IDs one at a time
+  // so this stays a low, steady request rate rather than bursting.
+  void poll_next_arm_servo()
+  {
+    if (!serial_.is_open() || arm_servo_ids_.empty()) {
+      return;
+    }
+    const uint8_t servo_id = static_cast<uint8_t>(arm_servo_ids_[arm_poll_index_]);
+    arm_poll_index_ = (arm_poll_index_ + 1) % arm_servo_ids_.size();
+    const auto frame = build_bus_servo_read_position(servo_id);
+    if (!serial_.write(frame.data(), frame.size())) {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 5000, "Arm servo poll write failed: %s",
+        serial_.last_error().c_str());
+    }
+  }
+
+  // Publishes whatever servo ticks have been read so far (converted to radians).
+  // Joints whose servo hasn't reported yet are simply left out of this message
+  // (robot_state_publisher keeps their last/default value); mimic joints (gripper
+  // fingers) are not listed here -- the URDF's <mimic> tags derive them from r_joint.
+  void publish_arm_joint_states()
+  {
+    sensor_msgs::msg::JointState msg;
+    msg.header.stamp = now();
+    for (std::size_t i = 0; i < arm_joint_names_.size(); ++i) {
+      const auto it = arm_servo_ticks_.find(static_cast<uint8_t>(arm_servo_ids_[i]));
+      if (it == arm_servo_ticks_.end()) {
+        continue;
+      }
+      const double angle =
+        (static_cast<double>(it->second) - arm_center_ticks_[i]) * arm_rad_per_tick_ *
+        arm_joint_signs_[i] + arm_joint_offsets_rad_[i];
+      msg.name.push_back(arm_joint_names_[i]);
+      msg.position.push_back(angle);
+    }
+    if (!msg.name.empty()) {
+      joint_state_pub_->publish(msg);
     }
   }
 
@@ -393,6 +490,19 @@ private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub_;
   rclcpp::TimerBase::SharedPtr odom_timer_;
+
+  bool publish_arm_joint_states_{true};
+  std::vector<std::string> arm_joint_names_;
+  std::vector<int64_t> arm_servo_ids_;
+  std::vector<double> arm_center_ticks_;
+  std::vector<double> arm_joint_signs_;
+  std::vector<double> arm_joint_offsets_rad_;
+  double arm_rad_per_tick_{0.0};
+  std::size_t arm_poll_index_{0};
+  std::map<uint8_t, int16_t> arm_servo_ticks_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
+  rclcpp::TimerBase::SharedPtr arm_poll_timer_;
+  rclcpp::TimerBase::SharedPtr joint_state_timer_;
 };
 
 }  // namespace jetrover_base

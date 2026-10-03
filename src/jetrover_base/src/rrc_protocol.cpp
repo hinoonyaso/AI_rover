@@ -84,6 +84,25 @@ bool decode_imu(const RrcPacket & packet, ImuRaw & imu)
   return true;
 }
 
+std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id)
+{
+  return build_packet(kRrcFuncBusServo, {kRrcBusServoSubReadPosition, servo_id});
+}
+
+bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out)
+{
+  if (packet.function != kRrcFuncBusServo || packet.payload.size() != 5 ||
+    packet.payload[1] != kRrcBusServoSubReadPosition)
+  {
+    return false;
+  }
+  out.id = packet.payload[0];
+  out.success = static_cast<int8_t>(packet.payload[2]);
+  out.pulse = static_cast<int16_t>(
+    static_cast<uint16_t>(packet.payload[3]) | (static_cast<uint16_t>(packet.payload[4]) << 8));
+  return true;
+}
+
 void RrcParser::feed(const uint8_t * data, std::size_t length)
 {
   buffer_.insert(buffer_.end(), data, data + length);

@@ -76,14 +76,14 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
             ├── Perception (RGB-D, YOLO)
             └── MoveIt2 ── Arm
 [구현] EKF (robot_localization) ← wheel_twist + imu/data_raw
-[구현] jetrover_base (base_node) ── RRC, 1 Mbps ── STM32F407 ── 모터 / IMU
+[구현] jetrover_base (base_node) ── RRC, 1 Mbps ── STM32F407 ── 모터 / IMU / 팔 bus servo 위치(읽기)
 ```
 
 ## 폴더
 | 경로 | 내용 |
 |---|---|
 | `src/jetrover_base/` | 베이스 드라이버 패키지 (`base_node`, RRC 프로토콜, 시리얼, 크래시 가드, launch, 설정) |
-| `src/jetrover_description/` | URDF와 `robot_state_publisher` launch (Hiwonder 공식 URDF의 치수 사용, 형상은 임시 도형) |
+| `src/jetrover_description/` | URDF(xacro)와 `robot_state_publisher` launch. **2026-10-03부터 Hiwonder 공식 메쉬 사용** (`~/AI_secretary_robot`의 `jetrover_arm_moveit`에서 가져옴, IMU 조인트 회전은 이중변환 방지로 0으로 되돌림 — `src/jetrover_description/README.md`). 팔/그리퍼/카메라까지 TF에 포함됨 |
 | `src/jetrover_bringup/` | 전체 실행 launch(`robot.launch.py`, `lidar.launch.py`, `rviz.launch.py`), LiDAR 설정, RViz 설정 |
 | `src/jetrover_navigation/` | SLAM Toolbox 설정/launch (이후 AMCL, Nav2) |
 | `tools/viz/` | `snapshot.py`: 스캔/지도/TF를 위에서 본 PNG로 저장 (사용자는 VS Code SSH라 RViz 화면을 못 본다) |
@@ -101,6 +101,13 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 새 기능을 `jetrover_base`에 무분별하게 넣지 않는다. 기능 영역이 다르면 별도 ROS2 패키지를 만든다
 (예: LiDAR/Nav2 → `jetrover_navigation`, YOLO/Depth → `jetrover_perception`, MoveIt → `jetrover_manipulation`,
 BT → `jetrover_mission`, URDF → `jetrover_description`). 이름과 구성은 계획이며 만들 때 사용자와 정한다.
+
+**참고 자료(이 워크스페이스 밖)**: `~/AI_secretary_robot`에 사용자의 다른 로컬 프로젝트가 있고,
+Hiwonder 공식 `jetrover_arm_moveit`(URDF/메쉬/MoveIt2 설정/SRDF/TRAC-IK), `ros_robot_controller_msgs`,
+음성 파이프라인(wake/VAD/STT/LLM/TTS, C++), nav2/slam config 등이 통째로 들어있다. PRD(`prd/jetinspect-m*.md`)의
+MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한 게 있는지 확인**한다(이미 URDF는
+2026-10-03에 여기서 가져왔다). 이 프로젝트(`jetrover_ws`)의 직접적인 부분이 아니므로 체크리스트/PRD에서
+가져다 쓸 때마다 출처를 남긴다.
 
 ## 빌드와 실행
 - 빌드는 **반드시 `cd ~/jetrover_ws`에서** `colcon build --packages-select jetrover_base`. (`src/`에서 빌드하면 `src/build|install|log`가 생긴다: troubleshooting/005)
@@ -123,7 +130,7 @@ BT → `jetrover_mission`, URDF → `jetrover_description`). 이름과 구성은
 
 ## 확정된 사실 (다시 조사하지 않는다)
 - 링크: CH9102 USB-UART(`/dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00`), STM32 UART2, **1,000,000 baud**.
-- 프레임: `AA 55 FUNC LEN DATA CRC8-MAXIM` (CRC는 FUNC+LEN+DATA). FUNC 0 배터리(`04`+u16 mV), 3 모터, 7 IMU(가속도 g, 자이로 deg/s, float32×6), 8 게임패드.
+- 프레임: `AA 55 FUNC LEN DATA CRC8-MAXIM` (CRC는 FUNC+LEN+DATA). FUNC 0 배터리(`04`+u16 mV), 3 모터, 5 버스 서보(관절1~5+그리퍼10, read-position subcommand `05`: 요청 `[05,id]`→응답 `[id,05,success,pulse i16LE]`, pulse 0~1000↔0~240°), 7 IMU(가속도 g, 자이로 deg/s, float32×6), 8 게임패드. `base_node`가 FUNC5를 5Hz round-robin으로 폴링해서 `/joint_states`로 publish한다(2026-10-03, 쓰기/모터 제어는 아직 없음 — `checklist` 14번).
 - **모터 ID는 0~3이다** (`DATA = 01, N, N×(id u8, rps f32)`).
   - ID 0 왼쪽 앞, ID 1 왼쪽 뒤, ID 2 오른쪽 앞, ID 3 오른쪽 뒤.
   - 오른쪽 모터(ID 2, 3)는 전진 방향의 rps 부호가 **음수**이다.
@@ -136,7 +143,7 @@ BT → `jetrover_mission`, URDF → `jetrover_description`). 이름과 구성은
     (Hiwonder URDF의 `imu_joint` rpy=(π,0,−π/2)는 raw 센서 축 X=오른쪽, Y=뒤, Z=아래를 뜻하며 실측과 일치한다.)
   - IMU/LiDAR/팔 기준의 translation은 Hiwonder URDF 값이다 (직접 실측한 것이 아님).
   - 자이로 bias는 `config/base.yaml`(변환된 축 기준, rad/s).
-- **TF 트리**: `odom → base_footprint`(EKF) `→ base_link → {imu_link, lidar_link, arm_base_link, 바퀴}`(URDF). `base_node`의 `odom_raw`/`wheel_twist` 프레임도 `base_footprint`. 깊이 카메라는 로봇팔 끝(link4)에 붙어 있어 팔 자세에 따라 위치가 바뀐다.
+- **TF 트리**: `odom → base_footprint`(EKF) `→ base_link → {imu_link, lidar_link, link1..5(팔)+gripper_link(그리퍼), 바퀴}`(URDF, 2026-10-03부터 실제 메쉬+팔 전체 포함, `src/jetrover_description/README.md`). `base_node`의 `odom_raw`/`wheel_twist` 프레임도 `base_footprint`. 깊이 카메라(`camera_connect_link`→`depth_cam_link`→`depth_cam_frame`)는 로봇팔 끝(`link4`)에 붙어 있어 팔 자세에 따라 위치가 바뀐다 — **URDF상으로는 연결됨**, 실제 카메라 드라이버의 frame_id와 일치하는지는 아직 미확인.
 - **LiDAR**: RPLIDAR **A1M8**(fw 1.29, 사용자 확인 + GET_INFO). 커널이 `ch341`을 빼고 빌드돼서 `drivers/ch341/`의 모듈을 설치해 썼다(`sudo ./install.sh`, 재부팅 후 자동 로드, 커널 업데이트 시 재빌드: troubleshooting/012). **`ttyUSB` 번호는 재부팅마다 바뀌므로** 포트는 by-path(`/dev/serial/by-path/platform-3610000.usb-usb-0:2.1.4:1.0-port0`, LiDAR를 같은 USB 포트에 꽂아 둘 것)로 지정한다. `/scan`은 약 14 Hz(실제 회전 속도), 프레임은 `lidar_frame`(URDF에서 `lidar_link` 기준 yaw 180°)이고 실제 스캔으로 방향을 검증했다. **로봇 뒤쪽 약 160°는 로봇팔에 가려 반환이 없다.** 다른 CH340(`ttyUSB` 나머지 하나)은 정체 미상이며 아무것도 보내지 않는다.
 - 실행: `ros2 launch jetrover_bringup robot.launch.py`(베이스 + URDF + EKF + LiDAR), RViz는 `ros2 launch jetrover_bringup rviz.launch.py`, SLAM은 `ros2 launch jetrover_navigation slam.launch.py`(`slam_toolbox` 설치 필요).
 - STM32는 **엔코더/바퀴 속도를 호스트로 보내지 않는다** (캡처, SDK, 공식 PDF로 확인). 그래서 odom은 명령 속도를 적분하는 open-loop이고, EKF에는 `wheel_twist`(vx, vy)와 자이로 yaw rate만 넣는다. open-loop 위치는 EKF에 넣지 않는다.

@@ -23,3 +23,19 @@ base_node:
     # Extra factor on vy only. Kept at 1.0: strafing matched the command (tape re-measurement, 0.99)
     odom_lateral_scale: 1.0
     odom_angular_scale: 1.0
+    # Arm bus-servo position -> /joint_states (sensor_msgs/JointState), polled at arm_poll_hz
+    # (one servo per tick, round-robin). Defaults (center=500 = mid-scale of the servo's
+    # 0-1000 pulse range, sign=+1, offset=0) matched real readings on this robot on
+    # 2026-10-03 (e.g. joint4: 110 ticks -> -1.6336 rad, computed and observed identical) --
+    # no calibration adjustment needed so far. r_joint (servo id 10) is the gripper;
+    # its mimic joints (l_joint etc.) are derived by robot_state_publisher from the URDF's
+    # <mimic> tags, not published here.
+    publish_arm_joint_states: true
+    arm_joint_names: [joint1, joint2, joint3, joint4, joint5, r_joint]
+    arm_servo_ids: [1, 2, 3, 4, 5, 10]
+    arm_center_ticks: [500.0, 500.0, 500.0, 500.0, 500.0, 500.0]
+    arm_joint_signs: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    arm_joint_offsets_rad: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    arm_servo_range_deg: 240.0
+    arm_servo_ticks_range: 1000.0
+    arm_poll_hz: 5.0

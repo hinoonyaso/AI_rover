@@ -109,16 +109,22 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 
 ## 4. Robot Description / TF
 목표 TF: map → odom → base_footprint → base_link → {imu_link, lidar_link, camera_link(color/depth optical), arm_base_link → arm}
-- [~] JetRover URDF: `src/jetrover_description/urdf/jetrover.urdf` (일반 URDF, xacro 미설치). Hiwonder 공식 치수 사용, 형상은 임시 도형, 팔 링크/카메라/실측 footprint는 아직
-- [x] base_footprint (EKF 프레임 = `odom → base_footprint`), [x] base_link (URDF `base_joint`, z 0.116)
+- [x] **JetRover URDF 실제 메쉬로 교체 (2026-10-03)**: `~/AI_secretary_robot`(사용자의 다른 로컬 프로젝트)에
+  Hiwonder 공식 `jetrover_arm_moveit` 패키지 전체(xacro+메쉬)가 있는 걸 발견, `src/jetrover_description/`로
+  가져옴(`$(find jetrover_arm_moveit)`→`$(find jetrover_description)`로 치환). 손으로 쓴 박스/실린더
+  placeholder(`jetrover_placeholder.urdf`로 보관)는 더 안 쓰고, `description.launch.py`가 이제
+  `jetrover.xacro`를 직접 처리한다(`xacro` 설치돼 있음 확인, 패키지 의존성 추가). 상세: `src/jetrover_description/README.md`
+- [x] base_footprint (EKF 프레임 = `odom → base_footprint`), [x] base_link (이제 실제 차체 메쉬)
 - [x] IMU frame 개념 확정
-- [x] imu_link (URDF `imu_joint`, 회전 없음, translation은 Hiwonder 값)
-- [~] lidar_link (URDF, Hiwonder 값 앞 9.0 cm / 위 4.05 cm). LiDAR 장착 위치 실측과 모델 확인은 아직
-- [ ] camera_link, RGB optical frame, Depth optical frame
-- [~] arm_base_link (URDF, Hiwonder 값). Robot arm URDF 통합은 아직
-- [x] robot_state_publisher (`jetrover_description/launch/description.launch.py`, `base.launch.py`에 포함)
-- [ ] RViz RobotModel 검증
-- [~] TF tree 검증: 실제 로봇에서 `odom→lidar_link`, `odom→imu_link` 체인 확인. RViz RobotModel과 view_frames는 아직
+- [x] imu_link (실제 메쉬 적용. **벤더 xacro의 `imu_joint` rpy(원시 센서축 회전)는 `0 0 0`으로 되돌림** —
+  `base_node`가 이미 소프트웨어로 변환하므로 벤더 회전을 그대로 쓰면 이중 변환이 됨. translation은 벤더값=기존값과 일치 확인)
+- [x] lidar_link (실제 메쉬, 벤더 xacro 값이 기존 값과 거의 동일(소수점 정밀도만 다름) — 교차 검증됨). 장착 위치 실측은 아직
+- [x] **camera_link, depth_cam_link/frame — 이번에 처음 TF 트리에 들어감** (`link4`에 연결, optical 변환까지 벤더 xacro에 있음). 실제 카메라 드라이버의 frame_id가 이 이름과 일치하는지 확인은 아직
+- [x] **arm_base_link → 5축 팔(link1~5)+그리퍼(gripper_link+손가락) 전체가 TF 트리에 들어감** (`check_urdf`로 트리 확인 완료, `joint1`~`joint5` + fixed 조인트들). 실제 서보(bus servo ID 1~5+그리퍼10)와 연결하는 컨트롤러/조인트 상태 publish는 아직 없음(14번 섹션)
+- [x] robot_state_publisher (`jetrover_description/launch/description.launch.py`, `base.launch.py`에 포함) — xacro 처리로 전환 후 재검증 완료(`/robot_description` 정상 발행, 에러 없음)
+- [~] RViz RobotModel 검증 — host Ubuntu 24.04 + RViz2(ROS_DOMAIN_ID=25)로 띄움, 실제 메쉬 반영 확인은 사용자 몫
+- [~] TF tree 검증: `check_urdf`로 전체 트리(29개 링크) 확인 완료. 실제 로봇에서 `odom→lidar_link`, `odom→imu_link` 체인은 기존에 확인됨, 새로 추가된 팔/카메라 체인의 실측 검증은 아직
+- [ ] 실측 footprint(바퀴/차체 치수를 줄자로 재검증 — 지금은 전부 Hiwonder 공식값)
 
 ## 5. LiDAR (RPLIDAR A1, 사용자 확인)
 - [x] USB/serial 인식 — `drivers/ch341/`의 모듈을 설치해서 `/dev/ttyUSB*` 생성, **재부팅 후에도 자동 로드 확인**. `ttyUSB0/1` 번호는 재부팅마다 바뀌므로 by-path(`...usb-0:2.1.4:1.0-port0`)로 지정 (GET_INFO로 A1M8 fw 1.29 확인, 헬스 Good)
@@ -210,8 +216,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 
 ## 14. Robot Arm / MoveIt2 (MoveIt2 + OMPL + RRTConnect)
 - [~] **버스 서보 ID 확인(2026-09-27, raw 프로토콜 레벨, ROS2 드라이버는 아직 없음)**: FUNC5로 ID 1~5 응답(관절, pulse 0~1000↔0~240°), **ID10 = 그리퍼**(ID 6~9,11~15는 무응답). PWM 서보(FUNC4) 채널 1~4는 응답은 하지만(전부 1500 기본값) 실제로 움직여도 육안으로 아무 변화 없음 — 미사용이거나 연결 안 된 채널로 추정. 각 서보 소폭 이동(±40~60 pulse)→원위치 왕복으로 실제 로봇에서 확인함
-- [ ] Arm driver (jetrover_base처럼 ROS2 패키지화 — 지금은 raw 스크립트로만 확인)
-- [ ] URDF, SRDF, joint limits (서보별 안전 pulse 범위 확정 필요, 특히 ID3은 pulse=5로 끝단 근접)
+- [x] **Arm driver — 서보 위치 읽기 (2026-10-03)**: `jetrover_base`(`base_node`)에 FUNC5 read-position 폴링(5Hz round-robin, ID 1~5+10)과 `sensor_msgs/JointState` publish(`/joint_states`, 그리퍼는 `r_joint`만 — 나머지 5개 손가락 조인트는 URDF `<mimic>`으로 자동 계산됨)를 추가함. 변환식 `(ticks-center)*rad_per_tick*sign+offset`은 `~/AI_secretary_robot`의 `arm_servo_state_bridge.py`(Hiwonder 공식 jetrover_arm_moveit 부속)에서 가져옴. **center=500/sign=+1/offset=0 기본값이 그대로 맞음** — joint4 등 여러 관절에서 수식 예측값과 실측 publish값이 소수점까지 일치 확인(2026-09-27 raw 프로토콜 측정값과도 일치). 파라미터는 `config/base.yaml`에 노출(캘리브레이션 필요해지면 재컴파일 없이 조정 가능). **모터 명령(write)은 아직 없음** — 지금은 읽기(TF 시각화용)만, 실제 팔을 움직이는 FUNC5 move 명령 송신은 다음 단계
+- [x] **URDF 실제 메쉬/조인트 반영 (2026-10-03)**: `jetrover_description`에 Hiwonder 공식 메쉬+xacro 통합 완료(4번 섹션 참고). `joint_limits.yaml`은 `~/AI_secretary_robot/src/control/jetrover_arm_moveit/config/joint_limits.yaml`에 이미 있음(가져오기는 아직 안 함). ID3은 pulse=5로 끝단 근접 — 안전 pulse 범위 확정은 아직
 - [ ] IK
 - [ ] MoveIt Setup Assistant
 - [ ] PlanningScene, Collision model

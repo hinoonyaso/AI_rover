@@ -13,8 +13,10 @@ constexpr uint8_t kRrcHeader1 = 0xAA;
 constexpr uint8_t kRrcHeader2 = 0x55;
 constexpr uint8_t kRrcFuncSys = 0x00;
 constexpr uint8_t kRrcFuncMotor = 0x03;
+constexpr uint8_t kRrcFuncBusServo = 0x05;
 constexpr uint8_t kRrcFuncImu = 0x07;
 constexpr std::size_t kRrcImuPayloadSize = 24;
+constexpr uint8_t kRrcBusServoSubReadPosition = 0x05;
 
 struct RrcPacket
 {
@@ -50,6 +52,19 @@ bool decode_battery(const RrcPacket & packet, uint16_t & millivolts);
 
 // Decode an IMU packet (FUNC 0x07, 24 bytes -> 6 little-endian floats).
 bool decode_imu(const RrcPacket & packet, ImuRaw & imu);
+
+// Build a bus servo read-position request: FUNC 0x05, DATA = 05, servo_id.
+std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id);
+
+struct BusServoPosition
+{
+  uint8_t id{0};
+  int8_t success{-1};
+  int16_t pulse{0};
+};
+
+// Decode a bus servo position report (FUNC 0x05, DATA = id, 05, success, pulse i16 LE).
+bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out);
 
 // Streaming parser: feed raw serial bytes, pop validated packets.
 // Bad CRC frames are discarded and the parser resyncs on the next AA 55.
