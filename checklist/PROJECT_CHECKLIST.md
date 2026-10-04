@@ -171,7 +171,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 8.5 BT Navigator(2026-10-04): 기본 BT XML, `odom_topic: /odom`(EKF 출력과 일치)
 - [x] 8.6 Recovery(2026-10-04): `spin`/`backup`/`wait` 설정. 실제 발동 확인은 8.11
 - [x] 8.7 `jetrover_navigation/launch/nav2.launch.py`(2026-10-04): 우리 `localization.launch.py`(map_server+amcl) + `nav2_bringup`의 `navigation_launch.py`(params_file로 `nav2_params.yaml` 전달) 조합. **실제 로봇으로 전체 스택 기동 성공**(map_server/amcl/controller_server/planner_server/bt_navigator/behavior_server/smoother_server/velocity_smoother/collision_monitor/docking_server/route_server/waypoint_follower 전부 active, 중복 노드 없음 확인). `collision_monitor`/`docking_server`는 `nav2_bringup`이 끄는 옵션 없이 하드코딩으로 띄워서 공식 예시값으로 플레이스홀더 설정 추가해야 했음(docking_server는 실제 충전 도크 없음, 미사용) — troubleshooting/017
-- [ ] 8.8 실제 로봇으로 `NavigateToPose` 1회 성공 시연(저속, 짧은 거리부터)
+- [x] 8.8 실제 로봇으로 `NavigateToPose` 1회 성공 시연(2026-10-04): 호스트(원격 PC)의 RViz에서 "2D Nav Goal"로 짧은 거리 주행 성공. 가는 길에 호스트→Jetson DDS 디스커버리가 Jetson/호스트 양쪽의 다중 네트워크 인터페이스 때문에 비대칭으로 깨져 있던 것과, RViz의 기본 "Nav2 Goal" 툴이 Navigation 2 패널 없이는 애초에 아무 토픽/액션도 안 쏘는 설계였던 것, 두 가지를 같이 고쳐야 했음 — troubleshooting/018
 - [ ] 8.9 목표 위치/yaw 오차 측정, 반복 시험(3회 이상)
 - [ ] 8.10 성능 지표 기록: CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인

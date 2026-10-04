@@ -1,6 +1,14 @@
 # robot_localization EKF: fuses the commanded (open-loop) body velocity with the gyro yaw rate.
 # The wheel input is a twist-only message (wheel_twist), so no open-loop pose reaches the filter;
 # yaw and position come from integrating vx/vy with the gyro yaw rate.
+#
+# frequency: tried raising 30 -> 100 (2026-10-04, troubleshooting/018) to shrink the tf-extrapolation
+# race window in nav2_amcl's handleInitialPose (it looks up base_footprint->odom at both the clicked
+# message's stamp AND this node's own now(); if now() is even a few ms ahead of the newest published
+# tf, amcl falls back to an identity odom-correction and the clicked pose is lost). 100Hz overloaded
+# this Jetson (ekf_filter_node logged "Failed to meet update rate", up to 0.5s late) and made it
+# worse, not better -- reverted to 30. Fix for the amcl race needs a different approach (see
+# troubleshooting/018).
 ekf_filter_node:
   ros__parameters:
     frequency: 30.0

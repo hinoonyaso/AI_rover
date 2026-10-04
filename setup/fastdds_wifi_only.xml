@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Jetson has multiple network interfaces (wlP1p1s0 = real WiFi, plus l4tbr0/docker0 which are
+     local-only virtual interfaces). Fast-DDS by default announces/listens on all of them, which
+     can confuse discovery for a remote host trying to reach this machine (even though simple
+     outbound pub/sub to the host may still work, host->Jetson discovery can fail). This profile
+     restricts Fast-DDS to the real WiFi interface only.
+     Usage: export FASTRTPS_DEFAULT_PROFILES_FILE=~/jetrover_ws/setup/fastdds_wifi_only.xml
+     See troubleshooting/018 (host RViz couldn't reach Jetson's actions/services). -->
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <transport_descriptors>
+      <transport_descriptor>
+        <transport_id>wifi_only_udp</transport_id>
+        <type>UDPv4</type>
+        <interfaceWhiteList>
+          <address>172.30.1.82</address>
+        </interfaceWhiteList>
+      </transport_descriptor>
+    </transport_descriptors>
+    <participant profile_name="wifi_only_participant" is_default_profile="true">
+      <rtps>
+        <userTransports>
+          <transport_id>wifi_only_udp</transport_id>
+        </userTransports>
+        <useBuiltinTransports>false</useBuiltinTransports>
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

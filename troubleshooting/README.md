@@ -44,3 +44,4 @@
 | 015 | [LiDAR USB가 운영 중 재연결되고 rplidar_composition이 스스로 복구 안 됨](015-lidar-usb-reconnect-no-recovery.md) | 우회 (재시작으로 회복) |
 | 016 | [host RViz에서 base_link 메쉬만 "Could not load mesh resource" 에러](016-urdf-mesh-file-find-not-package.md) | 해결 (벤더 xacro의 `file://$(find)` 한 줄을 `package://`로 수정) |
 | 017 | [Nav2 첫 통합 launch: 설정 오류 3개 + 재시도 중 좀비 프로세스 누적](017-nav2-bringup-hidden-nodes-zombies.md) | 해결 (플러그인 이름/누락 설정 수정, `ros2 node list`로 좀비 정리) |
+| 018 | [호스트 RViz의 Nav2 Goal/2D Pose Estimate가 Jetson에 전혀 안 닿음](018-host-rviz-nav2-goal-not-reaching-jetson.md) | 해결 (Jetson+호스트 양쪽 다중 NIC로 인한 Fast-DDS 디스커버리 비대칭 + "Nav2 Goal" 툴이 Navigation 2 패널 없이는 아무것도 안 쏘는 설계) |

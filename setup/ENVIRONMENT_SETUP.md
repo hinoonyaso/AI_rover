@@ -127,3 +127,17 @@ STM32_Programmer_CLI --version  # 2.23.0
 - 확인: 위 두 명령이 버전을 출력하면 정상.
 - **아직 없음**: `openocd`, `stlink-tools`(`st-info`/`st-flash`) — ST-Link 호환보드 도착 후 `sudo apt install openocd stlink-tools`로 설치 예정 (사용자 승인/sudo 필요).
 - PATH를 매번 export하지 않으려면 `~/.bashrc`에 추가하는 것을 고려.
+
+### 9. Fast-DDS WiFi 전용 인터페이스 프로필 (`~/.bashrc`에 환경변수 추가)
+Jetson에 WiFi(`wlP1p1s0`)/USB브리지(`l4tbr0`)/docker(`docker0`) 세 인터페이스가 동시에 있어서
+호스트(원격 PC)→Jetson 방향 ROS2 디스커버리가 비대칭으로 깨지는 문제가 있었다(troubleshooting/018).
+`~/.bashrc`의 `export ROS_DOMAIN_ID=25` 바로 아래에 추가:
+```bash
+export FASTRTPS_DEFAULT_PROFILES_FILE=/home/sang/jetrover_ws/setup/fastdds_wifi_only.xml
+```
+- 날짜: 2026-10-04
+- 프로필 파일: `setup/fastdds_wifi_only.xml` (Fast-DDS를 `172.30.1.82`(실제 WiFi)로만 제한).
+- 호스트 쪽에도 대칭으로 같은 종류의 프로필이 필요함(호스트가 유선+무선 동시 연결이면 특히) —
+  호스트 설정은 이 저장소 밖(호스트 머신)에 있음, troubleshooting/018 참고.
+- 확인: `echo $FASTRTPS_DEFAULT_PROFILES_FILE`로 경로가 뜨면 정상. 로봇 스택(`robot.launch.py`,
+  `nav2.launch.py`)은 이 환경변수가 걸린 셸에서 다시 켜야 적용된다.
