@@ -23,7 +23,7 @@
 | SLAM | 키보드 조종 한 바퀴 완주, hang 없이 지도 완성. **표준 지도(.pgm/.yaml) 저장도 이미 완료**(이전 기록의 "실패"는 stale였음, 2026-09-28 정정). loop closure 정량화, 반복 주행은 남음 |
 | **AMCL, Localization** | **소프트웨어 스택 실기 검증 완료**(map_server+amcl+lifecycle_manager, `/amcl_pose`·`map→odom` TF 확인). 실제 주행 기반 relocalization/오차 측정은 남음 |
 | Nav2(Costmap/Planner/BT) | **설정 완료 + 실주행 1회 성공**(2026-10-04): costmap/SmacPlanner2D/DWB/BT navigator/behavior/collision_monitor 전부 설정, 원격(호스트) RViz에서 보낸 goal로 실제 주행 확인. 호스트↔Jetson DDS 디스커버리(다중 네트워크 인터페이스) + RViz 툴 설정 문제 해결(`troubleshooting/018`). 반복 시험/오차 측정/지표 기록은 남음(8.9~8.11) |
-| RGB-D 카메라 | 동작 (Orbbec DaBai DCW, SDK v1 소스 빌드로 해결). **TF 연결 확인 완료**(2026-10-04, URDF 프레임=드라이버 frame_id 일치). calibration/alignment 검증 남음 |
+| RGB-D 카메라 | **TF 연결 + RGB/Depth 실측 확인 완료**(2026-10-04, URDF 프레임=드라이버 frame_id 일치, depth 최소 측정거리 ~29cm 확인). calibration/alignment 정량 검증은 남음 |
 | Vision AI, 3D Perception | 미완료 |
 | **로봇팔** | 서보 ID 확인 + **실시간 위치 읽기(`/joint_states`) 완료**(관절 1~5, 그리퍼 10, 실물과 RViz 자세 일치 확인). MoveIt2/IK/명령 송신(움직이기)은 미완료 |
 | Mission BT | 미완료 |

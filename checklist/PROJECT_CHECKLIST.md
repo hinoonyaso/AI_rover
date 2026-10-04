@@ -197,11 +197,12 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   (`orbbec/OrbbecSDK_v2#51`). **`OrbbecSDK_ROS2`의 `main` 브랜치(SDK v1.10.37)를 소스로 빌드해서 apt 버전을 오버레이**하여 해결 (troubleshooting/013)
 - [x] Jazzy driver: 소스 빌드(SDK v1) `orbbec_camera` 정상 동작, `Device DaBai DCW connected`
 - [x] RGB topic(`color/image_raw` 640×360 rgb8, 약 23 Hz), Depth topic(`depth/image_raw`, 약 24 Hz), IR(약 23 Hz), CameraInfo, point cloud 모두 발행 확인
-- [~] RGB 영상 실측 확인(2026-10-04): 픽셀 값 정상(평균 124, 97% non-zero), 실제로 캡처해서 보니 그리퍼+바닥(현재 팔이 접힌 자세와 일치). **Depth는 현재 자세에서 유효 픽셀 0%** — 카메라가 그리퍼/바닥에 너무 가까워 센서 최소 측정 거리 미만일 가능성 높음(추정, config에 min-depth 클램프 없음). 팔을 펴서 재검증 필요(로봇팔 모터 제어 미구현이라 현재는 불가, 14번 섹션 완료 후 재시도)
-- [ ] RGB/Depth alignment (정렬 정확도 검증은 아직, depth 유효값부터 필요)
+- [x] RGB 영상 실측 확인(2026-10-04): 픽셀 값 정상(평균 124, 97% non-zero), 직접 캡처로 시각 확인(그리퍼+바닥, 이후 사람 발+가구 — 팔 자세와 일치)
+- [x] Depth 실측 확인(2026-10-04): 팔이 접힌 최초 자세에서는 유효 픽셀 0%(카메라가 그리퍼에 너무 가까워 최소 측정 거리 미만으로 추정)였으나, **사용자가 팔 각도를 수동으로 바꾼 뒤 유효 픽셀 89%, 거리 범위 293~914mm로 정상 측정 확인** — 최소 측정 거리(~29cm) 가설이 맞았음. 최소/최대 측정 거리 정확한 스펙값은 아직 미확인
+- [ ] RGB/Depth alignment (정렬 정확도 정량 검증은 아직)
 - [ ] Camera calibration 확인
 - [x] TF 연결(2026-10-04): `base_link → link4 → camera_connect_link → depth_cam_link → depth_cam_color_optical_frame` 전부 `lookup_transform`으로 실측 확인됨. 카메라 드라이버가 발행하는 실제 frame_id(`depth_cam_color_optical_frame` 등)가 URDF의 프레임 이름과 정확히 일치함(Hiwonder 벤더 URDF가 Orbbec 드라이버 네이밍에 맞춰 설계됨)
-- [~] RGB 이미지 직접 캡처로 시각 확인 완료(2026-10-04, 200번 항목). PointCloud는 아직 미검증(depth가 현재 무효라 사실상 빈 포인트클라우드일 가능성 높음 — depth 재검증 후 같이 확인)
+- [x] RGB/Depth 이미지 직접 캡처로 시각 확인 완료(2026-10-04, 둘 다 정상). PointCloud 자체 시각 검증(RViz)은 아직
 
 ## 12. Vision AI
 - Detection (YOLO nano급 → ONNX → TensorRT FP16)
