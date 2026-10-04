@@ -164,7 +164,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 
 ## 8. Nav2 (PRD: `prd/slam-nav2.md`, 2026-10-04 Task 분해)
 이번 단계는 **DWB까지만**(MPPI는 최종 단계, `prd/jetinspect-m-pipelines.md` 3절).
-- [ ] 8.1 Nav2 패키지 설치 확인(`nav2_bringup`, `nav2_planner`, `nav2_controller`, `nav2_costmap_2d`, `nav2_behaviors`, `nav2_bt_navigator`, `dwb_core` 등) — 없으면 sudo 설치 요청
+- [x] 8.1 Nav2 패키지 설치 확인(2026-10-04): `ros-jazzy-navigation2`+`ros-jazzy-nav2-bringup` 설치, 11개 패키지(`nav2_bringup`/`planner`/`controller`/`costmap_2d`/`behaviors`/`bt_navigator`/`dwb_core`/`smac_planner`/`regulated_pure_pursuit_controller`/`velocity_smoother`/`collision_monitor`) 전부 확인됨. `setup/ENVIRONMENT_SETUP.md` 기록
 - [ ] 8.2 Costmap 설정: static+obstacle+inflation layer, local/global costmap yaml, 로봇 footprint(메카넘 차체 치수, `jetrover_description` 값 재사용)
 - [ ] 8.3 Global Planner 설정(SmacPlanner2D 또는 NavFn 중 선택 — SmacPlanner2D 우선 시도)
 - [ ] 8.4 Local Controller 설정(DWB) — **mecanum은 holonomic(vx,vy,wz)인데 DWB가 옆이동을 지원하는지 먼저 확인 필요**, 안 되면 Omni 지원 컨트롤러 플러그인 재검토

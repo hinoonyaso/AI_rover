@@ -28,6 +28,8 @@ sudo apt install \
 | 2026-09-21 | `ros-jazzy-slam-toolbox` | SLAM (`jetrover_navigation/launch/slam.launch.py`) | `ros2 lifecycle get /slam_toolbox` → `active` |
 | 2026-09-22 | `ros-jazzy-nav2-map-server` | 표준 지도(`.pgm/.yaml`) 저장 (`map_saver_cli`, `slam_toolbox`의 `save_map` 서비스가 내부적으로 사용) | `/slam_toolbox/save_map` 서비스 호출 결과 `result=0`, `.pgm/.yaml` 생성 확인 |
 | 2026-09-22 | `ros-jazzy-orbbec-camera` | Orbbec DaBai DCW(RGB-D) 카메라 드라이버 (`orbbec_camera::OBCameraNodeDriver`) | `jetrover_perception/launch/camera.launch.py` 실행, 이미지 토픽 확인 (진행 중) |
+| 2026-09-28 | `ros-jazzy-nav2-amcl`, `ros-jazzy-nav2-lifecycle-manager` | AMCL localization (`jetrover_navigation/launch/localization.launch.py`) — 이때 기록을 빠뜨렸다가 2026-10-04에 뒤늦게 추가함 | 실제 로봇으로 `localization.launch.py` 실행, `map_server`+`amcl` lifecycle active 확인 |
+| 2026-10-04 | `ros-jazzy-navigation2`, `ros-jazzy-nav2-bringup` | Nav2 전체(costmap/planner/controller/bt_navigator/behaviors/dwb/smac_planner 등, `prd/slam-nav2.md` 8번) | `ros2 pkg prefix nav2_bringup` 등 11개 패키지 전부 확인(`checklist` 8.1) |
 
 ### 2. ch341 커널 모듈 (out-of-tree 빌드)
 Jetson 커널(`6.8.12-1021-tegra`)이 `CONFIG_USB_SERIAL_CH341`을 빼고 빌드돼서, LiDAR(CH340 USB-시리얼)가 `/dev/ttyUSB*`로 안 잡힌다.
