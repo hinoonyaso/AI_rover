@@ -199,8 +199,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] RGB topic(`color/image_raw` 640×360 rgb8, 약 23 Hz), Depth topic(`depth/image_raw`, 약 24 Hz), IR(약 23 Hz), CameraInfo, point cloud 모두 발행 확인
 - [x] RGB 영상 실측 확인(2026-10-04): 픽셀 값 정상(평균 124, 97% non-zero), 직접 캡처로 시각 확인(그리퍼+바닥, 이후 사람 발+가구 — 팔 자세와 일치)
 - [x] Depth 실측 확인(2026-10-04): 팔이 접힌 최초 자세에서는 유효 픽셀 0%(카메라가 그리퍼에 너무 가까워 최소 측정 거리 미만으로 추정)였으나, **사용자가 팔 각도를 수동으로 바꾼 뒤 유효 픽셀 89%, 거리 범위 293~914mm로 정상 측정 확인** — 최소 측정 거리(~29cm) 가설이 맞았음. 최소/최대 측정 거리 정확한 스펙값은 아직 미확인
-- [ ] RGB/Depth alignment (정렬 정확도 정량 검증은 아직)
-- [ ] Camera calibration 확인
+- [x] RGB/Depth alignment(2026-10-04): depth 영상에서 깊이 불연속(물체 경계, gradient>15mm) 픽셀을 뽑아 RGB 위에 겹쳐보니 신발/가구/천 등 실제 물체 경계와 픽셀 단위로 정확히 일치(오프셋 없음). 스크립트 결과: `src/jetrover_perception/verification/rgb_depth_alignment_20261004.png`. `depth_registration: true` 설정이 실제로 작동함을 확인
+- [x] Camera calibration 확인(2026-10-04): `/depth_cam/{color,depth}/camera_info`의 K 행렬이 640×360 해상도에 맞는 현실적인 공장 출하값(fx=fy≈362.5, cx≈318.5, cy≈177.4, distortion 비0) — placeholder/identity 아님. color/depth가 동일 K와 `frame_id: depth_cam_color_optical_frame`을 공유(registration 확인)
 - [x] TF 연결(2026-10-04): `base_link → link4 → camera_connect_link → depth_cam_link → depth_cam_color_optical_frame` 전부 `lookup_transform`으로 실측 확인됨. 카메라 드라이버가 발행하는 실제 frame_id(`depth_cam_color_optical_frame` 등)가 URDF의 프레임 이름과 정확히 일치함(Hiwonder 벤더 URDF가 Orbbec 드라이버 네이밍에 맞춰 설계됨)
 - [x] RGB/Depth 이미지 직접 캡처로 시각 확인 완료(2026-10-04, 둘 다 정상). PointCloud 자체 시각 검증(RViz)은 아직
 
