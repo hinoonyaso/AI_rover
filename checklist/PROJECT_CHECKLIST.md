@@ -165,12 +165,12 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 ## 8. Nav2 (PRD: `prd/slam-nav2.md`, 2026-10-04 Task 분해)
 이번 단계는 **DWB까지만**(MPPI는 최종 단계, `prd/jetinspect-m-pipelines.md` 3절).
 - [x] 8.1 Nav2 패키지 설치 확인(2026-10-04): `ros-jazzy-navigation2`+`ros-jazzy-nav2-bringup` 설치, 11개 패키지(`nav2_bringup`/`planner`/`controller`/`costmap_2d`/`behaviors`/`bt_navigator`/`dwb_core`/`smac_planner`/`regulated_pure_pursuit_controller`/`velocity_smoother`/`collision_monitor`) 전부 확인됨. `setup/ENVIRONMENT_SETUP.md` 기록
-- [ ] 8.2 Costmap 설정: static+obstacle+inflation layer, local/global costmap yaml, 로봇 footprint(메카넘 차체 치수, `jetrover_description` 값 재사용)
-- [ ] 8.3 Global Planner 설정(SmacPlanner2D 또는 NavFn 중 선택 — SmacPlanner2D 우선 시도)
-- [ ] 8.4 Local Controller 설정(DWB) — **mecanum은 holonomic(vx,vy,wz)인데 DWB가 옆이동을 지원하는지 먼저 확인 필요**, 안 되면 Omni 지원 컨트롤러 플러그인 재검토
-- [ ] 8.5 BT Navigator 기본 BT(nav2 기본 xml 그대로, 커스텀은 Mission 단계에서)
-- [ ] 8.6 Recovery: ClearCostmap, Spin, BackUp, Wait 설정
-- [ ] 8.7 `jetrover_navigation`에 nav2 launch 작성(map_server+amcl+controller_server+planner_server+bt_navigator+behavior_server+lifecycle_manager_navigation 묶기, localization.launch.py와 통합 또는 별도)
+- [x] 8.2 Costmap 설정(2026-10-04): `jetrover_navigation/config/nav2_params.yaml`에 local/global costmap(static+obstacle+inflation) 작성. footprint는 바퀴 중심(±0.0975/±0.1121)+바퀴반경(0.0485)+여유로 `[[0.16,0.18],[0.16,-0.18],[-0.16,-0.18],[-0.16,0.18]]` 사각형(로봇팔은 주행중 안 움직인다는 전제로 2D footprint엔 미포함)
+- [x] 8.3 Global Planner(2026-10-04): `nav2_smac_planner::SmacPlanner2D`(순수 격자 A*, mecanum이라 회전반경 제약 불필요). **플러그인 이름 오타(`/`아니라 `::`) 한 번 잡음**(troubleshooting/017)
+- [x] 8.4 Local Controller(DWB, 2026-10-04): `vy_samples: 10`으로 옆이동 샘플링 열어둠(홀로노믹 활용). 속도 상한은 `jetrover_base`의 `max_linear`(0.2)/`max_angular`(1.0)과 동일하게 맞춤. **실제 옆이동이 나오는지는 아직 실주행으로 확인 안 함**(8.8에서)
+- [x] 8.5 BT Navigator(2026-10-04): 기본 BT XML, `odom_topic: /odom`(EKF 출력과 일치)
+- [x] 8.6 Recovery(2026-10-04): `spin`/`backup`/`wait` 설정. 실제 발동 확인은 8.11
+- [x] 8.7 `jetrover_navigation/launch/nav2.launch.py`(2026-10-04): 우리 `localization.launch.py`(map_server+amcl) + `nav2_bringup`의 `navigation_launch.py`(params_file로 `nav2_params.yaml` 전달) 조합. **실제 로봇으로 전체 스택 기동 성공**(map_server/amcl/controller_server/planner_server/bt_navigator/behavior_server/smoother_server/velocity_smoother/collision_monitor/docking_server/route_server/waypoint_follower 전부 active, 중복 노드 없음 확인). `collision_monitor`/`docking_server`는 `nav2_bringup`이 끄는 옵션 없이 하드코딩으로 띄워서 공식 예시값으로 플레이스홀더 설정 추가해야 했음(docking_server는 실제 충전 도크 없음, 미사용) — troubleshooting/017
 - [ ] 8.8 실제 로봇으로 `NavigateToPose` 1회 성공 시연(저속, 짧은 거리부터)
 - [ ] 8.9 목표 위치/yaw 오차 측정, 반복 시험(3회 이상)
 - [ ] 8.10 성능 지표 기록: CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency
