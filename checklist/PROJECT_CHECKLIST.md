@@ -155,18 +155,26 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [~] Initial Pose — `amcl.yaml`의 (0,0,0) 기본값으로 정상 설정됨(`Setting pose: 0.000 0.000 0.000` 로그 확인). 이게 실제 로봇 시작 위치와 맞는지는 물리적으로 검증 안 함
 - [x] /amcl_pose — 발행 확인(x=0,y=0, covariance 0, 정지 상태라 당연한 값). **주의**: 이 토픽은 `TRANSIENT_LOCAL` durability라 기본 QoS로 구독하면 조용히 아무것도 안 받는다(`troubleshooting/015` 참고)
 - [x] map → odom — TF 확인(거의 identity, 로봇이 초기 pose에서 안 움직인 상태라 당연)
-- [ ] kidnap/relocalization test — 로봇을 실제로 이동시켜야 함 (물리 시험)
-- [ ] localization error 측정 — 위와 동일, 물리 시험 필요
 
-## 8. Nav2
-- [ ] SmacPlanner2D (Global, cost-aware A*)
-- [ ] MPPI Controller, motion_model = Omni (vx, vy, wz)
-- [ ] Costmap: Static / Obstacle / Inflation layer, Robot footprint, Local / Global costmap
-- [ ] Recovery: Clear Costmap, Backup, Spin, Wait, Retry
-- [ ] NavigateToPose, NavigateThroughPoses
-- [ ] 직선 주행, 90° 코너, 좁은 복도, 장애물 회피, 횡이동 활용
-- [ ] 목표 위치/yaw 정밀도, 반복 주행
-- 정량 지표: CTE RMS, Goal Position Error, Goal Yaw Error, Success Rate, Planning/Replanning Latency
+### AMCL 물리 검증 (PRD: `prd/slam-nav2.md`, 2026-10-04 Task 분해)
+- [ ] 7.1 로봇을 지도 저장 시작 지점 근처에 놓거나, RViz "2D Pose Estimate"로 초기 pose 수동 지정 후 Initial Pose가 실제와 맞는지 확인
+- [ ] 7.2 저속(0.05~0.1 m/s)으로 1 m 이상 이동 → `/amcl_pose`가 실제 이동 방향/거리를 따라가는지 확인(줄자 비교)
+- [ ] 7.3 kidnap/relocalization 시험 — 로봇을 들어서 다른 위치로 옮기거나 AMCL 재시작 후 다른 위치에서 수렴하는지 확인
+- [ ] 7.4 localization error 수치 기록(목표 대비 pose 오차, 정지 상태 drift)
+
+## 8. Nav2 (PRD: `prd/slam-nav2.md`, 2026-10-04 Task 분해)
+이번 단계는 **DWB까지만**(MPPI는 최종 단계, `prd/jetinspect-m-pipelines.md` 3절).
+- [ ] 8.1 Nav2 패키지 설치 확인(`nav2_bringup`, `nav2_planner`, `nav2_controller`, `nav2_costmap_2d`, `nav2_behaviors`, `nav2_bt_navigator`, `dwb_core` 등) — 없으면 sudo 설치 요청
+- [ ] 8.2 Costmap 설정: static+obstacle+inflation layer, local/global costmap yaml, 로봇 footprint(메카넘 차체 치수, `jetrover_description` 값 재사용)
+- [ ] 8.3 Global Planner 설정(SmacPlanner2D 또는 NavFn 중 선택 — SmacPlanner2D 우선 시도)
+- [ ] 8.4 Local Controller 설정(DWB) — **mecanum은 holonomic(vx,vy,wz)인데 DWB가 옆이동을 지원하는지 먼저 확인 필요**, 안 되면 Omni 지원 컨트롤러 플러그인 재검토
+- [ ] 8.5 BT Navigator 기본 BT(nav2 기본 xml 그대로, 커스텀은 Mission 단계에서)
+- [ ] 8.6 Recovery: ClearCostmap, Spin, BackUp, Wait 설정
+- [ ] 8.7 `jetrover_navigation`에 nav2 launch 작성(map_server+amcl+controller_server+planner_server+bt_navigator+behavior_server+lifecycle_manager_navigation 묶기, localization.launch.py와 통합 또는 별도)
+- [ ] 8.8 실제 로봇으로 `NavigateToPose` 1회 성공 시연(저속, 짧은 거리부터)
+- [ ] 8.9 목표 위치/yaw 오차 측정, 반복 시험(3회 이상)
+- [ ] 8.10 성능 지표 기록: CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency
+- [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해
