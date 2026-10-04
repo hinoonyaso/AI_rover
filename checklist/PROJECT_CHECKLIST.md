@@ -119,11 +119,11 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] imu_link (실제 메쉬 적용. **벤더 xacro의 `imu_joint` rpy(원시 센서축 회전)는 `0 0 0`으로 되돌림** —
   `base_node`가 이미 소프트웨어로 변환하므로 벤더 회전을 그대로 쓰면 이중 변환이 됨. translation은 벤더값=기존값과 일치 확인)
 - [x] lidar_link (실제 메쉬, 벤더 xacro 값이 기존 값과 거의 동일(소수점 정밀도만 다름) — 교차 검증됨). 장착 위치 실측은 아직
-- [x] **camera_link, depth_cam_link/frame — 이번에 처음 TF 트리에 들어감** (`link4`에 연결, optical 변환까지 벤더 xacro에 있음). 실제 카메라 드라이버의 frame_id가 이 이름과 일치하는지 확인은 아직
+- [x] **camera_link, depth_cam_link/frame — TF 트리에 들어감** (`link4`에 연결, optical 변환까지 벤더 xacro에 있음). **실제 카메라 드라이버의 frame_id와 일치 확인 완료(2026-10-04)**: `base_link→link4→camera_connect_link→depth_cam_link→depth_cam_color_optical_frame` 전부 실측 lookup_transform 성공
 - [x] **arm_base_link → 5축 팔(link1~5)+그리퍼(gripper_link+손가락) 전체가 TF 트리에 들어감** (`check_urdf`로 트리 확인 완료, `joint1`~`joint5` + fixed 조인트들). 실제 서보(bus servo ID 1~5+그리퍼10)와 연결하는 컨트롤러/조인트 상태 publish는 아직 없음(14번 섹션)
 - [x] robot_state_publisher (`jetrover_description/launch/description.launch.py`, `base.launch.py`에 포함) — xacro 처리로 전환 후 재검증 완료(`/robot_description` 정상 발행, 에러 없음)
 - [~] RViz RobotModel 검증 — host Ubuntu 24.04 + RViz2(ROS_DOMAIN_ID=25)로 띄움, 실제 메쉬 반영 확인은 사용자 몫
-- [~] TF tree 검증: `check_urdf`로 전체 트리(29개 링크) 확인 완료. 실제 로봇에서 `odom→lidar_link`, `odom→imu_link` 체인은 기존에 확인됨, 새로 추가된 팔/카메라 체인의 실측 검증은 아직
+- [x] TF tree 검증: `check_urdf`로 전체 트리(29개 링크) 확인 완료. `odom→lidar_link`, `odom→imu_link`, `base_link→link1~5`(실제 서보 각도), `base_link→depth_cam_*`(2026-10-04) 전부 실측 확인됨
 - [ ] 실측 footprint(바퀴/차체 치수를 줄자로 재검증 — 지금은 전부 Hiwonder 공식값)
 
 ## 5. LiDAR (RPLIDAR A1, 사용자 확인)
@@ -197,10 +197,11 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   (`orbbec/OrbbecSDK_v2#51`). **`OrbbecSDK_ROS2`의 `main` 브랜치(SDK v1.10.37)를 소스로 빌드해서 apt 버전을 오버레이**하여 해결 (troubleshooting/013)
 - [x] Jazzy driver: 소스 빌드(SDK v1) `orbbec_camera` 정상 동작, `Device DaBai DCW connected`
 - [x] RGB topic(`color/image_raw` 640×360 rgb8, 약 23 Hz), Depth topic(`depth/image_raw`, 약 24 Hz), IR(약 23 Hz), CameraInfo, point cloud 모두 발행 확인
-- [ ] RGB/Depth alignment (정렬 정확도 검증은 아직)
+- [~] RGB 영상 실측 확인(2026-10-04): 픽셀 값 정상(평균 124, 97% non-zero), 실제로 캡처해서 보니 그리퍼+바닥(현재 팔이 접힌 자세와 일치). **Depth는 현재 자세에서 유효 픽셀 0%** — 카메라가 그리퍼/바닥에 너무 가까워 센서 최소 측정 거리 미만일 가능성 높음(추정, config에 min-depth 클램프 없음). 팔을 펴서 재검증 필요(로봇팔 모터 제어 미구현이라 현재는 불가, 14번 섹션 완료 후 재시도)
+- [ ] RGB/Depth alignment (정렬 정확도 검증은 아직, depth 유효값부터 필요)
 - [ ] Camera calibration 확인
-- [ ] TF 연결 (URDF에 아직 arm 체인이 없어 `depth_cam_link`가 로봇 TF 트리에 안 붙어 있음)
-- [ ] RViz image, PointCloud 검증 (`tools/viz/snapshot.py`류 도구로 SSH 환경에서 확인 필요)
+- [x] TF 연결(2026-10-04): `base_link → link4 → camera_connect_link → depth_cam_link → depth_cam_color_optical_frame` 전부 `lookup_transform`으로 실측 확인됨. 카메라 드라이버가 발행하는 실제 frame_id(`depth_cam_color_optical_frame` 등)가 URDF의 프레임 이름과 정확히 일치함(Hiwonder 벤더 URDF가 Orbbec 드라이버 네이밍에 맞춰 설계됨)
+- [~] RGB 이미지 직접 캡처로 시각 확인 완료(2026-10-04, 200번 항목). PointCloud는 아직 미검증(depth가 현재 무효라 사실상 빈 포인트클라우드일 가능성 높음 — depth 재검증 후 같이 확인)
 
 ## 12. Vision AI
 - Detection (YOLO nano급 → ONNX → TensorRT FP16)
