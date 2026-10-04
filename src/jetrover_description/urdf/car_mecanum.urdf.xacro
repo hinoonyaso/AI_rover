@@ -23,7 +23,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="file://$(find jetrover_description)/meshes/mecanum/base_link.stl" />
+          filename="package://jetrover_description/meshes/mecanum/base_link.stl" />
       </geometry>
       <material name="green"/>
     </visual>

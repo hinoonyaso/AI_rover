@@ -42,3 +42,4 @@
 | 013 | [Orbbec DaBai DCW: depth 센서 시리얼 없음 → SDK v2 열거 실패](013-orbbec-sdk-v2-no-serial-bug.md) | 해결 (SDK v1 소스 빌드) |
 | 014 | [colcon build -j6 + 스왑 0B로 SSH가 끊기고 시스템이 멈춤](014-oom-during-build.md) | 해결 (스왑 4G 추가 + -j2) |
 | 015 | [LiDAR USB가 운영 중 재연결되고 rplidar_composition이 스스로 복구 안 됨](015-lidar-usb-reconnect-no-recovery.md) | 우회 (재시작으로 회복) |
+| 016 | [host RViz에서 base_link 메쉬만 "Could not load mesh resource" 에러](016-urdf-mesh-file-find-not-package.md) | 해결 (벤더 xacro의 `file://$(find)` 한 줄을 `package://`로 수정) |

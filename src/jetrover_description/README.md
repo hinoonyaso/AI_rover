@@ -18,6 +18,15 @@ convention(x 앞, y 왼쪽, z 위)으로 변환해서 `/imu/data_raw`로 publish
 `jetrover_placeholder.urdf`(이전의 손으로 쓴 박스/실린더 placeholder)는 폐기하지 않고 참고용으로
 남겨뒀다 — 더는 launch에서 쓰지 않는다(`description.launch.py`는 이제 `jetrover.xacro`를 처리한다).
 
+**알려진 벤더 버그, 수정함 (2026-10-04)**: `car_mecanum.urdf.xacro`의 `base_link` 시각 메쉬 딱 하나만
+`filename="file://$(find jetrover_description)/meshes/..."` 형태였다(다른 모든 메쉬는
+`package://jetrover_description/...`). `$(find ...)`는 **xacro가 돌아가는 기계에서** 그 순간 바로
+절대경로로 치환되기 때문에, `robot_state_publisher`가 Jetson에서 xacro를 처리하면 그 결과
+(`/robot_description`)에 **Jetson 로컬 절대경로가 그대로 박혀서 네트워크로 나간다.** host RViz는 그
+경로가 자기 디스크에 없으니 "Could not load mesh resource"로 실패한다 — host에 패키지를 제대로
+빌드해놔도 소용없었던 이유. `package://`로 고쳐서(런타임에 메쉬를 보는 쪽이 각자 자기 환경에서
+해석하게) 해결했다. 같은 패턴(`file://$(find`)이 다른 곳에 더 있는지는 확인했고 없다.
+
 ## TF 트리 (xacro 처리 후, `check_urdf`로 확인, 2026-10-03)
 ```
 base_footprint → base_link → {back_shell_black_link, back_shell_green_link, imu_link,
