@@ -68,7 +68,19 @@ class SparsePointCloud(Node):
             'config', 'depth_background_ref.npy')
         self.declare_parameter('background_depth_path', default_ref)
         # mm, margin above typical depth-sensor noise at this range (troubleshooting/023).
-        self.declare_parameter('background_margin_mm', 30)
+        # 30 -> 60 (2026-10-05): with the wrist-raised home pose the camera sees the far floor, where
+        # the noise exceeds 30 mm (~12 false points/frame, 0.9 at 60). A real box is >100 mm closer.
+        # 한글: 손목을 든 새 홈 자세는 먼 바닥까지 보여서 노이즈가 커짐 → 거짓 점이 30mm에서 프레임당 약 12개, 60mm에서 약 1개.
+        self.declare_parameter('background_margin_mm', 60)
+        # 2026-10-05 (회피 시험): the camera only sees an obstacle's FRONT face, so the space behind it
+        # stays "free" in the costmap and the robot (and line waypoints) drove into the box body.
+        # Every obstacle point is therefore extended along its viewing ray by `extrude_depth_m`.
+        # 한글: 카메라는 장애물 앞면만 보므로 시선 방향으로 뒤쪽 extrude_depth_m(기본 0.3m)까지 점을 복제해
+        # 몸통도 점유로 취급한다(상자를 치고 지나가던 문제).
+        self.declare_parameter('extrude_depth_m', 0.3)
+        self.declare_parameter('extrude_step_m', 0.1)
+        self.extrude_depth = self.get_parameter('extrude_depth_m').value
+        self.extrude_step = self.get_parameter('extrude_step_m').value
         self.stride = self.get_parameter('stride').value
         self.every_nth = self.get_parameter('process_every_nth').value
         self.background_margin_mm = self.get_parameter('background_margin_mm').value
@@ -121,6 +133,15 @@ class SparsePointCloud(Node):
         y = (vs[valid] - cy) * z[valid] / fy
         z = z[valid]
         points = np.stack([x, y, z], axis=-1)
+        if self.extrude_depth > 0.0 and len(points) > 0:
+            norm = np.linalg.norm(points, axis=1, keepdims=True)
+            rays = points / np.maximum(norm, 1e-6)
+            layers = [points]
+            d = self.extrude_step
+            while d <= self.extrude_depth + 1e-6:
+                layers.append(points + rays * d)  # 같은 시선 위의 더 먼 점들
+                d += self.extrude_step
+            points = np.concatenate(layers, axis=0)
 
         fields = [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),

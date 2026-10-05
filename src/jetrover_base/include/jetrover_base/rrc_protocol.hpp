@@ -22,8 +22,11 @@ constexpr std::size_t kRrcImuPayloadSize = 24;
 // 한글: 버스 서보 서브커맨드: 0x01 이동, 0x05 위치 읽기, 0x0B 토크 켜기, 0x0C 토크 끄기.
 constexpr uint8_t kRrcBusServoSubReadPosition = 0x05;
 constexpr uint8_t kRrcBusServoSubSetPosition = 0x01;
-constexpr uint8_t kRrcBusServoSubTorqueOn = 0x0B;
-constexpr uint8_t kRrcBusServoSubTorqueOff = 0x0C;
+// 2026-10-05 실기 확인: 0x0B = 토크 해제(limp, 손으로 움직임), 0x0C = 토크 걸기(load). 공식 PDF 문서와 같고
+// board.cpp의 `enable ? 0x0B : 0x0C` 가정과는 반대다(이전 코드는 이름이 뒤집혀 있었다).
+// Verified on hardware: 0x0B releases (limp), 0x0C loads -- the opposite of what the names used to say.
+constexpr uint8_t kRrcBusServoSubTorqueOn = 0x0C;
+constexpr uint8_t kRrcBusServoSubTorqueOff = 0x0B;
 
 struct RrcPacket
 {

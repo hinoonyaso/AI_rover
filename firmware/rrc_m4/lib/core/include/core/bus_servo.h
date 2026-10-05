@@ -33,6 +33,7 @@ enum {
     BUS_CMD_VIN_READ = 27,
     BUS_CMD_POS_READ = 28,
     BUS_CMD_LOAD_OR_UNLOAD_WRITE = 31,
+    BUS_CMD_LOAD_OR_UNLOAD_READ = 32,
 };
 
 /* Returns the frame length written to out (>= BUS_SERVO_MAX_FRAME bytes), 0 on bad input. */

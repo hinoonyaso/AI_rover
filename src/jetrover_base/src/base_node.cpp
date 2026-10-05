@@ -405,16 +405,13 @@ private:
 
   // Torque on = servo holds position (stiff), off = limp. Applied to every configured arm servo.
   // Verified on hardware (2026-10-05): a loaded servo drives toward its OLD stored target
-  // instead of holding where it is, so loading must be followed by a move-to-current-position
-  // that overwrites that target. Frames go through a queue (one per arm_tx_period) because
+  // instead of holding where it is, so loading must be PRECEDED by a move-to-current-position
+  // that overwrites that target (2026-10-05: 0x0B = release, 0x0C = load; the names were swapped before). Frames go through a queue (one per arm_tx_period) because
   // back-to-back bus servo frames are dropped, and so this never blocks the cmd_vel watchdog.
   void set_arm_torque(bool enable)
   {
-    for (const auto id : arm_servo_ids_) {
-      const uint8_t servo_id = static_cast<uint8_t>(id);
-      arm_tx_queue_.push_back(
-        [servo_id, enable]() {return build_bus_servo_torque(servo_id, enable);});
-    }
+    // 한글: 토크를 걸 때는 서보가 "저장돼 있던 옛 목표값"으로 튀지 않도록, 먼저 현재 위치로 이동 명령(hold)을
+    // 보내 목표를 덮어쓴 뒤 load(0x0C)를 건다. 해제(0x0B)는 그냥 보낸다. 0x0B/0x0C 의미는 rrc_protocol.hpp 참고.
     if (enable) {
       arm_tx_queue_.push_back(
         [this]() {
@@ -422,12 +419,21 @@ private:
           for (const auto id : arm_servo_ids_) {
             const auto it = arm_servo_ticks_.find(static_cast<uint8_t>(id));
             if (it != arm_servo_ticks_.end()) {
-              hold.push_back({static_cast<uint8_t>(id), static_cast<uint16_t>(it->second)});
+              // 한글: 읽은 눈금이 음수/범위 밖(예: -34)이면 uint16 변환 시 65502 같은 값이 서보로 가므로
+              // 안전 클램프(arm_pulse_min/max)로 제한한 값만 보낸다.
+              const int64_t pulse = std::min<int64_t>(
+                std::max<int64_t>(static_cast<int64_t>(it->second), arm_pulse_min_), arm_pulse_max_);
+              hold.push_back({static_cast<uint8_t>(id), static_cast<uint16_t>(pulse)});
             }
           }
-          RCLCPP_WARN(get_logger(), "arm hold: pinned %zu servos at current position", hold.size());
+          RCLCPP_WARN(get_logger(), "arm hold: target pinned at current position for %zu servos", hold.size());
           return build_bus_servo_set_position(1.0, hold);
         });
+    }
+    for (const auto id : arm_servo_ids_) {
+      const uint8_t servo_id = static_cast<uint8_t>(id);
+      arm_tx_queue_.push_back(
+        [servo_id, enable]() {return build_bus_servo_torque(servo_id, enable);});
     }
     RCLCPP_WARN(get_logger(), "arm torque %s queued", enable ? "ON(+hold)" : "OFF");
   }

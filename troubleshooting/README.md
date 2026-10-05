@@ -52,3 +52,6 @@
 | 023 | [self-filter가 로봇 앞 35cm 물체를 "자기 자신"으로 오인해서 지워버림](023-depth-self-filter-ate-real-obstacle.md) | 해결 (풋프린트 사각형 방식 → 기준 depth 이미지와의 차이 비교 방식으로 교체) |
 | 024 | [micro-ROS 라이브러리 빌드가 sudo 없는 환경에서 rosdep/libstdc++ 헤더 때문에 막힘](024-microros-build-env-no-sudo.md) | 해결 (rosdep install no-op shim + libstdc++ 헤더를 사용자 로컬 툴체인에 추가) |
 | 025 | [디컴파일 재구성 패키지의 TIM8/핀 이름 오류, 부저 핀 문서 충돌](025-stm32-gpio-decompile-name-map-errors.md) | 해결 (TIM9로 정정, PA8 채택, PINMAP.md에 정리) |
+| 026 | [depth로만 보이는 장애물 앞에서 DWB가 멈추고 회피 못 함](026-depth-obstacle-not-in-global-costmap.md) | 해결 (global costmap에도 depth_cloud 추가, 카메라 감지거리가 짧은 한계는 남음) |
+| 027 | [로봇팔 토크 ON/OFF 서브커맨드(0x0B/0x0C)가 뒤집혀 있어 OFF해도 안 풀림](027-arm-torque-subcommands-swapped.md) | 해결 (0x0B=해제, 0x0C=걸기 확인, 호스트 코드/순서 수정) |
+| 028 | [depth 장애물(상자) 회피 시험: 멈춤/충돌/대각선 종료, collision_monitor 과민 반응](028-nav2-obstacle-avoidance-tuning-session.md) | 대부분 해결 (설정 정리, 반복 시험 필요) |

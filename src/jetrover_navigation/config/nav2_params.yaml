@@ -18,7 +18,7 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_footprint
       resolution: 0.05
-      footprint: "[[0.16, 0.18], [0.16, -0.18], [-0.16, -0.18], [-0.16, 0.18]]"
+      footprint: "[[0.20, 0.24], [0.20, -0.24], [-0.20, -0.24], [-0.20, 0.24]]"
       track_unknown_space: true
       always_send_full_costmap: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -28,7 +28,12 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        observation_sources: scan
+        # depth_cloud added to the GLOBAL costmap too (2026-10-05, 회피 시험): the LiDAR does not see
+        # low obstacles in front of the robot (a box was invisible in /scan), so with depth only in
+        # the local costmap the global planner kept planning straight through it and DWB (which
+        # only follows the global path) just stopped in front of it. Short range (3 m) like local.
+        # 한글: depth를 local에만 넣으면 전역 경로가 장애물을 통과하게 계획돼 DWB가 앞에서 멈춘다.
+        observation_sources: scan depth_cloud
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -38,6 +43,15 @@ global_costmap:
           data_type: "LaserScan"
           raytrace_max_range: 12.0
           obstacle_max_range: 12.0
+        depth_cloud:
+          topic: /depth_cam/depth/points_sparse
+          max_obstacle_height: 2.0
+          min_obstacle_height: -0.1
+          clearing: true
+          marking: true
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          obstacle_max_range: 3.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
@@ -46,7 +60,7 @@ global_costmap:
         # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
         # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
         # inscribed_radius. 0.2 clears that minimum with a little margin.
-        inflation_radius: 0.2
+        inflation_radius: 0.3  # 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄
 
 # 8.3: SmacPlanner2D -- 순수 격자 A*라 회전반경 제약이 없다. Mecanum(holonomic)엔 적합, Ackermann류
 # 전용 파라미터(minimum_turning_radius 등)는 Hybrid 변형 얘기라 여기선 불필요.
@@ -83,8 +97,10 @@ controller_server:
       movement_time_allowance: 10.0
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.1
-      yaw_goal_tolerance: 0.15
+      # 0.1 -> 0.2 (2026-10-05): 모든 시험에서 목표 0.15 m 앞에서 "Failed to make progress"로 멈췄다. 목표 근처에서
+      # DWB가 모터 데드존(펌웨어 PWM ±250) 아래의 아주 느린 속도를 내서 바퀴가 안 도는 것으로 추정. 정밀 정렬은 이후 AprilTag 단계.
+      xy_goal_tolerance: 0.15  # 0.1은 막힘(80초+recovery 7회), 0.2는 도착점이 어긋남 -> 절충 (2026-10-05)
+      yaw_goal_tolerance: 0.4  # 0.25는 미세조정이 오래 걸림, 0.5는 우회 후 20도 틀어진 채 끝남 -> 절충 (2026-10-05)
       stateful: true
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
@@ -95,18 +111,19 @@ controller_server:
       # (원래 값 -0.2).
       min_vel_x: 0.0
       min_vel_y: -0.2
-      max_vel_x: 0.2
+      max_vel_x: 0.12  # 0.2 -> 0.12 (2026-10-05): 감지거리 0.5m라 0.2m/s로는 옆으로 비킬 시간이 부족해 상자를 침
       max_vel_y: 0.2
       max_vel_theta: 1.0
-      min_speed_xy: 0.0
-      max_speed_xy: 0.22
+      min_speed_xy: 0.05  # 0.0 -> 0.05: 모터 데드존 아래 속도 샘플 방지(추정, 시험 중)
+      max_speed_xy: 0.15
       min_speed_theta: 0.0
-      acc_lim_x: 1.0
-      acc_lim_y: 1.0
-      acc_lim_theta: 2.0
-      decel_lim_x: -1.0
-      decel_lim_y: -1.0
-      decel_lim_theta: -2.0
+      # 2026-10-05 회피 시험: 가속 한계가 커서 회피가 "요란"했다 -> 낮춤 (1.0/1.0/2.0 -> 0.5/0.5/1.0)
+      acc_lim_x: 0.5
+      acc_lim_y: 0.5
+      acc_lim_theta: 1.0
+      decel_lim_x: -0.5
+      decel_lim_y: -0.5
+      decel_lim_theta: -1.0
       vx_samples: 10
       vy_samples: 10
       vtheta_samples: 20
@@ -118,7 +135,7 @@ controller_server:
       short_circuit_trajectory_evaluation: true
       stateful: true
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 0.02
+      BaseObstacle.scale: 0.1  # 0.02 -> 0.1: 장애물 근처를 아슬아슬하게 지나가 상자를 침
       PathAlign.scale: 32.0
       GoalAlign.scale: 24.0
       PathAlign.forward_point_distance: 0.1
@@ -193,18 +210,29 @@ collision_monitor:
     FootprintApproach:
       type: "polygon"
       action_type: "approach"
-      footprint_topic: "/local_costmap/published_footprint"
+      # 2026-10-05: 플래너용으로 키운 footprint(0.40x0.48)를 그대로 쓰면 상자(+뒤로 연장한 점)가 \"안\"에 들어와
+      # 로봇이 감속/정지(\"Failed to make progress\")했다. 안전망은 실제 로봇 크기(약 0.32x0.36)에 약간 여유만 둔다.
+      # 한글: 안전망 polygon은 실제 크기 + 여유 2~3 cm (바퀴 중심 +-0.17/0.19 근처).
+      points: "[[0.19, 0.21], [0.19, -0.21], [-0.19, -0.21], [-0.19, 0.21]]"
       time_before_collision: 1.2
       simulation_time_step: 0.1
       min_points: 6
       visualize: false
       enabled: true
-    observation_sources: ["scan"]
+    # depth_cloud added 2026-10-05 (회피 시험): 상자는 LiDAR(/scan)에 안 보여서 이 안전망이 작동한 적이 없었다.
+    # 한글: depth 포인트클라우드를 안전망에도 연결. 낮은 물체(상자 높이 약 0.1m)를 잡으려고 min_height는 작게.
+    observation_sources: ["scan", "depth_cloud"]
     scan:
       type: "scan"
       topic: "scan"
       min_height: 0.15
       max_height: 2.0
+      enabled: true
+    depth_cloud:
+      type: "pointcloud"
+      topic: "/depth_cam/depth/points_sparse"
+      min_height: 0.02
+      max_height: 1.0
       enabled: true
 
 # nav2_bringup의 navigation_launch.py가 docking_server도 lifecycle 노드 목록에 하드코딩돼 있어서
@@ -244,10 +272,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.2, 0.2, 1.0]
+    max_velocity: [0.12, 0.2, 1.0]
     min_velocity: [-0.2, -0.2, -1.0]
-    max_accel: [1.0, 1.0, 2.0]
-    max_decel: [-1.0, -1.0, -2.0]
+    max_accel: [0.5, 0.5, 1.0]  # 1.0/1.0/2.0 -> 0.5/0.5/1.0 (회피를 부드럽게)
+    max_decel: [-0.5, -0.5, -1.0]
     odom_topic: "odom"
     odom_duration: 0.1
 
@@ -263,7 +291,7 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      footprint: "[[0.16, 0.18], [0.16, -0.18], [-0.16, -0.18], [-0.16, 0.18]]"
+      footprint: "[[0.20, 0.24], [0.20, -0.24], [-0.20, -0.24], [-0.20, 0.24]]"
       always_send_full_costmap: true
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
@@ -304,4 +332,4 @@ local_costmap:
         # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
         # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
         # inscribed_radius. 0.2 clears that minimum with a little margin.
-        inflation_radius: 0.2
+        inflation_radius: 0.3  # 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄

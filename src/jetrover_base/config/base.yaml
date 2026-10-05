@@ -66,4 +66,11 @@ base_node:
     #    clamp on joint3/joint4 and near_bottom got WORSE (392mm) -- less-compact-than-max won here
     # joint1..5, r_joint in rad:
     arm_move_home_on_start: false
-    arm_home_pose_rad: [0.0, -0.5529, 1.6881, 1.6713, 0.0168, -0.0168]
+    # 2026-10-05 회피 시험: 사용자가 손으로 맞춘 자세로 변경. 이전 홈 자세(바닥만 보여 depth 감지거리 약 0.4 m,
+    #   카메라 시야 시작점은 바퀴 앞):  [0.0, -0.5529, 1.6881, 1.6713, 0.0168, -0.0168]
+    # 새 자세: 박스 실측으로 로봇 중심 앞 18 cm(로봇 앞단 바로 앞)부터 51 cm까지 연속 감지, 거짓 장애물 0개
+    # (기준 depth margin 60 mm). 모든 관절이 안전 클램프(arm_pulse_min/max 100~900) 안(joint3 103, joint4 117).
+    # 기준 depth 이미지(config/depth_background_ref.npy)는 이 자세로 다시 찍었다. 백업:
+    #   depth_background_ref.home_j4_1.67.npy (이전 홈), depth_background_ref.home_j4_0.97.npy (손목만 올린 후보)
+    # 한글: 홈 자세를 바꾸면 기준 depth 이미지를 반드시 다시 찍는다(안 그러면 로봇 바퀴가 장애물로 인식됨).
+    arm_home_pose_rad: [0.0042, -0.6618, 1.6629, 1.6043, 0.0168, -0.0209]

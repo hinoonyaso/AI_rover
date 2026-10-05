@@ -400,6 +400,10 @@ static void test_bus_servo(void)
     CHECK(bus_servo_plan_from_rrc(id_write, 3, &p) && p.cmd == BUS_CMD_ID_WRITE && p.params[0] == 7 && !p.expects_reply, "plan id write");
     const uint8_t lim[] = {0x30, 2, 0x64, 0x00, 0x90, 0x03};
     CHECK(bus_servo_plan_from_rrc(lim, 6, &p) && p.cmd == BUS_CMD_ANGLE_LIMIT_WRITE && p.nparams == 4, "plan angle limit write");
+    const uint8_t unload[] = {0x0B, 4}, load[] = {0x0C, 4}, tq[] = {0x0D, 4};
+    CHECK(bus_servo_plan_from_rrc(unload, 2, &p) && p.params[0] == 0, "0x0B = unload (limp), verified on the robot");
+    CHECK(bus_servo_plan_from_rrc(load, 2, &p) && p.params[0] == 1, "0x0C = load (hold)");
+    CHECK(bus_servo_plan_from_rrc(tq, 2, &p) && p.cmd == BUS_CMD_LOAD_OR_UNLOAD_READ && p.expects_reply, "0x0D = read torque state");
     const uint8_t bogus[] = {0x77, 1};
     CHECK(!bus_servo_plan_from_rrc(bogus, 2, &p), "unknown subcommand rejected");
 }
