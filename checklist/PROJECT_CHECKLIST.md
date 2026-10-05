@@ -175,7 +175,21 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [~] 8.9 목표 위치/yaw 오차 측정, 반복 시험(3회 이상): **3회 시도, 2회 성공 + 1회 실패(충돌 없음).** 의자 경로였던 Trial 2 첫 시도는 충돌(troubleshooting/021) → 피해서 재시도해 성공. 거리오차 Trial1 4.1cm(4.8%)/Trial2 4.3cm(3.8%) — 안정적으로 양호. yaw오차 Trial1 +5.3°(과대추정)/Trial2 -6.7°(과소추정) — 방향이 매번 달라서 고정 바이어스보다는 노이즈성으로 추정. Trial 3은 장애물 없이도 목표 15.6cm 앞에서 "Goal failed"(progress checker가 근거리 미세조정을 "정체"로 오판한 것으로 추정, `required_movement_radius: 0.3`이 너무 큼 — 추가 조사 필요). 의자/저상 장애물 근처 자율주행은 8.12 해결 전까지 보류
 - [ ] 8.10 성능 지표 기록: CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인
-- [ ] **8.12(신규, 2026-10-05) 2D LiDAR가 못 보는 얇은 장애물(의자 다리 등) 대응** — troubleshooting/021. depth 카메라를 costmap 관측 소스로 추가하는 방안 검토 필요. **이게 해결되기 전까지는 좁은 공간/가구 근처 자율주행을 피한다**
+- [x] **8.12(2026-10-05) 2D LiDAR가 못 보는 얇은 장애물(의자 다리 등) 대응** — troubleshooting/021.
+  팔을 카메라-전방 home pose로 두고(14번 참고) `sparse_point_cloud`가 `/depth_cam/depth/points_sparse`를
+  local costmap의 두 번째 `observation_sources`(`depth_cloud`, PointCloud2, min/max_obstacle_height=-0.1/2.0,
+  raytrace/obstacle_max_range=3.0)로 들어가도록 `nav2_params.yaml` local_costmap의 `obstacle_layer`만 수정
+  (global_costmap은 그대로 — 짧은 range라 static global에 넣을 가치 없음). 홈 포즈가 로봇 자신의 바퀴를
+  근접 시야에 일부러 보이게 하므로, `sparse_point_cloud.py`에 TF 기반 self-filter(`_drop_self_points`,
+  `base_footprint` 기준 footprint 사각형 밖 포인트만 통과, TF 안 준비되면 그 프레임은 publish 안 함)를
+  추가해 로봇 자신을 장애물로 오인(troubleshooting/020 재발)하지 않게 함.
+  **실기 검증(2026-10-05)**: self-filter 단독 — raw ~3196pt→필터 후 ~2947pt, 독립 검증 스크립트로
+  publish된 포인트 전부(2946개) footprint 밖임 확인. Nav2 전체 스택 기동 후 `/local_costmap/costmap`에서
+  로봇 자신의 footprint 셀 값=0(free, 오탐지 없음) 확인, `observation_sources`에 `scan depth_cloud` 둘 다
+  반영됨 확인, map→base_footprint TF 정상. (재시작 중 `rplidar_composition`이 `/scan`을 못 내는 채로 멈춰
+  있던 걸 발견해 재시작으로 해결 — Nav2와는 무관한 별개의 행잉, 원인 미확정.)
+  **아직 안 한 것**: 실제 저상 장애물(의자 등)을 놓고 목표를 통과시켜 충돌 회피 자체를 재현 검증(8.9/8.11에서
+  이어서 진행 예정).
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해

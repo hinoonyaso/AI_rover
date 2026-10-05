@@ -257,7 +257,15 @@ local_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        observation_sources: scan
+        # depth_cloud added 2026-10-05 (checklist 8.12, troubleshooting/021): LiDAR misses thin/low
+        # obstacles (a chair leg caused a real collision). jetrover_perception's sparse_point_cloud
+        # node already self-filters anything inside the robot's own footprint (see its source) --
+        # min/max_obstacle_height here only bounds it further, no extra margin needed on our side.
+        # Depends on the arm being in its home pose (base.yaml arm_home_pose_rad) so the camera
+        # actually points at the floor ahead; a different arm pose just means this source sees
+        # nothing useful, not that it marks anything wrong. Local costmap only (short range,
+        # rolling window) -- not worth adding to the static global costmap too.
+        observation_sources: scan depth_cloud
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -267,6 +275,15 @@ local_costmap:
           data_type: "LaserScan"
           raytrace_max_range: 12.0
           obstacle_max_range: 12.0
+        depth_cloud:
+          topic: /depth_cam/depth/points_sparse
+          max_obstacle_height: 2.0
+          min_obstacle_height: -0.1  # small tolerance for floor noise, not a real "below floor" case
+          clearing: true
+          marking: true
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          obstacle_max_range: 3.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
