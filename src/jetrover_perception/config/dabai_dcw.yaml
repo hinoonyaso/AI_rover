@@ -26,14 +26,20 @@
     soft_filter_max_diff: 8
     soft_filter_speckle_size: 100
 
-    enable_ir: true
+    # enable_ir/enable_point_cloud: off by default (2026-10-05, troubleshooting/019). With the full
+    # Nav2 stack (base+EKF+LiDAR+AMCL+Nav2) already running, enabling color+depth+ir simultaneously
+    # made the USB2.0 driver hang silently (no error, no frames, survived process restart/USB
+    # replug/reboot). Re-enabling just point_cloud alone (ir still off) hung it again -- looks like
+    # Jetson CPU/resource contention under the full stack, not purely a USB bandwidth limit. Turn
+    # these on only for isolated camera-only testing, not while the full robot stack is up.
+    enable_ir: false
     ir_width: 640
     ir_height: 480
     ir_fps: 30
     ir_format: "Y10"
     enable_ir_auto_exposure: true
 
-    enable_point_cloud: true
+    enable_point_cloud: false
     enable_colored_point_cloud: false
     ordered_pc: false
 
