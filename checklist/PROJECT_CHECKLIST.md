@@ -202,7 +202,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] RGB/Depth alignment(2026-10-04): depth 영상에서 깊이 불연속(물체 경계, gradient>15mm) 픽셀을 뽑아 RGB 위에 겹쳐보니 신발/가구/천 등 실제 물체 경계와 픽셀 단위로 정확히 일치(오프셋 없음). 스크립트 결과: `src/jetrover_perception/verification/rgb_depth_alignment_20261004.png`. `depth_registration: true` 설정이 실제로 작동함을 확인
 - [x] Camera calibration 확인(2026-10-04): `/depth_cam/{color,depth}/camera_info`의 K 행렬이 640×360 해상도에 맞는 현실적인 공장 출하값(fx=fy≈362.5, cx≈318.5, cy≈177.4, distortion 비0) — placeholder/identity 아님. color/depth가 동일 K와 `frame_id: depth_cam_color_optical_frame`을 공유(registration 확인)
 - [x] TF 연결(2026-10-04): `base_link → link4 → camera_connect_link → depth_cam_link → depth_cam_color_optical_frame` 전부 `lookup_transform`으로 실측 확인됨. 카메라 드라이버가 발행하는 실제 frame_id(`depth_cam_color_optical_frame` 등)가 URDF의 프레임 이름과 정확히 일치함(Hiwonder 벤더 URDF가 Orbbec 드라이버 네이밍에 맞춰 설계됨)
-- [x] RGB/Depth 이미지 직접 캡처로 시각 확인 완료(2026-10-04, 둘 다 정상). PointCloud 자체 시각 검증(RViz)은 아직
+- [x] RGB/Depth 이미지 직접 캡처로 시각 확인 완료(2026-10-04, 둘 다 정상)
+- [x] PointCloud 시각 검증(2026-10-05): `/depth_cam/depth/points` 203,916개 포인트, Z범위 0.29~0.92m(depth 이미지와 일치). top-down/front 투영 scatter plot으로 확인 — 바닥면이 평평하게 이어지고 노이즈/이상치 없음(`src/jetrover_perception/verification/pointcloud_20261005.png`). **섹션 11 완료**
 
 ## 12. Vision AI
 - Detection (YOLO nano급 → ONNX → TensorRT FP16)
