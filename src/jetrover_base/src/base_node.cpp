@@ -526,9 +526,13 @@ private:
       const int64_t pulse = std::min<int64_t>(
         std::max<int64_t>(static_cast<int64_t>(raw), arm_pulse_min_), arm_pulse_max_);
       targets.push_back({id, static_cast<uint16_t>(pulse)});
+    }
+    // Logged only once validation passed for every joint -- a mid-loop log here would
+    // misleadingly claim a move that a later joint's check could still reject.
+    for (std::size_t k = 0; k < msg.name.size(); ++k) {
       RCLCPP_INFO(
-        get_logger(), "arm move: %s id=%u %d -> %ld (%.3f rad)", msg.name[k].c_str(), id,
-        static_cast<int>(cur->second), static_cast<long>(pulse), msg.position[k]);
+        get_logger(), "arm move: %s id=%u -> %u", msg.name[k].c_str(), targets[k].id,
+        targets[k].pulse);
     }
     const auto frame = build_bus_servo_set_position(arm_move_duration_s_, targets);
     if (!serial_.write(frame.data(), frame.size())) {

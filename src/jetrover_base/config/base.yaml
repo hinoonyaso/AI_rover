@@ -55,9 +55,14 @@ base_node:
     arm_max_step_rad: 0.35       # ~20 deg max jump per command; send several small steps instead
     arm_pulse_min: 100           # servo pulse clamp (0..1000 = 0..240 deg), stays off the end stops
     arm_pulse_max: 900
-    # Home pose = "driving pose": camera ~40 deg down, floor 0.5-1.5 m ahead in view, gripper
-    # closed, depth 89% valid (found 2026-10-05 by moving joint4 while watching the camera;
-    # joint1..5, r_joint in rad: -2.2, -33.6, 60.2, 83.0, 1.4, -1.0 deg).
-    # arm_move_home_on_start ramps there after startup in <=0.3 rad steps (needs arm_command_enabled).
+    # Home pose = "driving pose" (2026-10-05, checklist 8.12 / 14, found on hardware by moving
+    # joint2-5 while watching the camera + measuring /scan coverage + depth/image_raw):
+    #  - near_bottom (closest point seen) ~145mm -- the robot's OWN wheel is in frame, so there is
+    #    no gap between what the camera sees and the floor right at the chassis edge (closes the
+    #    blind zone that caused troubleshooting/021's low-obstacle collision/snag)
+    #  - depth valid 86%, /scan valid 49.4% (== baseline before any arm move, no new LiDAR occlusion)
+    #  - tried folding joint2/3 further in (more compact) first: hit the arm_pulse_max/min safety
+    #    clamp on joint3/joint4 and near_bottom got WORSE (392mm) -- less-compact-than-max won here
+    # joint1..5, r_joint in rad:
     arm_move_home_on_start: false
-    arm_home_pose_rad: [-0.038, -0.586, 1.051, 1.449, 0.024, -0.017]
+    arm_home_pose_rad: [0.0, -0.5529, 1.6881, 1.6713, 0.0168, -0.0168]

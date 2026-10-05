@@ -233,7 +233,13 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [~] **버스 서보 ID 확인(2026-09-27, raw 프로토콜 레벨, ROS2 드라이버는 아직 없음)**: FUNC5로 ID 1~5 응답(관절, pulse 0~1000↔0~240°), **ID10 = 그리퍼**(ID 6~9,11~15는 무응답). PWM 서보(FUNC4) 채널 1~4는 응답은 하지만(전부 1500 기본값) 실제로 움직여도 육안으로 아무 변화 없음 — 미사용이거나 연결 안 된 채널로 추정. 각 서보 소폭 이동(±40~60 pulse)→원위치 왕복으로 실제 로봇에서 확인함
 - [x] **Arm driver — 서보 위치 읽기 (2026-10-03~04)**: `jetrover_base`(`base_node`)에 FUNC5 read-position 폴링(5Hz round-robin, ID 1~5+10)과 `sensor_msgs/JointState` publish(`/joint_states`, 그리퍼는 `r_joint`만 — 나머지 5개 손가락 조인트는 URDF `<mimic>`으로 자동 계산됨)를 추가함. 변환식 `(ticks-center)*rad_per_tick*sign+offset`은 `~/AI_secretary_robot`의 `arm_servo_state_bridge.py`(Hiwonder 공식 jetrover_arm_moveit 부속)에서 가져옴.
   sign=+1 기본값은 틀렸었다(동어반복 검증이었을 뿐 물리 방향 미확인) → `~/AI_secretary_robot`의 실제 캘리브레이션(`config/servo_calibration.yaml`)대로 **sign=-1(전 관절)로 교체, 2026-10-04 사용자가 host RViz에서 실물 팔을 직접 움직이며 최종 확인함(잘 따라옴)** — center=500/offset=0/sign=-1로 확정.
-  파라미터는 `config/base.yaml`에 노출(재조정 시 재컴파일 불필요). **모터 명령(write)은 아직 없음** — 지금은 읽기(TF 시각화용)만, 실제 팔을 움직이는 FUNC5 move 명령 송신은 MoveIt2 단계에서
+  파라미터는 `config/base.yaml`에 노출(재조정 시 재컴파일 불필요).
+- [x] **Arm driver — 쓰기(이동) 명령 (2026-10-05)**: `rrc_protocol`에 FUNC5 move(sub 0x01)/torque on-off(sub 0x0B/0x0C) 프레임 빌더 추가, `base_node`에 `arm/command`(JointState, rad)·`arm/torque`(Bool) 토픽 추가. **이 로봇 첫 소프트웨어 팔 이동**(그 전까진 전부 손으로 돌림). 기본 `arm_command_enabled: false`로 꺼둠(안전).
+  안전장치: 모르는 관절/읽기 없는 관절/`arm_max_step_rad`(0.35) 초과 스텝이면 **명령 전체를 거부**(부분 실행 없음), pulse를 `arm_pulse_min/max`(100~900)로 클램프, 서보 프레임 간 150ms 큐잉(연속 프레임 유실 확인됨).
+  실기로 알아낸 것: 서보 load_state 응답은 `1=힘빠짐(limp)/0=걸림(loaded)`이고, **토크만 켜면 서보가 자기 내부에 저장된 옛 목표값으로 튀어버려서** 토크 ON 직후 반드시 "현재 위치로 이동" 명령을 보내야 한다(hold). 참고: `~/AI_secretary_robot`의 `ros_robot_controller_cpp/src/board.cpp`(Hiwonder 공식, FUNC5 서브커맨드 전체 표).
+- [x] **Home pose(주행용 자세) 확정 (2026-10-05)**: joint1~5 = `[0.0, -0.553, 1.688, 1.671, 0.017]` rad, 그리퍼 닫힘. 카메라가 로봇 자기 바퀴(14.5cm)부터 바닥까지 끊김없이 보여서, 기존에 안 보이던 로봇 바로 앞 구간(troubleshooting/021의 저상 장애물 사각지대)을 depth로 커버함. `/scan` 가림은 기존과 동일(약 49%, 악화 없음). joint2/3를 더 접어보기도 했으나 `arm_pulse_min`/`arm_pulse_max` 안전 클램프에 걸리고 근접 거리도 오히려 나빠져서 기각 — 지금 값이 탐색 범위 내 최선.
+  `base.yaml`의 `arm_home_pose_rad`에 기록, `arm_move_home_on_start`(기본 false)를 켜면 기동 시 처진 자세에서 0.3rad/스텝으로 서서히 복귀 — 실기 2회 종단 검증함(토크 ON+hold 후 스텝 이동, "arm reached home pose" 로그 확인). 평소엔 꺼둠(그림 8.12/Safety Manager에서 실제로 쓸 때 켜는 걸로).
+  **아직 안 한 것**: depth를 Nav2 costmap 관측 소스로 실제로 연결하는 것(8.12), MoveIt2/IK
 - [x] **URDF 실제 메쉬/조인트 반영 (2026-10-03)**: `jetrover_description`에 Hiwonder 공식 메쉬+xacro 통합 완료(4번 섹션 참고). `joint_limits.yaml`은 `~/AI_secretary_robot/src/control/jetrover_arm_moveit/config/joint_limits.yaml`에 이미 있음(가져오기는 아직 안 함). ID3은 pulse=5로 끝단 근접 — 안전 pulse 범위 확정은 아직
 - [ ] IK
 - [ ] MoveIt Setup Assistant
