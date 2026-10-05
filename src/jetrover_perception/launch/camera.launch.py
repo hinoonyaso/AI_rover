@@ -8,7 +8,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
 
 
@@ -33,7 +33,19 @@ def launch_setup(context):
         ],
         output='screen',
     )
-    return [container]
+
+    # Republishes depth/image_raw (16UC1, unviewable as-is) as a colorized bgr8
+    # image on depth/image_colorized, so it can be streamed/viewed normally
+    # (web_video_server, rqt_image_view). See troubleshooting/019.
+    depth_colorizer = Node(
+        package='jetrover_perception',
+        executable='depth_colorizer.py',
+        name='depth_colorizer',
+        namespace=camera_name,
+        output='screen',
+    )
+
+    return [container, depth_colorizer]
 
 
 def generate_launch_description():
