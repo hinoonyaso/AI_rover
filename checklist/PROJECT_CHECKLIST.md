@@ -204,7 +204,9 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] TF 연결(2026-10-04): `base_link → link4 → camera_connect_link → depth_cam_link → depth_cam_color_optical_frame` 전부 `lookup_transform`으로 실측 확인됨. 카메라 드라이버가 발행하는 실제 frame_id(`depth_cam_color_optical_frame` 등)가 URDF의 프레임 이름과 정확히 일치함(Hiwonder 벤더 URDF가 Orbbec 드라이버 네이밍에 맞춰 설계됨)
 - [x] RGB/Depth 이미지 직접 캡처로 시각 확인 완료(2026-10-04, 둘 다 정상)
 - [x] PointCloud 시각 검증(2026-10-05): `/depth_cam/depth/points` 203,916개 포인트, Z범위 0.29~0.92m(depth 이미지와 일치). top-down/front 투영 scatter plot으로 확인 — 바닥면이 평평하게 이어지고 노이즈/이상치 없음(`src/jetrover_perception/verification/pointcloud_20261005.png`). **섹션 11 완료**
-  - **주의(2026-10-05, troubleshooting/019)**: Nav2 풀스택이 같이 떠 있는 상태에서 `enable_ir`+`enable_point_cloud`를 동시에 켜두면 카메라 드라이버가 에러 없이 조용히 멈추는 현상 발견(재부팅으로도 안 풀림, USB가 아니라 Jetson 자원 경합으로 추정). 그래서 `dabai_dcw.yaml` 기본값을 `enable_ir: false`/`enable_point_cloud: false`로 바꿈 — **지금은 RGB+Depth만 상시 켜짐**, PointCloud는 카메라 단독 테스트 때만 켜서 쓴다
+  - **주의(2026-10-05, troubleshooting/019)**: Nav2 풀스택이 같이 떠 있는 상태에서 `enable_ir`+`enable_point_cloud`를 동시에 켜두면 카메라 드라이버가 에러 없이 조용히 멈추는 현상 발견(재부팅으로도 안 풀림, USB가 아니라 Jetson 자원 경합으로 추정). 그래서 `dabai_dcw.yaml` 기본값을 `enable_ir: false`/`enable_point_cloud: false`로 바꿈 — **지금은 RGB+Depth만 상시 켜짐**
+  - **대체 수단(2026-10-05)**: `sparse_point_cloud.py` 노드 추가 — depth 이미지를 8픽셀 간격으로 성기게 샘플링한 뒤 camera_info로 XYZ 투영해서 `/depth_cam/depth/points_sparse`로 상시 발행(약 2,900개 포인트, CPU 9%, Nav2 풀스택과 동시에 돌려도 문제없음 확인). PRD의 실제 depth 사용처(3D XYZ 피킹, Safety Manager)는 애초에 dense cloud가 필요 없어서 이걸로 충분
+  - Depth를 눈으로 보려면 `depth_colorizer.py`가 `/depth_cam/depth/image_colorized`(JET 컬러맵, bgr8, ~7Hz로 rate-limit)로 발행 — `web_video_server`(`jetrover_perception web_video.launch.py`)로 브라우저에서 스트리밍 확인 가능
 
 ## 12. Vision AI
 - Detection (YOLO nano급 → ONNX → TensorRT FP16)
