@@ -4,7 +4,7 @@ project(jetrover_perception)
 find_package(ament_cmake REQUIRED)
 
 install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
-install(PROGRAMS scripts/depth_colorizer.py DESTINATION lib/${PROJECT_NAME})
+install(PROGRAMS scripts/depth_colorizer.py scripts/sparse_point_cloud.py DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

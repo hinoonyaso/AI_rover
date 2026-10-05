@@ -45,7 +45,17 @@ def launch_setup(context):
         output='screen',
     )
 
-    return [container, depth_colorizer]
+    # Sparse PointCloud2 built from a strided (downsampled) depth image, instead
+    # of the camera driver's own heavy enable_point_cloud (troubleshooting/019).
+    sparse_point_cloud = Node(
+        package='jetrover_perception',
+        executable='sparse_point_cloud.py',
+        name='sparse_point_cloud',
+        namespace=camera_name,
+        output='screen',
+    )
+
+    return [container, depth_colorizer, sparse_point_cloud]
 
 
 def generate_launch_description():
