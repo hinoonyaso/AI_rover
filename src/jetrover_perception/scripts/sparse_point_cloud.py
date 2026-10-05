@@ -28,7 +28,16 @@ class SparsePointCloud(Node):
     def __init__(self):
         super().__init__('sparse_point_cloud')
         self.declare_parameter('stride', 8)
+        # Publishing at the full depth rate (~25-30Hz) meant a remote viewer
+        # (RViz over WiFi) sometimes couldn't resolve the full TF chain in
+        # time for a given message's exact stamp -- same class of cross-
+        # machine timing race as troubleshooting/018, just for this topic.
+        # Harmless (the viewer keeps showing the last good cloud) but noisy.
+        # A live view doesn't need more than a few Hz.
+        self.declare_parameter('process_every_nth', 4)
         self.stride = self.get_parameter('stride').value
+        self.every_nth = self.get_parameter('process_every_nth').value
+        self._count = 0
         self.intrinsics = None
 
         self.pub = self.create_publisher(PointCloud2, 'depth/points_sparse', 10)
@@ -41,6 +50,9 @@ class SparsePointCloud(Node):
         self.intrinsics = (msg.k[0], msg.k[4], msg.k[2], msg.k[5])  # fx, fy, cx, cy
 
     def _depth_cb(self, msg):
+        self._count += 1
+        if self._count % self.every_nth != 0:
+            return
         if self.intrinsics is None:
             return
         fx, fy, cx, cy = self.intrinsics
