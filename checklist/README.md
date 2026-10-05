@@ -22,7 +22,7 @@
 | LiDAR | 동작 (`/scan` 14 Hz, TF·방향 검증 완료). **운영 중 USB 재연결 1회 발견, 드라이버 자동복구 없음** (`troubleshooting/015`) |
 | SLAM | 키보드 조종 한 바퀴 완주, hang 없이 지도 완성. **표준 지도(.pgm/.yaml) 저장도 이미 완료**(이전 기록의 "실패"는 stale였음, 2026-09-28 정정). loop closure 정량화, 반복 주행은 남음 |
 | **AMCL, Localization** | **소프트웨어 스택 실기 검증 완료**(map_server+amcl+lifecycle_manager, `/amcl_pose`·`map→odom` TF 확인). 실제 주행 기반 relocalization/오차 측정은 남음 |
-| Nav2(Costmap/Planner/BT) | **설정 완료 + 실주행 1회 성공**(2026-10-04): costmap/SmacPlanner2D/DWB/BT navigator/behavior/collision_monitor 전부 설정, 원격(호스트) RViz에서 보낸 goal로 실제 주행 확인. 호스트↔Jetson DDS 디스커버리(다중 네트워크 인터페이스) + RViz 툴 설정 문제 해결(`troubleshooting/018`). 반복 시험/오차 측정/지표 기록은 남음(8.9~8.11) |
+| Nav2(Costmap/Planner/BT) | **설정 완료, 실주행 1회 성공 + 2회차 중 충돌**(2026-10-05): DDS/RViz 툴 문제(`troubleshooting/018`) 해결 후 Trial 1 성공(거리오차 4.8%, 각도오차 5.3°, 7.2/8.9). 방 재매핑(의자가 진짜 장애물이었음, `lap2_20261005`) + inflation_radius 안전값 보정(`troubleshooting/020`). **Trial 2 중 로봇이 의자 다리에 충돌**(2D LiDAR 사각지대로 추정, `troubleshooting/021`, 미해결) — 자율주행 일시 중단, 반복 시험/지표 기록은 이 안전 문제 해결 후 재개 |
 | RGB-D 카메라 | **완료**(2026-10-05): TF 연결, RGB/Depth 실측, RGB-Depth 픽셀 정렬, camera_info 캘리브레이션, PointCloud 시각 검증까지 전부 확인됨 |
 | Vision AI, 3D Perception | 미완료 |
 | **로봇팔** | 서보 ID 확인 + **실시간 위치 읽기(`/joint_states`) 완료**(관절 1~5, 그리퍼 10, 실물과 RViz 자세 일치 확인). MoveIt2/IK/명령 송신(움직이기)은 미완료 |

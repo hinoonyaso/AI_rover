@@ -157,10 +157,10 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] map → odom — TF 확인(거의 identity, 로봇이 초기 pose에서 안 움직인 상태라 당연)
 
 ### AMCL 물리 검증 (PRD: `prd/slam-nav2.md`, 2026-10-04 Task 분해)
-- [ ] 7.1 로봇을 지도 저장 시작 지점 근처에 놓거나, RViz "2D Pose Estimate"로 초기 pose 수동 지정 후 Initial Pose가 실제와 맞는지 확인
-- [ ] 7.2 저속(0.05~0.1 m/s)으로 1 m 이상 이동 → `/amcl_pose`가 실제 이동 방향/거리를 따라가는지 확인(줄자 비교)
-- [ ] 7.3 kidnap/relocalization 시험 — 로봇을 들어서 다른 위치로 옮기거나 AMCL 재시작 후 다른 위치에서 수렴하는지 확인
-- [ ] 7.4 localization error 수치 기록(목표 대비 pose 오차, 정지 상태 drift)
+- [x] 7.1(2026-10-05): RViz "2D Pose Estimate"로 초기 pose 수동 지정, 여러 번 반복 확인함(새 지도 `lap2_20261005` 기준)
+- [x] 7.2(2026-10-05, Trial 1): `NavigateToPose`로 1m 이동 후 줄자 실측과 비교 — 이동거리 amcl 89.1cm vs 실측 85cm(오차 4.1cm, 4.8%), yaw amcl 12.5° vs 실측 7.2°(오차 5.3°). 거리는 양호, **각도 오차가 상대적으로 큼** — 원인 미조사(자이로 스케일/바퀴 슬립 등 후보)
+- [x] 7.3(2026-10-05): 사용자가 로봇을 손으로 들어서 다른 위치로 옮긴 뒤 `/initialpose`로 재설정 — 이건 AMCL이 "스스로" kidnap을 감지하고 재수렴한 게 아니라 **수동으로 알려준 것**이라 완전한 자동 kidnap 복구 시험은 아님. 자동 복구(`global_localization` 서비스 등)는 아직 안 함
+- [x] 7.4(2026-10-05): Trial 1 수치 기록됨(위 7.2). 반복 시험(2회 이상 더)은 8.9와 함께 진행 예정이었으나 충돌로 중단(아래 8.9 참고)
 
 ## 8. Nav2 (PRD: `prd/slam-nav2.md`, 2026-10-04 Task 분해)
 이번 단계는 **DWB까지만**(MPPI는 최종 단계, `prd/jetinspect-m-pipelines.md` 3절).
@@ -172,9 +172,10 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 8.6 Recovery(2026-10-04): `spin`/`backup`/`wait` 설정. 실제 발동 확인은 8.11
 - [x] 8.7 `jetrover_navigation/launch/nav2.launch.py`(2026-10-04): 우리 `localization.launch.py`(map_server+amcl) + `nav2_bringup`의 `navigation_launch.py`(params_file로 `nav2_params.yaml` 전달) 조합. **실제 로봇으로 전체 스택 기동 성공**(map_server/amcl/controller_server/planner_server/bt_navigator/behavior_server/smoother_server/velocity_smoother/collision_monitor/docking_server/route_server/waypoint_follower 전부 active, 중복 노드 없음 확인). `collision_monitor`/`docking_server`는 `nav2_bringup`이 끄는 옵션 없이 하드코딩으로 띄워서 공식 예시값으로 플레이스홀더 설정 추가해야 했음(docking_server는 실제 충전 도크 없음, 미사용) — troubleshooting/017
 - [x] 8.8 실제 로봇으로 `NavigateToPose` 1회 성공 시연(2026-10-04): 호스트(원격 PC)의 RViz에서 "2D Nav Goal"로 짧은 거리 주행 성공. 가는 길에 호스트→Jetson DDS 디스커버리가 Jetson/호스트 양쪽의 다중 네트워크 인터페이스 때문에 비대칭으로 깨져 있던 것과, RViz의 기본 "Nav2 Goal" 툴이 Navigation 2 패널 없이는 애초에 아무 토픽/액션도 안 쏘는 설계였던 것, 두 가지를 같이 고쳐야 했음 — troubleshooting/018
-- [ ] 8.9 목표 위치/yaw 오차 측정, 반복 시험(3회 이상)
-- [ ] 8.10 성능 지표 기록: CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency
+- [~] 8.9 목표 위치/yaw 오차 측정, 반복 시험(3회 이상): **Trial 1만 완료**(7.2 참고, 성공). Trial 2 진행 중 로봇이 **의자 다리와 충돌**해서 자율주행 중단함(troubleshooting/021, 원인 미해결) — 안전 문제 먼저 조사한 뒤 재개
+- [ ] 8.10 성능 지표 기록: CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 1개뿐이라 아직 의미있는 집계 불가)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인
+- [ ] **8.12(신규, 2026-10-05) 2D LiDAR가 못 보는 얇은 장애물(의자 다리 등) 대응** — troubleshooting/021. depth 카메라를 costmap 관측 소스로 추가하는 방안 검토 필요. **이게 해결되기 전까지는 좁은 공간/가구 근처 자율주행을 피한다**
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해
