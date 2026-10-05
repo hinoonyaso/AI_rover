@@ -5,17 +5,15 @@
  * see firmware_source/BOARD_CONNECTORS.md for what's confirmed vs assumed.
  * All multi-byte integers are little-endian, matching the PDF's own examples.
  *
- * Bus servo (FUNC5) subcommands other than move(0x01)/read-position(0x05)
- * (power on/off 0x0B/0x0C, ID-change 0x10, voltage/temperature limits and
- * uploads) are NOT implemented yet — their exact byte offsets need a fresh
- * PDF re-read before coding (see firmware_source/ PDF, "Serial bus servo
- * control" section). Deferred per the Phase C ordering in
- * ~/.claude/plans/enchanted-chasing-sky.md (bus servo is a late milestone).
+ * Bus servo (FUNC5) subcommands beyond move(0x01)/read-position(0x05) are
+ * handled by lib/core bus_servo.c (bus_servo_plan_from_rrc / bus_servo_make_upload), whose layouts
+ * come from the official docs repo (program analysis 3.14.2, 2026-10-05).
  *
  * PWM servo (FUNC4) deviation upload: the PDF text for "(2) PWM servo
  * deviation upload" shows subcommand byte 0x05, identical to the position
  * upload's subcommand -- almost certainly a copy/paste artifact in the PDF
- * (the read-deviation *request* uses 0x09). rrc_unpack_pwm_servo_upload()
+ * (the read-deviation *request* uses 0x09; set-deviation request is 0x07, confirmed by the
+ * official docs repo). The upload byte stays 0x05 as in the docs. rrc_unpack_pwm_servo_upload()
  * disambiguates by length (4 bytes = position, 3 bytes = deviation) and
  * ignores the subcommand byte's exact value for the deviation case. Verify
  * against a real capture before relying on this for calibration.
@@ -66,6 +64,23 @@ typedef struct {
 /* Returns 1 on success, 0 on malformed frame or count > RRC_MOTOR_MAX_COUNT. */
 int rrc_unpack_motor(const uint8_t *data, uint8_t len, rrc_motor_cmd_t *out);
 
+/* FUNC3 full subcommand set (PDF 3.14.2 / program analysis 3.14): 0x00 single, 0x01 multi,
+ * 0x02 stop one, 0x03 stop by bit mask. Use rrc_unpack_motor_ex for any of them. */
+typedef enum {
+    RRC_MOTOR_SUB_SET_SINGLE = 0x00,
+    RRC_MOTOR_SUB_SET_MULTI = 0x01,
+    RRC_MOTOR_SUB_STOP_ONE = 0x02,
+    RRC_MOTOR_SUB_STOP_MASK = 0x03,
+} rrc_motor_sub_t;
+typedef struct {
+    uint8_t subcommand;
+    uint8_t count;                                 /* valid for SET_SINGLE (1) / SET_MULTI */
+    rrc_motor_speed_t speeds[RRC_MOTOR_MAX_COUNT];
+    uint8_t stop_id;                               /* STOP_ONE */
+    uint8_t stop_mask;                             /* STOP_MASK, bit i = motor id i */
+} rrc_motor_cmd_ex_t;
+int rrc_unpack_motor_ex(const uint8_t *data, uint8_t len, rrc_motor_cmd_ex_t *out);
+
 /* ---- FUNC 0x04/0x05 subcommand bytes (Parameter 1 in the PDF) ---- */
 #define RRC_SERVO_SUB_MOVE_MULTI 0x01
 #define RRC_SERVO_SUB_MOVE_SINGLE 0x03 /* PWM servo only */
@@ -95,6 +110,9 @@ int rrc_unpack_pwm_servo_move_single(const uint8_t *data, uint8_t len, rrc_pwm_s
 
 /* read position/deviation requests: data = [subcommand, servo_id] */
 int rrc_unpack_pwm_servo_read_request(const uint8_t *data, uint8_t len, uint8_t *subcommand, uint8_t *servo_id);
+
+/* set deviation: data = [0x07, servo_id, int8 deviation (-100..100)] */
+int rrc_unpack_pwm_servo_set_deviation(const uint8_t *data, uint8_t len, uint8_t *servo_id, int8_t *deviation);
 
 /* device -> host: position upload (len 4) or deviation upload (len 3) */
 size_t rrc_pack_pwm_servo_position(uint8_t servo_id, uint16_t pulse, uint8_t *data_out);

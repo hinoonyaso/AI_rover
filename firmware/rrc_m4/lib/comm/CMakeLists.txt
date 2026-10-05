@@ -1,0 +1,10 @@
+add_library(rrc_comm STATIC src/rrc_adapter.c)
+target_include_directories(rrc_comm PUBLIC include)
+target_link_libraries(rrc_comm PUBLIC rrc_core rrc_protocol)
+target_compile_options(rrc_comm PRIVATE -Wall -Wextra)
+
+if(RRC_BUILD_HOST_TESTS)
+    add_executable(test_comm tests/test_comm.c)
+    target_link_libraries(test_comm PRIVATE rrc_comm)
+    add_test(NAME comm_tests COMMAND test_comm)
+endif()

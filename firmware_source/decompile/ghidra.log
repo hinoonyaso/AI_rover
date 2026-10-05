@@ -1,0 +1,97 @@
+2026-10-05 17:52:38 INFO  (LoggingInitialization) Using log config file: jar:file:/tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml  
+2026-10-05 17:52:38 INFO  (LoggingInitialization) Using log file: /home/sang/jetrover_ws/firmware_source/decompile/ghidra.log  
+2026-10-05 17:52:38 DEBUG (GhidraObjectInputFilter) Including serial input filter: FileSystem/data/client.rmi.serial.filter  
+2026-10-05 17:52:38 INFO  (Preferences) Loading user preferences: /home/sang/.config/ghidra/ghidra_12.1.4_PUBLIC/preferences  
+2026-10-05 17:52:38 INFO  (ClassSearcher) Searching for classes...  
+2026-10-05 17:52:40 INFO  (ClassSearcher) Class search complete (1605 ms)  
+2026-10-05 17:52:40 INFO  (DefaultSSLContextInitializer) Initializing SSL Context  
+2026-10-05 17:52:40 INFO  (SecureRandomFactory) Initializing Random Number Generator...  
+2026-10-05 17:52:40 INFO  (SecureRandomFactory) Random Number Generator initialization complete: NativePRNGNonBlocking  
+2026-10-05 17:52:40 INFO  (DefaultTrustManagerFactory) Trust manager disabled, cacerts have not been set  
+2026-10-05 17:52:45 INFO  (AnalyzeHeadless) Headless startup complete (9201 ms)  
+2026-10-05 17:52:45 INFO  (ClassSearcher) Class searcher loaded 177 extension points (88 false positives)  
+2026-10-05 17:52:46 INFO  (HeadlessAnalyzer) HEADLESS Script Paths:
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Processors/8051/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /home/sang/jetrover_ws/firmware_source/decompile
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/BSim/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/PDB/ghidra_scripts  
+2026-10-05 17:52:46 INFO  (HeadlessAnalyzer) HEADLESS: execution starts  
+2026-10-05 17:52:46 INFO  (HeadlessAnalyzer) Creating project: /tmp/jetrover-ghidra-v2/RosRobotControllerM4  
+2026-10-05 17:52:47 INFO  (DefaultProject) Creating project: /tmp/jetrover-ghidra-v2/RosRobotControllerM4  
+2026-10-05 17:52:47 INFO  (HeadlessAnalyzer) REPORT: Processing input files:   
+2026-10-05 17:52:47 INFO  (HeadlessAnalyzer)      project: /tmp/jetrover-ghidra-v2/RosRobotControllerM4  
+2026-10-05 17:52:47 INFO  (HeadlessAnalyzer) IMPORTING: file:///home/sang/jetrover_ws/firmware_source/decompile/RosRobotControllerM4.hex  
+2026-10-05 17:52:47 INFO  (ProgramLoader) Using Loader: Intel Hex  
+2026-10-05 17:52:47 INFO  (ProgramLoader) Using Language/Compiler: ARM:LE:32:Cortex:default  
+2026-10-05 17:52:47 INFO  (ProgramLoader) Using Library Search Path: [., /bin, /lib, /lib64, /lib/x86_64-linux-gnu, /lib/aarch64-linux-gnu, /usr/bin, /usr/lib, /usr/X11R6/bin, /usr/X11R6/lib, /home/sang/jetrover_ws/install/orbbec_camera/lib, /home/sang/jetrover_ws/install/orbbec_camera_msgs/lib, /opt/ros/jazzy/opt/gz_sim_vendor/lib, /opt/ros/jazzy/opt/gz_sensors_vendor/lib, /opt/ros/jazzy/opt/gz_physics_vendor/lib, /opt/ros/jazzy/opt/sdformat_vendor/lib, /opt/ros/jazzy/opt/rviz_ogre_vendor/lib, /opt/ros/jazzy/lib/aarch64-linux-gnu, /opt/ros/jazzy/opt/gz_gui_vendor/lib, /opt/ros/jazzy/opt/gz_transport_vendor/lib, /opt/ros/jazzy/opt/gz_rendering_vendor/lib, /opt/ros/jazzy/opt/gz_plugin_vendor/lib, /opt/ros/jazzy/opt/gz_fuel_tools_vendor/lib, /opt/ros/jazzy/opt/gz_msgs_vendor/lib, /opt/ros/jazzy/opt/gz_common_vendor/lib, /opt/ros/jazzy/opt/gz_math_vendor/lib, /opt/ros/jazzy/opt/gz_utils_vendor/lib, /opt/ros/jazzy/opt/gz_tools_vendor/lib, /opt/ros/jazzy/opt/gz_ogre_next_vendor/lib, /opt/ros/jazzy/opt/gz_dartsim_vendor/lib, /opt/ros/jazzy/opt/gz_cmake_vendor/lib, /opt/ros/jazzy/lib, /usr/java/packages/lib, /usr/lib/aarch64-linux-gnu/jni, /usr/lib/aarch64-linux-gnu, /usr/lib/jni]  
+2026-10-05 17:52:48 INFO  (HeadlessAnalyzer) IMPORTING: Loaded 0 additional files  
+2026-10-05 17:52:49 INFO  (HeadlessAnalyzer) REPORT: Execute script: SeedVectors.java   
+2026-10-05 17:52:53 INFO  (HeadlessAnalyzer) SCRIPT: /home/sang/jetrover_ws/firmware_source/decompile/SeedVectors.java  
+2026-10-05 17:52:55 INFO  (GhidraScript) SeedVectors.java> Seeded 31 unique vector functions  
+2026-10-05 17:52:55 INFO  (HeadlessAnalyzer) ANALYZING all memory and code: file:///home/sang/jetrover_ws/firmware_source/decompile/RosRobotControllerM4.hex  
+2026-10-05 17:53:17 DEBUG (FidAnalyzer) No FID Libraries apply for language ARM:LE:32:Cortex  
+2026-10-05 17:53:17 INFO  (PackedDatabaseCache) Packed database cache: /var/tmp/sang-ghidra/packed-db-cache  
+2026-10-05 17:53:17 DEBUG (PackedDatabaseCache) Using cached packed database: /tmp/ghidra-release/ghidra_12.1.4_PUBLIC/Ghidra/Features/Base/data/typeinfo/generic/generic_clib.gdt  
+2026-10-05 17:53:19 INFO  (ApplyDataArchiveAnalyzer) Applied data type archive: generic_clib  
+2026-10-05 17:53:24 INFO  (AutoAnalysisManager) -----------------------------------------------------
+    ARM Constant Reference Analyzer            5.630 secs
+    ARM Symbol                                 0.006 secs
+    ASCII Strings                              0.869 secs
+    Apply Data Archives                        1.686 secs
+    Call Convention ID                         0.025 secs
+    Call-Fixup Installer                       0.022 secs
+    Create Address Tables                      0.054 secs
+    Create Address Tables - One Time           0.063 secs
+    Create Function                            0.664 secs
+    Data Reference                             0.010 secs
+    Decompiler Switch Analysis                12.565 secs
+    Demangler GNU                              0.104 secs
+    Disassemble                                2.023 secs
+    Disassemble Entry Points                   0.022 secs
+    Disassemble Entry Points - One Time        0.000 secs
+    Embedded Media                             0.019 secs
+    External Entry References                  0.000 secs
+    Function ID                                0.088 secs
+    Function Start Pre Search                  0.040 secs
+    Function Start Search                      0.290 secs
+    Function Start Search After Code           0.240 secs
+    Function Start Search After Data           0.006 secs
+    Function Start Search delayed - One Time   0.012 secs
+    Non-Returning Functions - Discovered       0.172 secs
+    Reference                                  0.398 secs
+    Shared Return Calls                        0.147 secs
+    Stack                                      3.106 secs
+    Subroutine References                      0.567 secs
+    Subroutine References - One Time           0.001 secs
+-----------------------------------------------------
+     Total Time   28 secs
+-----------------------------------------------------
+  
+2026-10-05 17:53:24 INFO  (HeadlessAnalyzer) REPORT: Analysis succeeded for file: file:///home/sang/jetrover_ws/firmware_source/decompile/RosRobotControllerM4.hex  
+2026-10-05 17:53:24 INFO  (HeadlessAnalyzer) REPORT: Execute script: ExportDecomp.java '/home/sang/jetrover_ws/firmware_source/decompile'   
+2026-10-05 17:53:24 INFO  (HeadlessAnalyzer) SCRIPT: /home/sang/jetrover_ws/firmware_source/decompile/ExportDecomp.java  
+2026-10-05 17:53:38 INFO  (GhidraScript) ExportDecomp.java> Exported 493 functions; 0 failed  
+2026-10-05 17:53:38 INFO  (HeadlessAnalyzer) ANALYZING changes made by post scripts: file:///home/sang/jetrover_ws/firmware_source/decompile/RosRobotControllerM4.hex  
+2026-10-05 17:53:38 INFO  (HeadlessAnalyzer) REPORT: Post-analysis succeeded for file: file:///home/sang/jetrover_ws/firmware_source/decompile/RosRobotControllerM4.hex  
+2026-10-05 17:53:39 INFO  (LocalFileSystem) /RosRobotControllerM4.hex: file created (sang)  
+2026-10-05 17:53:39 INFO  (HeadlessAnalyzer) REPORT: Save succeeded for: /RosRobotControllerM4.hex (RosRobotControllerM4:/RosRobotControllerM4.hex)  
+2026-10-05 17:53:39 INFO  (HeadlessAnalyzer) REPORT: Import succeeded  

@@ -68,7 +68,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
   전체 기획(배경/아키텍처/시나리오/KPI/산출물)은 `prd/jetinspect-m.md`, 파이프라인별 기술 스펙(음성/Nav/Perception/
   Manipulation 등 22개, 전부 "계획" 신뢰수준)은 `prd/jetinspect-m-pipelines.md`.
 - 목표: 자율주행(SLAM/Nav2) → 인식 → 로봇팔 조작 → 미션 BT → 웹 관제/LLM/음성까지의 전체 통합. 전체 계획과 진행 상황은 `checklist/PROJECT_CHECKLIST.md`.
-- 사용자와는 **한국어**로 대화한다. 코드, 주석, 커밋 메시지는 기존 파일의 스타일(영어 주석)을 따른다.
+- 사용자와는 **한국어**로 대화한다. 코드 주석은 기존 파일의 영어 주석을 유지하고 **한글 주석을 함께** 단다(영어를 지우고 한글로 바꾸지 않는다; `mySkills/skills/coding`의 규칙). 커밋 메시지는 기존 스타일을 따른다.
 
 ```
 [계획] React / HMI / Voice → FastAPI → Mission Manager (BehaviorTree.CPP)
@@ -94,9 +94,10 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `checklist/` | 전체 체크리스트와 진행률 (3-File System의 Task 파일 역할도 겸함) |
 | `troubleshooting/` | 오류 원인과 해결 기록 |
 | `prd/` | 새 기능 착수 전 PRD (3-File System 1번째 파일). 언제/어떻게 쓰는지는 `prd/README.md`. `jetinspect-m.md`(+`-pipelines.md`)가 프로젝트 전체 기획서 |
-| `firmware/rrc_m4/` | STM32 자체 펌웨어 재작성 프로젝트(계획: `~/.claude/plans/enchanted-chasing-sky.md`). 지금은 `lib/protocol/`(FUNC 0~9 코덱, 호스트+타겟 빌드/테스트됨)만 있음 |
+| `firmware/rrc_m4/` | STM32 자체 펌웨어 재작성 프로젝트(계획: `~/.claude/plans/enchanted-chasing-sky.md`). `lib/{protocol,core,comm}`(호스트 단위 시험) + `app/`(HAL+FreeRTOS, RRC/micro-ROS 두 빌드). **flash 전**, 개요는 `firmware/rrc_m4/README.md` |
+| `src/jetrover_microros/` | micro-ROS 펌웨어용 호스트 패키지(브리지 노드 + agent launch). `jetrover_base`와 같은 시리얼 포트를 쓰므로 동시에 못 띄움 |
 | `tools/` | 시험/진단 스크립트: `parse_stm32.py`, `sniff_stm32.py`, `imu_calibration/`, `stm32_diagnostics/`(NOTES.md에 hang 조사 전체 기록) |
-| `firmware_source/` | Hiwonder 자료(펌웨어 `.hex` ZIP, 프로토콜 PDF, 실제 칩에서 덤프한 백업 `.bin`). 소스는 없음. `BOARD_CONNECTORS.md`에 커넥터/센서/액추에이터 대응표(확정/추정 구분) |
+| `firmware_source/` | Hiwonder 자료(펌웨어 `.hex` ZIP, 프로토콜 PDF, 실제 칩에서 덤프한 백업 `.bin`). 소스는 없음. `BOARD_CONNECTORS.md`에 커넥터/센서/액추에이터 대응표, `PINMAP.md`에 MCU 핀 대응(확정/추정 구분), `decompile/`에 Ghidra 결과 |
 
 새 기능을 `jetrover_base`에 무분별하게 넣지 않는다. 기능 영역이 다르면 별도 ROS2 패키지를 만든다
 (예: LiDAR/Nav2 → `jetrover_navigation`, YOLO/Depth → `jetrover_perception`, MoveIt → `jetrover_manipulation`,

@@ -72,6 +72,19 @@
 - [ ] (ST-Link 도착 후) SWD로 정품 펌웨어 관찰하며 핀맵 확정
 - [ ] 신규 펌웨어 단계별 브링업 (LED→UART→프로토콜/IWDG 재설계→IMU→배터리→**모터**→부저/LED→버튼→SBUS→PWM서보→버스서보→OLED/블루투스/게임패드 USB Host)
 
+
+#### RRC 완성 + micro-ROS 적용 (2026-10-05 착수, PRD `prd/rrc-microros-firmware.md`, 시험 계획 `prd/rrc-microros-firmware-test-plan.md`)
+Hiwonder 공식 문서 저장소 + 사용자가 준 디컴파일 팩을 근거로 코드/빌드까지 진행. **flash와 모터 시험은 하지 않았다(별도 승인).** 아래 `[~]`는 L0(빌드·호스트 시험)까지.
+- [x] 핀맵 확정/추정 구분 — `firmware_source/PINMAP.md` (모터 PWM 8핀=TIM1/9/10/11, 호스트=USART3 PD8/9, IMU 소프트 I2C PB10/11, 배터리 ADC PB0+Vrefint 등. 재구성 패키지의 "TIM8" 오기 정정, 부저 PA4/PA8 문서 충돌은 바이너리 기준 PA8 채택). 추출 도구 `tools/firmware_re/extract_gpio.py`
+- [~] core 라이브러리 `lib/core` (PID, 엔코더 모터+runaway 래치, 메카넘, robot_ctrl 안전, IMU 자동판별, 버스·PWM 서보, SBUS, 게임패드, 버튼, 부저·LED, 배터리, local_drive) — 호스트 단위 시험 통과
+- [~] 프로토콜 미구현분 — 모터 서브커맨드 0x00/0x02/0x03, PWM 서보 deviation 0x07, 버스 서보 부가 서브커맨드 전부(0x07/09/0B/0C/10/12/20/22/24/30/32/34/36/38/3A), 확장 FUNC 0x20~0x23(상태/엔코더 피드백/진단/원시 HID)
+- [~] RRC 어댑터 `lib/comm` — PDF 예제 프레임 골든 시험, 쓰레기/플러드/바이트 단위 입력 복구 시험
+- [~] ARM 펌웨어 `app/` (HAL + FreeRTOS 정적 태스크, USB 호스트 게임패드, LCD 상태 화면, 블루투스, 버스 서보 자동 극성 탐색, 감시 태스크 IWDG) — **RRC 모드 빌드 성공**(flash 56 KB, RAM 50 KB, 경고 0), flash 안 함
+- [~] 벤더에 없던 안전기능: MCU 자체 명령 timeout, e-stop 래치, 저전압 차단, task-health watchdog (위 "MCU 자체 motor command timeout / task-health watchdog" 항목의 구현본, 실기 검증 전)
+- [~] 엔코더 피드백(FUNC 0x21 / `/rrc/wheel_rps`) — 위 3번 "wheel RPS feedback 추가" 항목의 펌웨어측 구현. 호스트가 이걸 읽는 쪽은 `jetrover_microros`의 `rrc_bridge`(micro-ROS 경로)만 있음, `jetrover_base`는 아직 FUNC 0x21을 안 읽음
+- [~] micro-ROS: `micro_ros/build_microros_lib.sh`(Jetson 네이티브 빌드, docker 불가), 펌웨어 노드 `app/src/comm_microros.c`, 호스트 패키지 `src/jetrover_microros`(브리지+launch). 상태는 `firmware/rrc_m4/micro_ros/README.md`
+- [ ] 브링업(별도 승인): L2 IMU/배터리/통신만(MOTOR_ENABLE=0) → 바퀴 띄운 모터 극성/엔코더 부호 확인 → PID 튜닝 → 바닥 주행. 확인할 "추정" 목록은 `firmware/rrc_m4/README.md`
+
 ## 2. IMU
 - [x] 0x07 packet decoding
 - [x] sensor_msgs/msg/Imu, `/imu/data_raw` (약 111 Hz)

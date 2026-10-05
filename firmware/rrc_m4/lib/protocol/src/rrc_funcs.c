@@ -67,6 +67,37 @@ int rrc_unpack_motor(const uint8_t *data, uint8_t len, rrc_motor_cmd_t *out) {
     return 1;
 }
 
+int rrc_unpack_motor_ex(const uint8_t *data, uint8_t len, rrc_motor_cmd_ex_t *out) {
+    if (len < 2) return 0;
+    memset(out, 0, sizeof(*out));
+    out->subcommand = data[0];
+    switch (data[0]) {
+    case RRC_MOTOR_SUB_SET_SINGLE:
+        if (len != 6) return 0;
+        out->count = 1;
+        out->speeds[0].id = data[1];
+        out->speeds[0].rps = rd_f32le(&data[2]);
+        return 1;
+    case RRC_MOTOR_SUB_SET_MULTI: {
+        rrc_motor_cmd_t m;
+        if (!rrc_unpack_motor(data, len, &m)) return 0;
+        out->count = m.count;
+        for (uint8_t i = 0; i < m.count; i++) out->speeds[i] = m.speeds[i];
+        return 1;
+    }
+    case RRC_MOTOR_SUB_STOP_ONE:
+        if (len != 2) return 0;
+        out->stop_id = data[1];
+        return 1;
+    case RRC_MOTOR_SUB_STOP_MASK:
+        if (len != 2) return 0;
+        out->stop_mask = data[1];
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 /* ---- FUNC 0x04 ---- */
 int rrc_unpack_pwm_servo_move_multi(const uint8_t *data, uint8_t len, rrc_pwm_servo_move_multi_t *out) {
     if (len < 4) return 0;
@@ -99,6 +130,14 @@ int rrc_unpack_pwm_servo_read_request(const uint8_t *data, uint8_t len, uint8_t 
     if (data[0] != RRC_SERVO_SUB_READ_POSITION && data[0] != RRC_SERVO_SUB_READ_DEVIATION) return 0;
     *subcommand = data[0];
     *servo_id = data[1];
+    return 1;
+}
+
+int rrc_unpack_pwm_servo_set_deviation(const uint8_t *data, uint8_t len, uint8_t *servo_id, int8_t *deviation) {
+    if (len != 3) return 0;
+    if (data[0] != RRC_SERVO_SUB_SET_DEVIATION) return 0;
+    *servo_id = data[1];
+    *deviation = (int8_t)data[2];
     return 1;
 }
 

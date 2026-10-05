@@ -59,3 +59,14 @@ rosbag2_*/
 *.env
 *.pem
 *.key
+
+# firmware build outputs and downloaded toolchains/workspaces (regenerable)
+/firmware/rrc_m4/build/
+/firmware/rrc_m4/build-arm/
+/firmware/rrc_m4/build-arm-uros/
+/firmware/rrc_m4/micro_ros/firmware/
+/firmware/rrc_m4/micro_ros/setup_ws/
+/firmware/rrc_m4/micro_ros/setup_src/
+/firmware/rrc_m4/micro_ros/*.log
+/uros_agent_ws/
+__pycache__/

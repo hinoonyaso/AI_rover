@@ -1,0 +1,16 @@
+# 한글: 브리지 설정: 형상, 프레임, 자이로 bias, 배터리 경고 전압, 휠 트위스트 공분산.
+rrc_bridge:
+  ros__parameters:
+    # Same geometry and gyro bias as jetrover_base/config/base.yaml (the micro-ROS firmware publishes the
+    # IMU in the base_link axes but without bias correction, and wheel speeds as rev/s).
+    wheelbase: 0.216
+    track_width: 0.195
+    wheel_diameter: 0.097
+    imu_frame: imu_link
+    base_frame: base_footprint
+# 한글: 자이로 bias는 jetrover_base/config/base.yaml과 같은 값(변환된 축 기준, rad/s).
+    gyro_bias: [0.197, 0.168, -0.017]
+    low_battery_volts: 10.0
+    # Wheel-derived twist covariance (diagonal vx, vy, wz). Encoder based, so tighter than the open-loop
+    # command integral jetrover_base published (0.05) -- UNVERIFIED until compared with a floor test.
+    wheel_twist_cov: [0.02, 0.02, 0.05]

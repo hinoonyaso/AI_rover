@@ -50,3 +50,5 @@
 | 021 | [Nav2 자율주행 중 의자 다리와 충돌 — 2D LiDAR 사각지대로 추정](021-nav2-collision-with-chair-leg.md) | 우회 (근본 원인 미해결, 의자 피하는 경로로 재시도해서 성공) |
 | 022 | [Nav2 후진 중 로봇 뒤쪽 완전 사각지대에서 물체를 밀고 지나감](022-nav2-rear-blind-spot-backup-collision.md) | 해결 (DWB min_vel_x=0으로 후진 차단 + BT에서 BackUp recovery 노드 제거) |
 | 023 | [self-filter가 로봇 앞 35cm 물체를 "자기 자신"으로 오인해서 지워버림](023-depth-self-filter-ate-real-obstacle.md) | 해결 (풋프린트 사각형 방식 → 기준 depth 이미지와의 차이 비교 방식으로 교체) |
+| 024 | [micro-ROS 라이브러리 빌드가 sudo 없는 환경에서 rosdep/libstdc++ 헤더 때문에 막힘](024-microros-build-env-no-sudo.md) | 해결 (rosdep install no-op shim + libstdc++ 헤더를 사용자 로컬 툴체인에 추가) |
+| 025 | [디컴파일 재구성 패키지의 TIM8/핀 이름 오류, 부저 핀 문서 충돌](025-stm32-gpio-decompile-name-map-errors.md) | 해결 (TIM9로 정정, PA8 채택, PINMAP.md에 정리) |

@@ -141,3 +141,17 @@ export FASTRTPS_DEFAULT_PROFILES_FILE=/home/sang/jetrover_ws/setup/fastdds_wifi_
   호스트 설정은 이 저장소 밖(호스트 머신)에 있음, troubleshooting/018 참고.
 - 확인: `echo $FASTRTPS_DEFAULT_PROFILES_FILE`로 경로가 뜨면 정상. 로봇 스택(`robot.launch.py`,
   `nav2.launch.py`)은 이 환경변수가 걸린 셸에서 다시 켜야 적용된다.
+
+### 10. micro-ROS 펌웨어 빌드 환경 (sudo 없이, 2026-10-05)
+STM32 펌웨어(`firmware/rrc_m4`)의 micro-ROS 정적 라이브러리를 Jetson에서 네이티브로 빌드하기 위한 환경. docker는 권한이 없어서(`permission denied ... docker.sock`) 쓰지 않았다.
+- **C++ 표준 헤더 추가**: Jazzy의 `rosidl_typesupport_c`가 `.cpp` 파일을 생성하는데 기존 `~/.local/opt/stm32` 툴체인(`.deb`를 `dpkg -x`로 풀어 놓은 것)에는 libstdc++ 헤더가 없었다(`cstddef: No such file`).
+  ```bash
+  cd ~/.local/opt/stm32/debs
+  apt-get download libstdc++-arm-none-eabi-dev libstdc++-arm-none-eabi-newlib   # sudo 불필요, 약 465 MB
+  dpkg -x libstdc++-arm-none-eabi-dev_*.deb ../root
+  dpkg -x libstdc++-arm-none-eabi-newlib_*.deb ../root   # (lib만 필요: 헤더는 -dev에 있음)
+  ```
+  `tool-wrapper`는 수정하지 않았고, `firmware/rrc_m4/micro_ros/toolchain.cmake`가 `-isystem .../newlib/c++/13.2.1`을 직접 준다.
+- **rosdep 단계 건너뜀**: `micro_ros_setup`의 `create_firmware_ws.sh`가 `rosdep install -y`로 lint/test 도구(`python3-mypy`, `clang-tidy` 등)를 sudo apt로 깔려고 한다. 빌드에 필요 없는 것들이라 `micro_ros/shim/rosdep`(install만 no-op)을 PATH 앞에 둔다.
+- 빌드: `firmware/rrc_m4/micro_ros/build_microros_lib.sh` (2 job, 약 수십 분, 저장소 40여 개 clone). 산출물 `micro_ros/firmware/build/libmicroros.a` + `include/`.
+- micro-ROS agent(Jetson 쪽)는 `micro_ros_agent` 소스 빌드가 별도로 필요 — `firmware/rrc_m4/micro_ros/README.md`.

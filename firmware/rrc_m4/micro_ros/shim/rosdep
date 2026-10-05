@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# 한글: sudo가 없어 `rosdep install`만 건너뛰고 나머지는 원래 rosdep으로 넘기는 래퍼.
+# `rosdep install` would apt-install lint/test tools (mypy, clang-tidy...) with sudo, which this setup
+# does not have and the cross build does not need. Everything else is passed through.
+if [ "$1" = "install" ]; then
+    echo "[shim] rosdep install skipped (no sudo; only test/lint deps are missing)" >&2
+    exit 0
+fi
+exec /usr/bin/rosdep "$@"

@@ -1,6 +1,7 @@
 add_library(rrc_protocol STATIC
     src/rrc_protocol.c
     src/rrc_funcs.c
+    src/rrc_ext.c
 )
 target_include_directories(rrc_protocol PUBLIC include)
 target_compile_options(rrc_protocol PRIVATE -Wall -Wextra)
