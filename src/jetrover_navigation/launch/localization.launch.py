@@ -2,8 +2,10 @@
 instead of running SLAM live. Needs `jetrover_bringup robot.launch.py`
 (base + EKF + LiDAR) already running for /scan and odom -> base_footprint TF.
 
-Default map is the one saved in maps/lap1_20260922.yaml (single lap, small
-room, 2026-09-22). Override with `map:=/path/to/other.yaml` for a new one.
+Default map is maps/lap2_20261005.yaml (re-mapped 2026-10-05 after the original
+lap1_20260922 map kept blocking Nav2 near an actual chair the planner's
+footprint+inflation couldn't clear in that tight spot -- see checklist 8).
+Override with `map:=/path/to/other.yaml` for a new one.
 """
 import os
 
@@ -15,7 +17,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    default_map = os.path.expanduser('~/jetrover_ws/maps/lap1_20260922.yaml')
+    default_map = os.path.expanduser('~/jetrover_ws/maps/lap2_20261005.yaml')
     amcl_params = os.path.join(
         get_package_share_directory('jetrover_navigation'), 'config', 'amcl.yaml')
 

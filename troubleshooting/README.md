@@ -46,3 +46,4 @@
 | 017 | [Nav2 첫 통합 launch: 설정 오류 3개 + 재시도 중 좀비 프로세스 누적](017-nav2-bringup-hidden-nodes-zombies.md) | 해결 (플러그인 이름/누락 설정 수정, `ros2 node list`로 좀비 정리) |
 | 018 | [호스트 RViz의 Nav2 Goal/2D Pose Estimate가 Jetson에 전혀 안 닿음](018-host-rviz-nav2-goal-not-reaching-jetson.md) | 해결 (Jetson+호스트 양쪽 다중 NIC로 인한 Fast-DDS 디스커버리 비대칭 + "Nav2 Goal" 툴이 Navigation 2 패널 없이는 아무것도 안 쏘는 설계) |
 | 019 | [RGB-D 카메라가 Nav2 풀스택과 같이 돌 때 IR+PointCloud 켜면 조용히 멈춤](019-camera-hang-ir-pointcloud-with-full-stack.md) | 해결(우회) (재부팅까지 해도 안 풀렸는데 `enable_ir`/`enable_point_cloud`를 끄니 바로 해결 — USB가 아니라 자원 경합으로 추정) |
+| 020 | [Nav2 반복 주행이 매번 같은 지점에서 "Start occupied"로 막힘 — 실제론 의자, inflation_radius도 안전 최소값 미만이었음](020-nav2-remap-chair-and-inflation-radius.md) | 해결 (의자 반영된 새 지도로 재매핑 + inflation_radius를 Nav2가 요구하는 안전 최소값(inscribed radius) 이상인 0.2로 조정) |

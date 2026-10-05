@@ -41,7 +41,12 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.3
+        # 0.3 -> 0.2 (2026-10-05): footprint(~0.16-0.18m) + 0.3m inflation made the planner
+        # refuse "Start occupied" when the robot was simply near (not blocked by) an obstacle
+        # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
+        # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
+        # inscribed_radius. 0.2 clears that minimum with a little margin.
+        inflation_radius: 0.2
 
 # 8.3: SmacPlanner2D -- 순수 격자 A*라 회전반경 제약이 없다. Mecanum(holonomic)엔 적합, Ackermann류
 # 전용 파라미터(minimum_turning_radius 등)는 Hybrid 변형 얘기라 여기선 불필요.
@@ -265,4 +270,9 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.3
+        # 0.3 -> 0.2 (2026-10-05): footprint(~0.16-0.18m) + 0.3m inflation made the planner
+        # refuse "Start occupied" when the robot was simply near (not blocked by) an obstacle
+        # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
+        # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
+        # inscribed_radius. 0.2 clears that minimum with a little margin.
+        inflation_radius: 0.2

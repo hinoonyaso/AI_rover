@@ -19,7 +19,7 @@ def generate_launch_description():
     nav_share = get_package_share_directory('jetrover_navigation')
     bringup_share = get_package_share_directory('nav2_bringup')
 
-    default_map = os.path.expanduser('~/jetrover_ws/maps/lap1_20260922.yaml')
+    default_map = os.path.expanduser('~/jetrover_ws/maps/lap2_20261005.yaml')
     map_arg = DeclareLaunchArgument('map', default_value=default_map)
 
     localization = IncludeLaunchDescription(
