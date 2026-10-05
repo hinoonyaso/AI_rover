@@ -21,14 +21,24 @@ class DepthColorizer(Node):
         super().__init__('depth_colorizer')
         self.declare_parameter('min_range_mm', 200)
         self.declare_parameter('max_range_mm', 3000)
+        # Processing every frame (30Hz) measurably competed with the camera
+        # driver's own CPU use and slowed RGB down (troubleshooting/019's
+        # resource-contention issue again, this time self-inflicted). A
+        # live-view doesn't need more than this.
+        self.declare_parameter('process_every_nth', 3)
         self.min_range = self.get_parameter('min_range_mm').value
         self.max_range = self.get_parameter('max_range_mm').value
+        self.every_nth = self.get_parameter('process_every_nth').value
+        self._count = 0
 
         self.bridge = CvBridge()
         self.pub = self.create_publisher(Image, 'depth/image_colorized', 10)
         self.create_subscription(Image, 'depth/image_raw', self._cb, 10)
 
     def _cb(self, msg):
+        self._count += 1
+        if self._count % self.every_nth != 0:
+            return
         depth = self.bridge.imgmsg_to_cv2(msg, desired_encoding='16UC1')
         clamped = np.clip(depth, self.min_range, self.max_range).astype(np.float32)
         normalized = (clamped - self.min_range) / (self.max_range - self.min_range)
