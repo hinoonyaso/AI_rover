@@ -89,6 +89,30 @@ std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id)
   return build_packet(kRrcFuncBusServo, {kRrcBusServoSubReadPosition, servo_id});
 }
 
+std::vector<uint8_t> build_bus_servo_set_position(
+  double duration_s, const std::vector<BusServoTarget> & targets)
+{
+  const double clamped_s = std::min(std::max(duration_s, 0.0), 65.0);
+  const uint16_t duration_ms = static_cast<uint16_t>(clamped_s * 1000.0);
+  std::vector<uint8_t> payload;
+  payload.push_back(kRrcBusServoSubSetPosition);
+  payload.push_back(static_cast<uint8_t>(duration_ms & 0xFF));
+  payload.push_back(static_cast<uint8_t>(duration_ms >> 8));
+  payload.push_back(static_cast<uint8_t>(targets.size()));
+  for (const auto & t : targets) {
+    payload.push_back(t.id);
+    payload.push_back(static_cast<uint8_t>(t.pulse & 0xFF));
+    payload.push_back(static_cast<uint8_t>(t.pulse >> 8));
+  }
+  return build_packet(kRrcFuncBusServo, payload);
+}
+
+std::vector<uint8_t> build_bus_servo_torque(uint8_t servo_id, bool enable)
+{
+  return build_packet(
+    kRrcFuncBusServo, {enable ? kRrcBusServoSubTorqueOn : kRrcBusServoSubTorqueOff, servo_id});
+}
+
 bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out)
 {
   if (packet.function != kRrcFuncBusServo || packet.payload.size() != 5 ||

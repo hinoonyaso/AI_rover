@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <deque>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -14,6 +16,7 @@
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "jetrover_base/crash_guard.hpp"
@@ -130,6 +133,35 @@ public:
         joint_state_timer_ = create_wall_timer(
           std::chrono::duration<double>(1.0 / std::max(1.0, arm_poll_hz)),
           [this]() {publish_arm_joint_states();});
+
+        // Arm motion is off by default: the first software-driven arm move on this robot
+        // (checklist 14). Every guard below exists so a bad command can't slam a joint.
+        arm_command_enabled_ = declare_parameter<bool>("arm_command_enabled", false);
+        arm_move_duration_s_ = declare_parameter<double>("arm_move_duration_s", 2.0);
+        arm_max_step_rad_ = declare_parameter<double>("arm_max_step_rad", 0.35);
+        arm_pulse_min_ = declare_parameter<int64_t>("arm_pulse_min", 100);
+        arm_pulse_max_ = declare_parameter<int64_t>("arm_pulse_max", 900);
+        arm_move_home_on_start_ = declare_parameter<bool>("arm_move_home_on_start", false);
+        arm_home_pose_rad_ = declare_parameter<std::vector<double>>(
+          "arm_home_pose_rad", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+        if (arm_home_pose_rad_.size() != arm_joint_names_.size()) {
+          RCLCPP_ERROR(get_logger(), "arm_home_pose_rad length mismatch; home move disabled");
+          arm_move_home_on_start_ = false;
+        }
+        if (arm_command_enabled_ && arm_move_home_on_start_) {
+          arm_home_timer_ = create_wall_timer(2500ms, [this]() {arm_home_tick();});
+          RCLCPP_WARN(get_logger(), "Arm will ramp to home pose after startup");
+        }
+        if (arm_command_enabled_) {
+          arm_cmd_sub_ = create_subscription<sensor_msgs::msg::JointState>(
+            "arm/command", 1,
+            [this](sensor_msgs::msg::JointState::ConstSharedPtr msg) {on_arm_command(*msg);});
+          arm_tx_timer_ = create_wall_timer(150ms, [this]() {pump_arm_tx_queue();});
+          arm_torque_sub_ = create_subscription<std_msgs::msg::Bool>(
+            "arm/torque", 1,
+            [this](std_msgs::msg::Bool::ConstSharedPtr msg) {set_arm_torque(msg->data);});
+          RCLCPP_WARN(get_logger(), "Arm command input ENABLED on arm/command, arm/torque");
+        }
       }
     }
   }
@@ -354,6 +386,156 @@ private:
     }
   }
 
+  // Torque on = servo holds position (stiff), off = limp. Applied to every configured arm servo.
+  // Verified on hardware (2026-10-05): a loaded servo drives toward its OLD stored target
+  // instead of holding where it is, so loading must be followed by a move-to-current-position
+  // that overwrites that target. Frames go through a queue (one per arm_tx_period) because
+  // back-to-back bus servo frames are dropped, and so this never blocks the cmd_vel watchdog.
+  void set_arm_torque(bool enable)
+  {
+    for (const auto id : arm_servo_ids_) {
+      const uint8_t servo_id = static_cast<uint8_t>(id);
+      arm_tx_queue_.push_back(
+        [servo_id, enable]() {return build_bus_servo_torque(servo_id, enable);});
+    }
+    if (enable) {
+      arm_tx_queue_.push_back(
+        [this]() {
+          std::vector<BusServoTarget> hold;
+          for (const auto id : arm_servo_ids_) {
+            const auto it = arm_servo_ticks_.find(static_cast<uint8_t>(id));
+            if (it != arm_servo_ticks_.end()) {
+              hold.push_back({static_cast<uint8_t>(id), static_cast<uint16_t>(it->second)});
+            }
+          }
+          RCLCPP_WARN(get_logger(), "arm hold: pinned %zu servos at current position", hold.size());
+          return build_bus_servo_set_position(1.0, hold);
+        });
+    }
+    RCLCPP_WARN(get_logger(), "arm torque %s queued", enable ? "ON(+hold)" : "OFF");
+  }
+
+  // Startup ramp to the home pose: wait for every servo reading, load + hold, then walk each
+  // joint toward its home angle in steps of at most arm_home_step_rad every 2.5 s. Starting
+  // pose is whatever the (limp) arm sagged to, so keep the area around the arm clear.
+  void arm_home_tick()
+  {
+    if (arm_home_state_ == 0) {
+      for (const auto id : arm_servo_ids_) {
+        if (arm_servo_ticks_.find(static_cast<uint8_t>(id)) == arm_servo_ticks_.end()) {
+          return;
+        }
+      }
+      set_arm_torque(true);
+      arm_home_state_ = 1;
+      return;
+    }
+    if (arm_home_state_ == 1) {
+      if (arm_tx_queue_.empty()) {
+        arm_home_state_ = 2;
+      }
+      return;
+    }
+    std::vector<BusServoTarget> step;
+    bool done = true;
+    for (std::size_t i = 0; i < arm_joint_names_.size(); ++i) {
+      const uint8_t id = static_cast<uint8_t>(arm_servo_ids_[i]);
+      const double cur = arm_ticks_to_rad(i, static_cast<double>(arm_servo_ticks_[id]));
+      const double delta = arm_home_pose_rad_[i] - cur;
+      if (std::abs(delta) > 0.03) {
+        done = false;
+      }
+      const double next = cur + std::min(std::max(delta, -arm_home_step_rad_), arm_home_step_rad_);
+      const double raw = std::round(arm_rad_to_ticks(i, next));
+      const int64_t pulse = std::min<int64_t>(
+        std::max<int64_t>(static_cast<int64_t>(raw), arm_pulse_min_), arm_pulse_max_);
+      step.push_back({id, static_cast<uint16_t>(pulse)});
+    }
+    if (done) {
+      arm_home_timer_->cancel();
+      RCLCPP_WARN(get_logger(), "arm reached home pose");
+      return;
+    }
+    const auto frame = build_bus_servo_set_position(arm_move_duration_s_, step);
+    if (!serial_.write(frame.data(), frame.size())) {
+      RCLCPP_ERROR(get_logger(), "arm home step write failed: %s", serial_.last_error().c_str());
+    }
+  }
+
+  void pump_arm_tx_queue()
+  {
+    if (arm_tx_queue_.empty() || !serial_.is_open()) {
+      return;
+    }
+    const auto frame = arm_tx_queue_.front()();
+    arm_tx_queue_.pop_front();
+    if (!serial_.write(frame.data(), frame.size())) {
+      RCLCPP_ERROR(get_logger(), "arm tx write failed: %s", serial_.last_error().c_str());
+    }
+  }
+
+  double arm_ticks_to_rad(std::size_t i, double ticks) const
+  {
+    return (ticks - arm_center_ticks_[i]) * arm_rad_per_tick_ * arm_joint_signs_[i] +
+           arm_joint_offsets_rad_[i];
+  }
+
+  double arm_rad_to_ticks(std::size_t i, double rad) const
+  {
+    return arm_center_ticks_[i] +
+           (rad - arm_joint_offsets_rad_[i]) / (arm_rad_per_tick_ * arm_joint_signs_[i]);
+  }
+
+  // sensor_msgs/JointState (name + position in rad) -> one bus servo move frame.
+  // The whole command is rejected (nothing sent) if any joint is unknown, has no
+  // position reading yet, or would jump more than arm_max_step_rad from where it is.
+  void on_arm_command(const sensor_msgs::msg::JointState & msg)
+  {
+    if (!serial_.is_open() || msg.name.size() != msg.position.size() || msg.name.empty()) {
+      RCLCPP_WARN(get_logger(), "arm/command ignored: serial closed or name/position mismatch");
+      return;
+    }
+    std::vector<BusServoTarget> targets;
+    for (std::size_t k = 0; k < msg.name.size(); ++k) {
+      const auto joint_it = std::find(
+        arm_joint_names_.begin(), arm_joint_names_.end(), msg.name[k]);
+      if (joint_it == arm_joint_names_.end()) {
+        RCLCPP_WARN(get_logger(), "arm/command rejected: unknown joint '%s'", msg.name[k].c_str());
+        return;
+      }
+      const std::size_t i = static_cast<std::size_t>(joint_it - arm_joint_names_.begin());
+      const uint8_t id = static_cast<uint8_t>(arm_servo_ids_[i]);
+      const auto cur = arm_servo_ticks_.find(id);
+      if (cur == arm_servo_ticks_.end()) {
+        RCLCPP_WARN(
+          get_logger(), "arm/command rejected: no position reading for '%s' yet",
+          msg.name[k].c_str());
+        return;
+      }
+      const double cur_rad = arm_ticks_to_rad(i, static_cast<double>(cur->second));
+      if (std::abs(msg.position[k] - cur_rad) > arm_max_step_rad_) {
+        RCLCPP_WARN(
+          get_logger(),
+          "arm/command rejected: '%s' step %.3f rad exceeds arm_max_step_rad %.3f "
+          "(current %.3f, target %.3f) -- send smaller steps",
+          msg.name[k].c_str(), std::abs(msg.position[k] - cur_rad), arm_max_step_rad_, cur_rad,
+          msg.position[k]);
+        return;
+      }
+      const double raw = std::round(arm_rad_to_ticks(i, msg.position[k]));
+      const int64_t pulse = std::min<int64_t>(
+        std::max<int64_t>(static_cast<int64_t>(raw), arm_pulse_min_), arm_pulse_max_);
+      targets.push_back({id, static_cast<uint16_t>(pulse)});
+      RCLCPP_INFO(
+        get_logger(), "arm move: %s id=%u %d -> %ld (%.3f rad)", msg.name[k].c_str(), id,
+        static_cast<int>(cur->second), static_cast<long>(pulse), msg.position[k]);
+    }
+    const auto frame = build_bus_servo_set_position(arm_move_duration_s_, targets);
+    if (!serial_.write(frame.data(), frame.size())) {
+      RCLCPP_ERROR(get_logger(), "arm move write failed: %s", serial_.last_error().c_str());
+    }
+  }
+
   // Publishes whatever servo ticks have been read so far (converted to radians).
   // Joints whose servo hasn't reported yet are simply left out of this message
   // (robot_state_publisher keeps their last/default value); mimic joints (gripper
@@ -503,6 +685,20 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::TimerBase::SharedPtr arm_poll_timer_;
   rclcpp::TimerBase::SharedPtr joint_state_timer_;
+  bool arm_command_enabled_{false};
+  double arm_move_duration_s_{2.0};
+  double arm_max_step_rad_{0.35};
+  int64_t arm_pulse_min_{100};
+  int64_t arm_pulse_max_{900};
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr arm_cmd_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr arm_torque_sub_;
+  rclcpp::TimerBase::SharedPtr arm_tx_timer_;
+  rclcpp::TimerBase::SharedPtr arm_home_timer_;
+  bool arm_move_home_on_start_{false};
+  std::vector<double> arm_home_pose_rad_;
+  double arm_home_step_rad_{0.3};
+  int arm_home_state_{0};
+  std::deque<std::function<std::vector<uint8_t>()>> arm_tx_queue_;
 };
 
 }  // namespace jetrover_base

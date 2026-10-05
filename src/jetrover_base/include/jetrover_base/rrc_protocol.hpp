@@ -17,6 +17,9 @@ constexpr uint8_t kRrcFuncBusServo = 0x05;
 constexpr uint8_t kRrcFuncImu = 0x07;
 constexpr std::size_t kRrcImuPayloadSize = 24;
 constexpr uint8_t kRrcBusServoSubReadPosition = 0x05;
+constexpr uint8_t kRrcBusServoSubSetPosition = 0x01;
+constexpr uint8_t kRrcBusServoSubTorqueOn = 0x0B;
+constexpr uint8_t kRrcBusServoSubTorqueOff = 0x0C;
 
 struct RrcPacket
 {
@@ -55,6 +58,22 @@ bool decode_imu(const RrcPacket & packet, ImuRaw & imu);
 
 // Build a bus servo read-position request: FUNC 0x05, DATA = 05, servo_id.
 std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id);
+
+struct BusServoTarget
+{
+  uint8_t id;
+  uint16_t pulse;  // 0..1000 <-> 0..240 deg
+};
+
+// Build a bus servo move frame: FUNC 0x05, DATA = 01, duration_ms u16 LE, N,
+// N x (id u8, pulse u16 LE). Layout taken from Hiwonder's ros_robot_controller_cpp
+// (Board::bus_servo_set_position); not yet exercised on this robot.
+std::vector<uint8_t> build_bus_servo_set_position(
+  double duration_s, const std::vector<BusServoTarget> & targets);
+
+// Torque on/off for one bus servo: FUNC 0x05, DATA = 0B|0C, servo_id (Board::bus_servo_enable_torque).
+// With torque off the servo is limp (observed 2026-10-05: an unpowered-torque arm sags).
+std::vector<uint8_t> build_bus_servo_torque(uint8_t servo_id, bool enable);
 
 struct BusServoPosition
 {

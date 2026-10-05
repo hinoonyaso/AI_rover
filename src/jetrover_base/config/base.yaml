@@ -43,3 +43,21 @@ base_node:
     arm_servo_range_deg: 240.0
     arm_servo_ticks_range: 1000.0
     arm_poll_hz: 5.0
+
+    # --- Arm motion (2026-10-05, checklist 14): FIRST software-driven arm moves on this robot. ---
+    # OFF by default. Enable only while someone is watching the arm and can cut power:
+    #   ros2 run jetrover_base base_node --ros-args --params-file <this file> -p arm_command_enabled:=true
+    # Input: sensor_msgs/JointState on `arm/command` (name + position in rad, joint frame of
+    # joint_states). The whole command is rejected (nothing sent) if a joint is unknown, has no
+    # position reading yet, or would move more than arm_max_step_rad from its current angle.
+    arm_command_enabled: false
+    arm_move_duration_s: 2.0     # how long each commanded move takes (slow on purpose)
+    arm_max_step_rad: 0.35       # ~20 deg max jump per command; send several small steps instead
+    arm_pulse_min: 100           # servo pulse clamp (0..1000 = 0..240 deg), stays off the end stops
+    arm_pulse_max: 900
+    # Home pose = "driving pose": camera ~40 deg down, floor 0.5-1.5 m ahead in view, gripper
+    # closed, depth 89% valid (found 2026-10-05 by moving joint4 while watching the camera;
+    # joint1..5, r_joint in rad: -2.2, -33.6, 60.2, 83.0, 1.4, -1.0 deg).
+    # arm_move_home_on_start ramps there after startup in <=0.3 rad steps (needs arm_command_enabled).
+    arm_move_home_on_start: false
+    arm_home_pose_rad: [-0.038, -0.586, 1.051, 1.449, 0.024, -0.017]

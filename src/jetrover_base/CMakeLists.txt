@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_library(${PROJECT_NAME}_lib
   src/serial_port.cpp
@@ -24,7 +25,7 @@ target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_17)
 
 add_executable(base_node src/base_node.cpp)
 target_link_libraries(base_node ${PROJECT_NAME}_lib)
-ament_target_dependencies(base_node rclcpp geometry_msgs nav_msgs sensor_msgs)
+ament_target_dependencies(base_node rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs)
 
 install(TARGETS base_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
