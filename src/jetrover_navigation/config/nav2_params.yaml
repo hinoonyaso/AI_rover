@@ -89,7 +89,11 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: true
-      min_vel_x: -0.2
+      # 2026-10-05 troubleshooting/022: 후진 중 로봇 뒤쪽(LiDAR는 팔에 가려 160도 사각, depth_cloud는
+      # 전방 전용)이 통째로 센서 사각지대라서, recovery의 BackUp이나 DWB의 일반 후진 경로 선택 중에
+      # 사용자가 눈앞에서 물체를 미는 걸 목격함. 후방 센서가 생기기 전까지 후진을 완전히 차단한다
+      # (원래 값 -0.2).
+      min_vel_x: 0.0
       min_vel_y: -0.2
       max_vel_x: 0.2
       max_vel_y: 0.2
@@ -135,6 +139,12 @@ bt_navigator:
     robot_base_frame: base_footprint
     odom_topic: /odom
     transform_tolerance: 0.2
+    # 2026-10-05 troubleshooting/022: nav2_bt_navigator's default BT XMLs eagerly connect to a
+    # "backup" action server at load time, so removing the BackUp plugin below (behavior_server)
+    # without also removing <BackUp/> from the tree breaks bt_navigator startup. These are the
+    # stock default trees with only that one node deleted.
+    default_nav_to_pose_bt_xml: "/home/sang/jetrover_ws/install/jetrover_navigation/share/jetrover_navigation/config/behavior_trees/navigate_to_pose_no_backup.xml"
+    default_nav_through_poses_bt_xml: "/home/sang/jetrover_ws/install/jetrover_navigation/share/jetrover_navigation/config/behavior_trees/navigate_through_poses_no_backup.xml"
 
 # 8.6: Recovery. global_frame을 odom으로 쓰는 게 Nav2 기본 관례(로컬 복구 동작이라).
 behavior_server:
@@ -145,11 +155,13 @@ behavior_server:
     local_footprint_topic: local_costmap/published_footprint
     global_footprint_topic: global_costmap/published_footprint
     cycle_frequency: 10.0
-    behavior_plugins: ["spin", "backup", "wait"]
+    # 2026-10-05 troubleshooting/022: "backup" recovery(nav2_behaviors::BackUp)는 DWB의 min_vel_x와
+    # 무관하게 behavior_server가 직접 후진 cmd_vel을 내보낸다. 로봇 뒤쪽은 LiDAR(팔에 가려 160도 사각)와
+    # depth_cloud(전방 전용) 둘 다 안 보는 완전 사각지대라서, recovery 발동 시 눈앞의 물체를 그대로
+    # 밀고 지나가는 걸 실기로 확인함 -- 후방 센서가 생기기 전까지 제거한다 (원래: ["spin", "backup", "wait"]).
+    behavior_plugins: ["spin", "wait"]
     spin:
       plugin: "nav2_behaviors::Spin"
-    backup:
-      plugin: "nav2_behaviors::BackUp"
     wait:
       plugin: "nav2_behaviors::Wait"
     global_frame: odom

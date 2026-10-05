@@ -43,8 +43,14 @@ amcl:
 
     set_initial_pose: true
     initial_pose:
-      x: 0.0
-      y: 0.0
+      # Temporarily nudged 2026-10-05 for a one-off obstacle-avoidance test:
+      # (0,0,0) sits exactly on an occupied map cell (robot started mapping
+      # right next to a wall), which made planner_server reject every goal
+      # with "Start occupied". (0.15, -0.02) is the nearest free cell in the
+      # same spot, not a real re-measured position. Revert to (0,0,0) once
+      # this is no longer needed, or replace with an actual 2D Pose Estimate.
+      x: 0.15
+      y: -0.02
       z: 0.0
       yaw: 0.0
 

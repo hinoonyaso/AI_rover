@@ -175,7 +175,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [~] 8.9 목표 위치/yaw 오차 측정, 반복 시험(3회 이상): **3회 시도, 2회 성공 + 1회 실패(충돌 없음).** 의자 경로였던 Trial 2 첫 시도는 충돌(troubleshooting/021) → 피해서 재시도해 성공. 거리오차 Trial1 4.1cm(4.8%)/Trial2 4.3cm(3.8%) — 안정적으로 양호. yaw오차 Trial1 +5.3°(과대추정)/Trial2 -6.7°(과소추정) — 방향이 매번 달라서 고정 바이어스보다는 노이즈성으로 추정. Trial 3은 장애물 없이도 목표 15.6cm 앞에서 "Goal failed"(progress checker가 근거리 미세조정을 "정체"로 오판한 것으로 추정, `required_movement_radius: 0.3`이 너무 큼 — 추가 조사 필요). 의자/저상 장애물 근처 자율주행은 8.12 해결 전까지 보류
 - [ ] 8.10 성능 지표 기록: CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인
-- [x] **8.12(2026-10-05) 2D LiDAR가 못 보는 얇은 장애물(의자 다리 등) 대응** — troubleshooting/021.
+- [~] **8.12(2026-10-05) 2D LiDAR가 못 보는 얇은 장애물(의자 다리 등) 대응** — troubleshooting/021.
   팔을 카메라-전방 home pose로 두고(14번 참고) `sparse_point_cloud`가 `/depth_cam/depth/points_sparse`를
   local costmap의 두 번째 `observation_sources`(`depth_cloud`, PointCloud2, min/max_obstacle_height=-0.1/2.0,
   raytrace/obstacle_max_range=3.0)로 들어가도록 `nav2_params.yaml` local_costmap의 `obstacle_layer`만 수정
@@ -188,8 +188,29 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   로봇 자신의 footprint 셀 값=0(free, 오탐지 없음) 확인, `observation_sources`에 `scan depth_cloud` 둘 다
   반영됨 확인, map→base_footprint TF 정상. (재시작 중 `rplidar_composition`이 `/scan`을 못 내는 채로 멈춰
   있던 걸 발견해 재시작으로 해결 — Nav2와는 무관한 별개의 행잉, 원인 미확정.)
-  **아직 안 한 것**: 실제 저상 장애물(의자 등)을 놓고 목표를 통과시켜 충돌 회피 자체를 재현 검증(8.9/8.11에서
-  이어서 진행 예정).
+  **실제 저상 장애물 회피 재현 시험(2026-10-05) 결과: 실패.** 물체를 로봇 앞에 두고 목표를 보냈는데,
+  근접 목표 부근에서 recovery가 4회 발동했고 그중 **후진(BackUp recovery로 추정)하면서 물건을 그대로
+  밀고 지나감** — troubleshooting/022. 전진 방향 얇은 장애물 대응을 위해 넣은 depth_cloud가 **후진
+  방향에는 전혀 도움이 안 됨**(카메라가 전방 고정, LiDAR는 원래부터 팔에 가려 후방 160도 사각) —
+  로봇 뒤쪽이 통째로 센서 사각지대라는 구조적 문제를 새로 발견. 8.12는 "전진 중 얇은 장애물"만
+  부분 해결된 상태이고, 후진 충돌 문제는 미해결로 `[~]` 유지.
+  **후진 안전 조치(2026-10-05, 사용자 승인 후 적용)**: DWB `min_vel_x: 0`(원래 -0.2, 후진 완전 차단) +
+  `bt_navigator`의 기본 BT XML에서 `<BackUp/>` 노드를 제거한 커스텀 XML(`config/behavior_trees/
+  navigate_{to_pose,through_poses}_no_backup.xml`)로 교체, `behavior_server`의 `backup` 플러그인도
+  제거. 재기동해서 `backup` action server 없이 전체 lifecycle이 깨끗이 active됨 확인(troubleshooting/022).
+  **두 번째 전진 재시험 결과: 또 실패 (다른 원인) — troubleshooting/023.** 후진은 더 안 했지만, 이번엔
+  **아예 회피 시도 자체가 없이 물체를 비비고 지나감.** raw depth를 직접 뒤져서 원인 확인: depth_cloud는
+  물체를 정확히 보고 있었는데(바닥보다 뚜렷이 가까운 depth, base_footprint 변환 시 높이 4.5~8.8cm),
+  8.12에서 넣은 self-filter가 이걸 "로봇 자기 자신"으로 오인해서 지워버리고 있었음 — 풋프린트 사각형
+  (x<0.16, |y|<0.18)과 바퀴 높이(~9.7cm)가 이번 물체의 위치/높이와 겹쳐서 구조적으로 구분이 안 됐음.
+  **self-filter를 교체함**: XY/높이 비교 대신, 홈 포즈에서 아무것도 없을 때 미리 찍어둔 기준 depth
+  이미지(`config/depth_background_ref.npy`)와 지금 depth를 픽셀별로 비교해서, 30mm 이상 더 가깝게
+  찍힌 픽셀만 "새로 생긴 물체"로 판단(`tf2_ros` 의존성도 제거됨 — 더 이상 TF 변환 불필요).
+  **실기 재검증(2026-10-05)**: 물체 치운 상태로 기준 캡처(유효 91.4%) → 물체 없을 때 발행 0개(바퀴
+  오탐지 없음) → 물체를 다시 35cm 앞에 둠 → 397개 포인트 발행, 높이/거리 일치 → local costmap에서
+  로봇 전방 0.1~0.5m가 점유(94~100)로 찍히고 로봇 자신의 풋프린트 셀은 그대로 free(0) 확인.
+  **아직 안 한 것**: 이 상태로 실제 `NavigateToPose` 재시험해서 진짜로 멈추거나 돌아가는지(코스트맵
+  반영까지만 확인했고, 주행 중 회피 동작 자체는 아직 재시험 안 함) — 다음에 이어서.
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해

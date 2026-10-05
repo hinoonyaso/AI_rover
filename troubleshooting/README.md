@@ -48,3 +48,5 @@
 | 019 | [RGB-D 카메라가 Nav2 풀스택과 같이 돌 때 IR+PointCloud 켜면 조용히 멈춤](019-camera-hang-ir-pointcloud-with-full-stack.md) | 해결(우회) (재부팅까지 해도 안 풀렸는데 `enable_ir`/`enable_point_cloud`를 끄니 바로 해결 — USB가 아니라 자원 경합으로 추정) |
 | 020 | [Nav2 반복 주행이 매번 같은 지점에서 "Start occupied"로 막힘 — 실제론 의자, inflation_radius도 안전 최소값 미만이었음](020-nav2-remap-chair-and-inflation-radius.md) | 해결 (의자 반영된 새 지도로 재매핑 + inflation_radius를 Nav2가 요구하는 안전 최소값(inscribed radius) 이상인 0.2로 조정) |
 | 021 | [Nav2 자율주행 중 의자 다리와 충돌 — 2D LiDAR 사각지대로 추정](021-nav2-collision-with-chair-leg.md) | 우회 (근본 원인 미해결, 의자 피하는 경로로 재시도해서 성공) |
+| 022 | [Nav2 후진 중 로봇 뒤쪽 완전 사각지대에서 물체를 밀고 지나감](022-nav2-rear-blind-spot-backup-collision.md) | 해결 (DWB min_vel_x=0으로 후진 차단 + BT에서 BackUp recovery 노드 제거) |
+| 023 | [self-filter가 로봇 앞 35cm 물체를 "자기 자신"으로 오인해서 지워버림](023-depth-self-filter-ate-real-obstacle.md) | 해결 (풋프린트 사각형 방식 → 기준 depth 이미지와의 차이 비교 방식으로 교체) |
