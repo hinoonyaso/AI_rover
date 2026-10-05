@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: SSH 환경(RViz 없음)에서 로봇이 보는 것을 위에서 본 PNG로 저장한다(/scan, /map, TF 프레임, 대략적 외곽, 진행 방향). 외곽은 URDF의 임시 0.30×0.20m 박스이며 실측값이 아니다.
 """Save a top-down PNG of what the robot sees (for SSH sessions without RViz).
 
 Usage: python3 snapshot.py [--frame odom|map] [--out FILE] [--seconds 3] [--radius 3.0]

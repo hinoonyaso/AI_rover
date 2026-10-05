@@ -1,3 +1,4 @@
+# 한글: base_node의 crash guard를 가상 시리얼에서 시험한다(하드웨어 불필요). SEGV/ABRT/HUP/QUIT에는 마지막 프레임이 정지여야 하고 KILL은 잡을 수 없다.
 """Checks base_node's crash guard on a virtual serial port (no hardware needed):
 Usage: python3 crash_guard_test.py 11 SIGSEGV   (signal number, label)
 Expect: last frame written to the port is a STOP for SEGV/ABRT/HUP/QUIT, not for KILL.

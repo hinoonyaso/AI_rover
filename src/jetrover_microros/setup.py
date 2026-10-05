@@ -4,6 +4,7 @@ from setuptools import find_packages, setup
 
 package_name = 'jetrover_microros'
 
+# 한글: ament_python 패키지 설정: launch/config 설치와 rrc_bridge 실행 파일 등록.
 setup(
     name=package_name,
     version='0.0.1',

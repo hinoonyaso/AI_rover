@@ -1,8 +1,10 @@
+// 한글: FUNC별 팩/언팩 구현. 바이트 배치는 공식 PDF/문서와 실기 캡처 기준.
 #include "rrc_funcs.h"
 
 #include <string.h>
 
 /* ---- little-endian helpers (portable; don't assume struct packing/host endianness) ---- */
+// 한글: 리틀엔디안 읽기/쓰기 헬퍼(구조체 패킹/호스트 엔디안에 의존하지 않음).
 static uint16_t rd_u16le(const uint8_t *p) { return (uint16_t)(p[0] | (p[1] << 8)); }
 static void wr_u16le(uint8_t *p, uint16_t v) { p[0] = (uint8_t)(v & 0xFF); p[1] = (uint8_t)(v >> 8); }
 static void wr_i16le(uint8_t *p, int16_t v) { wr_u16le(p, (uint16_t)v); }
@@ -22,6 +24,7 @@ static float rd_f32le(const uint8_t *p) {
 }
 
 /* ---- FUNC 0x00 ---- */
+// 한글: FUNC0 배터리: 04 + u16 LE mV(벤더 PDF에 없고 실기로 확인한 값).
 size_t rrc_pack_battery_mv(uint16_t millivolts, uint8_t *data_out) {
     data_out[0] = 0x04;
     wr_u16le(&data_out[1], millivolts);
@@ -29,6 +32,7 @@ size_t rrc_pack_battery_mv(uint16_t millivolts, uint8_t *data_out) {
 }
 
 /* ---- FUNC 0x01 ---- */
+// 한글: FUNC1 LED: led_id u8 + 켜짐/꺼짐 ms + 반복 횟수(u16×3). 길이가 7이 아니면 거부.
 int rrc_unpack_led(const uint8_t *data, uint8_t len, rrc_led_cmd_t *out) {
     if (len != 7) return 0;
     out->led_id = data[0];
@@ -39,6 +43,7 @@ int rrc_unpack_led(const uint8_t *data, uint8_t len, rrc_led_cmd_t *out) {
 }
 
 /* ---- FUNC 0x02 ---- */
+// 한글: FUNC2 부저: 주파수 + 켜짐/꺼짐 ms + 반복(u16×4, 총 8바이트).
 int rrc_unpack_buzzer(const uint8_t *data, uint8_t len, rrc_buzzer_cmd_t *out) {
     if (len != 8) return 0;
     out->freq_hz = rd_u16le(&data[0]);
@@ -49,6 +54,7 @@ int rrc_unpack_buzzer(const uint8_t *data, uint8_t len, rrc_buzzer_cmd_t *out) {
 }
 
 /* ---- FUNC 0x03 ---- */
+// 한글: FUNC3 다중 속도 설정(서브커맨드 0x01): N개의 (모터 id u8, rps float32). 길이가 2+5N과 다르면 거부.
 int rrc_unpack_motor(const uint8_t *data, uint8_t len, rrc_motor_cmd_t *out) {
     if (len < 2) return 0;
     uint8_t sub = data[0];
@@ -99,6 +105,7 @@ int rrc_unpack_motor_ex(const uint8_t *data, uint8_t len, rrc_motor_cmd_ex_t *ou
 }
 
 /* ---- FUNC 0x04 ---- */
+// 한글: FUNC4 다중 이동: 시간 ms, 개수, N×(id, 펄스 us 500~2500).
 int rrc_unpack_pwm_servo_move_multi(const uint8_t *data, uint8_t len, rrc_pwm_servo_move_multi_t *out) {
     if (len < 4) return 0;
     if (data[0] != RRC_SERVO_SUB_MOVE_MULTI) return 0;
@@ -158,6 +165,7 @@ size_t rrc_pack_pwm_servo_deviation(uint8_t servo_id, int8_t deviation, uint8_t 
 }
 
 /* ---- FUNC 0x05 ---- */
+// 한글: FUNC5 다중 이동: 시간 ms, 개수, N×(id, 펄스 0~1000 = 0~240도).
 int rrc_unpack_bus_servo_move(const uint8_t *data, uint8_t len, rrc_bus_servo_move_t *out) {
     if (len < 4) return 0;
     if (data[0] != RRC_SERVO_SUB_MOVE_MULTI) return 0;
@@ -182,6 +190,7 @@ int rrc_unpack_bus_servo_read_position(const uint8_t *data, uint8_t len, uint8_t
     return 1;
 }
 
+// 한글: 버스 서보 위치 응답: id, 05, success(0 정상/-1 실패), 위치 int16 LE.
 size_t rrc_pack_bus_servo_position(uint8_t servo_id, int8_t success, int16_t pulse, uint8_t *data_out) {
     data_out[0] = servo_id;
     data_out[1] = RRC_SERVO_SUB_READ_POSITION;
@@ -198,6 +207,7 @@ size_t rrc_pack_key_event(uint8_t button_id, uint8_t event, uint8_t *data_out) {
 }
 
 /* ---- FUNC 0x07 ---- */
+// 한글: FUNC7 IMU: float32 6개(가속도 g ×3, 자이로 deg/s ×3), 센서 원시 축.
 size_t rrc_pack_imu(const rrc_imu_sample_t *sample, uint8_t *data_out) {
     wr_f32le(&data_out[0], sample->accel_g[0]);
     wr_f32le(&data_out[4], sample->accel_g[1]);
@@ -209,6 +219,7 @@ size_t rrc_pack_imu(const rrc_imu_sample_t *sample, uint8_t *data_out) {
 }
 
 /* ---- FUNC 0x08 ---- */
+// 한글: FUNC8 게임패드 7바이트: 버튼 u16, hat, 왼/오른 스틱 x,y(int8).
 size_t rrc_pack_gamepad(const rrc_gamepad_state_t *state, uint8_t *data_out) {
     wr_u16le(&data_out[0], state->buttons);
     data_out[2] = state->hat;
@@ -220,6 +231,7 @@ size_t rrc_pack_gamepad(const rrc_gamepad_state_t *state, uint8_t *data_out) {
 }
 
 /* ---- FUNC 0x09 ---- */
+// 한글: FUNC9 SBUS 36바이트: 채널 int16×16 + ch17/ch18/신호 손실/failsafe.
 size_t rrc_pack_sbus(const rrc_sbus_frame_t *frame, uint8_t *data_out) {
     for (int i = 0; i < 16; i++) {
         wr_i16le(&data_out[i * 2], frame->channels[i]);

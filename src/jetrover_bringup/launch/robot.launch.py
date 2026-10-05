@@ -1,3 +1,4 @@
+# 한글: 로봇 전체 기본 실행(베이스 + LiDAR).
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -8,11 +9,13 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
+    # 한글: 다른 패키지의 launch 파일을 인자와 함께 포함하는 헬퍼.
     def include(package, name, **args):
         path = os.path.join(get_package_share_directory(package), 'launch', name)
         return IncludeLaunchDescription(
             PythonLaunchDescriptionSource(path), launch_arguments=args.items())
 
+    # 한글: 베이스(+URDF+EKF) 다음에 LiDAR를 함께 띄운다. 키보드 텔레옵은 cmd_vel_timeout을 1.0으로 올린다.
     # base_node + URDF/TF + EKF, then the LiDAR.
     return LaunchDescription([
         DeclareLaunchArgument(

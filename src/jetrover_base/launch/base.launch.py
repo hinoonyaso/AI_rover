@@ -1,3 +1,4 @@
+# 한글: STM32 베이스 드라이버 + URDF TF + EKF 실행 launch.
 import os
 
 from ament_index_python.packages import get_package_share_directory, PackageNotFoundError
@@ -17,6 +18,7 @@ def generate_launch_description():
     description_launch = os.path.join(
         get_package_share_directory('jetrover_description'), 'launch', 'description.launch.py')
 
+    # 한글: robot_localization이 설치돼 있는지 확인한다. 없으면 EKF를 건너뛰고 안내만 출력한다(그 경우 /odom과 TF가 안 나온다).
     try:
         get_package_share_directory('robot_localization')
         have_ekf = True
@@ -38,6 +40,7 @@ def generate_launch_description():
             'max_angular', default_value='1.0',
             description='Speed limit in rad/s applied to /cmd_vel angular z'),
         Node(
+            # 한글: STM32 시리얼 드라이버 노드. base.yaml을 읽고, cmd_vel_timeout/속도 제한은 launch 인자로 덮어쓴다.
             package='jetrover_base',
             executable='base_node',
             name='base_node',
@@ -50,12 +53,14 @@ def generate_launch_description():
                 'max_angular': ParameterValue(
                     LaunchConfiguration('max_angular'), value_type=float)}],
         ),
+        # 한글: URDF에서 정적 TF를 만든다. base_node가 IMU 축을 이미 base_link 축으로 돌려 발행하므로 imu_link에는 회전이 없다.
         # URDF -> static TFs (base_footprint -> base_link -> imu_link, lidar_link, ...).
         # base_node already rotates the IMU axes into base_link's, so imu_link has no rotation.
         IncludeLaunchDescription(PythonLaunchDescriptionSource(description_launch)),
     ]
 
     if have_ekf:
+        # 한글: EKF: wheel_twist(vx, vy)와 IMU 자이로 yaw rate를 융합해 /odom과 odom→base_footprint TF를 낸다.
         actions.append(Node(
             package='robot_localization',
             executable='ekf_node',

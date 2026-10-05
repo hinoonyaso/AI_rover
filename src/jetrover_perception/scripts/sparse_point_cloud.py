@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: 간격을 둔 depth 영상으로 만드는 가벼운 PointCloud2 + 기준 depth 대비 새 물체만 남기는 self-filter.
 """Lightweight PointCloud2 from a strided (downsampled) depth image.
 
 The camera driver's own enable_point_cloud computes a full-resolution cloud
@@ -52,7 +53,9 @@ from sensor_msgs_py import point_cloud2
 class SparsePointCloud(Node):
     def __init__(self):
         super().__init__('sparse_point_cloud')
+        # 한글: stride=8이면 640x360 depth에서 최대 약 3600점(전체는 약 23만점). 3D 투영 연산을 점 수가 적은 단계에서만 한다.
         self.declare_parameter('stride', 8)
+        # 한글: 발행 속도를 4프레임에 1번으로 낮춘다(원격 RViz에서 TF 타이밍 경쟁 방지).
         # Publishing at the full depth rate (~25-30Hz) meant a remote viewer
         # (RViz over WiFi) sometimes couldn't resolve the full TF chain in
         # time for a given message's exact stamp -- same class of cross-
@@ -70,6 +73,7 @@ class SparsePointCloud(Node):
         self.every_nth = self.get_parameter('process_every_nth').value
         self.background_margin_mm = self.get_parameter('background_margin_mm').value
         ref_path = self.get_parameter('background_depth_path').value
+        # 한글: 기준 depth 이미지(로봇 홈 자세, 앞에 아무것도 없는 상태)를 불러온다. 홈 자세를 바꾸면 다시 찍어야 한다.
         self.background = np.load(ref_path)
         self.background_sparse = self.background[::self.stride, ::self.stride]
         self.get_logger().info(
@@ -84,9 +88,11 @@ class SparsePointCloud(Node):
         self.create_subscription(
             Image, 'depth/image_raw', self._depth_cb, qos_profile_sensor_data)
 
+    # 한글: 카메라 내부 파라미터(fx, fy, cx, cy) 저장.
     def _info_cb(self, msg):
         self.intrinsics = (msg.k[0], msg.k[4], msg.k[2], msg.k[5])  # fx, fy, cx, cy
 
+    # 한글: 기준 depth보다 margin 이상 '가까운' 픽셀만 장애물로 본다. 로봇 자신의 바퀴/섀시나 바닥은 기준과 같아서 제거되고, XY/높이 필터가 실제 장애물까지 지우던 문제(troubleshooting/023)를 피한다.
     def _depth_cb(self, msg):
         self._count += 1
         if self._count % self.every_nth != 0:
@@ -101,6 +107,7 @@ class SparsePointCloud(Node):
         vs, us = np.indices(depth_sparse.shape)
         us = us * self.stride
         vs = vs * self.stride
+        # 한글: mm → m
         z = depth_sparse.astype(np.float32) / 1000.0  # mm -> m
 
         # Closer than the known background (wheel/floor with nothing in front) by more than

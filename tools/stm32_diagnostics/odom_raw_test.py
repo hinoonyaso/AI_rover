@@ -1,3 +1,4 @@
+# 한글: base_node의 open-loop odom_raw를 가상 시리얼과 가짜 IMU로 시험한다(하드웨어 불필요). 각 결과 옆에 기대값을 출력한다.
 """Tests base_node open-loop odom_raw on a virtual serial port with a fake STM32 IMU stream.
 No hardware needed. Expected values are printed next to each result.
 """
@@ -8,6 +9,7 @@ from rclpy.qos import qos_profile_sensor_data
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
+# 한글: RRC CRC-8/MAXIM.
 def crc(b):
     c=0
     for x in b:

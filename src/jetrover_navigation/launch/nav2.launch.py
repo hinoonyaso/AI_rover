@@ -1,3 +1,4 @@
+# 한글: Nav2 전체 스택 launch. robot.launch.py(베이스+EKF+LiDAR)가 먼저 실행 중이어야 한다.
 """Full Nav2 stack: our own localization (map_server+amcl, localization.launch.py)
 + nav2_bringup's navigation_launch.py (planner/controller/bt_navigator/behavior_server/
 velocity_smoother + lifecycle_manager_navigation) with jetrover's own params
@@ -22,12 +23,14 @@ def generate_launch_description():
     default_map = os.path.expanduser('~/jetrover_ws/maps/lap2_20261005.yaml')
     map_arg = DeclareLaunchArgument('map', default_value=default_map)
 
+    # 한글: 우리 localization(map_server + amcl)을 포함.
     localization = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav_share, 'launch', 'localization.launch.py')),
         launch_arguments={'map': LaunchConfiguration('map')}.items(),
     )
 
+    # 한글: nav2_bringup의 navigation_launch.py(플래너/컨트롤러/BT/행동 서버/속도 스무더)를 jetrover 파라미터로 포함.
     navigation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(bringup_share, 'launch', 'navigation_launch.py')),

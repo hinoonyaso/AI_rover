@@ -15,12 +15,15 @@ namespace
 {
 
 // Only async-signal-safe state: plain arrays and integers, no allocation or locks.
+// 한글: async-signal-safe 상태만 쓴다: 단순 배열/정수, 할당·락 없음.
 volatile sig_atomic_t g_fd = -1;
 uint8_t g_frame[kMaxFrame];
 volatile sig_atomic_t g_len = 0;
 
+// 한글: 잡을 치명적/종료 시그널 목록(SIGKILL은 잡을 수 없다).
 constexpr int kSignals[] = {SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGHUP, SIGQUIT};
 
+// 한글: 정지 프레임을 fd에 두 번 직접 write(유실 대비)한 뒤 기본 동작을 다시 발생시켜 core dump/종료가 정상적으로 일어나게 한다.
 void handler(int sig)
 {
   const int fd = g_fd;
@@ -47,6 +50,7 @@ void install_handlers()
   std::memset(&sa, 0, sizeof(sa));
   sa.sa_handler = handler;
   sigemptyset(&sa.sa_mask);
+  // 한글: 핸들러 안에서 같은 시그널이 다시 와도 막지 않는다(재발생 raise를 위해).
   sa.sa_flags = SA_NODEFER;
   for (const int sig : kSignals) {
     sigaction(sig, &sa, nullptr);

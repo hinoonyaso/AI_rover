@@ -1,3 +1,4 @@
+// 한글: 시리얼 포트 구현(termios + poll).
 #include "jetrover_base/serial_port.hpp"
 
 #include <fcntl.h>
@@ -14,6 +15,7 @@ namespace jetrover_base
 namespace
 {
 
+// 한글: 숫자 baudrate를 termios 상수로 변환한다. 지원하지 않는 값이면 B0(open이 거부).
 speed_t to_speed(int baudrate)
 {
   switch (baudrate) {
@@ -49,6 +51,7 @@ bool SerialPort::open(const std::string & path, int baudrate)
     return false;
   }
 
+  // 한글: O_NONBLOCK으로 열고 read는 poll로 기다린다(블로킹 read로 노드가 멈추는 것 방지). O_NOCTTY로 제어 터미널이 되지 않게 한다.
   fd_ = ::open(path.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd_ < 0) {
     last_error_ = "open " + path + ": " + std::strerror(errno);
@@ -62,6 +65,7 @@ bool SerialPort::open(const std::string & path, int baudrate)
     return false;
   }
 
+  // 한글: raw 모드(문자 변환/에코 없음), 8N1, CRTSCTS(하드웨어 흐름 제어) 끔. VMIN=VTIME=0은 poll이 대기를 맡기 때문.
   cfmakeraw(&tty);
   cfsetispeed(&tty, speed);
   cfsetospeed(&tty, speed);
@@ -76,6 +80,7 @@ bool SerialPort::open(const std::string & path, int baudrate)
     return false;
   }
 
+  // 한글: 열자마자 이전 잔여 데이터를 버린다.
   tcflush(fd_, TCIOFLUSH);
   return true;
 }
@@ -106,6 +111,7 @@ int SerialPort::read(uint8_t * buffer, std::size_t length, int timeout_ms)
   if (ready == 0) {
     return 0;
   }
+  // 한글: USB-UART가 뽑히면 POLLHUP/POLLERR이 온다 → 호출자가 재연결하도록 -1을 돌려준다.
   if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) {
     last_error_ = "serial device error or disconnected";
     return -1;
@@ -135,6 +141,7 @@ bool SerialPort::write(const uint8_t * data, std::size_t length)
       if (errno == EINTR) {
         continue;
       }
+      // 한글: TX 버퍼가 가득 찬 경우: 최대 10ms 기다렸다가 이어서 쓴다.
       if (errno == EAGAIN) {
         pollfd pfd{fd_, POLLOUT, 0};
         poll(&pfd, 1, 10);

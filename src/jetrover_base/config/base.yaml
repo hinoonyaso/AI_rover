@@ -1,3 +1,4 @@
+# 한글: STM32 베이스 노드 설정(포트, 형상, 속도 제한, 자이로 bias, 오도메트리 보정, 팔 관절 설정). 값을 바꾸기 전 이전 값을 문서에 남긴다(AGENTS.md).
 base_node:
   ros__parameters:
     port: /dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00

@@ -1,3 +1,4 @@
+// 한글: FUNC별 pack/unpack 헬퍼. 바이트 배치는 공식 PDF와 실기 캡처 기준이며 정수는 모두 리틀엔디안이다.
 /* Per-FUNC pack/unpack helpers on top of rrc_protocol.h's generic frame codec.
  * Byte layouts are taken verbatim from firmware_source/"RRC Communication
  * Protocol with the Host Computer Analysis.pdf" (FUNC 1-9) plus the
@@ -30,6 +31,7 @@ extern "C" {
 
 /* ---- FUNC 0x00: battery/system (device -> host, encode only) ---- */
 /* data_out must have room for 3 bytes. Returns data_len (3). */
+// 한글: FUNC0 배터리(장치→호스트, 인코딩만).
 size_t rrc_pack_battery_mv(uint16_t millivolts, uint8_t *data_out);
 
 /* ---- FUNC 0x01: LED (host -> device, decode) ---- */
@@ -39,6 +41,7 @@ typedef struct {
     uint16_t off_ms;
     uint16_t cycles;
 } rrc_led_cmd_t;
+// 한글: FUNC1 LED(호스트→장치, 디코드).
 int rrc_unpack_led(const uint8_t *data, uint8_t len, rrc_led_cmd_t *out);
 
 /* ---- FUNC 0x02: buzzer (host -> device, decode) ---- */
@@ -62,6 +65,7 @@ typedef struct {
     rrc_motor_speed_t speeds[RRC_MOTOR_MAX_COUNT];
 } rrc_motor_cmd_t;
 /* Returns 1 on success, 0 on malformed frame or count > RRC_MOTOR_MAX_COUNT. */
+// 한글: FUNC3 모터 다중 설정(서브커맨드 0x01). 모터 ID는 0부터. 다른 서브커맨드는 rrc_unpack_motor_ex.
 int rrc_unpack_motor(const uint8_t *data, uint8_t len, rrc_motor_cmd_t *out);
 
 /* FUNC3 full subcommand set (PDF 3.14.2 / program analysis 3.14): 0x00 single, 0x01 multi,
@@ -99,6 +103,7 @@ typedef struct {
     uint8_t count;
     rrc_pwm_servo_target_t targets[RRC_PWM_SERVO_MAX_COUNT];
 } rrc_pwm_servo_move_multi_t;
+// 한글: FUNC4 PWM 서보: 펄스 500~2500us = 0~180도.
 int rrc_unpack_pwm_servo_move_multi(const uint8_t *data, uint8_t len, rrc_pwm_servo_move_multi_t *out);
 
 typedef struct {
@@ -129,6 +134,7 @@ typedef struct {
     uint8_t count;
     rrc_bus_servo_target_t targets[RRC_BUS_SERVO_MAX_COUNT];
 } rrc_bus_servo_move_t;
+// 한글: FUNC5 버스 서보: 펄스 0~1000 = 0~240도.
 int rrc_unpack_bus_servo_move(const uint8_t *data, uint8_t len, rrc_bus_servo_move_t *out);
 
 /* read position request: data = [0x05, servo_id] */
@@ -144,6 +150,7 @@ typedef enum {
     RRC_BUTTON_CLICK = 0x20,
     RRC_BUTTON_DOUBLE_CLICK = 0x40,
 } rrc_button_event_t;
+// 한글: FUNC6 버튼 이벤트(장치→호스트).
 size_t rrc_pack_key_event(uint8_t button_id, uint8_t event, uint8_t *data_out);
 
 /* ---- FUNC 0x07: IMU (device -> host, encode) ---- */
@@ -152,6 +159,7 @@ typedef struct {
     float gyro_dps[3];   /* gx, gy, gz in deg/s, same raw axes */
 } rrc_imu_sample_t;
 /* data_out must have room for 24 bytes. */
+// 한글: FUNC7 IMU(장치→호스트): 가속도 g, 자이로 deg/s, 센서 원시 축.
 size_t rrc_pack_imu(const rrc_imu_sample_t *sample, uint8_t *data_out);
 
 /* ---- FUNC 0x08: gamepad (device -> host, encode) ---- */
@@ -160,6 +168,7 @@ typedef struct {
     uint8_t hat;
     int8_t lx, ly, rx, ry;
 } rrc_gamepad_state_t;
+// 한글: FUNC8 게임패드.
 size_t rrc_pack_gamepad(const rrc_gamepad_state_t *state, uint8_t *data_out);
 
 /* ---- FUNC 0x09: SBUS (device -> host, encode) ---- */
@@ -171,6 +180,7 @@ typedef struct {
     uint8_t fail_safe;
 } rrc_sbus_frame_t;
 /* data_out must have room for 36 bytes. */
+// 한글: FUNC9 SBUS.
 size_t rrc_pack_sbus(const rrc_sbus_frame_t *frame, uint8_t *data_out);
 
 #ifdef __cplusplus

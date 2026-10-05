@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: 16UC1 depth를 보기 좋은 컬러 영상으로 재발행한다(web_video_server/rqt는 16UC1을 못 그린다). 카메라 포인트클라우드를 끄고도 depth를 볼 수 있게 하는 저비용 대안.
 """Republish raw 16UC1 depth (mm) as a colorized bgr8 image for viewing.
 
 web_video_server/rqt_image_view can't render 16UC1 directly (cv_bridge has
@@ -19,8 +20,10 @@ from sensor_msgs.msg import Image
 class DepthColorizer(Node):
     def __init__(self):
         super().__init__('depth_colorizer')
+        # 한글: 보여줄 거리 범위(mm)로 depth를 자르고 정규화한다.
         self.declare_parameter('min_range_mm', 200)
         self.declare_parameter('max_range_mm', 3000)
+        # 한글: 3프레임마다 1번만 처리: 매 프레임 처리하면 카메라 드라이버와 CPU를 다퉈 RGB가 느려졌다(troubleshooting/019).
         # Processing every frame (30Hz) measurably competed with the camera
         # driver's own CPU use and slowed RGB down (troubleshooting/019's
         # resource-contention issue again, this time self-inflicted). A
@@ -35,6 +38,7 @@ class DepthColorizer(Node):
         self.pub = self.create_publisher(Image, 'depth/image_colorized', 10)
         self.create_subscription(Image, 'depth/image_raw', self._cb, 10)
 
+    # 한글: 16UC1 depth(mm) → 범위 클램프 → 0~255 → JET 컬러맵. 반환값 없는 픽셀(0)은 검게 둔다.
     def _cb(self, msg):
         self._count += 1
         if self._count % self.every_nth != 0:

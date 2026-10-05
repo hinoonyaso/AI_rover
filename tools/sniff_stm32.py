@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: STM32 시리얼 원시 바이트를 그대로 덤프하는 최소 스니퍼(프로토콜 조사용).
 
 import time
 import serial

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: LiDAR가 가장 가까운 물체를 base_link 기준 몇 도에서 보는지 출력해 URDF의 LiDAR 장착 yaw를 검증한다(0도=전방, +90도=왼쪽).
 """Where does the LiDAR see the nearest object, in the robot's base_link frame?
 
 Run with the LiDAR driver and robot_state_publisher up (jetrover_bringup lidar.launch.py). Put an

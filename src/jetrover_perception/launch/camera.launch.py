@@ -17,6 +17,7 @@ def launch_setup(context):
     params_file = os.path.join(
         get_package_share_directory('jetrover_perception'), 'config', 'dabai_dcw.yaml')
 
+    # 한글: 카메라 드라이버를 composable node로 실행한다. 파라미터는 config/dabai_dcw.yaml.
     container = ComposableNodeContainer(
         name='camera_container',
         namespace=camera_name,
@@ -37,6 +38,7 @@ def launch_setup(context):
     # Republishes depth/image_raw (16UC1, unviewable as-is) as a colorized bgr8
     # image on depth/image_colorized, so it can be streamed/viewed normally
     # (web_video_server, rqt_image_view). See troubleshooting/019.
+    # 한글: 16UC1 depth를 컬러 영상으로 바꿔 웹/rqt에서 볼 수 있게 한다(troubleshooting/019).
     depth_colorizer = Node(
         package='jetrover_perception',
         executable='depth_colorizer.py',
@@ -47,6 +49,7 @@ def launch_setup(context):
 
     # Sparse PointCloud2 built from a strided (downsampled) depth image, instead
     # of the camera driver's own heavy enable_point_cloud (troubleshooting/019).
+    # 한글: 드라이버의 무거운 포인트클라우드 대신, 간격을 둔 depth 영상으로 가벼운 PointCloud2를 만든다.
     sparse_point_cloud = Node(
         package='jetrover_perception',
         executable='sparse_point_cloud.py',

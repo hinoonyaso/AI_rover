@@ -1,9 +1,11 @@
+# 한글: 호스트가 죽었을 때 STM32가 스스로 바퀴를 세우는지 확인한다(0.3rps로 구동 후 2초에 쓰는 프로세스를 SIGKILL, 15초에 정지 전송). 결과: 펌웨어에 호스트 timeout이 없어서 STOP 때까지 계속 돌았다. 바퀴를 띄울 것.
 """Does the STM32 stop the wheels by itself when the host dies? Runs the wheels at 0.3 rps,
 SIGKILLs the writer after 2 s, and sends STOP at t=15 s. Watch the wheels. WHEELS OFF THE GROUND.
 Result on this robot: wheels kept spinning until STOP (no host timeout in firmware).
 """
 import os,signal,struct,sys,time,serial
 PORT="/dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00"
+# 한글: RRC CRC-8/MAXIM(호스트 rrc_protocol.cpp와 동일).
 def crc(b):
     c=0
     for x in b:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: STM32 시리얼 스트림을 RRC 프레임으로 파싱해 보여주는 초기 점검용 스크립트(CRC 확인). base_node가 포트를 쓰고 있으면 실행 불가.
 
 import serial
 

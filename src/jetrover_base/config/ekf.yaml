@@ -1,3 +1,4 @@
+# 한글: STM32 베이스 노드 설정(포트, 형상, 속도 제한, 자이로 bias, 오도메트리 보정, 팔 관절 설정). 값을 바꾸기 전 이전 값을 문서에 남긴다(AGENTS.md).
 # robot_localization EKF: fuses the commanded (open-loop) body velocity with the gyro yaw rate.
 # The wheel input is a twist-only message (wheel_twist), so no open-loop pose reaches the filter;
 # yaw and position come from integrating vx/vy with the gyro yaw rate.

@@ -1,3 +1,4 @@
+// 한글: lib/comm(RRC 어댑터) 호스트 단위 시험: 공식 PDF 예제 프레임을 그대로 사용한다.
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,6 +22,7 @@ typedef struct {
     uint8_t tx[16][300]; size_t txlen[16]; int ntx;
 } mock_t;
 
+// 한글: mock 서비스: 호출 인자를 기록해 어댑터가 올바르게 분기했는지 확인한다.
 static uint32_t m_now(void *hw) { return ((mock_t *)hw)->now; }
 static void m_led(void *hw, uint8_t id, uint16_t on, uint16_t off, uint16_t cy) {
     mock_t *m = hw; m->led_id = id; m->led_on = on; m->led_off = off; m->led_cycles = cy; m->led_calls++; }
@@ -100,6 +102,7 @@ static void test_led_buzzer(void)
     CHECK(r.mock.bz_calls == 1 && r.mock.bz_freq == 1400 && r.mock.bz_on == 100 && r.mock.bz_off == 100 && r.mock.bz_cycles == 5, "buzzer from PDF example");
 }
 
+// 한글: PDF 예제 프레임으로 모터 단일/다중/정지/마스크/timeout 확인(모터 ID는 0부터).
 static void test_motor(void)
 {
     rig_t r; rig_init(&r);
@@ -185,6 +188,7 @@ static void test_bus_servo(void)
     CHECK(r.mock.xfer_calls == 3 && r.mock.xfer_cmd == BUS_CMD_LOAD_OR_UNLOAD_WRITE && r.mock.ntx == 2, "unload = write, no upload");
 }
 
+// 한글: 진단 명령과 견고성: 알 수 없는 FUNC, 쓰레기 바이트, 바이트 단위 입력, CRC 오류, 0xAA 홍수 후 복구.
 static void test_diag_and_robustness(void)
 {
     rig_t r; rig_init(&r);

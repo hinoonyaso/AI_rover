@@ -1,3 +1,4 @@
+# 한글: IMU 프레임을 N초 동안 세어 끊김(gap)을 보고하는 수동 heartbeat 시험. base_node가 포트를 열고 있으면 안 된다.
 """Passive heartbeat test: count IMU frames for N seconds and report gaps.
 Usage: python3 imu_soak.py 600   (base_node must NOT be running: it opens the port)
 """

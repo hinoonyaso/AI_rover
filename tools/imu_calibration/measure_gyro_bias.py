@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: 정지 상태 자이로 bias를 측정하고(선택) base.yaml에 기록한다. 로봇을 완전히 정지시킨 상태에서 실행. 새 bias = 현재 노드가 이미 빼는 값 + 측정 평균.
 """Measure the resting gyro bias and (optionally) store it in base.yaml.
 
 Keep the robot completely still, base_node running (via base.launch.py), then:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: base_node → wheel_twist/imu → EKF → /odom 전체 경로를 가상 시리얼과 가짜 IMU로 시험한다(로봇 불필요). yaw 변화는 가짜 자이로에서 나온다.
 """End-to-end test of base_node -> wheel_twist/imu -> robot_localization EKF -> /odom.
 
 No robot needed: base_node talks to a virtual serial port fed with fake IMU frames.

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: IMU 축이 base_node 규약(x 앞, y 왼쪽, z 위)을 따르는지 3자세(평평/왼쪽 위/앞쪽 아래)로 확인한다. base_node가 떠 있어야 한다.
 """Check that /imu/data_raw follows the base_node convention (x forward, y left, z up).
 
 base_node must be running. The script asks for three poses and averages the

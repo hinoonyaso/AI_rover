@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: /battery_state와 IMU 수신율을 1초마다 파일에 기록한다. STM32가 hang 나면 IMU 수가 0이 되기 직전 줄이 그때의 전압이다(hang 원인 조사용).
 """Log /battery_state and the IMU rate once per second to a file (run alongside base_node).
 
 Usage: python3 battery_logger.py OUTFILE [seconds]

@@ -1,3 +1,4 @@
+# 한글: 로봇 없이 imu_calibration 스크립트를 시험하기 위한 가짜 base_node(imu/data_raw 발행 + gyro_bias 파라미터).
 """Stand-in for base_node (publishes imu/data_raw, has a gyro_bias parameter) to test
 tools/imu_calibration scripts without the robot.
 """

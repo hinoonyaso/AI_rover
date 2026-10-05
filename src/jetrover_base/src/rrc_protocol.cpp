@@ -6,6 +6,7 @@
 namespace jetrover_base
 {
 
+// 한글: 비트 단위 CRC-8/MAXIM 계산(테이블 없이 8회 시프트).
 uint8_t crc8_maxim(const uint8_t * data, std::size_t length)
 {
   uint8_t crc = 0x00;
@@ -25,6 +26,7 @@ uint8_t crc8_maxim(const uint8_t * data, std::size_t length)
   return crc;
 }
 
+// 한글: 헤더 + FUNC + LEN + DATA + CRC를 조립한다. CRC는 FUNC부터(index 2) 계산.
 std::vector<uint8_t> build_packet(uint8_t function, const std::vector<uint8_t> & payload)
 {
   std::vector<uint8_t> frame;
@@ -40,6 +42,7 @@ std::vector<uint8_t> build_packet(uint8_t function, const std::vector<uint8_t> &
   return frame;
 }
 
+// 한글: 모터 명령: DATA = 01(다중 설정), N, N×(id-1, rps float32 LE). 오른쪽 모터 부호 반전은 호출자(base_node) 책임.
 std::vector<uint8_t> build_motor_packet(const std::vector<MotorCommand> & motors)
 {
   std::vector<uint8_t> payload;
@@ -72,6 +75,7 @@ bool decode_imu(const RrcPacket & packet, ImuRaw & imu)
     return false;
   }
 
+  // 한글: 둘 다 리틀엔디안이라 memcpy로 float을 그대로 복사한다.
   // STM32 and Jetson (aarch64) are both little-endian.
   const uint8_t * p = packet.payload.data();
   std::memcpy(&imu.ax, p + 0, 4);
@@ -92,6 +96,7 @@ std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id)
 std::vector<uint8_t> build_bus_servo_set_position(
   double duration_s, const std::vector<BusServoTarget> & targets)
 {
+  // 한글: 이동 시간을 0~65초로 제한(ms로 u16에 담기 위해 65.535초 미만).
   const double clamped_s = std::min(std::max(duration_s, 0.0), 65.0);
   const uint16_t duration_ms = static_cast<uint16_t>(clamped_s * 1000.0);
   std::vector<uint8_t> payload;
@@ -113,6 +118,7 @@ std::vector<uint8_t> build_bus_servo_torque(uint8_t servo_id, bool enable)
     kRrcFuncBusServo, {enable ? kRrcBusServoSubTorqueOn : kRrcBusServoSubTorqueOff, servo_id});
 }
 
+// 한글: 버스 서보 위치 응답: DATA = id, 05, success(0 정상/-1 실패), pulse int16 LE.
 bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out)
 {
   if (packet.function != kRrcFuncBusServo || packet.payload.size() != 5 ||
@@ -135,6 +141,7 @@ void RrcParser::feed(const uint8_t * data, std::size_t length)
 bool RrcParser::next(RrcPacket & packet)
 {
   while (true) {
+    // 한글: AA 55 헤더를 찾는다. 버퍼 끝이 AA 단독이면 다음 바이트가 55일 수 있으니 남겨 둔다.
     // Find AA 55.
     auto it = buffer_.begin();
     while (it != buffer_.end()) {
@@ -162,6 +169,7 @@ bool RrcParser::next(RrcPacket & packet)
     const uint8_t calculated = crc8_maxim(buffer_.data() + 2, 2 + len);
     const uint8_t received = buffer_[total - 1];
 
+    // 한글: 가짜 헤더이거나 깨진 프레임: AA 한 바이트만 버리고 다시 동기화한다(호스트/펌웨어 동일 동작).
     if (calculated != received) {
       // False header or corrupted frame: drop the AA and resync.
       buffer_.erase(buffer_.begin());

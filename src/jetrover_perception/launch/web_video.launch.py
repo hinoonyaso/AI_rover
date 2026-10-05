@@ -10,6 +10,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    # 한글: web_video_server를 8080 포트로 실행. VS Code Remote-SSH에서는 포트 포워딩 후 브라우저로 본다.
     return LaunchDescription([
         DeclareLaunchArgument('port', default_value='8080'),
         Node(

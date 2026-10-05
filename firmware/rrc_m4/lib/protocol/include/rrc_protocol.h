@@ -1,3 +1,4 @@
+// 한글: RRC 프레임 코덱: AA 55 FUNC LEN DATA CRC8-MAXIM. CRC는 FUNC+LEN+DATA만 계산한다. 호스트(jetrover_base)와 벤더 PDF와 와이어 호환.
 /* RRC frame codec: AA 55 FUNC LEN DATA CRC8-MAXIM.
  * CRC covers FUNC+LEN+DATA only (not the AA 55 header).
  * Wire-compatible with jetrover_base (src/jetrover_base/src/rrc_protocol.cpp)
@@ -20,6 +21,7 @@ extern "C" {
 /* header(2) + func(1) + len(1) + data(<=255) + crc(1) */
 #define RRC_MAX_FRAME_LEN (2 + 1 + 1 + RRC_MAX_DATA_LEN + 1)
 
+// 한글: FUNC 번호: 0 시스템(배터리, 벤더 PDF에 없고 실기로 확인), 1 LED, 2 부저, 3 모터, 4 PWM 서보, 5 버스 서보, 6 버튼, 7 IMU, 8 게임패드, 9 SBUS.
 typedef enum {
     RRC_FUNC_SYS = 0x00,        /* battery/system (undocumented by vendor, empirically reverse-engineered) */
     RRC_FUNC_LED = 0x01,
@@ -46,6 +48,7 @@ size_t rrc_encode(uint8_t func, const uint8_t *data, size_t data_len, uint8_t *o
 typedef struct {
     uint8_t buf[RRC_MAX_FRAME_LEN * 2];
     size_t len;
+// 한글: 스트리밍 파서 상태: 바이트를 넣고 rrc_parser_next로 CRC가 맞는 프레임을 꺼낸다.
 } rrc_parser_t;
 
 typedef struct {

@@ -1,9 +1,11 @@
+# 한글: 4개 바퀴를 2초마다 정/역 ±RPS로 번갈아 돌리며 IMU heartbeat와 배터리를 감시하고, STM32가 조용해지면 정지 후 보고한다. 바퀴를 반드시 띄울 것.
 """Alternate all four wheels forward/reverse every 2 s at +-RPS while watching the IMU
 heartbeat and battery voltage; stops and reports if the STM32 goes silent.
 Usage: python3 motor_load_test.py 0.3 180   (rps, seconds). WHEELS MUST BE OFF THE GROUND.
 """
 import serial,struct,time,sys
 RPS=float(sys.argv[1]); DUR=float(sys.argv[2]); PHASE=2.0
+# 한글: RRC CRC-8/MAXIM.
 def crc(b):
     c=0
     for x in b:

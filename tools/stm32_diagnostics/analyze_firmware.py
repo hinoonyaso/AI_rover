@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: 벤더 .hex 정적 분석: 벡터 테이블, IWDG 설정(prescaler/reload), Refresh 호출자, FreeRTOS 태스크 스택/우선순위/진입점. 주소는 휴리스틱(함수 시작=가장 가까운 PUSH)이다.
 """Static analysis of the Hiwonder RosRobotControllerM4.hex (no source available).
 
 Usage: python3 analyze_firmware.py ~/jetrover_ws/firmware_source/RosRobotControllerM4.zip

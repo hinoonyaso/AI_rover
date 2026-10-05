@@ -1,3 +1,4 @@
+// 한글: 호스트 단위 시험(하드웨어/크로스 툴체인 불필요). 골든 벡터는 PDF 예제와 실기에서 확인한 프레임이다.
 /* Host-native unit tests: no target hardware or cross toolchain needed.
  * Golden vectors come from two places:
  *  - firmware_source/"RRC Communication Protocol...pdf" worked examples
@@ -20,12 +21,14 @@ static int failures = 0;
     } \
 } while (0)
 
+// 한글: 표준 CRC-8/MAXIM 검증값("123456789" → 0xA1).
 static void test_crc8_maxim_check_value(void) {
     /* Standard MAXIM/DOW-CRC check value for the ASCII string "123456789". */
     const uint8_t check[] = "123456789";
     CHECK(rrc_crc8_maxim(check, 9) == 0xA1, "crc8_maxim check value");
 }
 
+// 한글: 실제 로봇에 보내 소리가 난 프레임을 그대로 회귀시험으로 남긴 것.
 static void test_buzzer_real_capture(void) {
     /* Frame this project actually sent to the robot: freq=1400Hz, on=200ms,
      * off=100ms, cycles=2 -- produced an audible beep on real hardware. */
@@ -48,6 +51,7 @@ static void test_buzzer_real_capture(void) {
           "buzzer unpack values");
 }
 
+// 한글: 공식 PDF 예제(LED 10회, 500ms 켜짐/300ms 꺼짐)와 일치하는지 확인.
 static void test_led_pdf_example(void) {
     /* PDF example 2: blink 10x, on 500ms, off 300ms. */
     uint8_t data[7] = {0x01, 0xF4, 0x01, 0x2C, 0x01, 0x0A, 0x00};

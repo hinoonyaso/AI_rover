@@ -1,3 +1,4 @@
+# 한글: 공용 헬퍼: 일정 시간 동안 /imu/data_raw를 평균낸다(보정 스크립트들이 사용).
 """Shared helper: average /imu/data_raw over a time window."""
 import statistics as st
 import time
@@ -10,6 +11,7 @@ from sensor_msgs.msg import Imu
 COLS = ("ax", "ay", "az", "gx", "gy", "gz")
 
 
+# 한글: 구간 평균을 구하는 헬퍼.
 def collect(seconds, node_name="imu_calibration"):
     """Return {name: (mean, std)} for accel (m/s^2) and gyro (rad/s), plus the sample count."""
     rows = []

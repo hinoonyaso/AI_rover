@@ -1,3 +1,4 @@
+// 한글: lib/core 호스트 단위 시험(하드웨어 불필요).
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +54,7 @@ static void feed_motor(enc_motor_t *m, plant_t *p, int32_t wrap, int64_t *hw_unw
     enc_motor_update(m, 0.01f, total - (*hw_unwrapped_prev / wrap) * wrap);
 }
 
+// 한글: PID 수식(Hiwonder 문서)과 수치가 같은지 손계산 값으로 확인.
 static void test_pid(void)
 {
     rrc_pid_t pid;
@@ -64,6 +66,7 @@ static void test_pid(void)
     NEAR(pid.output, 8.55f, 1e-4f, "pid second step");
 }
 
+// 한글: 1차 지연 모델의 가짜 모터로 속도 추종(정/역/상한/NaN) 확인.
 static void test_enc_motor_tracks(void)
 {
     plant_t p = {0, 2.0f, 0.15f, 0, 1.0f, 0};
@@ -93,6 +96,7 @@ static void test_enc_motor_tracks(void)
     NEAR(m.pid.set_point, 0.0f, 1e-6f, "NaN command becomes 0");
 }
 
+// 한글: 60000 오버플로(상향/하향)를 넘어도 속도가 변하지 않는지 확인.
 static void test_enc_motor_wraps(void)
 {
     /* Start near the 60000 wrap so both the up-wrap and (after reversing) the down-wrap happen. */
@@ -136,6 +140,7 @@ static void test_enc_motor_dead_zone_and_fault(void)
     CHECK(m.fault == ENC_MOTOR_FAULT_NONE, "driver fault clears when pin releases");
 }
 
+// 한글: 엔코더 부호가 반대일 때(양의 되먹임) 래치로 멈추고, encoder_sign=-1이면 정상 동작하는지 확인.
 static void test_enc_motor_runaway_latch(void)
 {
     plant_t p = {0, 2.0f, 0.15f, 0, -1.0f, 0}; /* reversed encoder: positive feedback */
@@ -172,6 +177,7 @@ static void test_enc_motor_runaway_latch(void)
     NEAR(m2.rps, 1.0f, 0.1f, "reversed encoder tracks with sign fix");
 }
 
+// 한글: 호스트 base_node 수식과 동일한 출력인지, 정/역 변환 왕복이 일치하는지 확인.
 static void test_mecanum(void)
 {
     const mecanum_cfg_t cfg = {0.216f, 0.195f, 0.097f}; /* config/base.yaml */
@@ -200,6 +206,7 @@ static void test_mecanum(void)
 
 static void set_pulse_noop(void *ctx, int pulse) { (void)ctx; (void)pulse; }
 
+// 한글: 명령 timeout, e-stop, 저전압 히스테리시스, 바퀴 fault 전체 정지, 비활성 시 명령 무시 확인.
 static void test_robot_ctrl(void)
 {
     enc_motor_t mt[4];
@@ -349,6 +356,7 @@ static void test_pwm_servo(void)
     CHECK(s.offset == 100, "offset clamped to +-100");
 }
 
+// 한글: 손으로 계산한 프레임/체크섬과 PDF 업로드 예제 배치와 일치하는지 확인.
 static void test_bus_servo(void)
 {
     uint8_t f[BUS_SERVO_MAX_FRAME];
@@ -436,6 +444,7 @@ static void test_gamepad(void)
     CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, rep, 3, &g) == -1, "short report rejected");
 }
 
+// 한글: 가짜 I2C 버스: MPU6050/QMI8658 탐색과 변환을 하드웨어 없이 시험한다.
 /* ---------- fake I2C bus ---------- */
 typedef struct {
     uint8_t mpu_regs[256];

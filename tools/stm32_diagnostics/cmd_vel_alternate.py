@@ -1,3 +1,4 @@
+# 한글: /cmd_vel을 ±V m/s로 2초마다 번갈아 20Hz로 발행한다. 반드시 바퀴를 띄운 상태에서 사용.
 """Publish /cmd_vel alternating +-V m/s every 2 s at 20 Hz for N seconds.
 Usage: python3 cmd_vel_alternate.py 0.2 180. WHEELS OFF THE GROUND.
 """

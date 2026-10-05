@@ -1,3 +1,4 @@
+# 한글: RRC 프레임을 직접 만들고 파싱하는 최소 헬퍼(부저, 버스 서보 등 jetrover_base가 아직 안 쓰는 FUNC를 raw로 시험할 때 사용).
 """RRC 프레임을 직접 만들고 파싱하는 최소 헬퍼. jetrover_base가 아직 안 쓰는
 FUNC(부저 FUNC2, 버스 서보 FUNC5 등)를 raw로 시험할 때 쓴다.
 CRC8-MAXIM은 src/jetrover_base/src/rrc_protocol.cpp의 crc8_maxim과 동일 알고리즘.

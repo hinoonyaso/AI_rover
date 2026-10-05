@@ -1,7 +1,9 @@
+// 한글: STM32 HAL 설정: 필요한 모듈만 활성화.
 #ifndef STM32F4xx_HAL_CONF_H
 #define STM32F4xx_HAL_CONF_H
 
 #define HAL_MODULE_ENABLED
+// 한글: 사용하는 HAL 모듈만 켠다(코드 크기 절약).
 #define HAL_ADC_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
@@ -16,6 +18,7 @@
 #define HAL_UART_MODULE_ENABLED
 #define HAL_EXTI_MODULE_ENABLED
 
+// 한글: 외부 크리스털 8MHz, LSI 32kHz(IWDG 클럭).
 #define HSE_VALUE 8000000U
 #define HSE_STARTUP_TIMEOUT 100U
 #define HSI_VALUE 16000000U

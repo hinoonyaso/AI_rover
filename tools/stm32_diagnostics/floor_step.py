@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: 실제 base_node를 통한 바닥에서의 짧고 감독된 1회 이동(최대 0.2m/s, 6초, 0.8m). IMU가 0.5초 넘게 끊기면 즉시 중단하고 정지한다. 끝나면 정지 명령을 반복 발행한다.
 """One short, supervised move on the floor through the real base_node.
 
 Usage: python3 floor_step.py VX VY WZ SECONDS      (m/s, m/s, rad/s, s; max 0.2 m/s, 6 s, 0.8 m)

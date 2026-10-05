@@ -46,17 +46,20 @@ namespace jetrover_base
 //
 // The STM32 keeps running the last motor command it received, so a watchdog
 // stops the wheels whenever /cmd_vel goes quiet, and on shutdown.
+// 한글: STM32 시리얼 링크를 열고 RRC 프레임을 파싱해 IMU(imu/data_raw)·배터리를 발행하고, /cmd_vel로 메카넘 섀시를 구동하며 open-loop 오도메트리(odom_raw)를 낸다. 팔 버스 서보 위치도 5Hz 정도로 폴링해 joint_states로 발행한다. STM32가 엔코더/바퀴 속도를 안 보내므로 odom_raw는 "명령 속도 적분"이라 디버깅용이고, EKF에는 twist만 넣는다. STM32는 마지막 모터 명령을 계속 실행하므로 /cmd_vel이 끊기거나 종료할 때 워치독이 바퀴를 세운다.
 class BaseNode : public rclcpp::Node
 {
 public:
   BaseNode()
   : Node("base_node")
   {
+    // 한글: 파라미터 선언: 시리얼 포트(by-id 경로는 재부팅해도 안 바뀜), baudrate 1Mbps, 폴링 주기 5ms. 값은 config/base.yaml에서 덮어쓴다.
     port_name_ = declare_parameter<std::string>(
       "port", "/dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00");
     baudrate_ = declare_parameter<int>("baudrate", 1000000);
     const int poll_period_ms = declare_parameter<int>("poll_period_ms", 5);
 
+    // 한글: 섀시 형상과 속도 제한. max_linear/max_angular는 /cmd_vel을 호스트에서 자르는 안전 한도다.
     wheelbase_ = declare_parameter<double>("wheelbase", 0.216);
     track_width_ = declare_parameter<double>("track_width", 0.195);
     wheel_diameter_ = declare_parameter<double>("wheel_diameter", 0.097);
@@ -67,6 +70,7 @@ public:
 
     imu_frame_ = declare_parameter<std::string>("imu_frame", "imu_link");
     gravity_ = declare_parameter<double>("gravity", 9.80665);
+    // 한글: 자이로 bias(변환된 base_link 축, rad/s). 길이가 3이 아니면 0으로 대체한다.
     gyro_bias_ = declare_parameter<std::vector<double>>("gyro_bias", {0.0, 0.0, 0.0});
     if (gyro_bias_.size() != 3) {
       RCLCPP_WARN(get_logger(), "gyro_bias must have 3 elements; using zeros");
@@ -87,6 +91,7 @@ public:
     twist_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
       "wheel_twist", 10);
     last_odom_time_ = now();
+    // 한글: odom_raw 발행 타이머(기본 50Hz). 명령 속도를 적분한다.
     odom_timer_ = create_wall_timer(
       std::chrono::duration<double>(1.0 / odom_rate), [this]() {publish_odom();});
 
@@ -97,6 +102,7 @@ public:
     stats_timer_ = create_wall_timer(1s, [this]() {log_stats();});
     watchdog_timer_ = create_wall_timer(50ms, [this]() {watchdog();});
 
+    // 한글: 로봇팔 관련: 위치 읽기(joint_states)는 기본 켜짐, 팔 구동(arm_command_enabled)은 기본 꺼짐(안전).
     publish_arm_joint_states_ = declare_parameter<bool>("publish_arm_joint_states", true);
     if (publish_arm_joint_states_) {
       arm_joint_names_ = declare_parameter<std::vector<std::string>>(
@@ -134,6 +140,7 @@ public:
           std::chrono::duration<double>(1.0 / std::max(1.0, arm_poll_hz)),
           [this]() {publish_arm_joint_states();});
 
+        // 한글: 팔 구동 가드: 한 번에 움직일 수 있는 각도(arm_max_step_rad)와 펄스 범위(100~900)를 제한해 잘못된 명령이 관절을 때리지 못하게 한다.
         // Arm motion is off by default: the first software-driven arm move on this robot
         // (checklist 14). Every guard below exists so a bad command can't slam a joint.
         arm_command_enabled_ = declare_parameter<bool>("arm_command_enabled", false);
@@ -166,6 +173,7 @@ public:
     }
   }
 
+  // 한글: 종료 시 반드시 모터를 정지하고 crash guard를 해제한다.
   ~BaseNode() override
   {
     stop_motors();
@@ -173,6 +181,7 @@ public:
   }
 
 private:
+  // 한글: 5ms마다 시리얼을 읽어 파서에 넣고 완성된 패킷을 처리한다. 오류가 나면 포트를 닫고 다음 틱에 다시 연다(USB 재연결 대응).
   void poll()
   {
     if (!serial_.is_open() && !try_open()) {
@@ -203,6 +212,7 @@ private:
     }
   }
 
+  // 한글: 시리얼을 열고 즉시 정지 명령을 보낸다(이전 세션의 잔여 명령 제거). 비정상 종료 대비 정지 프레임을 crash guard에 등록한다.
   bool try_open()
   {
     if (serial_.open(port_name_, baudrate_)) {
@@ -219,6 +229,7 @@ private:
     return false;
   }
 
+  // 한글: 메카넘 역기구학. 1,2번 모터=왼쪽 앞/뒤, 3,4번=오른쪽 앞/뒤이며 오른쪽은 반대로 장착돼 부호를 뒤집는다. 출력은 바퀴 rev/s. firmware/rrc_m4/lib/core/mecanum.c와 동일 수식.
   // Mecanum inverse kinematics (same wheel order/signs as Hiwonder's mecanum.py):
   // motors 1,2 = left front/rear, 3,4 = right front/rear; the right side is
   // mounted mirrored, so its command is negated. Output is wheel rev/s.
@@ -235,6 +246,7 @@ private:
     };
   }
 
+  // 한글: /cmd_vel 수신: 속도를 제한하고 시각을 기록한 뒤 모터 명령을 보낸다. 오도메트리 적분용으로 명령값도 저장한다.
   void on_cmd_vel(const geometry_msgs::msg::Twist & msg)
   {
     const double vx = std::clamp(msg.linear.x, -max_linear_, max_linear_);
@@ -250,6 +262,7 @@ private:
   }
 
   // Integrates the commanded body velocity (open loop) and publishes it.
+  // 한글: 명령 속도를 적분해 odom_raw와 wheel_twist를 발행한다. STM32가 멈췄거나 시리얼이 닫혔으면 속도는 0으로 본다. 공분산이 큰 이유: 실제 속도가 아니라 명령값이라서.
   void publish_odom()
   {
     const rclcpp::Time stamp = now();
@@ -305,6 +318,7 @@ private:
 
   // The STM32 streams IMU at ~100 Hz. Silence means its firmware (or power) hung:
   // the USB-UART bridge stays enumerated, so the port looks fine from the host.
+  // 한글: STM32는 IMU를 약 100Hz로 계속 보내므로 침묵하면 펌웨어(또는 전원)가 멈춘 것이다. USB-UART 브리지는 계속 보이기 때문에 포트만 봐서는 모른다. 침묵이 길면 정지 명령을 보낸다.
   void check_heartbeat()
   {
     if (!serial_.is_open() || stm32_silent_) {
@@ -319,6 +333,7 @@ private:
     }
   }
 
+  // 한글: 50ms마다: STM32 heartbeat 확인 + cmd_vel이 timeout 동안 없으면 바퀴 정지.
   void watchdog()
   {
     check_heartbeat();
@@ -328,6 +343,7 @@ private:
     }
   }
 
+  // 한글: 모든 바퀴를 0 rev/s로. 상태/명령 캐시도 초기화한다.
   void stop_motors()
   {
     moving_ = false;
@@ -346,6 +362,7 @@ private:
     }
   }
 
+  // 한글: 수신 패킷 분기: 배터리 → IMU → 버스 서보 위치 순서로 시도한다.
   void handle_packet(const RrcPacket & packet)
   {
     uint16_t millivolts = 0;
@@ -489,6 +506,7 @@ private:
   // sensor_msgs/JointState (name + position in rad) -> one bus servo move frame.
   // The whole command is rejected (nothing sent) if any joint is unknown, has no
   // position reading yet, or would jump more than arm_max_step_rad from where it is.
+  // 한글: JointState(이름+라디안)를 버스 서보 이동 프레임으로 변환한다. 알 수 없는 관절, 위치 읽기 전 관절, 한 번에 arm_max_step_rad 넘게 움직이는 관절이 하나라도 있으면 전체를 거부(아무것도 안 보냄)한다.
   void on_arm_command(const sensor_msgs::msg::JointState & msg)
   {
     if (!serial_.is_open() || msg.name.size() != msg.position.size() || msg.name.empty()) {
@@ -544,6 +562,7 @@ private:
   // Joints whose servo hasn't reported yet are simply left out of this message
   // (robot_state_publisher keeps their last/default value); mimic joints (gripper
   // fingers) are not listed here -- the URDF's <mimic> tags derive them from r_joint.
+  // 한글: 지금까지 읽은 서보 값을 라디안으로 발행. 아직 못 읽은 관절은 빠진다. 그리퍼 손가락은 URDF mimic이 r_joint에서 유도한다.
   void publish_arm_joint_states()
   {
     sensor_msgs::msg::JointState msg;
@@ -566,6 +585,7 @@ private:
 
   // Battery voltage as reported by the STM32 (about once per second). Kept so a hang can be
   // correlated with the voltage at that moment.
+  // 한글: 배터리 전압(mV→V) 발행, 하한 미만이면 30초마다 경고.
   void publish_battery(uint16_t millivolts)
   {
     sensor_msgs::msg::BatteryState msg;
@@ -589,6 +609,7 @@ private:
   // robot: flat gives az = -g, left side up gives ax = -g, nose down gives
   // ay = +g), so they are rotated into the base_link convention
   // (x forward, y left, z up) before publishing. gyro_bias is in that frame, rad/s.
+  // 한글: IMU 변환 발행: 보드 축(X=오른쪽, Y=뒤, Z=아래)을 base_link(x 앞, y 왼쪽, z 위)로 회전하고 g→m/s², deg/s→rad/s로 바꾼 뒤 gyro_bias를 뺀다. orientation_covariance[0]=-1은 방향 추정 없음(REP-145).
   void publish_imu(const ImuRaw & imu)
   {
     constexpr double kDegToRad = M_PI / 180.0;
@@ -707,6 +728,7 @@ private:
 
 }  // namespace jetrover_base
 
+// 한글: 노드 진입점.
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

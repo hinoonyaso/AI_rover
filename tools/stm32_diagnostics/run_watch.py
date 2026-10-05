@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 한글: 로봇이 달리는 동안 STM32와 배터리를 감시한다. IMU가 --silent초 넘게 없거나(hang) 전압이 --min-volts 미만이면 코드 2로 종료. 주기적으로 snapshot.png를 갱신하고 로그를 남긴다.
 """Watch the STM32 and the battery while the robot drives; exit with a message on trouble.
 
 Usage: python3 run_watch.py [--min-volts 9.3] [--silent 2.0] [--snapshot-every 20] [--log FILE]
