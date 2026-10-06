@@ -26,7 +26,7 @@ Hiwonder 기본 소프트웨어를 쓰지 않고, STM32(RRC 보드) 프로토콜
 | 자체 STM32 펌웨어 (`firmware/rrc_m4/`) | **L0(호스트 단위시험)까지 완료, 실기 flash/bring-up 전** (RRC + micro-ROS 두 빌드) |
 | **STM32 안정성** | 재플래시(2026-09-27) 이후 hang 재발 없음, **원인은 미확정** — 아래 "알려진 문제" 참고 |
 
-항목별 상세는 [checklist/PROJECT_CHECKLIST.md](checklist/PROJECT_CHECKLIST.md), 요약은 [checklist/README.md](checklist/README.md).
+로드맵·아키텍처·설계 노트는 [docs/](docs/README.md). 항목별 상세는 [checklist/PROJECT_CHECKLIST.md](checklist/PROJECT_CHECKLIST.md), 요약은 [checklist/README.md](checklist/README.md).
 
 ## 구조
 

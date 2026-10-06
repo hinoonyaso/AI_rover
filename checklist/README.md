@@ -49,3 +49,8 @@
 6. [ ] STM32 encoder 실기 bring-up → encoder odom + EKF → Nav2 재평가 (→ MPPI A/B)
 7. [ ] Arm: `ros2_control` + `FollowJointTrajectory` 설계 (`arm/command`·`arm/torque`는 진단용으로 유지)
 8. [~] GitHub Actions CI(`.github/workflows/ci.yml`: 펌웨어 host test + ROS Jazzy colcon build/test) 작성. 펌웨어 쪽은 로컬 확인, ROS 잡은 첫 push 후 Actions 결과로 확인 필요
+
+## 문서화 작업 (2026-10-06, 코드 변경 없음)
+- [x] `docs/` 신설: ROADMAP(재정렬 순서·게이트·MVP), architecture(Current vs Target, TF, 센서 커버리지), design/depth-obstacle(임시 방식·한계·검증 항목), case-studies/nav-depth-obstacle(Failure→Root Cause→Fix, 결과 수치는 미측정), benchmarks/navigation/tuning-history
+- [x] PRD/TEST_PLAN 추가: `prd/encoder-odometry*.md`, `prd/nav2-mppi-ab-test-plan.md`, `prd/nav2-baseline-test-plan.md`에 열린 결정 추가
+- [ ] 후속(코드/설정 건드리는 일이라 승인 필요): `nav2_params.yaml` 주석을 "짧은 이유 + tuning-history 링크"로 축약, `ros2 run tf2_tools view_frames`/`rqt_graph` 실기 이미지 저장

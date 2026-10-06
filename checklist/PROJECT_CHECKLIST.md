@@ -119,6 +119,12 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [~] 여러 속도 구간에서 오차 측정: EKF(명령 적분)는 0.05/0.1/0.2 m/s에서 일관(0.301/0.602/0.608 m). 실측(줄자)은 0.2 m/s 등 아직
 - [ ] 바닥 종류별 slip 측정
 - [ ] (가능하면) STM32 firmware에서 wheel RPS feedback 추가 → encoder 기반 wheel odometry 전환
+  - **2026-10-06 구체화(계획)**: PRD `prd/encoder-odometry.md`, 시험 `prd/encoder-odometry-test-plan.md`(E0~E6). 선행: Nav2 baseline(`prd/nav2-baseline-test-plan.md`). 현재 순서/게이트는 `docs/ROADMAP.md`.
+  - [ ] E0 `mecanum_forward` C++(`jetrover_base`)↔Python(`jetrover_microros/rrc_bridge.py`) 교차검증 시험 (L0/L1, 하드웨어 불필요)
+  - [ ] E1 엔코더 부호·ticks/rev 실측 (L2, ST-Link·flash 승인 필요)
+  - [ ] E2/E3 바퀴 띄운 속도 응답, MCU 자체 정지 시험 (L3)
+  - [ ] E4/E5 바닥 직선·회전에서 open-loop vs encoder odom 비교, EKF 공분산 근거 설정 (L4)
+  - [ ] E6 Nav2 baseline 15회 재시험(`encoder_ekf` 태그) + Before/After 표
 
 ## 4. Robot Description / TF
 목표 TF: map → odom → base_footprint → base_link → {imu_link, lidar_link, camera_link(color/depth optical), arm_base_link → arm}

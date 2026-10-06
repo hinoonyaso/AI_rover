@@ -17,7 +17,7 @@ JetInspect-M 개발 순서(`prd/jetinspect-m.md` 13절)의 2단계. SLAM은 이�
 - 정량 측정: Goal 위치오차, Localization 안정성(pose drift), 성공률(`checklist` 8번의 지표 정의 재사용)
 
 ## 비범위 (이번 단계에서 안 함)
-- MPPI 컨트롤러 전환(최종 단계, 나중에)
+- MPPI 컨트롤러 전환(최종 단계, 나중에) — **2026-10-06 보정**: 엔코더 odom 재시험 직후 A/B 비교로 앞당김, `prd/nav2-mppi-ab-test-plan.md`
 - Nav2 BT 커스터마이징(`checklist` 9번) — 기본 BT로 `NavigateToPose`만 되면 충분, 커스텀 BT는 Mission
   단계(개발 순서 7단계)에서
 - AprilTag 정밀 정렬(`checklist` 10번, 별도 단계)

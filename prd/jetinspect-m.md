@@ -44,7 +44,7 @@
 작업자 → "A라인 점검해줘" → 6CH Mic Array
   → DOA → AEC → VAD → STT → Local LLM → Mission JSON
   → Mission Manager → Behavior Tree
-      ├── Navigation   (LiDAR/IMU/Encoder·Odom → EKF/TF2 → SLAM/Nav2)
+      ├── Navigation   (LiDAR/IMU/Encoder·Odom → EKF/TF2 → SLAM/Nav2)   # Odom: 현재 open-loop(cmd_vel 적분), Encoder는 계획
       ├── Perception    (RGB-D → YOLO/OCR/Depth)
       └── Manipulation  (6DoF Arm + Gripper, TF2, MoveIt2)
       └─→ Inspection Logic → 정상/이상/대응(Pick·Push·Place) → Mission Result
@@ -178,6 +178,10 @@ ui/                   api_server, dashboard
 7. **Mission BT**: 위 5개 영역을 BehaviorTree.CPP로 묶는다 (2절 참고)
 8. **Battery/Safety**: 배터리 기반 Mission 판단(5절), Safety Manager(`prd/jetinspect-m-pipelines.md` 16절)
 9. **전체 통합**: End-to-End 시나리오(10절) 재현, 이어서 Dashboard(FastAPI/React/SQLite/RAG, 17절)
+
+> **2026-10-06 보정**: 위 순서는 유지하되 2단계(SLAM/Nav2)를 "Nav2 baseline → 엔코더 odom → 같은 시험 재측정(Before/After) → DWB vs MPPI"로
+> 세분화하고, MVP를 `Stack Light + Dropped Part` 두 가지로 줄인다(Gauge/OCR/Valve/버튼은 확장). 근거와 단계별 게이트는 `docs/ROADMAP.md`.
+> 아키텍처의 "Encoder·Odom"은 **현재 cmd_vel 적분 open-loop**이며 엔코더 기반은 **계획**이다(`prd/encoder-odometry.md`).
 
 ## 14. 성능 평가 지표 (목표치, 실제 시험으로 최종 확정)
 | KPI | 평가 | 목표 |

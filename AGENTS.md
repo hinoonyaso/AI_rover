@@ -38,6 +38,8 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 **음성/LLM부터 먼저 만들지 않는다** — 재미는 있지만 로봇 프로젝트의 핵심(자율주행·인식·조작 통합)이
 뒤로 밀린다. 이 순서와 다른 순서로 진행해달라는 요청이 오면, 순서를 바꾸는 이유를 먼저 확인한다.
 전체 배경은 `prd/jetinspect-m.md` 13절.
+**2026-10-06 보정(사용자 승인)**: 순서는 그대로이고 2단계를 `Nav2 baseline → 엔코더 odom → Before/After 재시험 → DWB vs MPPI`로 세분화했다.
+`ros2_control` 팔 PRD는 그 뒤에 쓴다. 단계별 게이트는 `docs/ROADMAP.md`.
 
 ### 1) PRD
 범위가 애매하면 코딩 전에 **먼저 사용자에게 명확화 질문**을 한다(목표, 범위, 비범위, 제약, 완료 기준).
@@ -93,6 +95,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `setup/` | `ENVIRONMENT_SETUP.md`: 이 로봇에 한 sudo/apt/시스템 설치 전체 기록 (새 Jetson 재현용) |
 | `checklist/` | 전체 체크리스트와 진행률 (3-File System의 Task 파일 역할도 겸함) |
 | `troubleshooting/` | 오류 원인과 해결 기록 |
+| `docs/` | 로드맵(`ROADMAP.md`), 아키텍처, 설계 노트, 사례 정리, 벤치마크 결과/튜닝 이력. 인덱스는 `docs/README.md` |
 | `prd/` | 새 기능 착수 전 PRD (3-File System 1번째 파일). 언제/어떻게 쓰는지는 `prd/README.md`. `jetinspect-m.md`(+`-pipelines.md`)가 프로젝트 전체 기획서 |
 | `firmware/rrc_m4/` | STM32 자체 펌웨어 재작성 프로젝트(계획: `~/.claude/plans/enchanted-chasing-sky.md`). `lib/{protocol,core,comm}`(호스트 단위 시험) + `app/`(HAL+FreeRTOS, RRC/micro-ROS 두 빌드). **flash 전**, 개요는 `firmware/rrc_m4/README.md` |
 | `src/jetrover_microros/` | micro-ROS 펌웨어용 호스트 패키지(브리지 노드 + agent launch). `jetrover_base`와 같은 시리얼 포트를 쓰므로 동시에 못 띄움 |
