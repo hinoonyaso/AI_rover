@@ -1,0 +1,27 @@
+# 한글: IK 솔버 = pick_ik (2026-10-07). 5자유도 팔은 임의의 6D 자세를 정확히 못 만든다.
+#  - TRAC-IK/KDL(전체 자세): 위치 목표와 RViz 마커 드래그가 거의 전부 실패(2026-10-06).
+#  - KDL position_only_ik: 위치는 되지만 자세를 완전히 무시 -> RViz 마커의 회전 링이 아무 효과 없음.
+#  - pick_ik: 위치는 정확히(position_threshold), 자세는 가중치(rotation_scale)로 "가능한 만큼" 맞춘다.
+#    정확 모드: 위치 1 mm, 자세 0.01 rad 안이어야 해(그래야 회전 링이 실제로 자세를 바꾼다).
+#    근사 모드(RViz "Approx IK Solutions" 체크): 위치 5 mm 안이면 자세는 가능한 만큼만 맞춘 해를 받아들인다
+#    -> 5자유도로 못 만드는 자세(옆으로 비틀기)가 섞인 드래그도 따라온다.
+#    (2026-10-07 시행착오: orientation_threshold 0.6으로 두면 0.6 rad 미만 회전은 "이미 충분"으로 보고 관절을 안 바꿈,
+#     위치 드래그는 자세 유지 조건 때문에 대부분 실패했다.)
+# pick_ik: exact position, orientation as a weighted soft goal (5-DoF cannot realise arbitrary orientations).
+# 이전 KDL 설정: kinematics_solver: kdl_kinematics_plugin/KDLKinematicsPlugin, position_only_ik: true
+arm:
+  kinematics_solver: pick_ik/PickIkPlugin
+  kinematics_solver_timeout: 0.05
+  kinematics_solver_attempts: 3
+  mode: global
+  position_scale: 1.0
+  rotation_scale: 0.5
+  position_threshold: 0.001
+  orientation_threshold: 0.01
+  cost_threshold: 0.001
+  minimal_displacement_weight: 0.0
+  gd_step_size: 0.0001
+  approximate_solution_position_threshold: 0.005
+  approximate_solution_orientation_threshold: 3.14
+  approximate_solution_joint_threshold: 3.14
+  approximate_solution_cost_threshold: 10.0

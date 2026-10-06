@@ -1,0 +1,45 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: false
+    - Class: moveit_rviz_plugin/MotionPlanning
+      Name: MotionPlanning
+      Enabled: true
+      Planning Request:
+        Planning Group: arm
+        Query Goal State: true
+        Interactive Marker Size: 0.15
+        Query Start State: false
+      Planning Scene Topic: /monitored_planning_scene
+      Robot Description: robot_description
+      Scene Robot:
+        Robot Alpha: 0.5
+        Show Scene Robot: true
+  # 한글: Tools가 없으면 Interact 도구가 없어 MoveIt의 끌어서 옮기는 마커(화살표/링)가 아예 그려지지 않는다(2026-10-07 원인 확인).
+  # Without Tools there is no Interact tool, and RViz hides all interactive marker controls (the MoveIt drag marker).
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+  Global Options:
+    Fixed Frame: base_link
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 1.2
+      Focal Point: {X: 0.1, Y: 0.0, Z: 0.15}
+      Pitch: 0.5
+      Yaw: 0.8

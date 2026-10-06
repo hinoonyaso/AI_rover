@@ -18,6 +18,7 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "jetrover_base/command_guard.hpp"
@@ -193,6 +194,14 @@ public:
             "arm/command", 1,
             [this](sensor_msgs::msg::JointState::ConstSharedPtr msg) {on_arm_command(*msg);});
           arm_tx_timer_ = create_wall_timer(150ms, [this]() {pump_arm_tx_queue();});
+          // 한글: MoveIt 실행 브리지용. 점마다 이동 시간(time_from_start)을 지정할 수 있다. 검증/클램프는 arm/command와 동일.
+          // Timed variant for the MoveIt execution bridge: the first point's time_from_start sets
+          // the move duration; every guard is the same as arm/command.
+          arm_timed_sub_ = create_subscription<trajectory_msgs::msg::JointTrajectory>(
+            "arm/command_timed", 1,
+            [this](trajectory_msgs::msg::JointTrajectory::ConstSharedPtr msg) {
+              on_arm_command_timed(*msg);
+            });
           arm_torque_sub_ = create_subscription<std_msgs::msg::Bool>(
             "arm/torque", 1,
             [this](std_msgs::msg::Bool::ConstSharedPtr msg) {set_arm_torque(msg->data);});
@@ -541,6 +550,34 @@ private:
   // 한글: JointState(이름+라디안)를 버스 서보 이동 프레임으로 변환한다. 알 수 없는 관절, 위치 읽기 전 관절, 한 번에 arm_max_step_rad 넘게 움직이는 관절이 하나라도 있으면 전체를 거부(아무것도 안 보냄)한다.
   void on_arm_command(const sensor_msgs::msg::JointState & msg)
   {
+    on_arm_command(msg, arm_move_duration_s_);
+  }
+
+  // 한글: JointTrajectory의 첫 점만 쓴다(브리지가 점을 하나씩 보낸다). 이동 시간은 [0.1, 5] 초로 제한 --
+  // 너무 짧으면 서보가 급가속, 너무 길면 브리지의 시간 관리가 어긋난다.
+  // Only the first point is used (the bridge streams one point at a time). Duration is clamped to
+  // [0.1, 5] s: too short = violent servo move, too long = the bridge loses track of time.
+  void on_arm_command_timed(const trajectory_msgs::msg::JointTrajectory & traj)
+  {
+    if (traj.points.empty() || traj.joint_names.size() != traj.points[0].positions.size()) {
+      RCLCPP_WARN(get_logger(), "arm/command_timed ignored: empty or name/position mismatch");
+      return;
+    }
+    const auto & pt = traj.points[0];
+    const double dur = static_cast<double>(pt.time_from_start.sec) +
+      static_cast<double>(pt.time_from_start.nanosec) * 1e-9;
+    if (!std::isfinite(dur)) {
+      RCLCPP_WARN(get_logger(), "arm/command_timed rejected: non-finite duration");
+      return;
+    }
+    sensor_msgs::msg::JointState js;
+    js.name = traj.joint_names;
+    js.position = pt.positions;
+    on_arm_command(js, std::min(std::max(dur, 0.1), 5.0));
+  }
+
+  void on_arm_command(const sensor_msgs::msg::JointState & msg, double duration_s)
+  {
     if (!serial_.is_open() || msg.name.size() != msg.position.size() || msg.name.empty()) {
       RCLCPP_WARN(get_logger(), "arm/command ignored: serial closed or name/position mismatch");
       return;
@@ -590,7 +627,7 @@ private:
         get_logger(), "arm move: %s id=%u -> %u", msg.name[k].c_str(), targets[k].id,
         targets[k].pulse);
     }
-    const auto frame = build_bus_servo_set_position(arm_move_duration_s_, targets);
+    const auto frame = build_bus_servo_set_position(duration_s, targets);
     if (!serial_.write(frame.data(), frame.size())) {
       RCLCPP_ERROR(get_logger(), "arm move write failed: %s", serial_.last_error().c_str());
     }
@@ -749,6 +786,7 @@ private:
   int64_t arm_pulse_min_{100};
   int64_t arm_pulse_max_{900};
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr arm_cmd_sub_;
+  rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_timed_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr arm_torque_sub_;
   rclcpp::TimerBase::SharedPtr arm_tx_timer_;
   rclcpp::TimerBase::SharedPtr arm_home_timer_;

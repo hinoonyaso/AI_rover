@@ -1,0 +1,14 @@
+# 한글: MoveIt이 쓰는 관절 한계. 서보 240도/1000틱 = 0.00419 rad/틱 이라, base_node 펄스 클램프(100~900, 중심 500 기준 ±400틱)는
+# ±1.676 rad. 그런데 실제 팔이 손으로 조작한 뒤 joint3 = 1.688처럼 클램프 밖에 있을 수 있어(MoveIt은 시작 상태가 한계 밖이면 계획을
+# 거부함) 한계는 ±1.70으로 두고, 실행 쪽(base_node)의 펄스 클램프가 최종 안전장치가 된다.
+# The real arm can rest slightly outside the clamp (joint3 = 1.688 seen); MoveIt refuses a start state outside limits,
+# so limits are +-1.70 and base_node's pulse clamp remains the final guard. 속도/가속은 처음엔 느리게(시험하며 올린다). 속도 0.4 rad/s: 관절 읽기 갱신이 느려서(아래 base_node 주석) base_node step 가드 0.35 rad를 넘기지 않게.
+# 240 deg / 1000 ticks = 0.00419 rad/tick, so base_node's pulse clamp (100..900) is +-1.676 rad.
+# Velocity/accel start conservative.
+joint_limits:
+  joint1: {has_position_limits: true, min_position: -1.70, max_position: 1.70, has_velocity_limits: true, max_velocity: 0.4, has_acceleration_limits: true, max_acceleration: 1.0}
+  joint2: {has_position_limits: true, min_position: -1.70, max_position: 1.70, has_velocity_limits: true, max_velocity: 0.4, has_acceleration_limits: true, max_acceleration: 1.0}
+  joint3: {has_position_limits: true, min_position: -1.70, max_position: 1.70, has_velocity_limits: true, max_velocity: 0.4, has_acceleration_limits: true, max_acceleration: 1.0}
+  joint4: {has_position_limits: true, min_position: -1.70, max_position: 1.70, has_velocity_limits: true, max_velocity: 0.4, has_acceleration_limits: true, max_acceleration: 1.0}
+  joint5: {has_position_limits: true, min_position: -1.70, max_position: 1.70, has_velocity_limits: true, max_velocity: 0.5, has_acceleration_limits: true, max_acceleration: 1.5}
+  r_joint: {has_position_limits: true, min_position: -1.70, max_position: 1.70, has_velocity_limits: true, max_velocity: 0.5, has_acceleration_limits: true, max_acceleration: 1.5}

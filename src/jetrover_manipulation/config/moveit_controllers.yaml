@@ -1,0 +1,17 @@
+# 한글: MoveIt -> 컨트롤러 연결. 실제 실행은 FollowJointTrajectory 액션 서버(브리지, 다음 단계)가 받는다.
+# 지금은 fake_execution(launch 인자)로 계획/시각화만 한다.
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names: [arm_controller, gripper_controller]
+  arm_controller:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
+    default: true
+    joints: [joint1, joint2, joint3, joint4, joint5]
+  # 한글: 그리퍼 부호는 메쉬 관통 계산으로 검증됨(-1, troubleshooting/030). / sign verified.
+  gripper_controller:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
+    default: false   # 두 컨트롤러 모두 default: true면 move_group이 segfault
+    joints: [r_joint]

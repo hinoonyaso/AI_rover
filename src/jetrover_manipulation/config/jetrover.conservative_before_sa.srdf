@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 한글: JetRover 팔 SRDF. 참고 ~/AI_secretary_robot/.../jetrover_arm_moveit/config/jetrover_arm.srdf (Humble)를
+     Jazzy용으로 정리: 그리퍼(r_joint)를 팔 그룹에서 분리하고 home 자세를 실기 주행 자세로 맞춤.
+     충돌 매트릭스는 인접 링크 면제만 넣은 "보수적" 버전이다. MoveIt 설치 후 Setup Assistant(Self-Collisions)로
+     재생성해야 한다. / Reference SRDF ported; collision matrix is conservative (adjacent links only) and
+     must be regenerated with the Setup Assistant after MoveIt is installed. -->
+<robot name="jetrover">
+  <virtual_joint name="world_joint" type="fixed" parent_frame="world" child_link="base_footprint"/>
+
+  <!-- 한글: arm = base_link에서 end_effector_link까지 체인(joint1~5, link5 앞 0.08 m가 끝단) -->
+  <group name="arm">
+    <chain base_link="base_link" tip_link="end_effector_link"/>
+  </group>
+  <group name="gripper">
+    <joint name="r_joint"/>
+  </group>
+
+  <!-- 한글: 주행용 홈 자세(base.yaml arm_home_pose_rad, 2026-10-06 확정)와 같은 값 -->
+  <group_state name="home" group="arm">
+    <joint name="joint1" value="0.0042"/>
+    <joint name="joint2" value="-0.6618"/>
+    <joint name="joint3" value="1.6629"/>
+    <joint name="joint4" value="1.6043"/>
+    <joint name="joint5" value="0.0168"/>
+  </group_state>
+  <group_state name="gripper_closed" group="gripper">
+    <joint name="r_joint" value="-0.0209"/>
+  </group_state>
+
+  <end_effector name="tool" parent_link="link5" group="gripper" parent_group="arm"/>
+
+  <disable_collisions link1="link1" link2="servo_link1" reason="Adjacent"/>
+  <disable_collisions link1="servo_link1" link2="link2" reason="Adjacent"/>
+  <disable_collisions link1="link2" link2="link3" reason="Adjacent"/>
+  <disable_collisions link1="link3" link2="link4" reason="Adjacent"/>
+  <disable_collisions link1="link4" link2="servo_link2" reason="Adjacent"/>
+  <disable_collisions link1="servo_link2" link2="link5" reason="Adjacent"/>
+  <disable_collisions link1="link5" link2="gripper_link" reason="Adjacent"/>
+  <disable_collisions link1="camera_connect_link" link2="gripper_link" reason="Adjacent"/>
+  <disable_collisions link1="depth_cam_link" link2="gripper_link" reason="Adjacent"/>
+  <disable_collisions link1="camera_connect_link" link2="l_link" reason="Never"/>
+  <disable_collisions link1="link5" link2="end_effector_link" reason="Adjacent"/>
+  <disable_collisions link1="l_link" link2="r_link" reason="Never"/>
+  <disable_collisions link1="l_out_link" link2="r_out_link" reason="Never"/>
+  <disable_collisions link1="l_in_link" link2="r_in_link" reason="Never"/>
+  <disable_collisions link1="l_in_link" link2="l_out_link" reason="Adjacent"/>
+  <disable_collisions link1="r_in_link" link2="r_out_link" reason="Adjacent"/>
+  <disable_collisions link1="l_link" link2="l_in_link" reason="Adjacent"/>
+  <disable_collisions link1="r_link" link2="r_in_link" reason="Adjacent"/>
+  <disable_collisions link1="l_link" link2="l_out_link" reason="Adjacent"/>
+  <disable_collisions link1="r_link" link2="r_out_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_link" link2="l_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_link" link2="r_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_link" link2="l_in_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_link" link2="r_in_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_link" link2="l_out_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_link" link2="r_out_link" reason="Adjacent"/>
+  <disable_collisions link1="l_in_link" link2="r_out_link" reason="Never"/>
+  <disable_collisions link1="r_in_link" link2="l_out_link" reason="Never"/>
+  <disable_collisions link1="l_link" link2="r_in_link" reason="Never"/>
+  <disable_collisions link1="r_link" link2="l_in_link" reason="Never"/>
+  <disable_collisions link1="l_link" link2="r_out_link" reason="Never"/>
+  <disable_collisions link1="r_link" link2="l_out_link" reason="Never"/>
+  <disable_collisions link1="l_out_link" link2="r_in_link" reason="Never"/>
+  <disable_collisions link1="r_out_link" link2="l_in_link" reason="Never"/>
+  <disable_collisions link1="l_in_link" link2="r_link" reason="Never"/>
+  <disable_collisions link1="r_in_link" link2="l_link" reason="Never"/>
+  <disable_collisions link1="back_shell_green_link" link2="link1" reason="Never"/>
+  <disable_collisions link1="back_shell_black_link" link2="link1" reason="Never"/>
+</robot>

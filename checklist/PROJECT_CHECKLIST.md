@@ -297,10 +297,10 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   **아직 안 한 것**: depth를 Nav2 costmap 관측 소스로 실제로 연결하는 것(8.12), MoveIt2/IK
 - [x] **URDF 실제 메쉬/조인트 반영 (2026-10-03)**: `jetrover_description`에 Hiwonder 공식 메쉬+xacro 통합 완료(4번 섹션 참고). `joint_limits.yaml`은 `~/AI_secretary_robot/src/control/jetrover_arm_moveit/config/joint_limits.yaml`에 이미 있음(가져오기는 아직 안 함). ID3은 pulse=5로 끝단 근접 — 안전 pulse 범위 확정은 아직
 - [ ] IK
-- [ ] MoveIt Setup Assistant
+- [~] MoveIt Setup Assistant (2026-10-06): `src/jetrover_manipulation/`에 SRDF/kinematics(TRAC-IK)/joint_limits/OMPL/controllers/launch(plan_only|real)를 Humble 참고 설정에서 Jazzy용으로 작성, SRDF-URDF 일치 검증·빌드까지. **MoveIt 설치 후 plan_only 계획 시험 통과(관절/위치 목표, 실행 없음). 5자유도라 TRAC-IK 대신 KDL position_only_ik 사용.** 충돌 매트릭스는 host Setup Assistant로 재생성해 합침(그리퍼 연동부는 수동 보존), host RViz 연동·충돌 검출 확인.
 - [ ] PlanningScene, Collision model
 - [ ] RRTConnect, Pose goal
-- [ ] 실제 arm trajectory
+- [~] 실제 arm trajectory (2026-10-06): 실행 브리지 + base_node `arm/command_timed` 구현, 단위 7개·dry_run 종단 시험 통과. **실기 왕복 시험 통과**(joint1 ±0.10, joint2 ±0.15 rad, 4/4 SUCCESS, 배터리 9.97 V). RViz 큰 목표/그리퍼/충전 후 반복은 아직.
 - [x] Gripper (ID10으로 확인됨)
 
 ## 15. Grasp (1차: Segmentation + Depth + Geometry + Rule-based)
