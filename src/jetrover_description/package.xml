@@ -2,10 +2,10 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>jetrover_description</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>URDF and robot_state_publisher launch for the Hiwonder JetRover (mecanum)</description>
-  <maintainer email="sang@todo.todo">sang</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="sun@kitejiarc.top">sang</maintainer>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

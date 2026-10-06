@@ -32,6 +32,10 @@ install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
+  # RRC 코덱 단위시험(하드웨어 불필요) / RRC codec unit tests (no hardware)
+  ament_add_gtest(test_rrc_protocol test/test_rrc_protocol.cpp)
+  target_link_libraries(test_rrc_protocol ${PROJECT_NAME}_lib)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)

@@ -1,0 +1,40 @@
+# L0 CI: build + unit tests only. Hardware tests (L2~L5) stay manual (AGENTS.md).
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  firmware-host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run firmware host tests
+        working-directory: firmware/rrc_m4
+        run: |
+          cmake -S . -B build
+          cmake --build build -j2
+          ctest --test-dir build --output-on-failure
+
+  ros2-jazzy:
+    runs-on: ubuntu-24.04
+    container: ros:jazzy-ros-base
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3-colcon-common-extensions \
+            ros-jazzy-ament-cmake-gtest ros-jazzy-ament-lint-auto ros-jazzy-ament-lint-common \
+            ros-jazzy-robot-localization
+      - name: Build
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --packages-select jetrover_description jetrover_base
+      - name: Test
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon test --packages-select jetrover_base
+          colcon test-result --verbose
