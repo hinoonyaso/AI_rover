@@ -18,7 +18,7 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_footprint
       resolution: 0.05
-      footprint: "[[0.20, 0.24], [0.20, -0.24], [-0.20, -0.24], [-0.20, 0.24]]"
+      footprint: "[[0.18, 0.25], [0.18, -0.25], [-0.18, -0.25], [-0.18, 0.25]]"  # 0.40x0.48 -> 0.36x0.42 (2026-10-06): 좁은 방에서 상자 주변 통과 불가 영역이 너무 커서 우회 대신 정지했다
       track_unknown_space: true
       always_send_full_costmap: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -38,7 +38,7 @@ global_costmap:
           topic: /scan
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
-          clearing: true
+          clearing: true  # global(map 프레임): AMCL 재설정 시 옛 LiDAR 표시가 남으므로 지우기 유지. 상자 기억 보존은 local(odom)만 clearing false. / keep clearing on global (map frame); only local keeps box memory.
           marking: true
           data_type: "LaserScan"
           raytrace_max_range: 12.0
@@ -54,13 +54,13 @@ global_costmap:
           obstacle_max_range: 3.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 5.0  # 3 -> 5 (2026-10-06)
         # 0.3 -> 0.2 (2026-10-05): footprint(~0.16-0.18m) + 0.3m inflation made the planner
         # refuse "Start occupied" when the robot was simply near (not blocked by) an obstacle
         # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
         # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
         # inscribed_radius. 0.2 clears that minimum with a little margin.
-        inflation_radius: 0.3  # 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄
+        inflation_radius: 0.40  # 0.25 -> 0.40 (2026-10-06): 상자를 여유 0으로 스치는 경로를 밀어내려고 완만한 비용 구간을 넓힘(통로를 막지는 않음): footprint 0.36x0.42(내접 0.21)에 맞춤. 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄
 
 # 8.3: SmacPlanner2D -- 순수 격자 A*라 회전반경 제약이 없다. Mecanum(holonomic)엔 적합, Ackermann류
 # 전용 파라미터(minimum_turning_radius 등)는 Hybrid 변형 얘기라 여기선 불필요.
@@ -76,7 +76,7 @@ planner_server:
       allow_unknown: true
       max_iterations: 1000000
       max_planning_time: 5.0
-      cost_travel_multiplier: 2.0
+      cost_travel_multiplier: 4.0  # 2 -> 4 (2026-10-06): 비용 높은 곳을 더 피해서 장애물에서 떨어져 간다
 
 # 8.4: DWB -- vy(옆이동) 샘플을 0이 아니게 열어둬야 mecanum의 홀로노믹 이동을 실제로 쓴다
 # (안 그러면 차동구동처럼 제자리회전+전진만 하게 됨). 속도 상한은 jetrover_base/config/base.yaml의
@@ -93,8 +93,10 @@ controller_server:
     controller_plugins: ["FollowPath"]
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.3
-      movement_time_allowance: 10.0
+      # 0.3 m/10 s -> 0.15 m/20 s (2026-10-06): 좁은 방에서 상자를 우회할 때 천천히 곡선으로 움직여 10 s에 0.3 m를 못 채워
+      # "Failed to make progress"로 중단됨. / Slow curved detours failed the 0.3 m/10 s check and aborted.
+      required_movement_radius: 0.15
+      movement_time_allowance: 20.0
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       # 0.1 -> 0.2 (2026-10-05): 모든 시험에서 목표 0.15 m 앞에서 "Failed to make progress"로 멈췄다. 목표 근처에서
@@ -113,7 +115,7 @@ controller_server:
       min_vel_y: -0.2
       max_vel_x: 0.12  # 0.2 -> 0.12 (2026-10-05): 감지거리 0.5m라 0.2m/s로는 옆으로 비킬 시간이 부족해 상자를 침
       max_vel_y: 0.2
-      max_vel_theta: 1.0
+      max_vel_theta: 0.4  # 1.0 -> 0.4 (2026-10-06): 회전을 섞으면 모서리가 크게 휩쓸려 안전망/DWB가 막아서 멈췄다. 메카넘이라 평행이동 위주로 비킨다
       min_speed_xy: 0.05  # 0.0 -> 0.05: 모터 데드존 아래 속도 샘플 방지(추정, 시험 중)
       max_speed_xy: 0.15
       min_speed_theta: 0.0
@@ -137,12 +139,12 @@ controller_server:
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 0.1  # 0.02 -> 0.1: 장애물 근처를 아슬아슬하게 지나가 상자를 침
       PathAlign.scale: 32.0
-      GoalAlign.scale: 24.0
+      GoalAlign.scale: 4.0  # 24 -> 4 (2026-10-06): 회전을 덜 선호해서 메카넘 평행이동 위주로 비킨다
       PathAlign.forward_point_distance: 0.1
       GoalAlign.forward_point_distance: 0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
+      RotateToGoal.scale: 8.0  # 32 -> 8 (2026-10-06)
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
@@ -206,16 +208,22 @@ collision_monitor:
     source_timeout: 1.0
     base_shift_correction: true
     stop_pub_timeout: 2.0
-    polygons: ["FootprintApproach"]
-    FootprintApproach:
+    # 2026-10-06: "approach"는 상자 옆을 따라 전진하며 비키는 정상 동작까지 0으로 만들어서(몸 옆 폭 안에 점이 있다는 이유)
+    # 로봇이 멈췄다. 정지 영역(몸 안에 점이 들어올 때만)과 감속 영역(몸보다 약 8cm 큼, 속도 50%)으로 분리한다.
+    # 한글: 평소 비킴은 DWB/플래너가 맡고, 안전망은 닿기 직전(정지) / 가까울 때 속도만 줄임(감속)으로 최소화한다.
+    polygons: ["FootprintStop", "FootprintSlow"]
+    FootprintStop:
       type: "polygon"
-      action_type: "approach"
-      # 2026-10-05: 플래너용으로 키운 footprint(0.40x0.48)를 그대로 쓰면 상자(+뒤로 연장한 점)가 \"안\"에 들어와
-      # 로봇이 감속/정지(\"Failed to make progress\")했다. 안전망은 실제 로봇 크기(약 0.32x0.36)에 약간 여유만 둔다.
-      # 한글: 안전망 polygon은 실제 크기 + 여유 2~3 cm (바퀴 중심 +-0.17/0.19 근처).
-      points: "[[0.19, 0.21], [0.19, -0.21], [-0.19, -0.21], [-0.19, 0.21]]"
-      time_before_collision: 1.2
-      simulation_time_step: 0.1
+      action_type: "stop"
+      points: "[[0.17, 0.195], [0.17, -0.195], [-0.17, -0.195], [-0.17, 0.195]]"  # 2026-10-06: 실제 몸에 가깝게(플래너 반폭 0.25 > 정지 반폭 0.195)
+      min_points: 6
+      visualize: false
+      enabled: true
+    FootprintSlow:
+      type: "polygon"
+      action_type: "slowdown"
+      slowdown_ratio: 0.5
+      points: "[[0.26, 0.28], [0.26, -0.28], [-0.26, -0.28], [-0.26, 0.28]]"
       min_points: 6
       visualize: false
       enabled: true
@@ -272,8 +280,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.12, 0.2, 1.0]
-    min_velocity: [-0.2, -0.2, -1.0]
+    max_velocity: [0.12, 0.2, 0.4]
+    min_velocity: [-0.2, -0.2, -0.4]
     max_accel: [0.5, 0.5, 1.0]  # 1.0/1.0/2.0 -> 0.5/0.5/1.0 (회피를 부드럽게)
     max_decel: [-0.5, -0.5, -1.0]
     odom_topic: "odom"
@@ -291,7 +299,7 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      footprint: "[[0.20, 0.24], [0.20, -0.24], [-0.20, -0.24], [-0.20, 0.24]]"
+      footprint: "[[0.18, 0.25], [0.18, -0.25], [-0.18, -0.25], [-0.18, 0.25]]"  # 0.40x0.48 -> 0.36x0.42 (2026-10-06): 좁은 방에서 상자 주변 통과 불가 영역이 너무 커서 우회 대신 정지했다
       always_send_full_costmap: true
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
@@ -310,7 +318,8 @@ local_costmap:
           topic: /scan
           max_obstacle_height: 2.0
           min_obstacle_height: 0.0
-          clearing: true
+          clearing: false
+          # 2026-10-06: LiDAR(높이 평면)는 낮은 상자 위로 지나가 상자 칸을 '빈 공간'으로 지움 -> 카메라 사각(<18cm)에 들어간 상자를 잊고 옆으로 밀었다. 지우기는 depth만 담당. / LiDAR rays pass over the low box and erased it from memory.
           marking: true
           data_type: "LaserScan"
           raytrace_max_range: 12.0
@@ -326,10 +335,10 @@ local_costmap:
           obstacle_max_range: 3.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 5.0  # 3 -> 5 (2026-10-06)
         # 0.3 -> 0.2 (2026-10-05): footprint(~0.16-0.18m) + 0.3m inflation made the planner
         # refuse "Start occupied" when the robot was simply near (not blocked by) an obstacle
         # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
         # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
         # inscribed_radius. 0.2 clears that minimum with a little margin.
-        inflation_radius: 0.3  # 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄
+        inflation_radius: 0.40  # 0.25 -> 0.40 (2026-10-06): 상자를 여유 0으로 스치는 경로를 밀어내려고 완만한 비용 구간을 넓힘(통로를 막지는 않음): footprint 0.36x0.42(내접 0.21)에 맞춤. 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄

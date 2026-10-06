@@ -22,6 +22,8 @@ def generate_launch_description():
 
     default_map = os.path.expanduser('~/jetrover_ws/maps/lap2_20261005.yaml')
     map_arg = DeclareLaunchArgument('map', default_value=default_map)
+    # 한글: 진단용 로그 레벨(기본 info). 예: log_level:=debug / Diagnostic log level (default info).
+    log_level_arg = DeclareLaunchArgument('log_level', default_value='info')
 
     # 한글: 우리 localization(map_server + amcl)을 포함.
     localization = IncludeLaunchDescription(
@@ -38,7 +40,8 @@ def generate_launch_description():
             'params_file': os.path.join(nav_share, 'config', 'nav2_params.yaml'),
             'use_sim_time': 'false',
             'autostart': 'true',
+            'log_level': LaunchConfiguration('log_level'),
         }.items(),
     )
 
-    return LaunchDescription([map_arg, localization, navigation])
+    return LaunchDescription([map_arg, log_level_arg, localization, navigation])

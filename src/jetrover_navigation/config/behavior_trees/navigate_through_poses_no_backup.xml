@@ -9,7 +9,7 @@
       <PipelineSequence name="NavigateWithReplanning">
         <ControllerSelector selected_controller="{selected_controller}" default_controller="FollowPath" topic_name="controller_selector"/>
         <PlannerSelector selected_planner="{selected_planner}" default_planner="GridBased" topic_name="planner_selector"/>
-        <RateController hz="1.0">
+        <RateController hz="0.5">
           <RecoveryNode number_of_retries="1" name="ComputePathThroughPoses">
             <ReactiveSequence>
               <!-- 2026-10-05: radius 0.7 -> 0.12 (웨이포인트가 즉시 지워져 직선 복귀가 안 됐음), 재계산 0.33 -> 1 Hz -->
@@ -26,7 +26,8 @@
           <FollowPath path="{path}" controller_id="{selected_controller}" error_code_id="{follow_path_error_code}"/>
           <Sequence>
             <WouldAControllerRecoveryHelp error_code="{follow_path_error_code}"/>
-            <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <!-- 2026-10-06: 로컬 costmap 비우기 제거(상자 기억 보존). 대신 1초 대기 후 같은 경로로 재시도 -->
+            <Wait wait_duration="1.0"/>
           </Sequence>
         </RecoveryNode>
       </PipelineSequence>
@@ -38,11 +39,8 @@
         <ReactiveFallback name="RecoveryFallback">
           <GoalUpdated/>
           <RoundRobin name="RecoveryActions">
-            <Sequence name="ClearingActions">
-              <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
-              <ClearEntireCostmap name="ClearGlobalCostmap-Subtree" service_name="global_costmap/clear_entirely_global_costmap"/>
-            </Sequence>
-            <Spin spin_dist="1.57" error_code_id="{spin_error_code}"/>
+            <!-- 2026-10-06: ClearingActions 제거. 비용 맵을 비우면 옆으로 벗어나 안 보이는 상자 기억까지 지워져 경로가 다시 상자를 가로지르며 좌우를 반복했다 -->
+            <!-- 2026-10-06: Spin 제거. 상자 옆에서 제자리 회전하면 모서리가 휩쓸려 위험하고 자세가 어긋났다 -->
             <Wait wait_duration="5.0"/>
           </RoundRobin>
         </ReactiveFallback>

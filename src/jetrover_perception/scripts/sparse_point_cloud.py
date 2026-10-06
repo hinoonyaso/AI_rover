@@ -77,7 +77,7 @@ class SparsePointCloud(Node):
         # Every obstacle point is therefore extended along its viewing ray by `extrude_depth_m`.
         # 한글: 카메라는 장애물 앞면만 보므로 시선 방향으로 뒤쪽 extrude_depth_m(기본 0.3m)까지 점을 복제해
         # 몸통도 점유로 취급한다(상자를 치고 지나가던 문제).
-        self.declare_parameter('extrude_depth_m', 0.3)
+        self.declare_parameter('extrude_depth_m', 0.15)  # 0.3 -> 0.15 (2026-10-06): 좁은 방에서 붉은 영역이 너무 커서 통로가 막혔다
         self.declare_parameter('extrude_step_m', 0.1)
         self.extrude_depth = self.get_parameter('extrude_depth_m').value
         self.extrude_step = self.get_parameter('extrude_step_m').value
