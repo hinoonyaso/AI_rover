@@ -4,7 +4,7 @@
   <name>jetrover_microros</name>
   <version>0.0.1</version>
   <description>Host side of the micro-ROS firmware: agent launch + bridge (gyro bias, wheel_twist from encoders, battery_state)</description>
-  <maintainer email="sun@kitejiarc.top">sang</maintainer>
+  <maintainer email="hinoonyaso@gmail.com">sang</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_python</buildtool_depend>

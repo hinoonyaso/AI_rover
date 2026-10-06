@@ -422,11 +422,13 @@ private:
               // 한글: 읽은 눈금이 음수/범위 밖(예: -34)이면 uint16 변환 시 65502 같은 값이 서보로 가므로
               // 안전 클램프(arm_pulse_min/max)로 제한한 값만 보낸다.
               const int64_t pulse = std::min<int64_t>(
-                std::max<int64_t>(static_cast<int64_t>(it->second), arm_pulse_min_), arm_pulse_max_);
+                std::max<int64_t>(static_cast<int64_t>(it->second), arm_pulse_min_),
+                arm_pulse_max_);
               hold.push_back({static_cast<uint8_t>(id), static_cast<uint16_t>(pulse)});
             }
           }
-          RCLCPP_WARN(get_logger(), "arm hold: target pinned at current position for %zu servos", hold.size());
+          RCLCPP_WARN(get_logger(), "arm hold: target pinned at current position for %zu servos",
+            hold.size());
           return build_bus_servo_set_position(1.0, hold);
         });
     }
