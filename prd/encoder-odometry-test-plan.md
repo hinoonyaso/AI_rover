@@ -4,7 +4,7 @@
 
 | Parent Task | 레벨 | 시험 | 통과 기준(초안) |
 |---|---|---|---|
-| E0 호스트 변환 | L0/L1 | C++ `mecanum_forward` 단위시험(있음), Python `mecanum_forward` 교차검증 시험(추가 필요), 가상 `/rrc/wheel_rps` → `/wheel_twist` | 두 구현이 동일 입력에서 1e-6 이내 일치, IK→FK 왕복 복원 |
+| E0 호스트 변환 ✅(2026-10-06 L0) | L0/L1 | C++ `mecanum_forward` 단위시험(있음), Python `mecanum_forward` 교차검증 시험(추가 필요), 가상 `/rrc/wheel_rps` → `/wheel_twist` | 두 구현이 동일 입력에서 1e-6 이내 일치, IK→FK 왕복 복원 |
 | E1 통신 (MOTOR_ENABLE=0) | L2 | flash(승인) 후 IMU/배터리/엔코더 값이 호스트에 도착, 손으로 바퀴 회전 | 엔코더 값이 바퀴를 돌릴 때 변하고 정지 시 안정. **바퀴 1회전 ticks 실측**, 모터별 부호 기록 |
 | E2 바퀴 띄운 속도 응답 | L3 | 명령 rps 단계 입력(예: 0.5, 1.0, 1.5 rev/s)에서 측정 rps | 정상상태 오차·응답시간을 수치로 기록(합격선은 첫 측정 후). runaway 래치 오작동 없음 |
 | E3 전체 안전 | L3 | 명령 timeout(MCU), e-stop, 엔코더 이상 감지 | 호스트 명령 중단 시 MCU가 자체 정지 (vendor 펌웨어에 없던 기능) |

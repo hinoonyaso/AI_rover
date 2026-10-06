@@ -13,7 +13,7 @@ IMU yaw rate만 실측이다. 이 상태로 Perception/Manipulation을 올리면
 
 | # | 작업 | 하드웨어 | 게이트(통과 조건) | 상태 |
 |---|---|---|---|---|
-| 0 | 저장소 정리: README, 라이선스, package.xml, CI, ROS2 unit test | 불필요 | CI 초록, README가 실제 상태와 일치 | 대부분 완료 (unit test: pulse↔rad, watchdog 남음) |
+| 0 | 저장소 정리: README, 라이선스, package.xml, CI, ROS2 unit test | 불필요 | CI 초록, README가 실제 상태와 일치 | 완료 (unit test: RRC 코덱·메카넘·서보 변환·watchdog, CI 포함) |
 | 1 | **Nav2 baseline** (open-loop odom, 15회) | 로봇 L4 | `prd/nav2-baseline-test-plan.md` 완료 기준 4개 | 계획·도구 완료, 시험 미실시 |
 | 2 | STM32 엔코더 bring-up | ST-Link, 로봇 L2~L3 | `prd/encoder-odometry-test-plan.md` E1~E3 | ST-Link 대기 |
 | 3 | encoder odom + EKF 재구성 | 로봇 L3~L4 | 같은 baseline을 `encoder_ekf` 태그로 재시험, Before/After 표 | 계획 (`prd/encoder-odometry.md`) |

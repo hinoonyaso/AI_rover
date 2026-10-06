@@ -26,15 +26,15 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends python3-colcon-common-extensions \
             ros-jazzy-ament-cmake-gtest ros-jazzy-ament-lint-auto ros-jazzy-ament-lint-common \
-            ros-jazzy-robot-localization
+            ros-jazzy-robot-localization python3-pytest
       - name: Build
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon build --packages-select jetrover_description jetrover_base
+          colcon build --packages-select jetrover_description jetrover_base jetrover_microros
       - name: Test
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon test --packages-select jetrover_base
+          colcon test --packages-select jetrover_base jetrover_microros
           colcon test-result --verbose

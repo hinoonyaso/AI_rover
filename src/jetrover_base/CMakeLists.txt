@@ -17,6 +17,7 @@ add_library(${PROJECT_NAME}_lib
   src/serial_port.cpp
   src/rrc_protocol.cpp
   src/mecanum.cpp
+  src/servo_convert.cpp
   src/crash_guard.cpp
 )
 target_include_directories(${PROJECT_NAME}_lib PUBLIC
@@ -39,6 +40,10 @@ if(BUILD_TESTING)
   target_link_libraries(test_rrc_protocol ${PROJECT_NAME}_lib)
   ament_add_gtest(test_mecanum test/test_mecanum.cpp)
   target_link_libraries(test_mecanum ${PROJECT_NAME}_lib)
+  ament_add_gtest(test_servo_convert test/test_servo_convert.cpp)
+  target_link_libraries(test_servo_convert ${PROJECT_NAME}_lib)
+  ament_add_gtest(test_link_watchdog test/test_link_watchdog.cpp)
+  target_link_libraries(test_link_watchdog ${PROJECT_NAME}_lib)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)

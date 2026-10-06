@@ -20,9 +20,11 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "jetrover_base/crash_guard.hpp"
+#include "jetrover_base/link_watchdog.hpp"
 #include "jetrover_base/mecanum.hpp"
 #include "jetrover_base/rrc_protocol.hpp"
 #include "jetrover_base/serial_port.hpp"
+#include "jetrover_base/servo_convert.hpp"
 
 using namespace std::chrono_literals;
 
@@ -68,6 +70,7 @@ public:
     max_angular_ = declare_parameter<double>("max_angular", 1.0);
     cmd_vel_timeout_ = declare_parameter<double>("cmd_vel_timeout", 0.5);
     stm32_timeout_ = declare_parameter<double>("stm32_timeout", 1.0);
+    watchdog_ = LinkWatchdog(cmd_vel_timeout_, stm32_timeout_);
 
     imu_frame_ = declare_parameter<std::string>("imu_frame", "imu_link");
     gravity_ = declare_parameter<double>("gravity", 9.80665);
@@ -119,7 +122,7 @@ public:
         "arm_joint_offsets_rad", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
       const double servo_range_deg = declare_parameter<double>("arm_servo_range_deg", 240.0);
       const double servo_ticks_range = declare_parameter<double>("arm_servo_ticks_range", 1000.0);
-      arm_rad_per_tick_ = (servo_range_deg * M_PI / 180.0) / servo_ticks_range;
+      arm_rad_per_tick_ = rad_per_tick(servo_range_deg, servo_ticks_range);
       const double arm_poll_hz = declare_parameter<double>("arm_poll_hz", 5.0);
 
       if (arm_joint_names_.size() != arm_servo_ids_.size() ||
@@ -218,8 +221,7 @@ private:
   {
     if (serial_.open(port_name_, baudrate_)) {
       RCLCPP_INFO(get_logger(), "Opened %s @ %d", port_name_.c_str(), baudrate_);
-      last_rx_time_ = now();
-      stm32_silent_ = false;
+      watchdog_.on_open(now().seconds());
       stop_motors();
       const auto stop_frame = build_motor_packet({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
       crash_guard::arm(serial_.fd(), stop_frame);
@@ -237,8 +239,7 @@ private:
     const double vy = std::clamp(msg.linear.y, -max_linear_, max_linear_);
     const double wz = std::clamp(msg.angular.z, -max_angular_, max_angular_);
 
-    last_cmd_time_ = now();
-    moving_ = (vx != 0.0 || vy != 0.0 || wz != 0.0);
+    watchdog_.on_cmd(now().seconds(), vx != 0.0 || vy != 0.0 || wz != 0.0);
     cmd_vx_ = vx;
     cmd_vy_ = vy;
     cmd_wz_ = wz;
@@ -254,7 +255,7 @@ private:
     const double dt = (stamp - last_odom_time_).seconds();
     last_odom_time_ = stamp;
 
-    const bool driving = serial_.is_open() && !stm32_silent_;
+    const bool driving = serial_.is_open() && !watchdog_.stm32_silent();
     const double vx = driving ? cmd_vx_ * odom_linear_scale_ : 0.0;
     const double vy = driving ? cmd_vy_ * odom_linear_scale_ * odom_lateral_scale_ : 0.0;
     const double wz = driving ? cmd_wz_ * odom_angular_scale_ : 0.0;
@@ -294,9 +295,7 @@ private:
 
   void note_rx()
   {
-    last_rx_time_ = now();
-    if (stm32_silent_) {
-      stm32_silent_ = false;
+    if (watchdog_.on_rx(now().seconds())) {
       RCLCPP_INFO(get_logger(), "STM32 stream recovered");
     }
   }
@@ -304,26 +303,18 @@ private:
   // The STM32 streams IMU at ~100 Hz. Silence means its firmware (or power) hung:
   // the USB-UART bridge stays enumerated, so the port looks fine from the host.
   // 한글: STM32는 IMU를 약 100Hz로 계속 보내므로 침묵하면 펌웨어(또는 전원)가 멈춘 것이다. USB-UART 브리지는 계속 보이기 때문에 포트만 봐서는 모른다. 침묵이 길면 정지 명령을 보낸다.
-  void check_heartbeat()
-  {
-    if (!serial_.is_open() || stm32_silent_) {
-      return;
-    }
-    const double silent = (now() - last_rx_time_).seconds();
-    if (silent > stm32_timeout_) {
-      stm32_silent_ = true;
-      RCLCPP_ERROR(
-        get_logger(), "STM32 silent for %.1fs (moving=%d): stopping motors", silent, moving_);
-      stop_motors();
-    }
-  }
-
-  // 한글: 50ms마다: STM32 heartbeat 확인 + cmd_vel이 timeout 동안 없으면 바퀴 정지.
+  // 한글: 50ms마다: STM32 heartbeat 확인 + cmd_vel이 timeout 동안 없으면 바퀴 정지. 판단 로직은 LinkWatchdog(단위시험 있음).
   void watchdog()
   {
-    check_heartbeat();
-    if (moving_ && (now() - last_cmd_time_).seconds() > cmd_vel_timeout_) {
-      RCLCPP_WARN(get_logger(), "cmd_vel timeout (%.2fs), stopping motors", cmd_vel_timeout_);
+    const auto result = watchdog_.check(now().seconds(), serial_.is_open());
+    if (result.action == LinkWatchdog::Action::StopStm32Silent) {
+      RCLCPP_ERROR(
+        get_logger(), "STM32 silent for %.1fs (moving=%d): stopping motors", result.silent_s,
+        result.was_moving);
+      stop_motors();
+    } else if (result.action == LinkWatchdog::Action::StopCmdTimeout) {
+      RCLCPP_WARN(
+        get_logger(), "cmd_vel timeout (%.2fs), stopping motors", watchdog_.cmd_vel_timeout());
       stop_motors();
     }
   }
@@ -331,7 +322,7 @@ private:
   // 한글: 모든 바퀴를 0 rev/s로. 상태/명령 캐시도 초기화한다.
   void stop_motors()
   {
-    moving_ = false;
+    watchdog_.on_stopped();
     cmd_vx_ = cmd_vy_ = cmd_wz_ = 0.0;
     send_motors({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
   }
@@ -457,8 +448,7 @@ private:
       }
       const double next = cur + std::min(std::max(delta, -arm_home_step_rad_), arm_home_step_rad_);
       const double raw = std::round(arm_rad_to_ticks(i, next));
-      const int64_t pulse = std::min<int64_t>(
-        std::max<int64_t>(static_cast<int64_t>(raw), arm_pulse_min_), arm_pulse_max_);
+      const int64_t pulse = clamp_pulse(raw, arm_pulse_min_, arm_pulse_max_);
       step.push_back({id, static_cast<uint16_t>(pulse)});
     }
     if (done) {
@@ -484,16 +474,21 @@ private:
     }
   }
 
+  // 한글: 변환 수식은 servo_convert.hpp(단위시험 있음). 여기서는 관절별 보정값만 모아 넘긴다.
+  ServoCal arm_cal(std::size_t i) const
+  {
+    return {
+      arm_center_ticks_[i], arm_joint_signs_[i], arm_joint_offsets_rad_[i], arm_rad_per_tick_};
+  }
+
   double arm_ticks_to_rad(std::size_t i, double ticks) const
   {
-    return (ticks - arm_center_ticks_[i]) * arm_rad_per_tick_ * arm_joint_signs_[i] +
-           arm_joint_offsets_rad_[i];
+    return ticks_to_rad(arm_cal(i), ticks);
   }
 
   double arm_rad_to_ticks(std::size_t i, double rad) const
   {
-    return arm_center_ticks_[i] +
-           (rad - arm_joint_offsets_rad_[i]) / (arm_rad_per_tick_ * arm_joint_signs_[i]);
+    return rad_to_ticks(arm_cal(i), rad);
   }
 
   // sensor_msgs/JointState (name + position in rad) -> one bus servo move frame.
@@ -534,8 +529,7 @@ private:
         return;
       }
       const double raw = std::round(arm_rad_to_ticks(i, msg.position[k]));
-      const int64_t pulse = std::min<int64_t>(
-        std::max<int64_t>(static_cast<int64_t>(raw), arm_pulse_min_), arm_pulse_max_);
+      const int64_t pulse = clamp_pulse(raw, arm_pulse_min_, arm_pulse_max_);
       targets.push_back({id, static_cast<uint16_t>(pulse)});
     }
     // Logged only once validation passed for every joint -- a mid-loop log here would
@@ -565,9 +559,7 @@ private:
       if (it == arm_servo_ticks_.end()) {
         continue;
       }
-      const double angle =
-        (static_cast<double>(it->second) - arm_center_ticks_[i]) * arm_rad_per_tick_ *
-        arm_joint_signs_[i] + arm_joint_offsets_rad_[i];
+      const double angle = arm_ticks_to_rad(i, static_cast<double>(it->second));
       msg.name.push_back(arm_joint_names_[i]);
       msg.position.push_back(angle);
     }
@@ -671,10 +663,7 @@ private:
   double odom_x_{0.0}, odom_y_{0.0}, odom_yaw_{0.0};
   rclcpp::Time last_odom_time_{0, 0, RCL_ROS_TIME};
 
-  bool moving_{false};
-  bool stm32_silent_{false};
-  rclcpp::Time last_rx_time_{0, 0, RCL_ROS_TIME};
-  rclcpp::Time last_cmd_time_{0, 0, RCL_ROS_TIME};
+  LinkWatchdog watchdog_;
 
   SerialPort serial_;
   RrcParser parser_;

@@ -120,7 +120,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [ ] 바닥 종류별 slip 측정
 - [ ] (가능하면) STM32 firmware에서 wheel RPS feedback 추가 → encoder 기반 wheel odometry 전환
   - **2026-10-06 구체화(계획)**: PRD `prd/encoder-odometry.md`, 시험 `prd/encoder-odometry-test-plan.md`(E0~E6). 선행: Nav2 baseline(`prd/nav2-baseline-test-plan.md`). 현재 순서/게이트는 `docs/ROADMAP.md`.
-  - [ ] E0 `mecanum_forward` C++(`jetrover_base`)↔Python(`jetrover_microros/rrc_bridge.py`) 교차검증 시험 (L0/L1, 하드웨어 불필요)
+  - [x] E0 `mecanum_forward` C++(`jetrover_base`)↔Python(`jetrover_microros/rrc_bridge.py`) 교차검증 (L0): 골든 벡터 5건을 양쪽 단위시험이 공유(2026-10-06). 두 구현의 수식 일치도 대수적으로 확인
   - [ ] E1 엔코더 부호·ticks/rev 실측 (L2, ST-Link·flash 승인 필요)
   - [ ] E2/E3 바퀴 띄운 속도 응답, MCU 자체 정지 시험 (L3)
   - [ ] E4/E5 바닥 직선·회전에서 open-loop vs encoder odom 비교, EKF 공분산 근거 설정 (L4)

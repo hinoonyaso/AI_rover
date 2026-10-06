@@ -89,3 +89,40 @@ TEST(MecanumRoundTrip, ForwardInvertsInverse)
     EXPECT_NEAR(t.wz, c[2], 1e-5);
   }
 }
+
+// 교차검증용 골든 벡터: jetrover_microros/test/test_bridge_kinematics.py에 같은 표가 있다(E0, prd/encoder-odometry-test-plan.md).
+// 두 구현(C++ jetrover_base, Python jetrover_microros)이 같은 표를 만족하므로 서로 일치한다. 표를 바꾸면 양쪽을 같이 바꾼다.
+// Golden vectors shared with the Python bridge test. Wheel order: ports 1..4, rev/s, right side negated.
+struct Golden
+{
+  double vx, vy, wz;
+  double rps[4];
+};
+
+const Golden kGolden[] = {
+  {0.1, 0.0, 0.0, {0.328154522, 0.328154522, -0.328154522, -0.328154522}},
+  {0.0, 0.1, 0.0, {-0.328154522, 0.328154522, -0.328154522, 0.328154522}},
+  {0.0, 0.0, 0.5, {-0.337178771, -0.337178771, -0.337178771, -0.337178771}},
+  {0.12, -0.07, 0.4, {0.353750575, -0.105665756, -0.433820278, -0.893236608}},
+  {-0.2, 0.2, -1.0, {-0.638260545, 0.674357542, 0.674357542, 1.986975630}},
+};
+
+TEST(MecanumGolden, InverseMatchesTable)
+{
+  for (const auto & g : kGolden) {
+    const auto m = ik(g.vx, g.vy, g.wz);
+    for (int i = 0; i < 4; ++i) {
+      EXPECT_NEAR(m[i].rps, g.rps[i], 1e-5) << "case vx=" << g.vx << " wheel " << i + 1;
+    }
+  }
+}
+
+TEST(MecanumGolden, ForwardMatchesTable)
+{
+  for (const auto & g : kGolden) {
+    const auto t = mecanum_forward(g.rps, kWheelbase, kTrack, kDiameter);
+    EXPECT_NEAR(t.vx, g.vx, 1e-8);
+    EXPECT_NEAR(t.vy, g.vy, 1e-8);
+    EXPECT_NEAR(t.wz, g.wz, 1e-8);
+  }
+}

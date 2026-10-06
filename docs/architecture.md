@@ -50,7 +50,7 @@ flowchart LR
 - Current의 한계 (실측): 전진·옆이동은 명령과 거의 일치(0.99), **회전은 명령 대비 약 81%**. 바닥 마찰, 슬립, 모터 데드존, 배터리 전압의 영향이 odom에 안 잡힌다. EKF는 yaw를 자이로로 보정하고 있다.
 - Target으로 가는 순서와 시험은 `prd/encoder-odometry.md`, 성능 비교는 `docs/benchmarks/navigation/` (같은 15회 시험을 태그 `baseline_openloop` vs `encoder_ekf`).
 - `mecanum_forward()`는 C++(`jetrover_base/mecanum.hpp`, 단위시험 있음)와 Python(`jetrover_microros/rrc_bridge.py`, 별도 시험)에 **각각 있다**.
-  통합/교차검증은 `prd/encoder-odometry.md`의 항목.
+  **교차검증 완료(L0)**: 같은 골든 벡터 표를 양쪽 단위시험이 공유한다(`jetrover_base/test/test_mecanum.cpp`, `jetrover_microros/test/test_bridge_kinematics.py`). 구현 통합은 필요 시 별도 결정.
 
 ## 3. TF 트리 [구현]
 
@@ -75,12 +75,12 @@ map ─(AMCL)→ odom ─(EKF)→ base_footprint ─→ base_link ─┬─ imu_
 ## 5. 패키지
 | 패키지 | 역할 | 비고 |
 |---|---|---|
-| `jetrover_base` | RRC 베이스 드라이버, IMU, 메카넘, 팔 서보 읽기/쓰기, EKF 설정 | 단위시험: RRC 코덱 14, 메카넘 7 (CI) |
+| `jetrover_base` | RRC 베이스 드라이버, IMU, 메카넘, 팔 서보 읽기/쓰기, EKF 설정 | 단위시험(CI): RRC 코덱 14, 메카넘 9(골든 벡터 포함), 서보 pulse↔rad 8, watchdog 11 |
 | `jetrover_description` | URDF/메쉬/`robot_state_publisher` | Hiwonder 공식 메쉬 파생 (라이선스 별도 확인 필요) |
 | `jetrover_bringup` | `robot.launch.py` 등 통합 실행 | 최종 `system.launch.py`(모듈 on/off 인자)는 [계획] |
 | `jetrover_navigation` | slam_toolbox, AMCL, Nav2(DWB) | 튜닝 이력은 benchmarks/navigation/tuning-history.md |
 | `jetrover_perception` | 카메라 launch, depth sparse cloud | YOLO/XYZ는 [계획] |
-| `jetrover_microros` | micro-ROS 호스트 브리지 | 실기 미검증 |
+| `jetrover_microros` | micro-ROS 호스트 브리지 | 실기 미검증. 기구학 단위시험 4개(C++와 골든 벡터 공유, CI) |
 | `firmware/rrc_m4` | 자체 STM32 펌웨어 | **L0(호스트 단위시험)까지, flash 전** |
 
 ## 6. 팔 제어의 목표 구조 [계획]
