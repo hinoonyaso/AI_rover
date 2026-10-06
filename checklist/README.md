@@ -48,14 +48,14 @@
 5. [~] ROS2 unit test: `jetrover_base/test/test_rrc_protocol.cpp` 14개 통과(CRC·파서 resync·모터/서보/토크). mecanum IK/FK는 `mecanum.hpp/.cpp`로 분리 후 `test_mecanum.cpp` 7개 통과(IK↔FK 왕복 포함, 2026-10-06). 서보 pulse↔rad 8개(`servo_convert`)·watchdog 11개(`link_watchdog`)도 분리 후 통과, 모두 CI 포함(2026-10-06). **분리한 `base_node.cpp`의 실기 동작은 미검증(L0까지)**
 6. [ ] STM32 encoder 실기 bring-up → encoder odom + EKF → Nav2 재평가 (→ MPPI A/B)
 7. [ ] Arm: `ros2_control` + `FollowJointTrajectory` 설계 (`arm/command`·`arm/torque`는 진단용으로 유지)
-8. [x] GitHub Actions CI(`.github/workflows/ci.yml`): 펌웨어 host test + ROS Jazzy colcon build/test(base, microros) 통과 확인(run 9, 2026-10-06). **이후 확장분(static-checks 잡, bringup/navigation/perception 빌드, synthetic rosbag 분석 시험)은 push 후 결과 확인 전 → 아래 안전성 항목 참고**
+8. [x] GitHub Actions CI(`.github/workflows/ci.yml`): 펌웨어 host test + ROS Jazzy colcon build/test(base, microros) 통과 확인(run 9, 2026-10-06). 확장분(static-checks 잡, bringup/navigation/perception 빌드, synthetic rosbag 분석 시험)도 run 10에서 통과
 
 ## 안전성/L0 보강 (2026-10-06, 하드웨어 없이, L0까지 — 실기 미검증)
 - [x] `/cmd_vel` NaN/Inf 거부 + 정지, `arm/command` NaN/Inf 전체 거부 (`command_guard`, 단위시험 11개). **발견한 실제 구멍**: `std::clamp`는 NaN을 못 거르고, 팔 step 검사(`abs(...) > max`)도 NaN에서는 거짓이라 통과 → `troubleshooting/029`
 - [x] STM32 침묵 중 0이 아닌 `cmd_vel` 거부(저장 안 함 → 복구 후 옛 명령 부활 방지). 0 명령은 허용
 - [x] 시작 시 파라미터 fail-fast: 형상/타임아웃/서보(부호 ±1, pulse 범위, range>0, home pose finite) 검증, 실패 시 `invalid_argument`로 종료(exit 1)
 - [x] 정적 검사 CI `tools/ci/static_checks.py`: Python 문법, YAML/XML 파싱, package.xml/setup.py TODO 검사 (검사 중 `navigate_through_poses_no_backup.xml` 주석의 `--`(XML 위반, 동작엔 영향 없었음) 발견·수정)
-- [~] synthetic rosbag으로 `analyze.py` 검증(`tools/nav/benchmark/test_analyze_bag.py`) — CI(ROS 컨테이너)에서만 실행 가능, **결과 확인 필요**
+- [x] synthetic rosbag으로 `analyze.py` 검증(`tools/nav/benchmark/test_analyze_bag.py`): CI run 10(ROS Jazzy 컨테이너)에서 통과 — rosbag2 읽기 경로와 지표 수치가 알려진 값과 일치. **실제 로봇이 기록한 bag으로는 아직 미검증**
 - [ ] **현장 확인 필요(실기)**: ① `cmd_vel` NaN을 일부러 보내도 바퀴가 안 도는지 ② STM32 침묵 상황에서 명령 거부 로그 ③ 잘못된 파라미터로 기동 시 즉시 종료 — 모터 시험이라 사용자 입회(L3, 바퀴 띄움)
 
 ## 문서화 작업 (2026-10-06, 코드 변경 없음)
