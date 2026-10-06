@@ -82,8 +82,9 @@ STM32(vendor 펌웨어)는 엔코더/바퀴 속도를 호스트로 보내지 않
   ```bash
   git clone -b main https://github.com/orbbec/OrbbecSDK_ROS2.git src/OrbbecSDK_ROS2
   ```
-- **`firmware_source/`**: Hiwonder 펌웨어 `.hex` ZIP과 프로토콜 PDF는 라이선스가 불분명해 `.gitignore`로 제외한다.
-  다만 직접 덤프한 `.bin`과 `decompile/`(Ghidra 산출물)은 현재 추적 중이다 — **재배포 가능 여부 검토 중** ([checklist](checklist/PROJECT_CHECKLIST.md) 참고). 소스는 애초에 없다.
+- **`firmware_source/`**: Hiwonder 펌웨어(`.hex` ZIP, 칩에서 덤프한 `.bin`, `decompile/` Ghidra 산출물)와 프로토콜 PDF는 재배포 권한이 불분명해
+  2026-10-06부터 `.gitignore`로 제외하고 **로컬에만 둔다**. 이 저장소에는 직접 작성한 `PINMAP.md`, `BOARD_CONNECTORS.md`만 공개한다. 소스는 애초에 없다.
+  (과거 커밋 이력에는 덤프가 남아 있다 — 이력 삭제 여부는 미결정, `checklist/README.md` 참고.)
 - **`maps/*.posegraph`, `maps/*.data`**: slam_toolbox 직렬화 지도 (용량이 커서 제외).
 - `build/ install/ log/ Log/`: 빌드 산출물과 로그.
 

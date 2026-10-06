@@ -100,7 +100,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `firmware/rrc_m4/` | STM32 자체 펌웨어 재작성 프로젝트(계획: `~/.claude/plans/enchanted-chasing-sky.md`). `lib/{protocol,core,comm}`(호스트 단위 시험) + `app/`(HAL+FreeRTOS, RRC/micro-ROS 두 빌드). **flash 전**, 개요는 `firmware/rrc_m4/README.md` |
 | `src/jetrover_microros/` | micro-ROS 펌웨어용 호스트 패키지(브리지 노드 + agent launch). `jetrover_base`와 같은 시리얼 포트를 쓰므로 동시에 못 띄움 |
 | `tools/` | 시험/진단 스크립트: `parse_stm32.py`, `sniff_stm32.py`, `imu_calibration/`, `stm32_diagnostics/`(NOTES.md에 hang 조사 전체 기록) |
-| `firmware_source/` | Hiwonder 자료(펌웨어 `.hex` ZIP, 프로토콜 PDF, 실제 칩에서 덤프한 백업 `.bin`). 소스는 없음. `BOARD_CONNECTORS.md`에 커넥터/센서/액추에이터 대응표, `PINMAP.md`에 MCU 핀 대응(확정/추정 구분), `decompile/`에 Ghidra 결과 |
+| `firmware_source/` | Hiwonder 자료(펌웨어 `.hex` ZIP, 프로토콜 PDF, 실제 칩에서 덤프한 백업 `.bin`, `decompile/`) — **2026-10-06부터 git 추적 제외, 로컬에만 존재**(재배포 권한 불분명; 추적되는 건 `PINMAP.md`/`BOARD_CONNECTORS.md`뿐). 소스는 없음. `BOARD_CONNECTORS.md`에 커넥터/센서/액추에이터 대응표, `PINMAP.md`에 MCU 핀 대응(확정/추정 구분), `decompile/`에 Ghidra 결과 |
 
 새 기능을 `jetrover_base`에 무분별하게 넣지 않는다. 기능 영역이 다르면 별도 ROS2 패키지를 만든다
 (예: LiDAR/Nav2 → `jetrover_navigation`, YOLO/Depth → `jetrover_perception`, MoveIt → `jetrover_manipulation`,
