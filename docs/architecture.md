@@ -75,7 +75,7 @@ map ─(AMCL)→ odom ─(EKF)→ base_footprint ─→ base_link ─┬─ imu_
 ## 5. 패키지
 | 패키지 | 역할 | 비고 |
 |---|---|---|
-| `jetrover_base` | RRC 베이스 드라이버, IMU, 메카넘, 팔 서보 읽기/쓰기, EKF 설정 | 단위시험(CI): RRC 코덱 14, 메카넘 9(골든 벡터 포함), 서보 pulse↔rad 8, watchdog 11 |
+| `jetrover_base` | RRC 베이스 드라이버, IMU, 메카넘, 팔 서보 읽기/쓰기, EKF 설정 | 단위시험(CI): RRC 코덱 14, 메카넘 9(골든 벡터 포함), 서보 pulse↔rad 8, watchdog 11, 명령 검증/파라미터 fail-fast 11 |
 | `jetrover_description` | URDF/메쉬/`robot_state_publisher` | Hiwonder 공식 메쉬 파생 (라이선스 별도 확인 필요) |
 | `jetrover_bringup` | `robot.launch.py` 등 통합 실행 | 최종 `system.launch.py`(모듈 on/off 인자)는 [계획] |
 | `jetrover_navigation` | slam_toolbox, AMCL, Nav2(DWB) | 튜닝 이력은 benchmarks/navigation/tuning-history.md |

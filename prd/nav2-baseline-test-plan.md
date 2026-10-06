@@ -10,7 +10,7 @@
 
 ## 고정 조건 (바꾸면 baseline이 무효)
 - 지도: `maps/lap2_20261005`, 같은 `nav2_params.yaml`/`amcl.yaml`(시험 시작 시 git 커밋 해시를 `notes`에 기록), 같은 배터리 구간(≥11 V 권장, 10 V 미만이면 충전).
-- 속도 제한은 현재 설정 그대로(`max_linear 0.2`). 시험 도중 파라미터를 고치지 않는다 — 고치면 그 시점부터 새 태그로 다시 시작.
+- 속도 제한은 현재 설정 그대로, **두 단계를 모두 기록**한다: `base_node` 호스트 하드 한계 `max_linear 0.20 m/s`(`base.yaml`), Nav2 DWB 전진 한계 `max_vel_x 0.12 m/s`(`nav2_params.yaml`). 실제 주행 속도는 후자가 결정한다. 시험 도중 파라미터를 고치지 않는다 — 고치면 그 시점부터 새 태그로 다시 시작.
 - 시작 자세는 바닥에 테이프로 표시, 매 시험 시작 전 AMCL이 수렴했는지 확인(`/amcl_pose` 공분산).
 - 팔은 home pose(`arm_home_pose_rad`), 카메라 전방 (depth 시험 전제).
 
@@ -33,9 +33,9 @@ Success Rate · Collision Rate · Goal Position Error [cm] · Goal Yaw Error [de
 - CPU/GPU 사용률은 이번 baseline에서 제외.
 
 ## 열린 결정 (시험 전 사용자와 정할 것)
-1. **depth off 조건(Before)**: depth 유효 효과를 "충돌 감소"로 증명하려면 depth를 끈 대조군이 필요하다. 그런데 LiDAR에 안 보이는
-   낮은 상자 시나리오를 depth off로 돌리면 **충돌이 거의 확실**하다. 한다면 *부드러운 장애물(폼 블록 등)*로 바꾸고 속도를 낮추며 사용자가 전원 스위치 옆에 있을 때만.
-   안 하면 Before 근거는 과거 실충돌 1건(troubleshooting/021)뿐이다. 이 경우 포트폴리오에서 "충돌 감소"가 아니라 "재현된 실패 사례 + 이후 반복 성공률"로 서술한다.
+1. **depth off 조건(Before) — 결정(2026-10-06)**: **depth를 끈 채 주행하지 않는다.** LiDAR에 안 보이는 낮은 상자를 depth off로 몰면 충돌이 거의 확실하고,
+   실충돌 사례(troubleshooting/021)가 이미 있다. 대신 **정지 상태 비교**로 대체: 같은 장애물을 두고 Depth OFF → `/scan` 미검출·costmap 미표시, Depth ON → point cloud 검출·costmap 표시를
+   각각 기록하고(스냅샷/costmap 덤프), 주행 성공률은 **depth ON 상태 5회**로만 측정한다. "충돌 감소율"은 주장하지 않고 "재현된 실패 사례 + 이후 반복 성공률"로 서술한다.
 2. **목표 좌표/시작 자세**: 시나리오별 고정 좌표(map 프레임)를 시험 전에 확정해 이 문서에 표로 기록한다 (현재 미정).
 3. **B/C 장애물 위치**: 지도 `lap2_20261005`의 의자 좌표(x 1.10~1.90, y −0.68~−0.18)와 겹치지 않게 정한다.
 

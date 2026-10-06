@@ -46,4 +46,4 @@ Depth → 3D PointCloud → TF(camera→base) → 로봇 형상 self-filter(URDF
 3. **FOV 밖**: 센서 시야 밖으로 나간 장애물이 stale로 남는지(`clearing`/`obstacle_max_range` 동작).
 4. **기준 이탈**: 홈 자세를 일부러 약간 바꿨을 때 false positive가 몇 개 생기는지(기준 의존성의 크기를 수치로).
 5. **두께**: 얇은 막대/깊은 상자에서 extrusion이 costmap을 얼마나 과/소 점유시키는지.
-결과는 `docs/benchmarks/navigation/`에 표로 남기고, 실패는 `troubleshooting/`에 기록한다.
+(depth를 끈 채 주행하는 대조 시험은 하지 않는다 — 정지 상태 OFF/ON costmap 비교로 대체, `prd/nav2-baseline-test-plan.md`.) 결과는 `docs/benchmarks/navigation/`에 표로 남기고, 실패는 `troubleshooting/`에 기록한다.

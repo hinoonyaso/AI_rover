@@ -36,7 +36,8 @@ def read_bag(path):
 
     reader = rosbag2_py.SequentialReader()
     reader.open(rosbag2_py.StorageOptions(uri=path, storage_id=''),
-                rosbag2_py.ConverterOptions('', ''))
+                rosbag2_py.ConverterOptions(input_serialization_format='',
+                                            output_serialization_format=''))
     types = {t.name: t.type for t in reader.get_all_topics_and_types()}
     data = {k: [] for k in TOPICS}
     while reader.has_next():

@@ -29,5 +29,4 @@ Nav2 자율주행 중 로봇이 의자 다리와 충돌했다(2026-10-05). `coll
 | Navigation 성공률 | 측정 예정 | 측정 예정 |
 | Goal 위치/yaw 오차, CTE RMS | 측정 예정 | 측정 예정 |
 
-측정 절차: `prd/nav2-baseline-test-plan.md`. "Before"는 depth 소스를 끈 설정으로 같은 시나리오를 돌려야 하므로,
-baseline 시험 설계 시 **depth off 조건을 추가할지** 결정이 필요하다 (현재 계획의 15회는 depth on만 포함).
+측정 절차: `prd/nav2-baseline-test-plan.md`. **결정(2026-10-06)**: depth를 끈 채로는 주행하지 않는다(충돌 위험, 실충돌 사례 이미 있음). Before 근거는 과거 실충돌 1건(021)과 정지 상태에서의 Depth OFF/ON costmap 비교이고, 주행 성공률은 depth ON 5회로만 측정한다.

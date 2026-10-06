@@ -7,7 +7,7 @@
   (+파이프라인 상세 [../prd/jetinspect-m-pipelines.md](../prd/jetinspect-m-pipelines.md)).
   새 기능을 시작할 때의 작업 방식(PRD→Task→실행)은 `AGENTS.md`의 "새 기능 작업 방식" 참고.
 
-## 진행률 (2026-10-04 기준)
+## 진행률 (2026-10-06 기준)
 
 | 영역 | 상태 |
 |---|---|
@@ -25,7 +25,7 @@
 | Nav2(Costmap/Planner/BT) | **설정 완료, 실주행 1회 성공 + 2회차 중 충돌**(2026-10-05): DDS/RViz 툴 문제(`troubleshooting/018`) 해결 후 Trial 1 성공(거리오차 4.8%, 각도오차 5.3°, 7.2/8.9). 방 재매핑(의자가 진짜 장애물이었음, `lap2_20261005`) + inflation_radius 안전값 보정(`troubleshooting/020`). **Trial 2 중 로봇이 의자 다리에 충돌**(2D LiDAR 사각지대로 추정, `troubleshooting/021`, 미해결) — 자율주행 일시 중단, 반복 시험/지표 기록은 이 안전 문제 해결 후 재개 |
 | RGB-D 카메라 | **완료**(2026-10-05): TF 연결, RGB/Depth 실측, RGB-Depth 픽셀 정렬, camera_info 캘리브레이션, PointCloud 시각 검증까지 전부 확인됨 |
 | Vision AI, 3D Perception | 미완료 |
-| **로봇팔** | 서보 ID 확인 + **실시간 위치 읽기(`/joint_states`) 완료**(관절 1~5, 그리퍼 10, 실물과 RViz 자세 일치 확인). MoveIt2/IK/명령 송신(움직이기)은 미완료 |
+| **로봇팔** | 서보 ID 확인 + **실시간 위치 읽기(`/joint_states`) 완료**(관절 1~5, 그리퍼 10, 실물과 RViz 자세 일치 확인). **저수준 위치 명령(`arm/command`)·토크(`arm/torque`)·home pose 완료**(2026-10-05, 실기 검증, 진단/bring-up용 인터페이스). MoveIt2 / IK / `FollowJointTrajectory`(ros2_control)는 미완료 |
 | Mission BT | 미완료 |
 | FastAPI, React 관제, DB | 미완료 |
 | RAG/Memory | 미완료 |
@@ -39,8 +39,8 @@
 3. ST-Link 도착 대기(별도 트랙) → 도착하면 SWD로 STM32 핀맵 확정, 신규 펌웨어 브링업 시작
 4. 2단계 끝나기 전엔 Perception/Voice/MoveIt2 등 뒷 단계는 손대지 않는다 (개발 순서 고정 규칙)
 
-## 외부 리뷰 반영 후보 (2026-10-06, 계획 — 사용자 확정 전)
-표준화·정량평가·재현성 중심으로 전환하자는 리뷰. 순서는 제안이며 개발 순서(PRD 13절)와 충돌하면 확인 후 정한다.
+## 2026-10-06 구조 개선 반영 현황 (외부 리뷰 기반)
+표준화·정량평가·재현성 중심으로 전환. 순서/게이트는 `docs/ROADMAP.md`가 기준이다(여기는 진행 요약).
 1. [x] README 현재 상태 최신화 (Current vs Target odometry 구분 포함)
 2. [~] `firmware_source/*.bin`, `decompile/`를 추적에서 제거하고 `.gitignore` 처리(2026-10-06, 로컬 파일은 유지). **과거 커밋 이력에는 아직 남아 있음** — 이력 삭제(filter-repo + force-push)는 사용자 승인 필요
 3. [x] `package.xml` license(Apache-2.0)/maintainer/version 정리 + `LICENSE` 추가. 단 vendor 파생물(Hiwonder URDF/메쉬 등)의 라이선스는 별도 확인 필요
@@ -48,7 +48,15 @@
 5. [~] ROS2 unit test: `jetrover_base/test/test_rrc_protocol.cpp` 14개 통과(CRC·파서 resync·모터/서보/토크). mecanum IK/FK는 `mecanum.hpp/.cpp`로 분리 후 `test_mecanum.cpp` 7개 통과(IK↔FK 왕복 포함, 2026-10-06). 서보 pulse↔rad 8개(`servo_convert`)·watchdog 11개(`link_watchdog`)도 분리 후 통과, 모두 CI 포함(2026-10-06). **분리한 `base_node.cpp`의 실기 동작은 미검증(L0까지)**
 6. [ ] STM32 encoder 실기 bring-up → encoder odom + EKF → Nav2 재평가 (→ MPPI A/B)
 7. [ ] Arm: `ros2_control` + `FollowJointTrajectory` 설계 (`arm/command`·`arm/torque`는 진단용으로 유지)
-8. [~] GitHub Actions CI(`.github/workflows/ci.yml`: 펌웨어 host test + ROS Jazzy colcon build/test) 작성. 펌웨어 쪽은 로컬 확인, ROS 잡은 첫 push 후 Actions 결과로 확인 필요
+8. [x] GitHub Actions CI(`.github/workflows/ci.yml`): 펌웨어 host test + ROS Jazzy colcon build/test(base, microros) 통과 확인(run 9, 2026-10-06). **이후 확장분(static-checks 잡, bringup/navigation/perception 빌드, synthetic rosbag 분석 시험)은 push 후 결과 확인 전 → 아래 안전성 항목 참고**
+
+## 안전성/L0 보강 (2026-10-06, 하드웨어 없이, L0까지 — 실기 미검증)
+- [x] `/cmd_vel` NaN/Inf 거부 + 정지, `arm/command` NaN/Inf 전체 거부 (`command_guard`, 단위시험 11개). **발견한 실제 구멍**: `std::clamp`는 NaN을 못 거르고, 팔 step 검사(`abs(...) > max`)도 NaN에서는 거짓이라 통과 → `troubleshooting/029`
+- [x] STM32 침묵 중 0이 아닌 `cmd_vel` 거부(저장 안 함 → 복구 후 옛 명령 부활 방지). 0 명령은 허용
+- [x] 시작 시 파라미터 fail-fast: 형상/타임아웃/서보(부호 ±1, pulse 범위, range>0, home pose finite) 검증, 실패 시 `invalid_argument`로 종료(exit 1)
+- [x] 정적 검사 CI `tools/ci/static_checks.py`: Python 문법, YAML/XML 파싱, package.xml/setup.py TODO 검사 (검사 중 `navigate_through_poses_no_backup.xml` 주석의 `--`(XML 위반, 동작엔 영향 없었음) 발견·수정)
+- [~] synthetic rosbag으로 `analyze.py` 검증(`tools/nav/benchmark/test_analyze_bag.py`) — CI(ROS 컨테이너)에서만 실행 가능, **결과 확인 필요**
+- [ ] **현장 확인 필요(실기)**: ① `cmd_vel` NaN을 일부러 보내도 바퀴가 안 도는지 ② STM32 침묵 상황에서 명령 거부 로그 ③ 잘못된 파라미터로 기동 시 즉시 종료 — 모터 시험이라 사용자 입회(L3, 바퀴 띄움)
 
 ## 문서화 작업 (2026-10-06, 코드 변경 없음)
 - [x] `docs/` 신설: ROADMAP(재정렬 순서·게이트·MVP), architecture(Current vs Target, TF, 센서 커버리지), design/depth-obstacle(임시 방식·한계·검증 항목), case-studies/nav-depth-obstacle(Failure→Root Cause→Fix, 결과 수치는 미측정), benchmarks/navigation/tuning-history

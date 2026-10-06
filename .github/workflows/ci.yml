@@ -16,6 +16,18 @@ jobs:
           cmake --build build -j2
           ctest --test-dir build --output-on-failure
 
+  static-checks:
+    # 한글: ROS 없이 Python 문법/YAML/XML/package.xml 메타데이터를 검사한다 (bringup/navigation/perception 포함).
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PyYAML
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends python3-yaml
+      - name: Static checks
+        run: python3 tools/ci/static_checks.py .
+      - name: Benchmark metric unit tests
+        run: python3 tools/nav/benchmark/test_metrics.py
+
   ros2-jazzy:
     runs-on: ubuntu-24.04
     container: ros:jazzy-ros-base
@@ -26,15 +38,22 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends python3-colcon-common-extensions \
             ros-jazzy-ament-cmake-gtest ros-jazzy-ament-lint-auto ros-jazzy-ament-lint-common \
-            ros-jazzy-robot-localization python3-pytest
+            ros-jazzy-robot-localization python3-pytest \
+            ros-jazzy-rosbag2-py ros-jazzy-rosbag2-storage-default-plugins
       - name: Build
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon build --packages-select jetrover_description jetrover_base jetrover_microros
+          colcon build --packages-select jetrover_description jetrover_base jetrover_microros \
+            jetrover_bringup jetrover_navigation jetrover_perception
       - name: Test
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
           colcon test --packages-select jetrover_base jetrover_microros
           colcon test-result --verbose
+      - name: Benchmark analyzer on a synthetic rosbag
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          python3 tools/nav/benchmark/test_analyze_bag.py -v

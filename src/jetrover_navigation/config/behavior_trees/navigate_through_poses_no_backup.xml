@@ -1,6 +1,6 @@
 <!--
   nav2_bt_navigator's default navigate_through_poses_w_replanning_and_recovery.xml, with the
-  <BackUp .../> recovery action removed -- same reason as navigate_to_pose_no_backup.xml
+  <BackUp .../> recovery action removed; same reason as navigate_to_pose_no_backup.xml
   (troubleshooting/022, 2026-10-05).
 -->
 <root BTCPP_format="4" main_tree_to_execute="MainTree">

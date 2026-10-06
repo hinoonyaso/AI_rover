@@ -55,3 +55,4 @@
 | 026 | [depth로만 보이는 장애물 앞에서 DWB가 멈추고 회피 못 함](026-depth-obstacle-not-in-global-costmap.md) | 해결 (global costmap에도 depth_cloud 추가, 카메라 감지거리가 짧은 한계는 남음) |
 | 027 | [로봇팔 토크 ON/OFF 서브커맨드(0x0B/0x0C)가 뒤집혀 있어 OFF해도 안 풀림](027-arm-torque-subcommands-swapped.md) | 해결 (0x0B=해제, 0x0C=걸기 확인, 호스트 코드/순서 수정) |
 | 028 | [depth 장애물(상자) 회피 시험: 멈춤/충돌/대각선 종료, collision_monitor 과민 반응](028-nav2-obstacle-avoidance-tuning-session.md) | 대부분 해결 (설정 정리, 반복 시험 필요) |
+| 029 | [NaN/Inf 명령이 std::clamp와 팔 step 검사를 통과](029-cmd-nan-passes-clamp-and-arm-step-check.md) | 해결 (L0, 실기 미검증) |

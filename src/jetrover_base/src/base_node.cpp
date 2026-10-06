@@ -7,6 +7,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include "jetrover_base/command_guard.hpp"
 #include "jetrover_base/crash_guard.hpp"
 #include "jetrover_base/link_watchdog.hpp"
 #include "jetrover_base/mecanum.hpp"
@@ -70,6 +72,14 @@ public:
     max_angular_ = declare_parameter<double>("max_angular", 1.0);
     cmd_vel_timeout_ = declare_parameter<double>("cmd_vel_timeout", 0.5);
     stm32_timeout_ = declare_parameter<double>("stm32_timeout", 1.0);
+    // 한글: 잘못된 형상/타임아웃 설정이면 대충 돌지 않고 시작을 거부한다(fail-fast, main()에서 잡아 종료).
+    // Fail fast on bad geometry/timeouts instead of running roughly (caught in main()).
+    const std::string base_err = validate_base_params(
+      wheelbase_, track_width_, wheel_diameter_, max_linear_, max_angular_, cmd_vel_timeout_,
+      stm32_timeout_);
+    if (!base_err.empty()) {
+      throw std::invalid_argument("invalid parameter: " + base_err);
+    }
     watchdog_ = LinkWatchdog(cmd_vel_timeout_, stm32_timeout_);
 
     imu_frame_ = declare_parameter<std::string>("imu_frame", "imu_link");
@@ -159,6 +169,21 @@ public:
           RCLCPP_ERROR(get_logger(), "arm_home_pose_rad length mismatch; home move disabled");
           arm_move_home_on_start_ = false;
         }
+        ArmParams arm_params;
+        arm_params.servo_range_deg = servo_range_deg;
+        arm_params.servo_ticks_range = servo_ticks_range;
+        arm_params.center_ticks = arm_center_ticks_;
+        arm_params.signs = arm_joint_signs_;
+        arm_params.offsets_rad = arm_joint_offsets_rad_;
+        arm_params.home_pose_rad = arm_home_pose_rad_;
+        arm_params.max_step_rad = arm_max_step_rad_;
+        arm_params.move_duration_s = arm_move_duration_s_;
+        arm_params.pulse_min = arm_pulse_min_;
+        arm_params.pulse_max = arm_pulse_max_;
+        const std::string arm_err = validate_arm_params(arm_params);
+        if (!arm_err.empty()) {
+          throw std::invalid_argument("invalid parameter: " + arm_err);
+        }
         if (arm_command_enabled_ && arm_move_home_on_start_) {
           arm_home_timer_ = create_wall_timer(2500ms, [this]() {arm_home_tick();});
           RCLCPP_WARN(get_logger(), "Arm will ramp to home pose after startup");
@@ -235,6 +260,25 @@ private:
   // 한글: /cmd_vel 수신: 속도를 제한하고 시각을 기록한 뒤 모터 명령을 보낸다. 오도메트리 적분용으로 명령값도 저장한다.
   void on_cmd_vel(const geometry_msgs::msg::Twist & msg)
   {
+    // 한글: 먼저 검증한다. std::clamp는 NaN을 걸러주지 않으므로 NaN/Inf는 clamp 전에 거부하고 정지한다.
+    // STM32가 침묵 중일 때의 0이 아닌 명령도 거부(저장 안 함 -> 복구 후 예전 명령이 되살아나지 않는다).
+    // Validate first: std::clamp does not sanitize NaN, so reject NaN/Inf before clamping and stop.
+    // Non-zero motion while the STM32 is silent is rejected too (and not cached).
+    const CmdDecision decision =
+      decide_cmd_vel(msg.linear.x, msg.linear.y, msg.angular.z, watchdog_.stm32_silent());
+    if (decision == CmdDecision::RejectNonFinite) {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(), *get_clock(), 2000, "cmd_vel rejected: non-finite value (NaN/Inf), stopping");
+      stop_motors();
+      return;
+    }
+    if (decision == CmdDecision::RejectStm32Silent) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 2000,
+        "cmd_vel rejected: STM32 is silent, holding stop until it recovers");
+      stop_motors();
+      return;
+    }
     const double vx = std::clamp(msg.linear.x, -max_linear_, max_linear_);
     const double vy = std::clamp(msg.linear.y, -max_linear_, max_linear_);
     const double wz = std::clamp(msg.angular.z, -max_angular_, max_angular_);
@@ -501,6 +545,13 @@ private:
       RCLCPP_WARN(get_logger(), "arm/command ignored: serial closed or name/position mismatch");
       return;
     }
+    // 한글: NaN/Inf가 있으면 전체 거부. NaN은 step 비교(`> max`)도 통과하고 정수 변환이 정의되지 않는다.
+    // Reject the whole command on NaN/Inf: NaN slips through the `> max` step check and the
+    // integer conversion would be undefined.
+    if (!all_finite(msg.position)) {
+      RCLCPP_WARN(get_logger(), "arm/command rejected: non-finite position (NaN/Inf)");
+      return;
+    }
     std::vector<BusServoTarget> targets;
     for (std::size_t k = 0; k < msg.name.size(); ++k) {
       const auto joint_it = std::find(
@@ -714,7 +765,15 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<jetrover_base::BaseNode>());
+  // 한글: 파라미터 검증 실패(생성자에서 throw)는 로그를 남기고 비정상 종료한다.
+  // A parameter validation failure (thrown in the constructor) logs and exits non-zero.
+  try {
+    rclcpp::spin(std::make_shared<jetrover_base::BaseNode>());
+  } catch (const std::invalid_argument & e) {
+    RCLCPP_FATAL(rclcpp::get_logger("base_node"), "%s", e.what());
+    rclcpp::shutdown();
+    return 1;
+  }
   rclcpp::shutdown();
   return 0;
 }
