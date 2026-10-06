@@ -73,3 +73,6 @@ rosbag2_*/
 __pycache__/
 /firmware_source/*.bin
 /firmware_source/decompile/
+
+# Nav2 benchmark rosbags (large; summaries go to docs/benchmarks/navigation/)
+/bags/
