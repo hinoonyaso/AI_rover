@@ -46,13 +46,13 @@
   → Mission Manager → Behavior Tree
       ├── Navigation   (LiDAR/IMU/Encoder·Odom → EKF/TF2 → SLAM/Nav2)   # Odom: 현재 open-loop(cmd_vel 적분), Encoder는 계획
       ├── Perception    (RGB-D → YOLO/OCR/Depth)
-      └── Manipulation  (6DoF Arm + Gripper, TF2, MoveIt2)
+      └── Manipulation  (5-DoF Arm + Gripper, TF2, MoveIt2)
       └─→ Inspection Logic → 정상/이상/대응(Pick·Push·Place) → Mission Result
               → TTS/LCD/Dashboard
   Battery Monitor → 정상/Low Battery → Return-to-Base
 ```
 
-JetRover 자체도 LiDAR, 3D depth camera, 6DoF arm, far-field microphone array 등으로 SLAM/navigation,
+JetRover 자체도 LiDAR, 3D depth camera, 5-DoF arm + gripper, far-field microphone array 등으로 SLAM/navigation,
 3D grabbing, voice interaction을 수행하도록 구성된 플랫폼이라 프로젝트 방향과 하드웨어 목적이 맞는다.
 
 ## 5. JetRover 하드웨어 활용
@@ -70,7 +70,7 @@ JetRover 자체도 LiDAR, 3D depth camera, 6DoF arm, far-field microphone array 
 | RGB-D Camera | 객체인식, OCR, Depth, 3D 위치 추정 |
 | 6CH Mic Array | 음원방향 추정, 음성 명령 |
 | Speaker | TTS 결과 및 위험 알림 |
-| 6DoF Robot Arm | 설비 근접 검사, 버튼 누르기, 물체 조작 |
+| 5-DoF Robot Arm + Gripper | 설비 근접 검사, 버튼 누르기, 물체 조작 |
 | Gripper | 볼트/경량 부품 Pick & Place |
 | Battery | 전압 기반 Mission 관리 및 복귀 판단 |
 | Display | Mission/배터리/점검 결과 HMI |

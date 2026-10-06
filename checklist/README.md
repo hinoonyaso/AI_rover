@@ -34,7 +34,7 @@
 
 ## 지금 당장 남은 일
 개발 순서(PRD 13절) 기준 **1단계(Base/TF)는 끝났고, 2단계(SLAM/Nav2)는 핵심 동작까지 확인됨**:
-1. Nav2: 반복 주행 시험(3회+)으로 목표 위치/yaw 오차 측정, 성능 지표 기록 (8.9~8.10)
+1. Nav2: **공식 baseline 15회**(3 시나리오 × 5회, `prd/nav2-baseline-test-plan.md`)로 지표 7개 기록 (8.9~8.10) — 이전의 "3회+" 기준을 대체
 2. AMCL: 실제 로봇을 움직여서 relocalization/localization error 측정 (7.1~7.4)
 3. ST-Link 도착 대기(별도 트랙) → 도착하면 SWD로 STM32 핀맵 확정, 신규 펌웨어 브링업 시작
 4. 2단계 끝나기 전엔 Perception/Voice/MoveIt2 등 뒷 단계는 손대지 않는다 (개발 순서 고정 규칙)
@@ -45,7 +45,7 @@
 2. [~] `firmware_source/*.bin`, `decompile/`를 추적에서 제거하고 `.gitignore` 처리(2026-10-06, 로컬 파일은 유지). **과거 커밋 이력에는 아직 남아 있음** — 이력 삭제(filter-repo + force-push)는 사용자 승인 필요
 3. [x] `package.xml` license(Apache-2.0)/maintainer/version 정리 + `LICENSE` 추가. 단 vendor 파생물(Hiwonder URDF/메쉬 등)의 라이선스는 별도 확인 필요
 4. [~] Nav2 baseline 15회(3시나리오×5): 계획 `prd/nav2-baseline-test-plan.md` + 기록/분석 도구 작성 완료, **시험 미실시**(사용자 입회 필요). 순서: baseline → ST-Link/엔코더 bring-up → encoder odom+EKF → 동일 15회 재시험(Before/After) → DWB vs MPPI → ros2_control 팔 PRD
-5. [~] ROS2 unit test: `jetrover_base/test/test_rrc_protocol.cpp` 14개 통과(CRC·파서 resync·모터/서보/토크). mecanum IK/FK는 `mecanum.hpp/.cpp`로 분리 후 `test_mecanum.cpp` 7개 통과(IK↔FK 왕복 포함, 2026-10-06). 서보 pulse↔rad 8개(`servo_convert`)·watchdog 11개(`link_watchdog`)도 분리 후 통과, 모두 CI 포함(2026-10-06). **분리한 `base_node.cpp`의 실기 동작은 미검증(L0까지)**
+5. [x] ROS2 **L0 unit test 구축** (CI 포함, 2026-10-06): RRC 코덱 14 · 메카넘 9(IK↔FK 왕복, C++/Python 골든 벡터) · 서보 변환 8 · watchdog 11 · 명령 검증/파라미터 fail-fast 11 · micro-ROS 기구학 4 · 벤치마크 지표 8 + synthetic rosbag 분석. **실기 regression은 별도(L3/L4, 사용자 입회) — 아래 "현장 확인 필요" 항목 참고**. 세부: `jetrover_base/test/test_rrc_protocol.cpp` 14개 통과(CRC·파서 resync·모터/서보/토크). mecanum IK/FK는 `mecanum.hpp/.cpp`로 분리 후 `test_mecanum.cpp` 7개 통과(IK↔FK 왕복 포함, 2026-10-06). 서보 pulse↔rad 8개(`servo_convert`)·watchdog 11개(`link_watchdog`)도 분리 후 통과, 모두 CI 포함(2026-10-06). 분리한 `base_node.cpp`의 실기 동작은 미검증(L0까지)
 6. [ ] STM32 encoder 실기 bring-up → encoder odom + EKF → Nav2 재평가 (→ MPPI A/B)
 7. [ ] Arm: `ros2_control` + `FollowJointTrajectory` 설계 (`arm/command`·`arm/torque`는 진단용으로 유지)
 8. [x] GitHub Actions CI(`.github/workflows/ci.yml`): 펌웨어 host test + ROS Jazzy colcon build/test(base, microros) 통과 확인(run 9, 2026-10-06). 확장분(static-checks 잡, bringup/navigation/perception 빌드, synthetic rosbag 분석 시험)도 run 10에서 통과

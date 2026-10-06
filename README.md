@@ -1,6 +1,6 @@
 # AI_rover
 
-Hiwonder JetRover(메카넘 휠 + 6축 로봇팔) 위에 ROS 2 Jazzy 기반 자율주행·인식·조작·미션·관제 시스템을 처음부터 쌓아 가는 프로젝트.
+Hiwonder JetRover(메카넘 휠 + 5-DoF 로봇팔 + 그리퍼) 위에 ROS 2 Jazzy 기반 자율주행·인식·조작·미션·관제 시스템을 처음부터 쌓아 가는 프로젝트.
 Hiwonder 기본 소프트웨어를 쓰지 않고, STM32(RRC 보드) 프로토콜을 직접 분석해서 드라이버부터 만들었다.
 
 - 호스트: Jetson Orin Nano 8GB, Ubuntu + ROS 2 Jazzy

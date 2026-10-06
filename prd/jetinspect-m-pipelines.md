@@ -192,7 +192,7 @@ Object Pose → PoseStamped → MoveGroup → IK → Collision Checking → OMPL
   → Arm Controller → Servo Motors
 ```
 기술: MoveIt2 + OMPL + RRTConnect. OMPL이 MoveIt2의 기본 motion planning backend로 많이 쓰이고
-collision checking도 기본 수행(원문). 추천 Planner(초기): RRTConnect — 빠르고 설정 쉽고 6DoF arm에 충분.
+collision checking도 기본 수행(원문). 추천 Planner(초기): RRTConnect — 빠르고 설정 쉽고 5-DoF arm에 충분.
 
 ## 14. Robot Alignment Pipeline
 Manipulation 전에 모바일 베이스를 정확히 맞춘다. Mecanum 장점을 여기서 쓴다.
