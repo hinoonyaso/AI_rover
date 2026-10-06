@@ -45,7 +45,7 @@
 2. [~] `firmware_source/*.bin`, `decompile/`를 추적에서 제거하고 `.gitignore` 처리(2026-10-06, 로컬 파일은 유지). **과거 커밋 이력에는 아직 남아 있음** — 이력 삭제(filter-repo + force-push)는 사용자 승인 필요
 3. [x] `package.xml` license(Apache-2.0)/maintainer/version 정리 + `LICENSE` 추가. 단 vendor 파생물(Hiwonder URDF/메쉬 등)의 라이선스는 별도 확인 필요
 4. [ ] Nav2+Depth 10~20회 반복시험으로 baseline (성공률, CTE, goal 오차)
-5. [~] ROS2 unit test: `jetrover_base/test/test_rrc_protocol.cpp` 14개 통과(CRC·파서 resync·모터/서보/토크). 남음: mecanum IK/FK(`base_node.cpp` 안이라 분리 필요), pulse↔rad, watchdog
+5. [~] ROS2 unit test: `jetrover_base/test/test_rrc_protocol.cpp` 14개 통과(CRC·파서 resync·모터/서보/토크). mecanum IK/FK는 `mecanum.hpp/.cpp`로 분리 후 `test_mecanum.cpp` 7개 통과(IK↔FK 왕복 포함, 2026-10-06). 남음: pulse↔rad, watchdog
 6. [ ] STM32 encoder 실기 bring-up → encoder odom + EKF → Nav2 재평가 (→ MPPI A/B)
 7. [ ] Arm: `ros2_control` + `FollowJointTrajectory` 설계 (`arm/command`·`arm/torque`는 진단용으로 유지)
 8. [~] GitHub Actions CI(`.github/workflows/ci.yml`: 펌웨어 host test + ROS Jazzy colcon build/test) 작성. 펌웨어 쪽은 로컬 확인, ROS 잡은 첫 push 후 Actions 결과로 확인 필요

@@ -20,6 +20,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "jetrover_base/crash_guard.hpp"
+#include "jetrover_base/mecanum.hpp"
 #include "jetrover_base/rrc_protocol.hpp"
 #include "jetrover_base/serial_port.hpp"
 
@@ -229,23 +230,6 @@ private:
     return false;
   }
 
-  // 한글: 메카넘 역기구학. 1,2번 모터=왼쪽 앞/뒤, 3,4번=오른쪽 앞/뒤이며 오른쪽은 반대로 장착돼 부호를 뒤집는다. 출력은 바퀴 rev/s. firmware/rrc_m4/lib/core/mecanum.c와 동일 수식.
-  // Mecanum inverse kinematics (same wheel order/signs as Hiwonder's mecanum.py):
-  // motors 1,2 = left front/rear, 3,4 = right front/rear; the right side is
-  // mounted mirrored, so its command is negated. Output is wheel rev/s.
-  std::vector<MotorCommand> mecanum_rps(double vx, double vy, double wz) const
-  {
-    const double k = wz * (wheelbase_ + track_width_) / 2.0;
-    const double to_rps = 1.0 / (M_PI * wheel_diameter_);
-
-    return {
-      {1, static_cast<float>((vx - vy - k) * to_rps)},
-      {2, static_cast<float>((vx + vy - k) * to_rps)},
-      {3, static_cast<float>(-(vx + vy + k) * to_rps)},
-      {4, static_cast<float>(-(vx - vy + k) * to_rps)},
-    };
-  }
-
   // 한글: /cmd_vel 수신: 속도를 제한하고 시각을 기록한 뒤 모터 명령을 보낸다. 오도메트리 적분용으로 명령값도 저장한다.
   void on_cmd_vel(const geometry_msgs::msg::Twist & msg)
   {
@@ -258,7 +242,8 @@ private:
     cmd_vx_ = vx;
     cmd_vy_ = vy;
     cmd_wz_ = wz;
-    send_motors(mecanum_rps(vx, vy, wz));
+    send_motors(
+      mecanum_inverse(vx, vy, wz, wheelbase_, track_width_, wheel_diameter_));
   }
 
   // Integrates the commanded body velocity (open loop) and publishes it.
