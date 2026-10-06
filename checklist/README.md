@@ -38,3 +38,14 @@
 2. AMCL: 실제 로봇을 움직여서 relocalization/localization error 측정 (7.1~7.4)
 3. ST-Link 도착 대기(별도 트랙) → 도착하면 SWD로 STM32 핀맵 확정, 신규 펌웨어 브링업 시작
 4. 2단계 끝나기 전엔 Perception/Voice/MoveIt2 등 뒷 단계는 손대지 않는다 (개발 순서 고정 규칙)
+
+## 외부 리뷰 반영 후보 (2026-10-06, 계획 — 사용자 확정 전)
+표준화·정량평가·재현성 중심으로 전환하자는 리뷰. 순서는 제안이며 개발 순서(PRD 13절)와 충돌하면 확인 후 정한다.
+1. [x] README 현재 상태 최신화 (Current vs Target odometry 구분 포함)
+2. [ ] `firmware_source/*.bin`, `decompile/`(hex/Ghidra 산출물 포함) 공개 여부·라이선스 검토 — git 이력까지 고려해야 하므로 사용자 결정 필요
+3. [ ] `package.xml` license/maintainer/version 정리 (라이선스 결정 필요; `LICENSE` 파일 없음)
+4. [ ] Nav2+Depth 10~20회 반복시험으로 baseline (성공률, CTE, goal 오차)
+5. [ ] ROS2 unit test (`rrc_protocol` encode/decode·CRC, mecanum IK/FK, pulse↔rad, watchdog)
+6. [ ] STM32 encoder 실기 bring-up → encoder odom + EKF → Nav2 재평가 (→ MPPI A/B)
+7. [ ] Arm: `ros2_control` + `FollowJointTrajectory` 설계 (`arm/command`·`arm/torque`는 진단용으로 유지)
+8. [ ] GitHub Actions CI (L0: colcon build/test + firmware host test)

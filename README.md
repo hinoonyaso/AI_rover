@@ -8,17 +8,23 @@ Hiwonder 기본 소프트웨어를 쓰지 않고, STM32(RRC 보드) 프로토콜
 - 센서: RPLIDAR A1M8, Orbbec DaBai DCW (RGB-D), 보드 IMU
 - 개발 방식: VS Code Remote-SSH (RViz 화면을 못 보므로 PNG 저장 / 웹 스트리밍 도구를 씀)
 
-## 진행 상황
+## 진행 상황 (2026-10-06 기준)
 
 | 영역 | 상태 |
 |---|---|
-| Base driver (`base_node`), IMU, open-loop odom, EKF | 동작 (바닥 주행 1차 검증) |
-| URDF / TF | 부분 (기본 트리, 팔·카메라·실측 footprint 남음) |
-| LiDAR | 동작 (`/scan` 약 14 Hz) |
-| SLAM (slam_toolbox) | 키보드 조종으로 한 바퀴 지도 완성 |
-| RGB-D 카메라 | 동작 (TF 연결·calibration 남음) |
-| AMCL, Nav2, Vision AI, MoveIt2, Mission BT, 웹 관제, LLM/음성 | 미착수 |
-| **STM32 안정성** | **미해결** — 아래 "알려진 문제" 참고 |
+| Base driver (`base_node`), IMU, EKF | 완료 (바닥 주행 1차 검증). odom은 **cmd_vel 적분 open-loop** (아래 "Current vs Target") |
+| URDF / TF | 거의 완료 (공식 메쉬 + 팔 + 카메라 TF, 실측 footprint만 남음) |
+| LiDAR | 완료 (`/scan` 약 14 Hz) |
+| SLAM (slam_toolbox) | 완료 (지도 저장까지), loop closure 정량평가 남음 |
+| AMCL | 소프트웨어 스택 실기 검증 완료, relocalization 오차 정량평가 남음 |
+| Nav2 (DWB) | 동작 — 실주행 성공/충돌 사례 기록, **obstacle avoidance 튜닝 중**, 반복시험 baseline 남음 |
+| RGB-D 카메라 | 완료 (TF, 정렬, camera_info, PointCloud 확인) |
+| Depth 장애물 | 동작 (임시 근거리 방식: background-depth 비교 sparse cloud → local/global costmap). 정량평가 남음 |
+| 로봇팔 저수준 | 위치 읽기(`/joint_states`) + 위치 명령(`arm/command`) + torque + home pose 완료. **bring-up/진단용 인터페이스** |
+| MoveIt2 / Vision AI / Mission BT / 웹 관제 / LLM | 예정 |
+| Voice | 마이크·스피커 하드웨어 확인 완료, SW(VAD/STT/TTS) 예정 |
+| 자체 STM32 펌웨어 (`firmware/rrc_m4/`) | **L0(호스트 단위시험)까지 완료, 실기 flash/bring-up 전** (RRC + micro-ROS 두 빌드) |
+| **STM32 안정성** | 재플래시(2026-09-27) 이후 hang 재발 없음, **원인은 미확정** — 아래 "알려진 문제" 참고 |
 
 항목별 상세는 [checklist/PROJECT_CHECKLIST.md](checklist/PROJECT_CHECKLIST.md), 요약은 [checklist/README.md](checklist/README.md).
 
@@ -33,8 +39,16 @@ Hiwonder 기본 소프트웨어를 쓰지 않고, STM32(RRC 보드) 프로토콜
 [구현] jetrover_base (base_node) ── RRC, 1 Mbps ── STM32F407 ── 모터 / IMU
 ```
 
-STM32는 엔코더/바퀴 속도를 호스트로 보내지 않는다. 그래서 odom은 명령 속도를 적분하는 open-loop이고,
-EKF에는 `wheel_twist`(vx, vy)와 자이로 yaw rate만 들어간다.
+위 도식의 `[계획]`은 아직 없는 부분이다 (Nav2/Perception은 동작 중이나 MoveIt2/Mission/관제는 계획).
+
+### Current vs Target (odometry)
+
+| | 입력 | 한계 |
+|---|---|---|
+| **Current** | `cmd_vel`에서 유도한 open-loop `wheel_twist`(vx, vy) + IMU yaw rate | 명령 ≠ 실측. 회전은 실측 이동량이 명령의 약 81% |
+| **Target** | 엔코더 기반 wheel odometry + IMU | 자체 STM32 펌웨어(`/rrc/wheel_rps`)의 실기 검증 후 전환, Nav2 baseline 재평가 |
+
+STM32(vendor 펌웨어)는 엔코더/바퀴 속도를 호스트로 보내지 않는다. 그래서 현재 EKF에는 `wheel_twist`와 자이로 yaw rate만 들어간다.
 
 ## 저장소 구성
 
@@ -43,8 +57,10 @@ EKF에는 `wheel_twist`(vx, vy)와 자이로 yaw rate만 들어간다.
 | `src/jetrover_base/` | 베이스 드라이버 (`base_node`, RRC 프로토콜, 크래시 가드, EKF 설정) |
 | `src/jetrover_description/` | URDF, `robot_state_publisher` launch |
 | `src/jetrover_bringup/` | 전체 실행 launch (`robot.launch.py`, `lidar.launch.py`, `rviz.launch.py`) |
-| `src/jetrover_navigation/` | SLAM Toolbox 설정/launch (이후 AMCL, Nav2) |
-| `src/jetrover_perception/` | 카메라 launch, `web_video_server` launch (이후 YOLO/Depth) |
+| `src/jetrover_navigation/` | SLAM Toolbox, AMCL, Nav2(DWB) 설정/launch |
+| `src/jetrover_perception/` | 카메라 launch, `web_video_server`, depth sparse point cloud (이후 YOLO/Depth) |
+| `src/jetrover_microros/` | micro-ROS 펌웨어용 호스트 브리지 + agent launch |
+| `firmware/rrc_m4/` | 자체 STM32 펌웨어 (호스트 단위시험 L0 완료, flash 전) |
 | `tools/` | 진단·시험 스크립트 (`stm32_diagnostics/`, `imu_calibration/`, `lidar/`, `viz/`) |
 | `drivers/ch341/` | Jetson 커널에 없는 CH340 드라이버 (빌드/설치 스크립트) |
 | `setup/ENVIRONMENT_SETUP.md` | 이 로봇에 한 sudo/apt/시스템 설치 전체 기록 (새 Jetson 재현용) |
@@ -66,7 +82,8 @@ EKF에는 `wheel_twist`(vx, vy)와 자이로 yaw rate만 들어간다.
   ```bash
   git clone -b main https://github.com/orbbec/OrbbecSDK_ROS2.git src/OrbbecSDK_ROS2
   ```
-- **`firmware_source/`**: Hiwonder 펌웨어 `.hex` ZIP과 프로토콜 PDF (라이선스가 불분명해 로컬에만 둔다). 소스는 애초에 없다.
+- **`firmware_source/`**: Hiwonder 펌웨어 `.hex` ZIP과 프로토콜 PDF는 라이선스가 불분명해 `.gitignore`로 제외한다.
+  다만 직접 덤프한 `.bin`과 `decompile/`(Ghidra 산출물)은 현재 추적 중이다 — **재배포 가능 여부 검토 중** ([checklist](checklist/PROJECT_CHECKLIST.md) 참고). 소스는 애초에 없다.
 - **`maps/*.posegraph`, `maps/*.data`**: slam_toolbox 직렬화 지도 (용량이 커서 제외).
 - `build/ install/ log/ Log/`: 빌드 산출물과 로그.
 
