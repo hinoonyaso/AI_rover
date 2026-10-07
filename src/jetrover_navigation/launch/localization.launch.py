@@ -7,12 +7,17 @@ Default map is maps/lap2_20261005.yaml (re-mapped 2026-10-05 after the original
 lap1_20260922 map kept blocking Nav2 near an actual chair the planner's
 footprint+inflation couldn't clear in that tight spot -- see checklist 8).
 Override with `map:=/path/to/other.yaml` for a new one.
+
+auto_localize (default true, 2026-10-07): runs scan_match_init.py once at startup, which
+matches the current /scan against the map and sends /initialpose if the match is confident
+(more accurate than clicking 2D Pose Estimate over a remote RViz). The robot must stand still.
 """
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, TimerAction
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -58,4 +63,20 @@ def generate_launch_description():
         }],
     )
 
-    return LaunchDescription([map_arg, map_server, amcl, lifecycle_manager])
+    # 한글: 시작 시 스캔-지도 매칭으로 초기 위치 자동 설정(확신 낮으면 안 보냄). auto_localize:=false로 끔.
+    auto_arg = DeclareLaunchArgument(
+        'auto_localize', default_value='true',
+        description='Match /scan to the map once at startup and send /initialpose if confident')
+    scan_match = TimerAction(
+        period=3.0,  # let map_server/amcl come up first; the script also waits for them
+        actions=[Node(
+            package='jetrover_navigation',
+            executable='scan_match_init.py',
+            name='scan_match_init',
+            output='screen',
+            condition=IfCondition(LaunchConfiguration('auto_localize')),
+        )],
+    )
+
+    return LaunchDescription(
+        [map_arg, auto_arg, map_server, amcl, lifecycle_manager, scan_match])

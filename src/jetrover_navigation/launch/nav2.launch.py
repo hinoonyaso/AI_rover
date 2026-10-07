@@ -24,12 +24,19 @@ def generate_launch_description():
     map_arg = DeclareLaunchArgument('map', default_value=default_map)
     # 한글: 진단용 로그 레벨(기본 info). 예: log_level:=debug / Diagnostic log level (default info).
     log_level_arg = DeclareLaunchArgument('log_level', default_value='info')
+    # 한글: A/B 시험용으로 다른 파라미터 파일을 줄 수 있다(기본은 패키지의 nav2_params.yaml).
+    # Alternate params file for A/B tests (default: this package's nav2_params.yaml).
+    params_arg = DeclareLaunchArgument(
+        'params_file', default_value=os.path.join(nav_share, 'config', 'nav2_params.yaml'))
 
     # 한글: 우리 localization(map_server + amcl)을 포함.
+    # 한글: auto_localize(기본 true)는 localization.launch.py로 그대로 넘긴다.
+    auto_arg = DeclareLaunchArgument('auto_localize', default_value='true')
     localization = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav_share, 'launch', 'localization.launch.py')),
-        launch_arguments={'map': LaunchConfiguration('map')}.items(),
+        launch_arguments={'map': LaunchConfiguration('map'),
+                          'auto_localize': LaunchConfiguration('auto_localize')}.items(),
     )
 
     # 한글: nav2_bringup의 navigation_launch.py(플래너/컨트롤러/BT/행동 서버/속도 스무더)를 jetrover 파라미터로 포함.
@@ -37,11 +44,12 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(bringup_share, 'launch', 'navigation_launch.py')),
         launch_arguments={
-            'params_file': os.path.join(nav_share, 'config', 'nav2_params.yaml'),
+            'params_file': LaunchConfiguration('params_file'),
             'use_sim_time': 'false',
             'autostart': 'true',
             'log_level': LaunchConfiguration('log_level'),
         }.items(),
     )
 
-    return LaunchDescription([map_arg, log_level_arg, localization, navigation])
+    return LaunchDescription(
+        [map_arg, log_level_arg, params_arg, auto_arg, localization, navigation])

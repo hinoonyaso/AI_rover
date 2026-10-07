@@ -11,7 +11,7 @@ dir="bags/${tag}/trial_${sc}${n}"
 [ -e "$dir" ] && { echo "$dir already exists" >&2; exit 1; }
 mkdir -p "bags/${tag}"
 # 한글: bag 폴더는 ros2 bag이 만들어야 해서 meta는 기록 후 옆에 둔다(폴더 생성 후 복사).
-topics="/tf /tf_static /odom /amcl_pose /cmd_vel /cmd_vel_nav /scan /plan /received_global_plan \
+topics="/tf /tf_static /odom /amcl_pose /cmd_vel /cmd_vel_nav /cmd_vel_smoothed /joint_states /scan /plan /received_global_plan \
 /depth_cam/depth/points_sparse /global_costmap/costmap /local_costmap/costmap /collision_monitor_state"
 trap 'cat > "$dir/meta.json" <<JSON
 {"scenario": "'"$sc"'", "trial": '"$((10#$n))"', "goal": {"x": '"$gx"', "y": '"$gy"', "yaw_deg": '"$gyaw"'},
