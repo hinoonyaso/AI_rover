@@ -3,6 +3,7 @@
 | 문서 | 내용 |
 |---|---|
 | [ROADMAP.md](ROADMAP.md) | **재정렬된 개발 순서**, 단계별 게이트(통과 조건), MVP 범위, 하드웨어 의존성 |
+| [PLAN_ARM_TO_MVP.md](PLAN_ARM_TO_MVP.md) | 로봇팔(5단계)부터 MVP 데모(13단계)까지 단계별 작업·게이트 수치·준비물·위험 (계획) |
 | [architecture.md](architecture.md) | 시스템 구조 (Current vs Target), TF 트리, odometry 파이프라인, 하드웨어 추상화 방향 |
 | [design/depth-obstacle.md](design/depth-obstacle.md) | RGB-D 근거리 장애물 처리: 현재 방식(임시), 한계, 목표 방식, 검증 항목 |
 | [case-studies/nav-depth-obstacle.md](case-studies/nav-depth-obstacle.md) | Failure → Root Cause → Fix 사례 (의자 충돌 → depth costmap), 포트폴리오용 |
