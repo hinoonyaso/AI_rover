@@ -22,11 +22,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install PyYAML
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends python3-yaml
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends python3-yaml python3-numpy
       - name: Static checks
         run: python3 tools/ci/static_checks.py .
       - name: Benchmark metric unit tests
         run: python3 tools/nav/benchmark/test_metrics.py
+      - name: Home pose floor-metric unit tests
+        run: python3 tools/perception/test_floor_metrics.py
 
   ros2-jazzy:
     runs-on: ubuntu-24.04

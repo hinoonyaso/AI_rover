@@ -38,15 +38,25 @@ depth as that reference (nothing moved). Anything that now measures *closer* tha
 reference by more than a margin is something new between the camera and that known
 background -- a real obstacle, regardless of where it lands in XY. This has no failure mode
 tied to the obstacle's position or height matching the wheel's.
+
+Home-pose gate (2026-10-07, troubleshooting/031): that reference is only valid while the arm
+(and therefore the camera) is at the pose it was captured in. If the arm is elsewhere, the
+floor itself differs from the reference and shows up as obstacles (or real obstacles are
+missed), so this node stops publishing until /joint_states is back within tolerance of the
+home pose. Withholding the cloud is deliberate: collision_monitor treats the depth source as
+stale after its source_timeout and stops the robot, i.e. no navigation on an invalid reference.
+한글: 기준 depth는 그걸 찍은 팔 자세에서만 유효하다. 팔이 홈 자세에서 벗어나면 발행을 멈추고,
+collision_monitor가 source_timeout 후 로봇을 세운다(잘못된 기준으로 주행하지 않게 하는 의도된 동작).
 """
 import os
+import time
 
 from ament_index_python.packages import get_package_share_directory
 import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
+from sensor_msgs.msg import CameraInfo, Image, JointState, PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
 
 
@@ -76,7 +86,7 @@ class SparsePointCloud(Node):
         # stays "free" in the costmap and the robot (and line waypoints) drove into the box body.
         # Every obstacle point is therefore extended along its viewing ray by `extrude_depth_m`.
         # 한글: 카메라는 장애물 앞면만 보므로 시선 방향으로 뒤쪽 extrude_depth_m(기본 0.3m)까지 점을 복제해
-        # 몸통도 점유로 취급한다(상자를 치고 지나가던 문제).
+        # 몸통도 점유로 취급한다(상자를 치고 지나가던 문제). 현재 기본값은 아래 0.15m.
         self.declare_parameter('extrude_depth_m', 0.15)  # 0.3 -> 0.15 (2026-10-06): 좁은 방에서 붉은 영역이 너무 커서 통로가 막혔다
         self.declare_parameter('extrude_step_m', 0.1)
         self.extrude_depth = self.get_parameter('extrude_depth_m').value
@@ -91,6 +101,40 @@ class SparsePointCloud(Node):
         self.get_logger().info(
             f'loaded background depth reference from {ref_path}, '
             f'valid fraction={float((self.background > 0).mean()):.3f}')
+        # Home-pose gate (module docstring). Empty home_pose_rad disables it (camera bench tests).
+        # 한글: 팔 홈 자세 확인. home_pose_rad가 비어 있으면 끔(카메라 단독 시험용). camera.launch.py가 base.yaml 값을 넘긴다.
+        self.declare_parameter(
+            'home_pose_joint_names', ['joint1', 'joint2', 'joint3', 'joint4', 'joint5'])
+        self.declare_parameter('home_pose_rad', [0.0])
+        # 0.04 -> 0.08 rad + 1 s debounce (2026-10-07, first floor test): at the home pose joint3
+        # read 0.025..0.042 rad off while driving (servo backlash/vibration), so 0.04 flapped the
+        # gate and collision_monitor stopped the robot 3 times. The gate is meant to catch gross
+        # pose changes (arm folded / used for manipulation: 0.3..0.6 rad); small backlash is the
+        # background_margin_mm's job (0 false points measured at joint3 0.029 rad off).
+        # 한글: 0.04는 주행 중 백래시(0.025~0.042)로 열림/닫힘을 반복해 로봇이 3번 섰다. 게이트는 큰 자세 변화
+        # (팔 접힘/조작, 0.3~0.6 rad)만 잡고, 작은 백래시는 margin(60mm)이 처리한다. 1초 이상 계속 벗어나야 닫힘.
+        self.declare_parameter('home_pose_tolerance_rad', 0.08)
+        self.declare_parameter('home_pose_debounce_s', 1.0)
+        self.declare_parameter('joint_state_timeout_s', 2.0)
+        self.home_names = list(self.get_parameter('home_pose_joint_names').value)
+        home = [float(v) for v in self.get_parameter('home_pose_rad').value]
+        self.home_pose = home if len(home) == len(self.home_names) else None
+        self.home_tol = self.get_parameter('home_pose_tolerance_rad').value
+        self.js_timeout = self.get_parameter('joint_state_timeout_s').value
+        self.debounce = self.get_parameter('home_pose_debounce_s').value
+        self._bad_since = None  # first time the pose check failed in the current streak
+        self._joints = {}
+        self._joints_stamp = None
+        self._gate_ok = None  # last logged gate state / 마지막으로 로그한 상태
+        if self.home_pose is None:
+            self.get_logger().warn(
+                'home_pose_rad not set (or length mismatch): home-pose gate DISABLED -- '
+                'cloud is published regardless of arm pose')
+        else:
+            self.create_subscription(JointState, '/joint_states', self._joint_cb, 10)
+            self.get_logger().info(
+                f'home-pose gate on: {dict(zip(self.home_names, self.home_pose))}, '
+                f'tol={self.home_tol} rad')
         self._count = 0
         self.intrinsics = None
 
@@ -99,6 +143,28 @@ class SparsePointCloud(Node):
             CameraInfo, 'depth/camera_info', self._info_cb, qos_profile_sensor_data)
         self.create_subscription(
             Image, 'depth/image_raw', self._depth_cb, qos_profile_sensor_data)
+
+    def _joint_cb(self, msg):
+        for name, pos in zip(msg.name, msg.position):
+            self._joints[name] = pos
+        self._joints_stamp = time.monotonic()
+
+    # 한글: 팔이 홈 자세(허용오차 내)이고 joint_states가 최신이면 (True, ''), 아니면 (False, 이유).
+    def _home_pose_ok(self):
+        if self.home_pose is None:
+            return True, ''
+        if self._joints_stamp is None or time.monotonic() - self._joints_stamp > self.js_timeout:
+            return False, 'no recent /joint_states'
+        worst_name, worst_err = None, 0.0
+        for name, target in zip(self.home_names, self.home_pose):
+            if name not in self._joints:
+                return False, f'{name} missing in /joint_states'
+            err = abs(self._joints[name] - target)
+            if err > worst_err:
+                worst_name, worst_err = name, err
+        if worst_err > self.home_tol:
+            return False, f'arm off home pose: {worst_name} off by {worst_err:.3f} rad'
+        return True, f'max error {worst_name}={worst_err:.3f} rad'
 
     # 한글: 카메라 내부 파라미터(fx, fy, cx, cy) 저장.
     def _info_cb(self, msg):
@@ -112,6 +178,30 @@ class SparsePointCloud(Node):
         if self.intrinsics is None:
             return
         fx, fy, cx, cy = self.intrinsics
+
+        ok, why = self._home_pose_ok()
+        # Debounce: only close after the check has failed continuously for debounce seconds.
+        # 한글: 연속으로 debounce초 이상 실패해야 닫는다(순간적인 서보 읽기 흔들림 무시).
+        now = time.monotonic()
+        if ok:
+            self._bad_since = None
+        else:
+            if self._bad_since is None:
+                self._bad_since = now
+            if self._gate_ok is not False and now - self._bad_since < self.debounce:
+                ok = True
+        if ok != self._gate_ok:
+            # Log only on state changes (plus a throttled reminder while blocked).
+            # 한글: 상태가 바뀔 때만 로그(막혀 있는 동안은 아래 throttle 경고).
+            if ok:
+                self.get_logger().info(f'home-pose gate OPEN, publishing ({why})')
+            else:
+                self.get_logger().warn(f'home-pose gate CLOSED, not publishing: {why}')
+            self._gate_ok = ok
+        if not ok:
+            self.get_logger().warn(
+                f'depth cloud withheld: {why}', throttle_duration_sec=5.0)
+            return
 
         depth = np.frombuffer(msg.data, dtype=np.uint16).reshape(msg.height, msg.width)
         depth_sparse = depth[::self.stride, ::self.stride]
