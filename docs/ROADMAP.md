@@ -15,7 +15,7 @@ IMU yaw rate만 실측이다. 이 상태로 Perception/Manipulation을 올리면
 |---|---|---|---|---|
 | 0 | 저장소 정리: README, 라이선스, package.xml, CI, ROS2 unit test | 불필요 | CI 초록, README가 실제 상태와 일치 | 완료 (unit test: RRC 코덱·메카넘·서보 변환·watchdog·명령 검증, CI 포함. 안전 로직 L0 보강 — `checklist/README.md`) |
 | 1 | **Nav2 baseline** (open-loop odom, 15회) | 로봇 L4 | `prd/nav2-baseline-test-plan.md` 완료 기준 4개 | 계획·도구 완료, **선행 정리(1-1~1-3) 진행 중**(아래), 시험 미실시 |
-| 2 | STM32 엔코더 bring-up | ST-Link, 로봇 L2~L3 | `prd/encoder-odometry-test-plan.md` E1~E3 | ST-Link 대기 |
+| 2 | STM32 엔코더 bring-up | ST-Link, 로봇 L2~L3 | `prd/encoder-odometry-test-plan.md` E1~E3 | ST-Link 도착(2026-10-08), 착수 예정 금요일(2026-10-09) |
 | 3 | encoder odom + EKF 재구성 | 로봇 L3~L4 | 같은 baseline을 `encoder_ekf` 태그로 재시험, Before/After 표 | 계획 (`prd/encoder-odometry.md`) |
 | 4 | DWB vs MPPI A/B | 로봇 L4 | `prd/nav2-mppi-ab-test-plan.md` | 계획 |
 | 5 | Arm: ros2_control + FollowJointTrajectory 설계 | 불필요(설계) → 로봇 L2 | PRD 승인 → hardware interface가 `arm/command`와 같은 동작 재현 | **3·4 이후에 PRD 작성** |
