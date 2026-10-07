@@ -1,4 +1,4 @@
-# ROADMAP (2026-10-06 재정렬)
+# ROADMAP (2026-10-06 재정렬, 2026-10-08 1단계 갱신)
 
 신뢰 수준: **계획**. 근거와 배경은 외부 리뷰(2026-10-06)와 이 저장소의 실측 기록. 원래의 고정 개발 순서
 (`Base/TF → SLAM/Nav2 → RGB-D/YOLO → 3D XYZ → MoveIt2 → Voice → Mission BT → Battery/Safety → 통합`, `prd/jetinspect-m.md` 13절)는
@@ -14,7 +14,7 @@ IMU yaw rate만 실측이다. 이 상태로 Perception/Manipulation을 올리면
 | # | 작업 | 하드웨어 | 게이트(통과 조건) | 상태 |
 |---|---|---|---|---|
 | 0 | 저장소 정리: README, 라이선스, package.xml, CI, ROS2 unit test | 불필요 | CI 초록, README가 실제 상태와 일치 | 완료 (unit test: RRC 코덱·메카넘·서보 변환·watchdog·명령 검증, CI 포함. 안전 로직 L0 보강 — `checklist/README.md`) |
-| 1 | **Nav2 baseline** (open-loop odom, 15회) | 로봇 L4 | `prd/nav2-baseline-test-plan.md` 완료 기준 4개 | 계획·도구 완료, 시험 미실시 |
+| 1 | **Nav2 baseline** (open-loop odom, 15회) | 로봇 L4 | `prd/nav2-baseline-test-plan.md` 완료 기준 4개 | 계획·도구 완료, **선행 정리(1-1~1-3) 진행 중**(아래), 시험 미실시 |
 | 2 | STM32 엔코더 bring-up | ST-Link, 로봇 L2~L3 | `prd/encoder-odometry-test-plan.md` E1~E3 | ST-Link 대기 |
 | 3 | encoder odom + EKF 재구성 | 로봇 L3~L4 | 같은 baseline을 `encoder_ekf` 태그로 재시험, Before/After 표 | 계획 (`prd/encoder-odometry.md`) |
 | 4 | DWB vs MPPI A/B | 로봇 L4 | `prd/nav2-mppi-ab-test-plan.md` | 계획 |
@@ -30,6 +30,23 @@ IMU yaw rate만 실측이다. 이 상태로 Perception/Manipulation을 올리면
 | 14 | RAG | — | **정말 필요할 때만** | 보류 |
 
 게이트를 통과하지 못하면 다음 단계로 넘어가지 않는다. 게이트 결과는 수치로 `checklist/`에 남긴다.
+
+### 1단계 선행 정리 (2026-10-08 갱신)
+baseline 수치를 엔코더 적용 전 "Before"로 쓰려면 설정 버그가 먼저 없어야 한다. 2026-10-07 실기 시험에서 다음을 찾고 고쳤다
+(`troubleshooting/031`, `032`): DWB 후보가 매 주기 vy 전 범위(→ LimitedAccelGenerator), RotateToGoal 허용오차 0.25 > goal checker 0.15
+(→ 0.12), 데드존 아래 속도 선택(→ min_speed_xy 0.04 + min_speed_theta 0.1), local costmap에 LiDAR 점 누적(→ scan/depth 레이어 분리),
+몸이 비스듬한 채 대각선 주행(→ RotationShim), 팔 홈 자세 게이트 과민(→ 0.08 rad + debounce), AMCL 초기 위치(→ 스캔-지도 자동 매칭).
+이들은 "미세조정"이 아니라 설정 충돌/버그 수정으로 보고 진행했다. DWB 쪽 작업이 더 길어지면 4단계(MPPI 비교)를 앞당기는 것을 검토한다.
+
+| 순서 | 작업 | 상태 |
+|---|---|---|
+| 1-1 | 직진 흔들림 A/B: LimitedAccel+RotationShim vs Standard 각 6회 (`tools/nav/straight_trial.py`) | 일부 실측(Standard vy 뒤집힘 42~98/분, LimitedAccel 0~8회), shim 적용 후 재시험 대기 |
+| 1-2 | 팔 홈 자세 재설계: depth 감지 0.18~0.51 m → near ≤ 0.25, far ≥ 0.8 m (`tools/perception/`) | 도구 완료, 실측 대기(팔 입회) |
+| 1-3 | 회피 정리: 시험 전용 BaseObstacle 0.02 ↔ 기본 0.1 정합, global costmap 레이어 분리, collision monitor 개입 확인, footprint 실측 | 대기 |
+| 1-4 | baseline 정식 15회 | 1-1~1-3 후 |
+
+알려진 미해결: Nav2 정지 후 바퀴 울림(호스트 정지 명령으로 안 꺼짐, 2단계 자체 펌웨어에서 정지 시 출력 차단으로 해결 예정 — `troubleshooting/032`).
+처음 외부 분석의 "기준 depth 대신 TF/URDF self-filter + 바닥 제거"는 7단계(RGB-D → XYZ → TF) 근처에서 한다.
 
 ## MVP 범위 축소 (프로젝트가 너무 넓어지는 것을 막는다)
 최종 데모는 다음 한 줄만 보장한다:

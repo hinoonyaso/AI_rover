@@ -57,3 +57,5 @@
 | 028 | [depth 장애물(상자) 회피 시험: 멈춤/충돌/대각선 종료, collision_monitor 과민 반응](028-nav2-obstacle-avoidance-tuning-session.md) | 대부분 해결 (설정 정리, 반복 시험 필요) |
 | 029 | [NaN/Inf 명령이 std::clamp와 팔 step 검사를 통과](029-cmd-nan-passes-clamp-and-arm-step-check.md) | 해결 (L0, 실기 미검증) |
 | 030 | [MoveIt2 설정/Setup Assistant 충돌 매트릭스(TRAC-IK 5자유도 실패, 그리퍼 쌍 누락 등)](030-moveit-setup-and-srdf-collision-matrix.md) | 해결 (plan_only 검증) |
+| 031 | [Nav2 직진 중 좌우 흔들림(DWB 후보가 매 주기 vy 전 범위), min_speed_xy 무효, depth 기준이 팔 자세에 종속](031-nav2-lateral-wobble-and-depth-reference-gate.md) | 조치함, 실기 미검증 (LimitedAccelGenerator, 홈 자세 게이트, 진단 도구) |
+| 032 | [Nav2 시험 후 정지 상태에서 바퀴 "웅" 소리(탭하면 멈춤)](032-wheel-hum-after-nav2-stop.md) | 미해결 (정지 프레임 0x03 효과 없음, 펌웨어 속도 루프 미세진동 추정, 탭하면 멈춤) |

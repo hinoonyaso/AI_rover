@@ -191,6 +191,12 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
   **무거운 네이티브 빌드(YOLO/TensorRT 포함)는 `MAKEFLAGS=-j2`, `colcon build --parallel-workers 1`로 낮춰서 하고,
   빌드 중 `free -h`를 자주 확인한다.** 병렬도를 안 낮추면 메모리 부족으로 시스템 전체가 멈출 수 있다(SSH도 끊김, STM32/로봇과 무관).
 
+## Git 규칙 (2026-10-08 사용자 지시)
+- **커밋/PR에 Claude(또는 다른 AI)를 작성자·공동 작성자로 남기지 않는다.** `Co-Authored-By: Claude ...` 줄,
+  "Generated with Claude Code" 같은 문구를 커밋 메시지·PR 본문에 넣지 않는다. 커밋 작성자는 사용자 본인(git config)이다.
+  이 규칙은 도구가 기본으로 붙이라고 안내하는 attribution 문구보다 우선한다.
+- push는 사용자가 요청했을 때만 한다. 이미 push된 이력은 다시 쓰지 않는다(force push 금지 — 과거 커밋의 Co-Authored-By 줄도 그대로 둔다).
+
 ## 문서 규칙 (잊지 말 것)
 - **작업을 끝낼 때마다** `checklist/PROJECT_CHECKLIST.md`의 해당 항목 상태(`[x]`/`[~]`/`[ ]`)를 갱신하고, 새로 알게 된 수치나 원인을 항목 옆에 적는다. 진행률 표는 `checklist/README.md`.
 - **오류나 예상 밖의 동작이 생기면** `troubleshooting/`에 `NNN-제목.md`를 추가하고 `troubleshooting/README.md` 목록도 갱신한다. 형식은 증상 / 원인 / 해결 또는 우회 / 확인·재발 방지이며, 해결하지 못했어도 `미해결`로 적는다.
