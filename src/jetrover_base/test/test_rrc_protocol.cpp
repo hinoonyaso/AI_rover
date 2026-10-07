@@ -58,6 +58,14 @@ TEST(MotorPacket, IdIsZeroBasedOnWire)
   EXPECT_FLOAT_EQ(v, -2.0f);
 }
 
+// 한글: 전체 정지 프레임이 프로토콜 PDF/실기 시험과 같은 바이트인지 확인.
+TEST(RrcProtocol, MotorStopPacketMatchesHardwareTest)
+{
+  // Bytes sent on the robot on 2026-10-07 (tools/stm32_diagnostics/motor_stop_hum_test.py).
+  const std::vector<uint8_t> expected{0xAA, 0x55, 0x03, 0x02, 0x03, 0x0F, 0xD3};
+  EXPECT_EQ(build_motor_stop_packet(0x0F), expected);
+}
+
 TEST(Parser, RoundTrip)
 {
   bool ok;

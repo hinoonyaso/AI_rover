@@ -73,6 +73,10 @@ public:
     max_angular_ = declare_parameter<double>("max_angular", 1.0);
     cmd_vel_timeout_ = declare_parameter<double>("cmd_vel_timeout", 0.5);
     stm32_timeout_ = declare_parameter<double>("stm32_timeout", 1.0);
+    // Optionally send the "stop motors" frame (0x03, all 4) after speed 0. Off by default: on the
+    // floor it did not stop the wheel hum it was added for (troubleshooting/032).
+    // 한글: 정지 프레임 추가 전송(기본 끔). 바닥에서 바퀴 울림을 멈추지 못했다.
+    motor_stop_frame_on_stop_ = declare_parameter<bool>("motor_stop_frame_on_stop", false);
     // 한글: 잘못된 형상/타임아웃 설정이면 대충 돌지 않고 시작을 거부한다(fail-fast, main()에서 잡아 종료).
     // Fail fast on bad geometry/timeouts instead of running roughly (caught in main()).
     const std::string base_err = validate_base_params(
@@ -378,6 +382,12 @@ private:
     watchdog_.on_stopped();
     cmd_vx_ = cmd_vy_ = cmd_wz_ = 0.0;
     send_motors({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
+    if (motor_stop_frame_on_stop_ && serial_.is_open()) {
+      const auto frame = build_motor_stop_packet(0x0F);
+      if (!serial_.write(frame.data(), frame.size())) {
+        RCLCPP_ERROR(get_logger(), "Motor stop write failed: %s", serial_.last_error().c_str());
+      }
+    }
   }
 
   void send_motors(const std::vector<MotorCommand> & motors)
@@ -781,6 +791,7 @@ private:
   rclcpp::TimerBase::SharedPtr arm_poll_timer_;
   rclcpp::TimerBase::SharedPtr joint_state_timer_;
   bool arm_command_enabled_{false};
+  bool motor_stop_frame_on_stop_{false};
   double arm_move_duration_s_{2.0};
   double arm_max_step_rad_{0.35};
   int64_t arm_pulse_min_{100};

@@ -39,6 +39,14 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'max_angular', default_value='1.0',
             description='Speed limit in rad/s applied to /cmd_vel angular z'),
+        # 한글: 팔 구동/시작 시 홈 자세 이동(기본 꺼짐). 사람이 팔 옆에서 지켜볼 때만 true. / Arm motion, OFF by default.
+        DeclareLaunchArgument(
+            'arm_command_enabled', default_value='false',
+            description='Allow arm motion (arm/command, home move); only while watched'),
+        DeclareLaunchArgument(
+            'arm_move_home_on_start', default_value='false',
+            description='Step the arm to base.yaml arm_home_pose_rad at startup '
+                        '(needs arm_command_enabled)'),
         Node(
             # 한글: STM32 시리얼 드라이버 노드. base.yaml을 읽고, cmd_vel_timeout/속도 제한은 launch 인자로 덮어쓴다.
             package='jetrover_base',
@@ -51,7 +59,11 @@ def generate_launch_description():
                 'max_linear': ParameterValue(
                     LaunchConfiguration('max_linear'), value_type=float),
                 'max_angular': ParameterValue(
-                    LaunchConfiguration('max_angular'), value_type=float)}],
+                    LaunchConfiguration('max_angular'), value_type=float),
+                'arm_command_enabled': ParameterValue(
+                    LaunchConfiguration('arm_command_enabled'), value_type=bool),
+                'arm_move_home_on_start': ParameterValue(
+                    LaunchConfiguration('arm_move_home_on_start'), value_type=bool)}],
         ),
         # 한글: URDF에서 정적 TF를 만든다. base_node가 IMU 축을 이미 base_link 축으로 돌려 발행하므로 imu_link에는 회전이 없다.
         # URDF -> static TFs (base_footprint -> base_link -> imu_link, lidar_link, ...).

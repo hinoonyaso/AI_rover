@@ -60,6 +60,12 @@ std::vector<uint8_t> build_packet(uint8_t function, const std::vector<uint8_t> &
 // Build a motor command frame: FUNC 0x03, DATA = 01, N, N x (id-1 u8, rps f32 LE).
 std::vector<uint8_t> build_motor_packet(const std::vector<MotorCommand> & motors);
 
+// Build a "stop several motors" frame: FUNC 0x03, DATA = 03, mask (bit i = motor id i, 0-based).
+// Documented in the Hiwonder RRC protocol PDF; accepted by this robot's firmware with no side
+// effects and speed commands still work afterwards (2026-10-07, wheels lifted, troubleshooting/032).
+// 한글: 여러 모터 정지 프레임(서브커맨드 0x03 + 비트마스크, 비트 i = 0부터 센 모터 id). 실기에서 수락/부작용 없음 확인.
+std::vector<uint8_t> build_motor_stop_packet(uint8_t mask);
+
 // Decode a battery report (FUNC 0x00, DATA = 04, u16 LE millivolts).
 // 한글: 배터리 보고(FUNC 0, 04 + u16 LE mV)를 해석한다.
 bool decode_battery(const RrcPacket & packet, uint16_t & millivolts);

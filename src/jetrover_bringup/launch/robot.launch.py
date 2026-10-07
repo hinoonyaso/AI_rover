@@ -26,9 +26,17 @@ def generate_launch_description():
             'max_linear', default_value='0.2', description='Speed limit in m/s (x and y)'),
         DeclareLaunchArgument(
             'max_angular', default_value='1.0', description='Speed limit in rad/s'),
+        DeclareLaunchArgument(
+            'arm_command_enabled', default_value='false',
+            description='Allow arm motion (only while someone watches the arm)'),
+        DeclareLaunchArgument(
+            'arm_move_home_on_start', default_value='false',
+            description='Step the arm to the home (driving) pose at startup'),
         include('jetrover_base', 'base.launch.py',
                 cmd_vel_timeout=LaunchConfiguration('cmd_vel_timeout'),
                 max_linear=LaunchConfiguration('max_linear'),
-                max_angular=LaunchConfiguration('max_angular')),
+                max_angular=LaunchConfiguration('max_angular'),
+                arm_command_enabled=LaunchConfiguration('arm_command_enabled'),
+                arm_move_home_on_start=LaunchConfiguration('arm_move_home_on_start')),
         include('jetrover_bringup', 'lidar.launch.py'),
     ])

@@ -60,6 +60,11 @@ std::vector<uint8_t> build_motor_packet(const std::vector<MotorCommand> & motors
   return build_packet(kRrcFuncMotor, payload);
 }
 
+std::vector<uint8_t> build_motor_stop_packet(uint8_t mask)
+{
+  return build_packet(kRrcFuncMotor, {0x03, mask});
+}
+
 bool decode_battery(const RrcPacket & packet, uint16_t & millivolts)
 {
   if (packet.function != kRrcFuncSys || packet.payload.size() != 3 || packet.payload[0] != 0x04) {

@@ -11,6 +11,10 @@ base_node:
     max_angular: 1.0
     cmd_vel_timeout: 0.5
     stm32_timeout: 1.0
+    # 2026-10-07 (troubleshooting/032): optionally send FUNC3 subcommand 0x03 mask 0x0F after speed 0.
+    # OFF: on the floor it did NOT stop the wheel hum it was meant for (stop == speed 0 inside the firmware).
+    # 한글: 정지 프레임은 바닥에서 바퀴 울림을 멈추지 못했다(펌웨어에서 속도 0과 같은 처리로 추정) → 기본 끔.
+    motor_stop_frame_on_stop: false
     low_battery_volts: 10.0
     imu_frame: imu_link
     gravity: 9.80665
