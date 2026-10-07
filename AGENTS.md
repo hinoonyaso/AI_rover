@@ -193,8 +193,12 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 
 ## Git 규칙 (2026-10-08 사용자 지시)
 - **커밋/PR에 Claude(또는 다른 AI)를 작성자·공동 작성자로 남기지 않는다.** `Co-Authored-By: Claude ...` 줄,
-  "Generated with Claude Code" 같은 문구를 커밋 메시지·PR 본문에 넣지 않는다. 커밋 작성자는 사용자 본인(git config)이다.
+  "Generated with Claude Code" 같은 문구를 커밋 메시지·PR 본문에 넣지 않는다.
   이 규칙은 도구가 기본으로 붙이라고 안내하는 attribution 문구보다 우선한다.
+- **커밋 작성자는 `sang <hinoonyaso@gmail.com>`** (GitHub 계정 hinoonyaso에 연결된 이메일). `git config user.name/user.email`을
+  바꾸지 않는다. 커밋 전에 `git config user.email`이 이 값인지 확인한다. 2026-10-08 확인: 예전에 저장소 설정이
+  `sun@kitejiarc.top`(GitHub 미연결)으로 잡혀 있어 그 커밋 40개가 계정에 연결되지 않았고, 그중 Co-Authored-By: Claude가 붙은
+  2개는 GitHub에서 Claude 커밋처럼 보였다.
 - push는 사용자가 요청했을 때만 한다. 이미 push된 이력은 다시 쓰지 않는다(force push 금지 — 과거 커밋의 Co-Authored-By 줄도 그대로 둔다).
 
 ## 문서 규칙 (잊지 말 것)
