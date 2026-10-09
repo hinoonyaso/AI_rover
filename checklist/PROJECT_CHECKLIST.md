@@ -208,6 +208,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [ ] 8.13.14 depth 레이어 `raytrace_min_range`: 새 홈 자세의 사각지대(범퍼~8 cm)에 들어간 상자를 depth 광선이 지우지 않게(회피 단계)
   - [x] 8.13.15 footprint 줄자 실측(2026-10-09): 36×26 cm → 플래너 0.38×0.28(+1 cm), collision_monitor 정지 0.40×0.30 / 감속 0.56×0.44. 이전 0.36×0.50은 미실측 과대값
   - [~] 8.13.16 MPPI(Omni) 설정 `config/mppi_followpath.yaml` + `make_variants.sh`로 `nav2_params_mppi.yaml` 생성. 로드맵 4단계를 앞당김(2026-10-09 사용자 승인). 2회 시험, 튜닝 전
+  - [~] 8.13.17 회피 방식 설계(2026-10-09 사용자 요구): 정면 유지 + 대각 이동, 회전은 60° 이상 방향 전환에서만. MPPI Twirling 30·wz_std 0.2, shim 60°/0.6 m/매번. 설정만, 주행 확인 전 — troubleshooting/034 끝
   - [ ] 8.13.6 장기: 기준 영상 차분 대신 TF/URDF self-filter + 바닥 제거(서보 백래시에 둔감하게)
 - [ ] 8.10 성능 지표 기록 (**2026-10-06: 계획 `prd/nav2-baseline-test-plan.md`, 3시나리오×5회=15회, 도구 `tools/nav/benchmark/`(지표 단위시험 통과, bag 분석 미검증), 시험 자체는 미실시. 엔코더 odom 적용 전 baseline 용도**): CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인

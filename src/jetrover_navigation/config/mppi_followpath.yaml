@@ -9,7 +9,7 @@ model_dt: 0.1               # = 1/controller_frequency
 batch_size: 1000            # Jazzy example 2000; halved for the Orin Nano CPU budget (check controller rate)
 vx_std: 0.2
 vy_std: 0.2
-wz_std: 0.4
+wz_std: 0.2                 # 0.4 -> 0.2 (2026-10-09): fewer rotating samples, keep facing forward while avoiding / 회피 중 정면 유지
 vx_max: 0.12
 vx_min: 0.0                 # no reverse: rear is a sensor blind spot (troubleshooting/022)
 vy_max: 0.12
@@ -52,6 +52,9 @@ PathAlignCritic:
 PathFollowCritic: {enabled: true, cost_power: 1, cost_weight: 5.0, offset_from_furthest: 5, threshold_to_consider: 1.0}
 # mode 0 = keep the body pointed along the path (front-only depth camera) / 몸을 경로 방향으로(정면 카메라)
 PathAngleCritic: {enabled: true, cost_power: 1, cost_weight: 2.0, offset_from_furthest: 4, threshold_to_consider: 0.5, max_angle_to_furthest: 1.0, mode: 0}
-TwirlingCritic: {enabled: true, cost_power: 1, cost_weight: 10.0}
+# 10 -> 30 (2026-10-09, user requirement): avoid by sliding diagonally while facing forward (mecanum), not by turning the
+# body 50-70 deg as in box trials M3-M5; big direction changes are left to the RotationShim (60 deg).
+# 한글: 회피는 정면 유지 + 대각 이동(메카넘), 몸 회전은 큰 방향 전환에서만(shim 60도).
+TwirlingCritic: {enabled: true, cost_power: 1, cost_weight: 30.0}
 # wheel dead zone (2026-10-07: 0.006 m/s / 0.02 rad/s commands did not turn the wheels) / 모터 데드존
 VelocityDeadbandCritic: {enabled: true, cost_power: 1, cost_weight: 35.0, deadband_velocities: [0.04, 0.04, 0.1]}

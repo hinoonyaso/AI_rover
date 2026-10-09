@@ -129,9 +129,13 @@ controller_server:
       # ~95% of the time near the box (DWB evaluated 7 times in 30 s): the detour path heading kept moving and its
       # +-0.11 rad/s commands are below the wheel dead zone, so it never got inside 5 deg. Now only big misalignment
       # (start of a goal) is the shim's job; smaller ones DWB handles with vy + Twirling. 한글: 큰 방향 차이만 shim이.
-      angular_dist_threshold: 0.6         # ~35 deg: rotate first above this / 이보다 크면 먼저 회전
+      # 0.6 -> 1.05 + rotate_to_heading_once false + forward_sampling 0.6 (2026-10-09, user requirement): rotate the body
+      # only for real direction changes (corners, start of a goal), not for obstacle detours (30-45 deg local bends, done
+      # diagonally with vy while facing forward). Looking 0.6 m ahead averages out the small bends next to an obstacle.
+      # 한글: 진짜 방향 전환(60도 이상, 코너/출발)에서만 몸을 돌리고, 회피 중 작은 꺾임은 정면 유지 대각 이동으로.
+      angular_dist_threshold: 1.05        # ~60 deg: rotate first above this / 이보다 크면 먼저 회전
       angular_disengage_threshold: 0.2    # ~11 deg: stop rotating, hand to DWB / 이 안이면 DWB로
-      forward_sampling_distance: 0.3      # path point used for the heading (short room) / 방향 계산용 경로 점 거리
+      forward_sampling_distance: 0.6      # 0.3 -> 0.6: heading of the route, not of the local detour / 경로 전체 방향
       rotate_to_heading_angular_vel: 0.4  # = max_vel_theta
       max_angular_accel: 1.0              # = acc_lim_theta
       simulate_ahead_time: 1.0            # collision check while rotating / 회전 중 충돌 검사
@@ -141,7 +145,7 @@ controller_server:
       # timeout. Now it only rotates when the goal changes (isGoalChanged); detours are done by DWB with vy while
       # Twirling holds the heading (camera keeps facing forward). 한글: 목표가 바뀔 때만 회전. 회피 중 경로가 바뀔 때마다
       # 제자리 회전을 반복하던 문제. 회피는 DWB가 몸 방향 유지한 채 옆이동으로.
-      rotate_to_heading_once: true
+      rotate_to_heading_once: false  # true -> false (2026-10-09): needed for corners; 60 deg / 0.6 m keep detours from triggering it
       use_path_orientations: false        # SmacPlanner2D path orientations are not meaningful
       debug_trajectory_details: true
       # 2026-10-07 (Nav2 lateral wobble, troubleshooting/031): the default StandardTrajectoryGenerator
