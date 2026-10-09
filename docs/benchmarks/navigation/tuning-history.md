@@ -89,6 +89,7 @@
 | shim `angular_dist_threshold` | 1.05 (60°) → **1.4 (80°)** | M6: 목표 20 cm 앞, 옆 25 cm 치우친 상태에서 목표점 방향이 60°를 넘어 제자리 −60° 회전 |
 | MPPI `PathAngleCritic` | 켬 → **끔** (critics 목록에서 제거) | M6: Twirling 30에도 회피 중 몸이 +31°까지 돌아감. 큰 방향 전환은 shim 담당 |
 | MPPI `VelocityDeadbandCritic` wz | 0.1 → **0** | M7: PathAngle 끈 뒤에도 회전 0.12~0.16 rad/s 지속(+38°) — |wz|<0.1 벌점이 '0' 대신 '0.1 이상 회전'을 고르게 함 |
+| MPPI `threshold_to_consider` | Goal 1.0→**0.35**, GoalAngle 0.5→**0.3**, PathAlign 0.5→**0.3**, PathFollow 1.0→**0.35** | 반복 R2: 1.1 m 시험 구간에서 출발 10~20 cm 뒤 '목표 직행' 모드로 바뀌어 상자 앞에 갇힘(전역 경로는 +18 cm 우회였음). **주행 확인 전** |
 
 **기타**
 | 파라미터 | 변경 | 날짜 | 이유 |
