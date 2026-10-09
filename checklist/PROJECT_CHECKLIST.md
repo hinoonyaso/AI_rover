@@ -217,7 +217,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
     - [~] 시뮬레이션 비교 시나리오 S1/S2/S3 × dwb/mppi/mppi_nolr(`tools/sim/run_scenarios.sh`, `make_variants.sh`가 `nav2_params_mppi_nolr.yaml`도 생성) — 준비만, host 실행 대기
     - [ ] 실기 회피 왕복 4회: 명령 각도 > 50° 시간 비율 < 5%, 성공 ≥ 3, 최대 옆 속도/우회 시작점 비교(배터리 ≥ 10.3 V)
   - [ ] 8.13.6 장기: 기준 영상 차분 대신 TF/URDF self-filter + 바닥 제거(서보 백래시에 둔감하게)
-- [ ] 8.10 성능 지표 기록 (**2026-10-06: 계획 `prd/nav2-baseline-test-plan.md`, 3시나리오×5회=15회, 도구 `tools/nav/benchmark/`(지표 단위시험 통과, bag 분석 미검증), 시험 자체는 미실시. 엔코더 odom 적용 전 baseline 용도**): CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
+- [ ] 8.10 성능 지표 기록 (**2026-10-06: 계획 `prd/nav2-baseline-test-plan.md`, 3시나리오×5회=15회, 도구 `tools/nav/benchmark/`(지표 단위시험 통과, **2026-10-10 실기 bag 4개로 analyze.py 검증**: 시간 0.1 s 이내 일치, 목표 오차는 마지막 /amcl_pose가 3~8 cm 과대 → /tf 기반으로 수정, `prd/nav2-baseline-test-plan.md`), 시험 자체는 미실시. 엔코더 odom 적용 전 baseline 용도**): CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인
 - [~] **8.12(2026-10-05) 2D LiDAR가 못 보는 얇은 장애물(의자 다리 등) 대응** — troubleshooting/021.
   팔을 카메라-전방 home pose로 두고(14번 참고) `sparse_point_cloud`가 `/depth_cam/depth/points_sparse`를

@@ -12,6 +12,9 @@ Per trial dir: a rosbag2 recording of /amcl_pose, /plan, /cmd_vel and meta.json 
   }
 Success/collision/recoveries are operator-judged (cannot be inferred from the bag).
 Goal error uses `measured_final` when present: AMCL's own pose is not independent ground truth.
+Otherwise the final pose = last map->odom * last odom->base_footprint from /tf (ground_truth 'tf'), and
+only without /tf the last /amcl_pose ('amcl'). 2026-10-10: on real bags the last /amcl_pose lagged the
+stop pose by 3-8 cm (AMCL publishes only after update_min_d/a of motion), so it biased the goal error.
 """
 import argparse
 import csv
@@ -26,7 +29,8 @@ import metrics as m  # noqa: E402
 
 TOPICS = {'/amcl_pose': 'geometry_msgs/msg/PoseWithCovarianceStamped',
           '/plan': 'nav_msgs/msg/Path',
-          '/cmd_vel': 'geometry_msgs/msg/Twist'}
+          '/cmd_vel': 'geometry_msgs/msg/Twist',
+          '/tf': 'tf2_msgs/msg/TFMessage'}
 
 
 def read_bag(path):
@@ -45,6 +49,21 @@ def read_bag(path):
         if topic in data and topic in types:
             data[topic].append((stamp_ns * 1e-9, deserialize_message(raw, get_message(types[topic]))))
     return data
+
+
+def final_pose_from_tf(tf_msgs, base='base_footprint'):
+    """Last map->odom * last odom->base from /tf messages, or None. 한글: /tf로 최종 자세."""
+    last = {}
+    for _, msg in tf_msgs:
+        for tr in msg.transforms:
+            q = tr.transform.rotation
+            last[(tr.header.frame_id, tr.child_frame_id)] = (
+                tr.transform.translation.x, tr.transform.translation.y, m.yaw_from_quat(q.z, q.w))
+    mo, ob = last.get(('map', 'odom')), last.get(('odom', base))
+    if mo is None or ob is None:
+        return None
+    x, y, yaw = m.compose2d(mo, ob)
+    return (x, y), yaw
 
 
 def analyze_trial(path):
@@ -72,8 +91,12 @@ def analyze_trial(path):
     cte = m.cross_track_errors(plan_xy, track)
 
     final = meta.get('measured_final')
+    from_tf = final_pose_from_tf(data['/tf'])
+    source = 'measured' if final else ('tf' if from_tf else 'amcl')
     if final:
         f_xy, f_yaw = (final['x'], final['y']), math.radians(final['yaw_deg'])
+    elif from_tf:
+        f_xy, f_yaw = from_tf
     elif poses:
         f_xy, f_yaw = poses[-1][1], poses[-1][2]
     else:
@@ -91,7 +114,7 @@ def analyze_trial(path):
         'time_s': (t1 - t0) if interval else None,
         'path_len_m': m.path_length(track) if len(track) > 1 else None,
         'recoveries': meta.get('recoveries'),
-        'ground_truth': 'measured' if final else 'amcl',
+        'ground_truth': source,
     }
 
 
@@ -111,7 +134,8 @@ def write_markdown(path, tag, rows):
                 sc, s['n'], 100 * s['success_rate'], 100 * s['collision_rate'],
                 fmt(s['pos_err_cm']), fmt(s['yaw_err_deg']), fmt(s['cte_rms_cm']),
                 fmt(s['time_s']), fmt(s['recoveries'])))
-        f.write('\n값은 mean ± std (max). Goal 오차는 `measured_final`(줄자 실측)이 있으면 그것을, 없으면 AMCL pose를 쓴다 '
+        f.write('\n값은 mean ± std (max). Goal 오차는 `measured_final`(줄자 실측)이 있으면 그것을, '
+                '없으면 bag의 /tf(map→odom→base_footprint), 그것도 없으면 마지막 AMCL pose를 쓴다 '
                 '(`ground_truth` 열 참고, CSV).\n')
 
 

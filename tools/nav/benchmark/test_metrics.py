@@ -15,6 +15,12 @@ class MetricsTest(unittest.TestCase):
     def test_yaw_from_quat(self):
         self.assertAlmostEqual(m.yaw_from_quat(math.sin(0.4), math.cos(0.4)), 0.8)
 
+    def test_compose2d(self):
+        x, y, yaw = m.compose2d((1.0, 2.0, math.pi / 2), (0.5, 0.0, math.pi))
+        self.assertAlmostEqual(x, 1.0)
+        self.assertAlmostEqual(y, 2.5)
+        self.assertAlmostEqual(yaw, -math.pi / 2)  # 3pi/2 wrapped / 감싸기
+
     def test_cte_straight_line(self):
         plan = [(0, 0), (2, 0)]
         errs = m.cross_track_errors(plan, [(0.5, 0.1), (1.0, -0.2), (3.0, 0.0)])

@@ -9,6 +9,14 @@ def yaw_from_quat(z, w):
     return 2.0 * math.atan2(z, w)
 
 
+def compose2d(a, b):
+    """Planar transform composition a*b; a, b = (x, y, yaw) e.g. map->odom * odom->base."""
+    ax, ay, ath = a
+    bx, by, bth = b
+    c, s = math.cos(ath), math.sin(ath)
+    return (ax + c * bx - s * by, ay + s * bx + c * by, angle_diff(ath + bth, 0.0))
+
+
 def angle_diff(a, b):
     """Smallest signed difference a-b in (-pi, pi]."""
     d = (a - b + math.pi) % (2.0 * math.pi) - math.pi

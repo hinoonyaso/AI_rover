@@ -21,7 +21,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import analyze  # noqa: E402
 from geometry_msgs.msg import Pose, PoseStamped, PoseWithCovarianceStamped, Twist  # noqa: E402
 from nav_msgs.msg import Path  # noqa: E402
+from geometry_msgs.msg import TransformStamped  # noqa: E402
 from rclpy.serialization import serialize_message  # noqa: E402
+from tf2_msgs.msg import TFMessage  # noqa: E402
 import rosbag2_py  # noqa: E402
 
 T0 = 100.0
@@ -63,7 +65,15 @@ def make_topic(name, type_name):
         return rosbag2_py.TopicMetadata(id=0, name=name, type=type_name, serialization_format='cdr')
 
 
-def write_bag(path):
+def tf_msg(parent, child, x, y, yaw):
+    tr = TransformStamped()
+    tr.header.frame_id, tr.child_frame_id = parent, child
+    tr.transform.translation.x, tr.transform.translation.y = x, y
+    tr.transform.rotation.z, tr.transform.rotation.w = math.sin(yaw / 2.0), math.cos(yaw / 2.0)
+    return TFMessage(transforms=[tr])
+
+
+def write_bag(path, with_tf=False):
     writer = rosbag2_py.SequentialWriter()
     writer.open(rosbag2_py.StorageOptions(uri=path, storage_id='sqlite3'),
                 rosbag2_py.ConverterOptions(input_serialization_format='cdr',
@@ -82,6 +92,12 @@ def write_bag(path):
         writer.write('/amcl_pose', serialize_message(amcl(0.5 * (t - 1.0), 0.02)), ns(t))
     for t in (5.5, 6.0):  # 이동 후: 최종 pose는 (2.0, 0.02)
         writer.write('/amcl_pose', serialize_message(amcl(2.0, 0.02)), ns(t))
+    if with_tf:  # 한글: 최종 자세 = map->odom (0.1, 0) * odom->base (1.95, 0.03, 0.1 rad) = (2.05, 0.03)
+        writer.create_topic(make_topic('/tf', 'tf2_msgs/msg/TFMessage'))
+        writer.write('/tf', serialize_message(tf_msg('odom', 'base_footprint', 1.0, 0.0, 0.0)), ns(3.0))
+        writer.write('/tf', serialize_message(tf_msg('map', 'odom', 0.1, 0.0, 0.0)), ns(5.0))
+        writer.write('/tf', serialize_message(tf_msg('odom', 'base_footprint', 1.95, 0.03, 0.1)),
+                     ns(6.0))
     del writer  # flush + close
 
 
@@ -102,9 +118,9 @@ class AnalyzeBagTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def trial(self, name, measured_final):
+    def trial(self, name, measured_final, with_tf=False):
         path = os.path.join(self.root, name)
-        write_bag(path)
+        write_bag(path, with_tf)
         write_meta(path, measured_final)
         return analyze.analyze_trial(path)
 
@@ -125,6 +141,12 @@ class AnalyzeBagTest(unittest.TestCase):
         self.assertEqual(r['ground_truth'], 'amcl')
         self.assertAlmostEqual(r['pos_err_cm'], 2.0, places=6)    # 마지막 pose (2.0, 0.02) vs goal (2.0, 0)
         self.assertAlmostEqual(r['yaw_err_deg'], 0.0, places=6)
+
+    def test_final_pose_from_tf_beats_amcl(self):
+        r = self.trial('trial_A03', False, with_tf=True)
+        self.assertEqual(r['ground_truth'], 'tf')
+        self.assertAlmostEqual(r['pos_err_cm'], math.hypot(5.0, 3.0), places=4)
+        self.assertAlmostEqual(r['yaw_err_deg'], math.degrees(0.1), places=4)
 
     def test_markdown_and_csv_outputs(self):
         rows = [self.trial('trial_A01', True), self.trial('trial_A02', False)]
