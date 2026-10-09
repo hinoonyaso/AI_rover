@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<!-- JetRover for Gazebo Harmonic (prd/gazebo-sim.md). Process with:
+       xacro jetrover_sim.urdf.xacro sim_mode:=true controllers_file:=<abs path to sim_controllers.yaml>
+     Adds ros2_control (gz_ros2_control: 4 wheels velocity, arm/gripper position held at the home pose), the official
+     demo's mecanum emulation (sphere wheels + anisotropic friction along the roller diagonal), LiDAR, RGB-D camera, IMU.
+     The real-robot description (jetrover_description, sim_mode false) is unchanged.
+     한글: Gazebo용. ros2_control(바퀴 속도, 팔 위치 고정), 메카넘 마찰 흉내, LiDAR/RGB-D/IMU 센서를 덧붙인다. 실기 URDF는 그대로. -->
+<robot name="jetrover" xmlns:xacro="http://ros.org/wiki/xacro" xmlns:gz="http://gazebosim.org/schema">
+  <xacro:arg name="controllers_file" default=""/>
+  <xacro:include filename="$(find jetrover_description)/urdf/jetrover.xacro"/>
+
+  <!-- arm home pose = jetrover_base/config/base.yaml arm_home_pose_rad (2026-10-09) / 팔 홈 자세 -->
+  <xacro:property name="home" value="${[0.0042, -0.6618, 1.6629, 1.45, 0.0168, -0.0209]}"/>
+
+  <xacro:macro name="wheel_if" params="joint">
+    <joint name="${joint}">
+      <command_interface name="velocity">
+        <param name="min">-10</param>
+        <param name="max">10</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+  <xacro:macro name="arm_if" params="joint init">
+    <joint name="${joint}">
+      <command_interface name="position"/>
+      <state_interface name="position"><param name="initial_value">${init}</param></state_interface>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <ros2_control name="GazeboSimSystem" type="system">
+    <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+    <xacro:wheel_if joint="wheel_left_front_joint"/>
+    <xacro:wheel_if joint="wheel_right_front_joint"/>
+    <xacro:wheel_if joint="wheel_right_back_joint"/>
+    <xacro:wheel_if joint="wheel_left_back_joint"/>
+    <xacro:arm_if joint="joint1" init="${home[0]}"/>
+    <xacro:arm_if joint="joint2" init="${home[1]}"/>
+    <xacro:arm_if joint="joint3" init="${home[2]}"/>
+    <xacro:arm_if joint="joint4" init="${home[3]}"/>
+    <xacro:arm_if joint="joint5" init="${home[4]}"/>
+    <xacro:arm_if joint="r_joint" init="${home[5]}"/>
+  </ros2_control>
+
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(arg controllers_file)</parameters>
+    </plugin>
+  </gazebo>
+
+  <!-- Mecanum emulation exactly as gz_ros2_control_demos test_mecanum_drive: friction only along the roller
+       diagonal (fdir1, in base_link), none across it (mu2 = 0). X pattern seen from above; verify by strafing on host.
+       한글: 공식 데모와 같은 방식. 롤러 대각 방향으로만 마찰. 위에서 X자 배치 — host에서 옆이동 방향으로 확인. -->
+  <xacro:macro name="mecanum_friction" params="link fdir">
+    <gazebo reference="${link}">
+      <collision>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>0.0</mu2>
+              <fdir1 gz:expressed_in="base_link">${fdir}</fdir1>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+    </gazebo>
+  </xacro:macro>
+  <xacro:mecanum_friction link="wheel_left_front_link" fdir="1 -1 0"/>
+  <xacro:mecanum_friction link="wheel_right_front_link" fdir="1 1 0"/>
+  <xacro:mecanum_friction link="wheel_left_back_link" fdir="1 1 0"/>
+  <xacro:mecanum_friction link="wheel_right_back_link" fdir="1 -1 0"/>
+
+  <!-- RPLIDAR A1M8-like: 360 deg, ~10 Hz, 0.15-12 m. Frame = lidar_frame like the real driver; the arm geometry
+       occludes the rear by itself. / 실기와 같은 프레임, 팔이 뒤쪽을 실제처럼 가린다. -->
+  <gazebo reference="lidar_frame">
+    <sensor name="lidar" type="gpu_lidar">
+      <topic>scan</topic>
+      <gz_frame_id>lidar_frame</gz_frame_id>
+      <update_rate>10</update_rate>
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <lidar>
+        <scan><horizontal><samples>720</samples><resolution>1</resolution>
+          <min_angle>-3.14159</min_angle><max_angle>3.14159</max_angle></horizontal></scan>
+        <range><min>0.15</min><max>12.0</max><resolution>0.01</resolution></range>
+        <noise><type>gaussian</type><mean>0.0</mean><stddev>0.01</stddev></noise>
+      </lidar>
+    </sensor>
+  </gazebo>
+
+  <!-- Orbbec DaBai DCW-like RGB-D: 640x360, fx = 320 / tan(hfov/2) = 362.5 like the factory K. Gazebo cameras look along
+       +x of the link; images are labelled with the optical frame (static TF added in sim.launch.py).
+       한글: 실기와 같은 해상도/초점거리. 이미지 프레임은 optical(sim.launch.py가 정적 TF 추가). -->
+  <gazebo reference="depth_cam_link">
+    <sensor name="depth_cam" type="rgbd_camera">
+      <topic>depth_cam</topic>
+      <gz_frame_id>depth_cam_color_optical_frame</gz_frame_id>
+      <update_rate>15</update_rate>
+      <always_on>true</always_on>
+      <camera>
+        <horizontal_fov>1.4464</horizontal_fov>
+        <image><width>640</width><height>360</height><format>R8G8B8</format></image>
+        <clip><near>0.05</near><far>8.0</far></clip>
+        <depth_camera><clip><near>0.2</near><far>3.0</far></clip></depth_camera>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu" type="imu">
+      <topic>imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <update_rate>100</update_rate>
+      <always_on>true</always_on>
+    </sensor>
+  </gazebo>
+</robot>

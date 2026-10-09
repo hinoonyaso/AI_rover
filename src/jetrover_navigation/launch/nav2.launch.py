@@ -32,11 +32,14 @@ def generate_launch_description():
     # 한글: 우리 localization(map_server + amcl)을 포함.
     # 한글: auto_localize(기본 true)는 localization.launch.py로 그대로 넘긴다.
     auto_arg = DeclareLaunchArgument('auto_localize', default_value='true')
+    # 한글: Gazebo에서는 use_sim_time:=true(navigation_launch가 모든 Nav2 노드 파라미터를 덮어씀).
+    sim_arg = DeclareLaunchArgument('use_sim_time', default_value='false')
     localization = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav_share, 'launch', 'localization.launch.py')),
         launch_arguments={'map': LaunchConfiguration('map'),
-                          'auto_localize': LaunchConfiguration('auto_localize')}.items(),
+                          'auto_localize': LaunchConfiguration('auto_localize'),
+                          'use_sim_time': LaunchConfiguration('use_sim_time')}.items(),
     )
 
     # 한글: nav2_bringup의 navigation_launch.py(플래너/컨트롤러/BT/행동 서버/속도 스무더)를 jetrover 파라미터로 포함.
@@ -45,11 +48,11 @@ def generate_launch_description():
             os.path.join(bringup_share, 'launch', 'navigation_launch.py')),
         launch_arguments={
             'params_file': LaunchConfiguration('params_file'),
-            'use_sim_time': 'false',
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
             'autostart': 'true',
             'log_level': LaunchConfiguration('log_level'),
         }.items(),
     )
 
     return LaunchDescription(
-        [map_arg, log_level_arg, params_arg, auto_arg, localization, navigation])
+        [map_arg, log_level_arg, params_arg, auto_arg, sim_arg, localization, navigation])

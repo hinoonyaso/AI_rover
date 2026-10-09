@@ -45,6 +45,7 @@ baseline 수치를 엔코더 적용 전 "Before"로 쓰려면 설정 버그가 �
 | 1-2 | 팔 홈 자세 재설계: depth 감지 0.18~0.51 m → near ≤ 0.25, far ≥ 0.8 m (`tools/perception/`) | **완료(2026-10-09)**: joint4 1.45, 0.26~0.81 m, 상자 3위치 검출 — `benchmarks/perception/home_pose_20261009.md` |
 | 1-3 | 회피 정리: ~~BaseObstacle 정합~~(불필요), **global costmap 레이어 분리(완료 2026-10-09)**, collision monitor 개입 확인(**원인 아님**), footprint 실측(다음), 상자 회피 재시험 | 진행 중 — troubleshooting/034 |
 | 1-4 | baseline 정식 15회 | 1-1~1-3 후 |
+| (추가) | Gazebo 시뮬레이션(`prd/gazebo-sim.md`, gz_ros2_control + mecanum_drive_controller, 지도→월드): Nav2/MPPI를 배터리 없이 반복 시험 | 환경 구축·L0 완료(2026-10-09), host 실행 대기 |
 
 알려진 미해결: Nav2 정지 후 바퀴 울림(호스트 정지 명령으로 안 꺼짐, 2단계 자체 펌웨어에서 정지 시 출력 차단으로 해결 예정 — `troubleshooting/032`).
 처음 외부 분석의 "기준 depth 대신 TF/URDF self-filter + 바닥 제거"는 7단계(RGB-D → XYZ → TF) 근처에서 한다.

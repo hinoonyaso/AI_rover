@@ -155,3 +155,10 @@ STM32 펌웨어(`firmware/rrc_m4`)의 micro-ROS 정적 라이브러리를 Jetson
 - **rosdep 단계 건너뜀**: `micro_ros_setup`의 `create_firmware_ws.sh`가 `rosdep install -y`로 lint/test 도구(`python3-mypy`, `clang-tidy` 등)를 sudo apt로 깔려고 한다. 빌드에 필요 없는 것들이라 `micro_ros/shim/rosdep`(install만 no-op)을 PATH 앞에 둔다.
 - 빌드: `firmware/rrc_m4/micro_ros/build_microros_lib.sh` (2 job, 약 수십 분, 저장소 40여 개 clone). 산출물 `micro_ros/firmware/build/libmicroros.a` + `include/`.
 - micro-ROS agent(Jetson 쪽)는 `micro_ros_agent` 소스 빌드가 별도로 필요 — `firmware/rrc_m4/micro_ros/README.md`.
+
+## 2026-10-09 — host PC: Gazebo 시뮬레이션 실행용 (Jetson 아님, 사용자가 host에서 실행 예정)
+- 이유: `jetrover_gazebo`(prd/gazebo-sim.md) 실행. Jetson에는 설치하지 않음(빌드만 함, 실행은 host).
+- 명령(host, sudo):
+  `sudo apt install -y ros-jazzy-ros-gz ros-jazzy-gz-ros2-control ros-jazzy-gz-ros2-control-demos ros-jazzy-ros2-control ros-jazzy-ros2-controllers ros-jazzy-navigation2 ros-jazzy-nav2-bringup ros-jazzy-robot-localization ros-jazzy-xacro ros-jazzy-teleop-twist-keyboard python3-scipy`
+- 확인: `ros2 launch gz_ros2_control_demos mecanum_drive_example.launch.py`가 뜨고 키보드로 옆이동.
+- 상태: **계획(host에서 미실행)** — 실행 후 결과를 여기 갱신.

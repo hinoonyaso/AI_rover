@@ -32,6 +32,8 @@ def main():
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     ap.add_argument('--frames', type=int, default=30)
     ap.add_argument('--dry-run', action='store_true', help='measure only, do not write')
+    ap.add_argument('--out', default=REF, help='output .npy (default: the real-robot reference; Gazebo: '
+                    'src/jetrover_gazebo/config/depth_background_ref_sim.npy)')
     args = ap.parse_args()
 
     rclpy.init()
@@ -66,12 +68,13 @@ def main():
     if args.dry_run:
         print('dry run: nothing written')
     else:
-        if os.path.exists(REF):
-            backup = REF.replace('.npy', time.strftime('.%Y%m%d_%H%M%S.npy'))
-            shutil.copy2(REF, backup)
+        out = os.path.abspath(os.path.expanduser(args.out))
+        if os.path.exists(out):
+            backup = out.replace('.npy', time.strftime('.%Y%m%d_%H%M%S.npy'))
+            shutil.copy2(out, backup)
             print(f'backed up old reference -> {backup}')
-        np.save(REF, ref)
-        print(f'wrote {REF}  ({ref.shape[1]}x{ref.shape[0]})')
+        np.save(out, ref)
+        print(f'wrote {out}  ({ref.shape[1]}x{ref.shape[0]})')
         print('next: colcon build --packages-select jetrover_perception, '
               'restart camera.launch.py, '
               f'set base.yaml arm_home_pose_rad joints 1-5 = [{pose.replace(" ", ", ")}]')

@@ -1,0 +1,34 @@
+# ros2_control for jetrover_sim.urdf.xacro (prd/gazebo-sim.md). Format follows gz_ros2_control_demos
+# mecanum_drive_controller.yaml (Jazzy). 한글: 시뮬레이션 컨트롤러 설정.
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+    use_sim_time: true
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+    mecanum_drive_controller:
+      type: mecanum_drive_controller/MecanumDriveController
+    arm_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+mecanum_drive_controller:
+  ros__parameters:
+    use_sim_time: true
+    reference_timeout: 0.5          # same as base_node cmd_vel_timeout / base_node와 같은 0.5 s
+    front_left_wheel_command_joint_name: "wheel_left_front_joint"
+    front_right_wheel_command_joint_name: "wheel_right_front_joint"
+    rear_right_wheel_command_joint_name: "wheel_right_back_joint"
+    rear_left_wheel_command_joint_name: "wheel_left_back_joint"
+    kinematics:
+      base_frame_offset: { x: 0.0, y: 0.0, theta: 0.0 }
+      wheels_radius: 0.0485                            # base.yaml wheel_diameter 0.097 / 2
+      sum_of_robot_center_projection_on_X_Y_axis: 0.2096  # lx 0.0975 + ly 0.1121 (URDF wheel joints)
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    enable_odom_tf: false            # EKF publishes odom -> base_footprint like on the robot / 실기처럼 EKF가 TF
+
+arm_position_controller:
+  ros__parameters:
+    use_sim_time: true
+    joints: [joint1, joint2, joint3, joint4, joint5, r_joint]
+    interface_name: position

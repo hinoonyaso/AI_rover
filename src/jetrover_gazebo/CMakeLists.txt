@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.8)
+project(jetrover_gazebo)
+find_package(ament_cmake REQUIRED)
+install(DIRECTORY launch config urdf worlds DESTINATION share/${PROJECT_NAME})
+install(PROGRAMS scripts/map_to_world.py scripts/cmd_vel_to_stamped.py scripts/depth_float_to_mm.py
+  scripts/arm_hold.py DESTINATION lib/${PROJECT_NAME})
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+ament_package()

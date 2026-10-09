@@ -254,6 +254,13 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   **아직 안 한 것**: 이 상태로 실제 `NavigateToPose` 재시험해서 진짜로 멈추거나 돌아가는지(코스트맵
   반영까지만 확인했고, 주행 중 회피 동작 자체는 아직 재시험 안 함) — 다음에 이어서.
 
+### 8.14 Gazebo 시뮬레이션 (PRD `prd/gazebo-sim.md`, 2026-10-09 착수, 실행은 host)
+- [x] 8.14.1 `jetrover_description` `sim_mode` 인자: 기본 false 출력이 변경 전 URDF와 동일(diff), true면 바퀴 4개 continuous(y축)+구 충돌
+- [x] 8.14.2 지도 → 월드 생성기(`map_to_world.py`): 점유 737칸 → 벽 167개(덮는 칸 일치), `gz sdf -k` Valid(상자 있음/없음 2종)
+- [x] 8.14.3 sim xacro(ros2_control 바퀴 속도·팔 위치, 메카넘 이방성 마찰, LiDAR/RGB-D/IMU): `gz sdf -p` 변환 성공(센서 3, 플러그인 1, fdir1 4, 회전 바퀴 4)
+- [x] 8.14.4 launch/브리지/EKF/보조 노드(cmd_vel→stamped, depth float→16UC1 mm, 팔 홈 유지), Nav2/localization `use_sim_time` 인자. colcon test 12개 통과
+- [ ] 8.14.5 host 실행(L5-sim): 데모 → JetRover 키보드 전후좌우·회전 방향, 센서 토픽, Nav2 A→B·상자 회피를 실기 좌표로 재현
+
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해
 - [ ] 기본 NavigateToPose BT

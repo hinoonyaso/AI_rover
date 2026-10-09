@@ -20,6 +20,7 @@ from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -31,6 +32,9 @@ def generate_launch_description():
     map_arg = DeclareLaunchArgument('map', default_value=default_map,
                                      description='Path to a map .yaml saved by nav2_map_server')
     map_yaml = LaunchConfiguration('map')
+    # 한글: Gazebo(jetrover_gazebo)에서는 use_sim_time:=true. 실기는 기본 false. / true only for Gazebo.
+    sim_arg = DeclareLaunchArgument('use_sim_time', default_value='false')
+    sim_time = {'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool)}
 
     # 한글: 지도 서버: 저장된 지도를 /map으로 발행.
     map_server = Node(
@@ -38,7 +42,7 @@ def generate_launch_description():
         executable='map_server',
         name='map_server',
         output='screen',
-        parameters=[{'yaml_filename': map_yaml, 'use_sim_time': False}],
+        parameters=[{'yaml_filename': map_yaml}, sim_time],
     )
 
     # 한글: AMCL: 지도와 /scan으로 map→odom TF를 추정.
@@ -47,7 +51,7 @@ def generate_launch_description():
         executable='amcl',
         name='amcl',
         output='screen',
-        parameters=[amcl_params],
+        parameters=[amcl_params, sim_time],
     )
 
     # 한글: map_server/amcl 라이프사이클 노드를 자동으로 활성화한다.
@@ -56,8 +60,7 @@ def generate_launch_description():
         executable='lifecycle_manager',
         name='lifecycle_manager_localization',
         output='screen',
-        parameters=[{
-            'use_sim_time': False,
+        parameters=[sim_time, {
             'autostart': True,
             'node_names': ['map_server', 'amcl'],
         }],
@@ -75,8 +78,9 @@ def generate_launch_description():
             name='scan_match_init',
             output='screen',
             condition=IfCondition(LaunchConfiguration('auto_localize')),
+            parameters=[sim_time],
         )],
     )
 
     return LaunchDescription(
-        [map_arg, auto_arg, map_server, amcl, lifecycle_manager, scan_match])
+        [map_arg, auto_arg, sim_arg, map_server, amcl, lifecycle_manager, scan_match])

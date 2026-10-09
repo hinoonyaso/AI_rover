@@ -1,0 +1,53 @@
+# EKF for Gazebo (prd/gazebo-sim.md): same as jetrover_base/config/ekf.yaml, but the wheel twist comes from
+# mecanum_drive_controller odometry (wheel-velocity based, like the planned encoder odom) instead of base_node wheel_twist.
+# GENERATED from ekf.yaml (2026-10-09) -- keep in sync by hand if ekf.yaml changes.
+# 한글: 실기 EKF와 같고 바퀴 속도 입력만 컨트롤러 odometry로.
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.2
+    two_d_mode: true
+    publish_tf: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+    imu0: /imu/data_raw
+    imu0_config:
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - true
+    - false
+    - false
+    - false
+    imu0_differential: false
+    imu0_queue_size: 50
+    imu0_remove_gravitational_acceleration: false
+    use_sim_time: true
+    odom0: /mecanum_drive_controller/odometry
+    odom0_config:
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - true
+    - true
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    - false
+    odom0_queue_size: 10

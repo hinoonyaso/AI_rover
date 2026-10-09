@@ -2,6 +2,11 @@
 <robot name="jetrover" xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:property name="lidar"        value="$(optenv LIDAR_TYPE A1)"/>
     <xacro:property name="machine"      value="$(optenv MACHINE_TYPE JetRover_Mecanum)"/>
+    <!-- sim_mode (2026-10-09, prd/gazebo-sim.md): true only for Gazebo (jetrover_gazebo). Wheels become continuous joints with
+         sphere collisions there; false (default) keeps the real-robot description unchanged (fixed wheels, mesh collisions).
+         한글: Gazebo에서만 true. 바퀴를 회전 관절+구 충돌로. 기본 false는 실기 설명 그대로. -->
+    <xacro:arg name="sim_mode" default="false"/>
+    <xacro:property name="sim_mode" value="$(arg sim_mode)"/>
 
     <xacro:include filename="$(find jetrover_description)/urdf/materials.xacro"/>
     <xacro:include filename="$(find jetrover_description)/urdf/inertial_matrix.xacro" />
