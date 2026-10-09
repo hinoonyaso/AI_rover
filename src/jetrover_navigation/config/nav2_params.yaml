@@ -156,10 +156,15 @@ controller_server:
       # 2026-10-05 회피 시험: 가속 한계가 커서 회피가 "요란"했다 -> 낮춤 (1.0/1.0/2.0 -> 0.5/0.5/1.0)
       acc_lim_x: 0.5
       acc_lim_y: 0.5
-      acc_lim_theta: 1.0
+      # 1.0 -> 3.0 (2026-10-09, troubleshooting/031): with LimitedAccel the vtheta window is current +-acc*0.1 s.
+      # RotationShim hands over while still turning at ~0.36 rad/s, so with 1.0 DWB could not pick w < 0.26 and kept
+      # turning while driving -> overshoot to +-30 deg, shim took over again -> zig-zag. 3.0 lets DWB choose w = 0 at
+      # the hand-over; velocity_smoother still limits the real angular accel to 1.0. 한글: shim이 회전 중에 넘겨도 DWB가
+      # 바로 회전 0을 고를 수 있게 샘플 창만 넓힘(실제 가속은 smoother가 1.0으로 제한). 지그재그 대책.
+      acc_lim_theta: 3.0
       decel_lim_x: -0.5
       decel_lim_y: -0.5
-      decel_lim_theta: -1.0
+      decel_lim_theta: -3.0  # see acc_lim_theta / acc_lim_theta 참고
       vx_samples: 10
       vy_samples: 11  # 10 -> 11 (2026-10-07): odd count -> symmetric grid around the current vy (step 0.01 with LimitedAccel) / 홀수로 현재 vy 기준 대칭
       vtheta_samples: 20
@@ -170,7 +175,12 @@ controller_server:
       trans_stopped_velocity: 0.1
       short_circuit_trajectory_evaluation: true
       stateful: true
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
+      # Twirling added 2026-10-09 (troubleshooting/031): DWB rotated up to 0.4 rad/s while driving because turning moves the
+      # PathAlign forward point onto the path more cheaply than vy -> heading drifted to ~30 deg and RotationShim took over
+      # again (zig-zag). Twirling penalizes |w| so a holonomic base keeps its heading and corrects sideways with vy; final
+      # heading is done by the shim (rotate_to_goal_heading). 한글: 주행 중 회전에 벌점 → 몸 방향 유지, 옆 보정은 vy로.
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist", "Twirling"]
+      Twirling.scale: 10.0  # 0.4 rad/s -> 4.0, vs PathAlign ~1-4 cells x 0.8
       BaseObstacle.scale: 0.1  # 0.02 -> 0.1: 장애물 근처를 아슬아슬하게 지나가 상자를 침
       PathAlign.scale: 32.0
       GoalAlign.scale: 4.0  # 24 -> 4 (2026-10-06): 회전을 덜 선호해서 메카넘 평행이동 위주로 비킨다

@@ -42,7 +42,7 @@ def spin_until(node, cond, timeout):
     return cond()
 
 
-def match(m, scan, tf, xy_step, yaw_step):
+def match(m, scan, tf, xy_step, yaw_step, near=None, near_radius=0.5):
     """Return refined candidates [(score, x, y, yaw)], best first, at distinct places."""
     # Scan points in base_footprint / 스캔 점을 base_footprint 기준으로
     r = np.array(scan.ranges)
@@ -75,7 +75,11 @@ def match(m, scan, tf, xy_step, yaw_step):
     fy, fx = np.nonzero(grid[::stride, ::stride] == 0)
     yaws = np.radians(np.arange(-180, 180, yaw_step))
     results = []
-    for x, y in zip(ox + (fx * stride + 0.5) * res, oy + (fy * stride + 0.5) * res):
+    cx_all, cy_all = ox + (fx * stride + 0.5) * res, oy + (fy * stride + 0.5) * res
+    if near is not None:  # only search around a known rough pose / 대략 아는 위치 근처만 탐색
+        keep = np.hypot(cx_all - near[0], cy_all - near[1]) <= near_radius
+        cx_all, cy_all = cx_all[keep], cy_all[keep]
+    for x, y in zip(cx_all, cy_all):
         sc = score(x, y, yaws)
         k = int(sc.argmax())
         results.append((sc[k], x, y, yaws[k]))
@@ -114,6 +118,10 @@ def main():
     # first rule alone. 한글: 1등 0.974/2등 0.883이 거부돼서, 거의 완벽한 일치는 차이 0.05로도 허용.
     ap.add_argument('--strong-score', type=float, default=0.95)
     ap.add_argument('--strong-margin', type=float, default=0.05)
+    ap.add_argument('--near', type=float, nargs=2, metavar=('X', 'Y'),
+                    help='search only within --near-radius of this map point (e.g. where the robot '
+                         'was last), when the room alone is ambiguous')
+    ap.add_argument('--near-radius', type=float, default=0.5)
     ap.add_argument('--wait', type=float, default=90.0,
                     help='max s to wait for /map, /scan, TF and AMCL')
     args, _ = ap.parse_known_args()  # ignore --ros-args added by launch
@@ -151,7 +159,8 @@ def main():
             return
 
         t0 = time.time()
-        cands = match(data['map'], data['scan'], tf['t'], args.xy_step, args.yaw_step)
+        cands = match(data['map'], data['scan'], tf['t'], args.xy_step, args.yaw_step,
+                      args.near, args.near_radius)
         for i, (s, x, y, yaw) in enumerate(cands):
             log.info(f'#{i + 1} score={s:.3f}  x={x:+.3f} y={y:+.3f} '
                      f'yaw={math.degrees(yaw):+.1f}deg')

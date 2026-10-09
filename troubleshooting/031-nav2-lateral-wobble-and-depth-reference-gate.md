@@ -118,3 +118,25 @@ A(LimitedAccel), vy_off 비교는 아직. 다음: 시험 전용 파라미터(Bas
    확인: 출발 회전 후 yaw_dev_max가 작아졌는지(대각선 해소), vy 뒤집힘, 성공률.
 3. C(`nav2_params_wobble_standard.yaml`) 6회 같은 방식 → 표로 비교 → 생성기 채택 확정.
 4. 그다음 2단계(장애물 회피): 시험 전용 BaseObstacle 0.02를 기본(0.1)과 어떻게 맞출지, global costmap 레이어 분리, collision monitor 개입 확인.
+
+## 2026-10-09 RotationShim 실기 → 지그재그 발견 → 수정 → 정식 A/B (배터리 12.0→11.7 V)
+11. **shim + LimitedAccel 지그재그**(0.5 s 간격 추적으로 확인): shim이 감속 없이 wz 0.36에서 DWB에 넘기는데 LimitedAccel 창(±acc×0.1 s =
+    ±0.1)이라 DWB가 회전을 못 멈추고 ±30°까지 넘어감 → shim 재개입 반복. **DWB `acc_lim_theta`/`decel` 1.0 → 3.0**(샘플 창만, 실제 각가속은
+    velocity_smoother 1.0 유지). 넘겨받은 직후 회전이 바로 멈추는 것 확인.
+12. 그래도 DWB가 주행 중 스스로 0.3~0.4 rad/s 회전(PathAlign 전방점을 vy보다 회전으로 옮기는 게 싸서) → 28°까지 틀어지고 shim 재개입.
+    **`Twirling` critic(scale 10) 추가** → DWB 구간 wz = 0 유지, 옆 보정은 vy로. 직진 구간 방향 오차 ±2.5° 확인.
+13. 지표 수정: `yaw_dev_max`는 직선 방향 진행 0.2 m ~ 목표 0.2 m 전 구간만(처음 정의는 제자리 회전이 섞여 50~60°로 잘못 나옴).
+14. `scan_match_init.py --near X Y`: A 끝에서 남쪽을 볼 때 두 후보(같은 세로선, 0.3 m 차이)가 0.67로 동률 → 근처만 탐색해도 구분 안 됨.
+    이 경우 두 후보 중간을 ±15 cm 공분산으로 넣고 AMCL이 회전 중 수렴하게 함(성공).
+
+### 정식 A/B (같은 설정, 생성기만 다름: shim + Twirling + 데드존 가드 + 허용오차 0.12, 시험 전용 BaseObstacle 0.02, 왕복 1.15 m)
+| 조건 | 성공 | 직진 중 몸 방향 오차(중앙값/최대) | vy RMS | vy 뒤집힘 | 최대 횡이탈 | 도착 오차 | 시간 |
+|---|---|---|---|---|---|---|---|
+| **A LimitedAccel** | 6/6 | **4.5° / 21.6°** | 0.0171 | 4.7 | 9.2 cm | 13.7 cm | 21.5 s |
+| C Standard | 6/6 | 29.1° / 114.5° | 0.0181 | 4.0 | 10.1 cm | 13.9 cm | 23.0 s |
+(원자료: `Log/wobble_trials_v2.csv`, 태그 F_A_limited / F_C_standard)
+
+**결론(6회씩, 확정 수준은 "표본 작음")**: 처음의 게걸음/대각선의 주원인은 몸 방향 관리 부재였고(shim + Twirling으로 해결),
+생성기는 **LimitedAccel 채택** — 직진 중 몸 방향 안정성이 Standard보다 뚜렷이 좋다(중앙값 4.5° vs 29°). vy 뒤집힘 횟수 자체는
+shim+Twirling 이후 두 조건이 비슷해졌다(이전 Standard 42~98/분은 shim/Twirling 없을 때 값).
+남은 것: 기본 설정(BaseObstacle 0.1)으로 같은 직진이 되는지, 도착 오차 13~17 cm(goal checker 0.15 근처) 개선 여부.

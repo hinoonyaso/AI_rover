@@ -14,7 +14,7 @@ Metrics (printed and appended to Log/wobble_trials.csv):
   lat_max_odom      same in odom frame (smooth, open-loop)
   jumps             map->odom corrections > 3 cm or > 2 deg
   start_yaw_err     robot heading vs the start->goal line at the start (deg)
-  yaw_dev_max       max |heading - line| while translating (>5 cm from start, >15 cm from goal):
+  yaw_dev_max       max |heading - line| while translating (0.2 m along the line .. 0.2 m before goal):
                     body turned away from the travel direction = diagonal/crab driving (deg)
 (v2 CSV: Log/wobble_trials_v2.csv, 2026-10-08, after RotationShim)
 """
@@ -207,9 +207,13 @@ def main():
         return math.degrees(abs(math.atan2(math.sin(a), math.cos(a))))
     start_yaw_err = ang(start_map[2] - gyaw)
     total = math.hypot(gx - start_map[0], gy - start_map[1])
+    # only the translating middle part: 0.2 m progressed along the line .. 0.2 m before the goal
+    # (2026-10-09: with ">5 cm from start" the in-place turn leaked in -> 50-60 deg)
+    # 한글: 직선 방향 진행량 0.2 m ~ 목표 0.2 m 전 구간만(제자리 회전 구간 제외)
+    def along(p):
+        return (p[0] - start_map[0]) * math.cos(gyaw) + (p[1] - start_map[1]) * math.sin(gyaw)
     devs = [ang(p[2] - gyaw) for p in track_map
-            if math.hypot(p[0] - start_map[0], p[1] - start_map[1]) > 0.05
-            and math.hypot(p[0] - gx, p[1] - gy) > 0.15 and total > 0.3]
+            if 0.2 < along(p) < total - 0.2]
     yaw_dev = max(devs, default=float('nan'))
     row = {'time': stamp, 'tag': args.tag, 'status': status, 'elapsed_s': round(elapsed, 1),
            'vy_flips': flips, 'vy_flips_per_min': round(flips / max(elapsed, 1e-3) * 60, 1),
