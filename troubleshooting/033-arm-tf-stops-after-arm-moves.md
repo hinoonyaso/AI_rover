@@ -22,3 +22,9 @@
 ## 재발 시
 `/tf`를 프레임 쌍별로 세는 스크립트(이 문서 작성 시 사용한 방식)로 어느 발행자가 멈췄는지 확인 →
 `ros2 topic echo /joint_states --once`의 stamp와 `date +%s` 비교 → `robot_state_publisher`만 재시작해 보고 결과 기록.
+
+## 2026-10-10: 진단 도구 저장
+문서 작성 때 쓴 "쌍별 /tf 세기"를 `tools/viz/tf_pair_rates.py`로 저장(읽기 전용). 정상 기준(2026-10-10, 홈 자세, base+camera):
+관절 TF(`base_link→link1`, `link2→link3`, `link3→link4` …) **5 Hz**(= joint_states 폴링), 카메라 `depth_cam_*` **10 Hz**,
+`odom→base_footprint` 30 Hz, static 17쌍, joint_states stamp − now ≈ 0. 재발하면 이 출력과 비교 → 멈춘 쌍의 발행자만 재시작.
+`--expect`에 든 프레임(기본 link1, link4, depth_cam_color_frame)이 없으면 종료 코드 1 — 팔 시험 스크립트 앞뒤에 넣어 자동 감지 가능.

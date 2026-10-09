@@ -36,3 +36,20 @@ Nav2 직진 시험 여러 번 뒤 로봇이 멈춘 상태(`/cmd_vel` 없음, bas
   탭하면 바퀴가 백래시 한쪽에 붙어 안정 → 조용해짐과 일치. 확인하려면 자체 펌웨어(firmware/rrc_m4)에서 정지 시 PWM 0/적분 리셋을 넣는 것이 근본 대책.
 - 조치: `motor_stop_frame_on_stop` **기본 false**로 되돌림(코드/파라미터/단위시험은 남김). 당장의 우회: 바퀴를 살짝 치거나 로봇을 살짝 민다.
 - 왜 오늘 처음 들렸나: 미확인. 오늘은 DWB가 데드존 아래 미세 명령을 오래 낸 시험이 많았다(031) — 바퀴가 비틀린 채 멈추는 빈도가 높았을 수 있음.
+
+## 2026-10-10 정리: 남은 가설과 다음 확인 (ST-Link)
+| 가설 | 상태 | 근거 |
+|---|---|---|
+| 호스트가 미세 속도를 계속 보냄 | 폐기 | base_node를 내려도 계속 울림(10-07) |
+| 정지 프레임(0x03)이면 멈춤 | 폐기 | stopall 전송해도 안 멈춤(10-07) |
+| **펌웨어 속도 PID가 목표 0에서 백래시 안 limit cycle** | 추정(유력) | 바닥 하중에서만, 탭하면 멈춤, 호스트에 PWM 직접 제어 없음 |
+| PWM이 0이 아닌 채로 걸려 있어 200 Hz PWM 자체가 들림 | 추정(대안) | PINMAP: 모터 PWM 200 Hz — 가청 대역 |
+
+두 추정은 같은 측정으로 갈린다: **울리는 동안 SWD로 PWM CCR·엔코더 CNT를 읽는다**(flash 없음, halt 없음 —
+IWDG 약 20 ms라 halt하면 리셋됨). `tools/stm32_diagnostics/swd_motor_probe.sh 50 100 > Log/swd_motor_probe_<날짜>.txt`
+- CCR ≠ 0이고 CNT가 몇 틱 안에서 왕복 → limit cycle 확정 → 자체 펌웨어(`firmware/rrc_m4`)에서 목표 0 + 저속이면 PWM 0·적분 리셋(데드밴드).
+- CCR ≠ 0인데 CNT 고정 → 적분이 정지 마찰을 못 넘는 채 PWM만 걸림(대책 같음).
+- CCR = 0인데 소리 → 기계/드라이버 쪽, 이 문서 가설 재검토.
+- 덤: 바퀴 띄우고 한 바퀴씩 돌릴 때 0이 아닌 CCR을 보면 PINMAP의 M2~M4 PWM 핀 배정(추정)이 확인된다.
+준비: `sudo apt install openocd stlink-tools`(setup/ENVIRONMENT_SETUP.md에 기록됨), ST-Link는 SWDIO/SWCLK/GND만(3.3V 미연결).
+스크립트는 작성만 했고 openocd 미설치라 미실행(`reset_config none` + `init`이 halt하지 않는지 첫 실행에서 확인).
