@@ -1,0 +1,7 @@
+<library path="lateral_ratio_critic">
+  <!-- MPPI prepends "mppi::critics::" to critic names, so the class lives in that namespace. -->
+  <!-- 한글: MPPI가 critic 이름 앞에 mppi::critics::를 붙여 찾으므로 그 네임스페이스에 둔다. -->
+  <class type="mppi::critics::LateralRatioCritic" base_class_type="mppi::critics::CriticFunction">
+    <description>Penalizes |vy| above tan(max_angle) * vx (mecanum diagonal angle limit, JetRover)</description>
+  </class>
+</library>

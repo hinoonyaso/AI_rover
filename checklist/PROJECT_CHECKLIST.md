@@ -209,6 +209,11 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [x] 8.13.15 footprint 줄자 실측(2026-10-09): 36×26 cm → 플래너 0.38×0.28(+1 cm), collision_monitor 정지 0.40×0.30 / 감속 0.56×0.44. 이전 0.36×0.50은 미실측 과대값
   - [~] 8.13.16 MPPI(Omni) 설정 `config/mppi_followpath.yaml` + `make_variants.sh`로 `nav2_params_mppi.yaml` 생성. 로드맵 4단계를 앞당김(2026-10-09 사용자 승인). 2회 시험, 튜닝 전
   - [~] 8.13.17 회피 방식(정면 유지 + 대각 이동, 회전은 큰 방향 전환에서만): MPPI 목표 근처 기준 0.35 m 적용 후 **왕복 3/4 성공**(옆 이동 15~18 cm, 몸 방향 2~11°, 2026-10-09). 실패 1회(F2-4, 48 cm 우회 후 진동) 원인 미조사. M3~M8 접촉 없음
+  - [~] 8.13.18 MPPI LateralRatioCritic(메카넘 대각 45° 제한, PRD `prd/mppi-lateral-ratio-critic.md`)
+    - [x] 계산 함수 + 단위시험 6개(45° 경계, slack, 후진, 배치 독립, 30° 변형) — `src/jetrover_nav_plugins`
+    - [x] 플러그인 등록·로드 확인(`Critic loaded : mppi::critics::LateralRatioCritic`), colcon test 22개 통과
+    - [x] MPPI 연결(weight 50, PathAlign 14→6, PathFollow 5→3)
+    - [ ] 실기 회피 왕복 4회: 명령 각도 > 50° 시간 비율 < 5%, 성공 ≥ 3, 최대 옆 속도/우회 시작점 비교(배터리 ≥ 10.3 V)
   - [ ] 8.13.6 장기: 기준 영상 차분 대신 TF/URDF self-filter + 바닥 제거(서보 백래시에 둔감하게)
 - [ ] 8.10 성능 지표 기록 (**2026-10-06: 계획 `prd/nav2-baseline-test-plan.md`, 3시나리오×5회=15회, 도구 `tools/nav/benchmark/`(지표 단위시험 통과, bag 분석 미검증), 시험 자체는 미실시. 엔코더 odom 적용 전 baseline 용도**): CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인

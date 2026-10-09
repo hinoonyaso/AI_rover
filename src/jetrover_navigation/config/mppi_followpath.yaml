@@ -27,7 +27,11 @@ motion_model: "Omni"
 visualize: false
 regenerate_noises: true
 critics: ["ConstraintCritic", "CostCritic", "GoalCritic", "GoalAngleCritic", "PathAlignCritic",
-          "PathFollowCritic", "TwirlingCritic", "VelocityDeadbandCritic"]  # PathAngleCritic removed 2026-10-09 (M6)
+          "PathFollowCritic", "TwirlingCritic", "VelocityDeadbandCritic", "LateralRatioCritic"]  # PathAngleCritic removed 2026-10-09 (M6)
+# LateralRatioCritic (jetrover_nav_plugins, prd/mppi-lateral-ratio-critic.md, 2026-10-09): keep the travel direction
+# within 45 deg of the body (front-only depth camera, FOV ~+-41 deg) while letting the mecanum base slide diagonally.
+# 한글: 진행 방향을 몸 정면 45도 이내로(정면 카메라), 그 안에서는 대각 이동을 자유롭게.
+LateralRatioCritic: {enabled: true, cost_power: 1, cost_weight: 50.0, max_angle_deg: 45.0, slack: 0.02}
 ConstraintCritic: {enabled: true, cost_power: 1, cost_weight: 4.0}
 # threshold_to_consider shortened 2026-10-09 (repeat run R2): with the example values (path critics off / goal critic on
 # within 1.0 m) the 1.1 m test lane switched to "head straight for the goal" after 10-20 cm, straight through the box,
@@ -47,13 +51,14 @@ CostCritic:
 PathAlignCritic:
   enabled: true
   cost_power: 1
-  cost_weight: 14.0
+  cost_weight: 6.0   # 14 -> 6 (2026-10-09): follow the plan loosely, sidestep near obstacles within 45 deg / 경로를 느슨하게 따라 장애물 근처에선 직접 비켜감
   max_path_occupancy_ratio: 0.05
   trajectory_point_step: 4
   threshold_to_consider: 0.3   # 0.5 -> 0.3 (2026-10-09)
   offset_from_furthest: 20
   use_path_orientations: false
-PathFollowCritic: {enabled: true, cost_power: 1, cost_weight: 5.0, offset_from_furthest: 5, threshold_to_consider: 0.35}  # 1.0 -> 0.35 (2026-10-09)
+PathFollowCritic: {enabled: true, cost_power: 1, cost_weight: 3.0,  # 5 -> 3 (2026-10-09)
+                    offset_from_furthest: 5, threshold_to_consider: 0.35}  # 1.0 -> 0.35 (2026-10-09)
 # mode 0 = keep the body pointed along the path. DISABLED 2026-10-09 (trial M6): it still turned the body +31 deg along the
 # detour with Twirling 30; big direction changes are the RotationShim's job. 한글: 회피 중 몸을 경로 쪽으로 돌려서 끔(큰 전환은 shim).
 PathAngleCritic: {enabled: false, cost_power: 1, cost_weight: 2.0, offset_from_furthest: 4, threshold_to_consider: 0.5, max_angle_to_furthest: 1.0, mode: 0}

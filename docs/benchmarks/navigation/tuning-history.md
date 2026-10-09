@@ -91,6 +91,13 @@
 | MPPI `VelocityDeadbandCritic` wz | 0.1 → **0** | M7: PathAngle 끈 뒤에도 회전 0.12~0.16 rad/s 지속(+38°) — |wz|<0.1 벌점이 '0' 대신 '0.1 이상 회전'을 고르게 함 |
 | MPPI `threshold_to_consider` | Goal 1.0→**0.35**, GoalAngle 0.5→**0.3**, PathAlign 0.5→**0.3**, PathFollow 1.0→**0.35** | 반복 R2: 1.1 m 시험 구간에서 출발 10~20 cm 뒤 '목표 직행' 모드로 바뀌어 상자 앞에 갇힘(전역 경로는 +18 cm 우회였음). 적용 후 왕복 3/4 성공, 옆 이동 15~18 cm |
 
+**2026-10-09 밤 (메카넘 대각 45° 제한, `prd/mppi-lateral-ratio-critic.md`)**
+| 파라미터 | 변경 | 이유 |
+|---|---|---|
+| MPPI critics | + **LateralRatioCritic**(신규 플러그인 `jetrover_nav_plugins`): max_angle 45°, slack 0.02 m/s, weight 50 | 회피가 vy 0.02~0.06의 완만한 흐름이라 메카넘 활용 부족. 정면 카메라 시야 때문에 45° 이내로 제한(사용자 A안) |
+| MPPI `PathAlignCritic.cost_weight` | 14 → **6** | 경로를 느슨하게 따라 장애물 근처에서 45° 이내 옆이동을 직접 고르게 |
+| MPPI `PathFollowCritic.cost_weight` | 5 → **3** | 위와 같음 |
+
 **기타**
 | 파라미터 | 변경 | 날짜 | 이유 |
 |---|---|---|---|
