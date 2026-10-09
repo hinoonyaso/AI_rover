@@ -21,11 +21,28 @@ global_costmap:
       footprint: "[[0.18, 0.25], [0.18, -0.25], [-0.18, -0.25], [-0.18, 0.25]]"  # 0.40x0.48 -> 0.36x0.50 (2026-10-06, 내접 반경 0.18): 좁은 방에서 상자 주변 통과 불가 영역이 너무 커서 우회 대신 정지했다. (2026-10-07 주석 정정: 예전 주석의 "0.36x0.42"는 틀렸고 값은 y=±0.25.) 실측 재검증 전 — checklist 9 "실측 footprint"
       track_unknown_space: true
       always_send_full_costmap: true
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      # 2026-10-09 (box avoidance): scan and depth split into separate layers here too (same as local, 2026-10-07).
+      # With one layer the LiDAR rays passing over the low box erased its depth marks, so the global plan went straight
+      # through the box (seen on the costmap/plan plot) and both DWB and MPPI got stuck in front of it.
+      # 한글: global도 LiDAR/depth 레이어 분리. LiDAR가 depth 상자를 지워 전역 경로가 상자를 관통했다.
+      plugins: ["static_layer", "obstacle_layer", "depth_layer", "inflation_layer"]
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: true
       obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
+          clearing: true  # map frame: old LiDAR marks must clear after AMCL corrections; cannot touch depth_layer / depth 레이어는 못 지움
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 12.0
+          obstacle_max_range: 12.0
+      depth_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
         # depth_cloud added to the GLOBAL costmap too (2026-10-05, 회피 시험): the LiDAR does not see
@@ -33,16 +50,7 @@ global_costmap:
         # the local costmap the global planner kept planning straight through it and DWB (which
         # only follows the global path) just stopped in front of it. Short range (3 m) like local.
         # 한글: depth를 local에만 넣으면 전역 경로가 장애물을 통과하게 계획돼 DWB가 앞에서 멈춘다.
-        observation_sources: scan depth_cloud
-        scan:
-          topic: /scan
-          max_obstacle_height: 2.0
-          min_obstacle_height: 0.0
-          clearing: true  # global(map 프레임): AMCL 재설정 시 옛 LiDAR 표시가 남으므로 지우기 유지. 상자 기억 보존은 local(odom)만 clearing false. / keep clearing on global (map frame); only local keeps box memory.
-          marking: true
-          data_type: "LaserScan"
-          raytrace_max_range: 12.0
-          obstacle_max_range: 12.0
+        observation_sources: depth_cloud
         depth_cloud:
           topic: /depth_cam/depth/points_sparse
           max_obstacle_height: 2.0
@@ -114,14 +122,23 @@ controller_server:
       # 몸이 비스듬한 채 옆이동으로 따라가던 대각선/게걸음 주행과, 정면 전용 depth 카메라가 진행 방향을 못 보는 문제 대책.
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "dwb_core::DWBLocalPlanner"
-      angular_dist_threshold: 0.26        # ~15 deg: rotate first above this / 이보다 크면 먼저 회전
-      angular_disengage_threshold: 0.09   # ~5 deg: stop rotating, hand to DWB / 이 안이면 DWB로
+      # 0.26/0.09 -> 0.6/0.2 (2026-10-09, box avoidance trial 2): with 5 deg to reach, the shim kept the controller for
+      # ~95% of the time near the box (DWB evaluated 7 times in 30 s): the detour path heading kept moving and its
+      # +-0.11 rad/s commands are below the wheel dead zone, so it never got inside 5 deg. Now only big misalignment
+      # (start of a goal) is the shim's job; smaller ones DWB handles with vy + Twirling. 한글: 큰 방향 차이만 shim이.
+      angular_dist_threshold: 0.6         # ~35 deg: rotate first above this / 이보다 크면 먼저 회전
+      angular_disengage_threshold: 0.2    # ~11 deg: stop rotating, hand to DWB / 이 안이면 DWB로
       forward_sampling_distance: 0.3      # path point used for the heading (short room) / 방향 계산용 경로 점 거리
       rotate_to_heading_angular_vel: 0.4  # = max_vel_theta
       max_angular_accel: 1.0              # = acc_lim_theta
       simulate_ahead_time: 1.0            # collision check while rotating / 회전 중 충돌 검사
       rotate_to_goal_heading: true        # final yaw also by the shim (DWB chose sub-dead-zone wz there)
-      rotate_to_heading_once: false
+      # false -> true (2026-10-09, box avoidance trial 1): around an obstacle the replanned (1 Hz) detour path keeps
+      # changing heading, so the shim kept rotating +-0.4 rad/s back and forth and the camera lost the box -> 60 s
+      # timeout. Now it only rotates when the goal changes (isGoalChanged); detours are done by DWB with vy while
+      # Twirling holds the heading (camera keeps facing forward). 한글: 목표가 바뀔 때만 회전. 회피 중 경로가 바뀔 때마다
+      # 제자리 회전을 반복하던 문제. 회피는 DWB가 몸 방향 유지한 채 옆이동으로.
+      rotate_to_heading_once: true
       use_path_orientations: false        # SmacPlanner2D path orientations are not meaningful
       debug_trajectory_details: true
       # 2026-10-07 (Nav2 lateral wobble, troubleshooting/031): the default StandardTrajectoryGenerator

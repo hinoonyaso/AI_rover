@@ -17,7 +17,7 @@ IMU yaw rate만 실측이다. 이 상태로 Perception/Manipulation을 올리면
 | 1 | **Nav2 baseline** (open-loop odom, 15회) | 로봇 L4 | `prd/nav2-baseline-test-plan.md` 완료 기준 4개 | 계획·도구 완료, **선행 정리(1-1~1-3) 진행 중**(아래), 시험 미실시 |
 | 2 | STM32 엔코더 bring-up | ST-Link, 로봇 L2~L3 | `prd/encoder-odometry-test-plan.md` E1~E3 | ST-Link 도착(2026-10-08), 착수 예정 금요일(2026-10-09) |
 | 3 | encoder odom + EKF 재구성 | 로봇 L3~L4 | 같은 baseline을 `encoder_ekf` 태그로 재시험, Before/After 표 | 계획 (`prd/encoder-odometry.md`) |
-| 4 | DWB vs MPPI A/B | 로봇 L4 | `prd/nav2-mppi-ab-test-plan.md` | 계획 |
+| 4 | DWB vs MPPI A/B | 로봇 L4 | `prd/nav2-mppi-ab-test-plan.md` | **앞당겨 착수(2026-10-09 사용자 승인)**: DWB 회피가 구조적 문제를 반복해서. MPPI 설정 완료, 공정 비교는 footprint 실측 후 |
 | 5 | Arm: ros2_control + FollowJointTrajectory 설계 | 불필요(설계) → 로봇 L2 | PRD 승인 → hardware interface가 `arm/command`와 같은 동작 재현 | **3·4 이후에 PRD 작성** |
 | 6 | MoveIt2 단독 joint-space 이동 | 로봇 L2~L3(팔) | perception 없이 목표 관절각 도달·충돌 회피 | 계획 |
 | 7 | RGB-D → XYZ → TF | 로봇 | 알려진 위치 물체의 base_link 좌표 오차 측정 | 계획 |
@@ -43,7 +43,7 @@ baseline 수치를 엔코더 적용 전 "Before"로 쓰려면 설정 버그가 �
 |---|---|---|
 | 1-1 | 직진 흔들림 A/B: LimitedAccel+RotationShim vs Standard 각 6회 (`tools/nav/straight_trial.py`) | **완료(2026-10-09)**: 둘 다 6/6, 몸 방향 오차 중앙값 4.5° vs 29° → LimitedAccel 채택. 기본 BaseObstacle(0.1)로 재확인은 1-3에서 |
 | 1-2 | 팔 홈 자세 재설계: depth 감지 0.18~0.51 m → near ≤ 0.25, far ≥ 0.8 m (`tools/perception/`) | **완료(2026-10-09)**: joint4 1.45, 0.26~0.81 m, 상자 3위치 검출 — `benchmarks/perception/home_pose_20261009.md` |
-| 1-3 | 회피 정리: ~~BaseObstacle 0.02 ↔ 0.1 정합~~(기본 0.1로 직진 3/3, 불필요 — 2026-10-09), global costmap 레이어 분리, collision monitor 개입 확인, footprint 실측, 상자 회피 시험 | 진행 중 |
+| 1-3 | 회피 정리: ~~BaseObstacle 정합~~(불필요), **global costmap 레이어 분리(완료 2026-10-09)**, collision monitor 개입 확인(**원인 아님**), footprint 실측(다음), 상자 회피 재시험 | 진행 중 — troubleshooting/034 |
 | 1-4 | baseline 정식 15회 | 1-1~1-3 후 |
 
 알려진 미해결: Nav2 정지 후 바퀴 울림(호스트 정지 명령으로 안 꺼짐, 2단계 자체 펌웨어에서 정지 시 출력 차단으로 해결 예정 — `troubleshooting/032`).

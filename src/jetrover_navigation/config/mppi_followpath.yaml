@@ -1,0 +1,57 @@
+# MPPI primary controller for the DWB vs MPPI A/B (prd/nav2-mppi-ab-test-plan.md, started 2026-10-09 with user approval,
+# ahead of the encoder stage). Only the controller differs from nav2_params.yaml: costmaps, velocity limits (0.12 m/s,
+# no reverse), collision_monitor and the RotationShim wrapper (same thresholds) are shared.
+# tools/nav/ab_params/make_variants.sh merges this into FollowPath -> nav2_params_mppi.yaml.
+# 한글: DWB 대신 MPPI(Omni, 메카넘). 컨트롤러만 다르고 나머지는 nav2_params.yaml과 같다. 시작값은 Nav2 Jazzy 예제 기반.
+primary_controller: "nav2_mppi_controller::MPPIController"
+time_steps: 40              # 40 x 0.1 s = 4 s horizon (~0.5 m at 0.12 m/s)
+model_dt: 0.1               # = 1/controller_frequency
+batch_size: 1000            # Jazzy example 2000; halved for the Orin Nano CPU budget (check controller rate)
+vx_std: 0.2
+vy_std: 0.2
+wz_std: 0.4
+vx_max: 0.12
+vx_min: 0.0                 # no reverse: rear is a sensor blind spot (troubleshooting/022)
+vy_max: 0.12
+wz_max: 0.4
+ax_max: 0.5
+ax_min: -0.5
+ay_max: 0.5
+az_max: 1.0
+iteration_count: 1
+prune_distance: 1.2
+transform_tolerance: 0.2
+temperature: 0.3
+gamma: 0.015
+motion_model: "Omni"
+visualize: false
+regenerate_noises: true
+critics: ["ConstraintCritic", "CostCritic", "GoalCritic", "GoalAngleCritic", "PathAlignCritic",
+          "PathFollowCritic", "PathAngleCritic", "TwirlingCritic", "VelocityDeadbandCritic"]
+ConstraintCritic: {enabled: true, cost_power: 1, cost_weight: 4.0}
+GoalCritic: {enabled: true, cost_power: 1, cost_weight: 5.0, threshold_to_consider: 1.0}
+GoalAngleCritic: {enabled: true, cost_power: 1, cost_weight: 3.0, threshold_to_consider: 0.5}
+CostCritic:
+  enabled: true
+  cost_power: 1
+  cost_weight: 3.81
+  critical_cost: 300.0
+  consider_footprint: true    # rectangular footprint (0.36 x 0.50)
+  collision_cost: 1000000.0
+  near_goal_distance: 0.5
+  trajectory_point_step: 2
+PathAlignCritic:
+  enabled: true
+  cost_power: 1
+  cost_weight: 14.0
+  max_path_occupancy_ratio: 0.05
+  trajectory_point_step: 4
+  threshold_to_consider: 0.5
+  offset_from_furthest: 20
+  use_path_orientations: false
+PathFollowCritic: {enabled: true, cost_power: 1, cost_weight: 5.0, offset_from_furthest: 5, threshold_to_consider: 1.0}
+# mode 0 = keep the body pointed along the path (front-only depth camera) / 몸을 경로 방향으로(정면 카메라)
+PathAngleCritic: {enabled: true, cost_power: 1, cost_weight: 2.0, offset_from_furthest: 4, threshold_to_consider: 0.5, max_angle_to_furthest: 1.0, mode: 0}
+TwirlingCritic: {enabled: true, cost_power: 1, cost_weight: 10.0}
+# wheel dead zone (2026-10-07: 0.006 m/s / 0.02 rad/s commands did not turn the wheels) / 모터 데드존
+VelocityDeadbandCritic: {enabled: true, cost_power: 1, cost_weight: 35.0, deadband_velocities: [0.04, 0.04, 0.1]}

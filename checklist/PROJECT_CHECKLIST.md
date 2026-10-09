@@ -202,10 +202,12 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [~] 8.13.7 local costmap scan/depth 레이어 분리(오래된 LiDAR 점이 안 지워져 통로가 막히던 문제). 실기에서 막힘 해소 확인, global은 아직 한 레이어
   - [x] 8.13.8 좁은 방 비용 균형: 원인은 가중치가 아니라 허용오차 충돌·데드존(수정됨). 기본 BaseObstacle 0.1로 직진 3/3 성공, 횡이탈 4~6 cm(2026-10-09). 회피 시 적정값은 회피 시험에서 다시 본다
   - [ ] 8.13.9 정지 후 바퀴 울림(미해결): 정지 프레임(0x03)은 바닥에서 효과 없음 → 기본 끔. 근본 대책은 자체 펌웨어에서 정지 시 PWM 0/적분 리셋 — troubleshooting/032
-  - [ ] 8.13.3 회피 재시험: 멈출 때 collision_monitor(`<<CM-STOP>>`)인지 DWB/planner(nav=0)인지 판정, 그 결과로 정지/감속 polygon 조정
+  - [~] 8.13.3 회피 재시험(2026-10-09, 5회 모두 시간 초과 — troubleshooting/034): collision_monitor는 원인 아님. shim 반복 회전(→ 목표당 1회, 35°/11°), **global costmap 상자 소실(→ 레이어 분리, 경로 우회 확인)** 수정. 남은 원인: 통로 vs footprint 폭 0.50 m(미실측)
   - [~] 8.13.4 depth 기준 영상 홈 자세 게이트(`sparse_point_cloud`, ±0.08 rad + 1초 debounce, 벗어나면 발행 중지 → CM 정지). 실기: 팔 접힘(0.65 rad) 차단 확인, 0.04는 주행 중 백래시로 열림/닫힘 반복해서 완화함
   - [x] 8.13.5 카메라 감지거리 재설계(2026-10-09): 손목 joint4 1.6043 → 1.45, 바닥 시야 0.21~0.62 → **0.26~0.81 m**, 자기 바퀴 시야 밖, LiDAR 가림 변화 없음. 기준 depth 재촬영(이전 백업), 빈 바닥 거짓 점 0, 상자 범퍼 10/30/60 cm 모두 검출(60 cm는 아래 4 cm만). 기록 `docs/benchmarks/perception/home_pose_20261009.md`
   - [ ] 8.13.14 depth 레이어 `raytrace_min_range`: 새 홈 자세의 사각지대(범퍼~8 cm)에 들어간 상자를 depth 광선이 지우지 않게(회피 단계)
+  - [ ] 8.13.15 **footprint 줄자 실측**(플래너 0.36×0.50 vs 정지 영역 0.34×0.39) → 재설정 후 상자 회피 재시험(양옆 여유 있는 위치)
+  - [~] 8.13.16 MPPI(Omni) 설정 `config/mppi_followpath.yaml` + `make_variants.sh`로 `nav2_params_mppi.yaml` 생성. 로드맵 4단계를 앞당김(2026-10-09 사용자 승인). 2회 시험, 튜닝 전
   - [ ] 8.13.6 장기: 기준 영상 차분 대신 TF/URDF self-filter + 바닥 제거(서보 백래시에 둔감하게)
 - [ ] 8.10 성능 지표 기록 (**2026-10-06: 계획 `prd/nav2-baseline-test-plan.md`, 3시나리오×5회=15회, 도구 `tools/nav/benchmark/`(지표 단위시험 통과, bag 분석 미검증), 시험 자체는 미실시. 엔코더 odom 적용 전 baseline 용도**): CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인
