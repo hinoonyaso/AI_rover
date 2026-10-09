@@ -133,7 +133,7 @@ controller_server:
       # only for real direction changes (corners, start of a goal), not for obstacle detours (30-45 deg local bends, done
       # diagonally with vy while facing forward). Looking 0.6 m ahead averages out the small bends next to an obstacle.
       # 한글: 진짜 방향 전환(60도 이상, 코너/출발)에서만 몸을 돌리고, 회피 중 작은 꺾임은 정면 유지 대각 이동으로.
-      angular_dist_threshold: 1.05        # ~60 deg: rotate first above this / 이보다 크면 먼저 회전
+      angular_dist_threshold: 1.4         # 60 -> ~80 deg (2026-10-09, trial M6): near the goal with a 25 cm side offset the direction to the goal exceeded 60 deg and the shim spun the robot; offsets like that are for diagonal driving / 이보다 크면 먼저 회전
       angular_disengage_threshold: 0.2    # ~11 deg: stop rotating, hand to DWB / 이 안이면 DWB로
       forward_sampling_distance: 0.6      # 0.3 -> 0.6: heading of the route, not of the local detour / 경로 전체 방향
       rotate_to_heading_angular_vel: 0.4  # = max_vel_theta

@@ -27,7 +27,7 @@ motion_model: "Omni"
 visualize: false
 regenerate_noises: true
 critics: ["ConstraintCritic", "CostCritic", "GoalCritic", "GoalAngleCritic", "PathAlignCritic",
-          "PathFollowCritic", "PathAngleCritic", "TwirlingCritic", "VelocityDeadbandCritic"]
+          "PathFollowCritic", "TwirlingCritic", "VelocityDeadbandCritic"]  # PathAngleCritic removed 2026-10-09 (M6)
 ConstraintCritic: {enabled: true, cost_power: 1, cost_weight: 4.0}
 GoalCritic: {enabled: true, cost_power: 1, cost_weight: 5.0, threshold_to_consider: 1.0}
 GoalAngleCritic: {enabled: true, cost_power: 1, cost_weight: 3.0, threshold_to_consider: 0.5}
@@ -50,11 +50,15 @@ PathAlignCritic:
   offset_from_furthest: 20
   use_path_orientations: false
 PathFollowCritic: {enabled: true, cost_power: 1, cost_weight: 5.0, offset_from_furthest: 5, threshold_to_consider: 1.0}
-# mode 0 = keep the body pointed along the path (front-only depth camera) / 몸을 경로 방향으로(정면 카메라)
-PathAngleCritic: {enabled: true, cost_power: 1, cost_weight: 2.0, offset_from_furthest: 4, threshold_to_consider: 0.5, max_angle_to_furthest: 1.0, mode: 0}
+# mode 0 = keep the body pointed along the path. DISABLED 2026-10-09 (trial M6): it still turned the body +31 deg along the
+# detour with Twirling 30; big direction changes are the RotationShim's job. 한글: 회피 중 몸을 경로 쪽으로 돌려서 끔(큰 전환은 shim).
+PathAngleCritic: {enabled: false, cost_power: 1, cost_weight: 2.0, offset_from_furthest: 4, threshold_to_consider: 0.5, max_angle_to_furthest: 1.0, mode: 0}
 # 10 -> 30 (2026-10-09, user requirement): avoid by sliding diagonally while facing forward (mecanum), not by turning the
 # body 50-70 deg as in box trials M3-M5; big direction changes are left to the RotationShim (60 deg).
 # 한글: 회피는 정면 유지 + 대각 이동(메카넘), 몸 회전은 큰 방향 전환에서만(shim 60도).
 TwirlingCritic: {enabled: true, cost_power: 1, cost_weight: 30.0}
 # wheel dead zone (2026-10-07: 0.006 m/s / 0.02 rad/s commands did not turn the wheels) / 모터 데드존
-VelocityDeadbandCritic: {enabled: true, cost_power: 1, cost_weight: 35.0, deadband_velocities: [0.04, 0.04, 0.1]}
+# wz deadband 0.1 -> 0 (2026-10-09, trial M7): penalizing |wz| < 0.1 made MPPI prefer turning at 0.12-0.16 rad/s over
+# exactly 0 -> the body kept turning (+38 deg) while avoiding. In-place turns are done by the shim at 0.4 rad/s anyway.
+# 한글: 회전 데드존 벌점이 '회전 0' 대신 0.1 이상 회전을 고르게 만들어 회피 중 몸이 돌았다 → 회전은 제외.
+VelocityDeadbandCritic: {enabled: true, cost_power: 1, cost_weight: 35.0, deadband_velocities: [0.04, 0.04, 0.0]}

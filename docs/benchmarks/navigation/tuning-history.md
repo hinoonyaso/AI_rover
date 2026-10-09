@@ -83,6 +83,13 @@
 | `CostCritic` | weight 3.81, critical 300, footprint 고려, collision 1e6 | 예제값 |
 | `PathAngleCritic` | mode 0, max_angle 1.0 rad | 경로 방향 바라보기(57° 넘을 때만) |
 
+**2026-10-09 밤 (회피 M6 → M7)**
+| 파라미터 | 변경 | 이유 |
+|---|---|---|
+| shim `angular_dist_threshold` | 1.05 (60°) → **1.4 (80°)** | M6: 목표 20 cm 앞, 옆 25 cm 치우친 상태에서 목표점 방향이 60°를 넘어 제자리 −60° 회전 |
+| MPPI `PathAngleCritic` | 켬 → **끔** (critics 목록에서 제거) | M6: Twirling 30에도 회피 중 몸이 +31°까지 돌아감. 큰 방향 전환은 shim 담당 |
+| MPPI `VelocityDeadbandCritic` wz | 0.1 → **0** | M7: PathAngle 끈 뒤에도 회전 0.12~0.16 rad/s 지속(+38°) — |wz|<0.1 벌점이 '0' 대신 '0.1 이상 회전'을 고르게 함 |
+
 **기타**
 | 파라미터 | 변경 | 날짜 | 이유 |
 |---|---|---|---|
