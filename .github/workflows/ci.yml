@@ -45,18 +45,21 @@ jobs:
           apt-get install -y --no-install-recommends python3-colcon-common-extensions \
             ros-jazzy-ament-cmake-gtest ros-jazzy-ament-lint-auto ros-jazzy-ament-lint-common \
             ros-jazzy-robot-localization python3-pytest \
-            ros-jazzy-rosbag2-py ros-jazzy-rosbag2-storage-default-plugins
+            ros-jazzy-rosbag2-py ros-jazzy-rosbag2-storage-default-plugins \
+            ros-jazzy-nav2-mppi-controller
       - name: Build
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
+          # jetrover_nav_plugins: jetrover_navigation exec_depends on it, colcon refuses to build
+          # navigation without it (CI red since 2026-10-09 4823968).
           colcon build --packages-select jetrover_description jetrover_base jetrover_microros \
-            jetrover_bringup jetrover_navigation jetrover_perception
+            jetrover_bringup jetrover_nav_plugins jetrover_navigation jetrover_perception
       - name: Test
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon test --packages-select jetrover_base jetrover_microros
+          colcon test --packages-select jetrover_base jetrover_microros jetrover_nav_plugins
           colcon test-result --verbose
       - name: Benchmark analyzer on a synthetic rosbag
         shell: bash
