@@ -1,4 +1,4 @@
-# nav2_params.yaml 튜닝 이력
+# nav2_params.yaml 튜닝 이력 (+ MPPI, 관련 perception/base 파라미터)
 
 `src/jetrover_navigation/config/nav2_params.yaml`의 주석에 쌓인 "왜 이 값인가" 기록을 파라미터별로 모은 문서.
 **이 값들은 정량 baseline이 아니라 소수 시행(1~3회)에서 나온 경험적 선택이다.** 실제 성능은 `prd/nav2-baseline-test-plan.md`의 15회 시험으로 확정한다.
@@ -22,6 +22,75 @@
 | `sparse_point_cloud` `extrude_depth_m` | 0 → **0.3** | 2026-10-05 | 카메라가 앞면만 봐서 몸통이 free로 보임 (휴리스틱) | design/depth-obstacle.md |
 | `background_margin_mm` | **60** | 2026-10-05 | depth 노이즈보다 큰 여유 (기준 depth 비교, 30 mm에서 상향) | 023 |
 | 홈 자세 `arm_home_pose_rad` | → [0.0, -0.553, 1.688, 1.671, 0.017] | 2026-10-05 | 카메라가 자기 바퀴부터 바닥까지 끊김 없이 보이도록 | checklist 14 |
+
+
+## 2026-10-06 (커밋 7db53d6, 상자 회피 튜닝) — 이 문서에 늦게 추가
+| 파라미터 | 변경 | 이유 / 근거 | 관련 |
+|---|---|---|---|
+| footprint (global/local) | 0.40×0.48 → **0.36×0.50** | 좁은 방에서 상자 주변 통과 불가 영역이 커서 우회 대신 정지. **실측 아님**(2026-10-09에 과대로 판명) | 028 |
+| `inflation_radius` | 0.3 → 0.25 → **0.40** | 상자를 여유 0으로 스치는 경로를 밀어내려고 | 028 |
+| `cost_scaling_factor` | 3 → **5** | 위와 같음 | 028 |
+| planner `cost_travel_multiplier` | 2 → **4** | 비용 높은 곳을 더 피하게 | 028 |
+| `max_vel_theta` (DWB) / smoother wz | 1.0 → **0.4** | 회전 섞으면 모서리가 크게 휩쓸려 안전망/DWB가 정지 | 028 |
+| `GoalAlign.scale` / `RotateToGoal.scale` | 24 → **4** / 32 → **8** | 회전을 덜 선호, 메카넘 평행이동 위주 | 028 |
+| local `scan.clearing` | true → **false** | LiDAR가 낮은 상자를 지움(→ 2026-10-07 레이어 분리로 대체) | 028, 031 |
+| progress checker | 0.3 m/10 s → **0.15 m/20 s** | 느린 곡선 우회가 진행 실패로 중단 | 028 |
+| collision_monitor | FootprintApproach → **FootprintStop [[0.17,0.195]…] + FootprintSlow [[0.26,0.28]…] 50%** | approach가 상자 옆 정상 비킴까지 0으로 만듦 | 028 |
+| BT XML | ClearingActions·Spin 제거, local clear → Wait | recovery가 상자 기억을 지움 | 028 |
+| `extrude_depth_m` (sparse_point_cloud) | 0.3 → **0.15** | 좁은 방에서 연장 영역이 통로를 막음 | 028 |
+| `arm_home_pose_rad` | → **[0.0042, -0.6618, 1.6629, 1.6043, 0.0168, -0.0209]** | 손목을 들어 앞 18~51 cm 연속 감지 | 028 |
+
+## 2026-10-07 ~ 10-09 (실기 직진/회피 시험) — troubleshooting 031·034
+**DWB / 컨트롤러**
+| 파라미터 | 변경 (중간 시도 포함) | 날짜 | 이유 / 근거 |
+|---|---|---|---|
+| `trajectory_generator_name` | Standard → **LimitedAccelGenerator** (+`sim_period` 0.1) | 10-07 | Standard는 매 주기 vy 전 범위 샘플(sim_time을 가속 시간으로 씀) → 좌우 뒤집힘. A/B 6+6회: 직진 중 몸 방향 오차 중앙값 4.5° vs 29° (10-09) |
+| `vy_samples` | 10 → **11** | 10-07 | 현재 vy 기준 대칭 격자 |
+| `min_speed_xy` | 0.05 → 0.0 → **0.04** | 10-07 | 0.05는 `min_speed_theta` 0이라 원래 무효(소스 확인). 0.04 + theta와 함께 데드존 가드 |
+| `min_speed_theta` | 0.0 → 0.2 → **0.1** | 10-07 | 목표 앞 0.006 m/s 선택·A 끝 출발 실패 대책. 0.2는 LimitedAccel 정지 상태에서 회전 후보 0개(회전 4/4 실패) |
+| DWB `xy_goal_tolerance` | (미설정=0.25) → **0.12** | 10-07 | RotateToGoal 자체 허용오차 0.25 > goal checker 0.15 → 목표 15~25 cm 앞에서 정지 |
+| `acc_lim_theta` / `decel_lim_theta` | 1.0 / -1.0 → **3.0 / -3.0** | 10-09 | shim이 0.36 rad/s로 넘길 때 LimitedAccel 창(±0.1)으로는 회전을 못 멈춰 ±30° 지그재그. 실제 각가속은 smoother 1.0 유지 |
+| critics `Twirling` | 없음 → **scale 10** | 10-09 | DWB가 주행 중 PathAlign 때문에 몸을 돌림 → 방향 유지, 옆 보정은 vy |
+| `BaseObstacle.scale` | 0.1 유지 (직진 시험 전용 파일에서만 0.02) | 10-07~09 | 0.1에서 멈춘 원인은 허용오차·데드존이었음 → 기본 0.1로 직진 3/3 |
+| `FollowPath.plugin` | DWB → **RotationShimController**(primary DWB) | 10-07 | 출발 시 15~20° 틀어진 채 vy로 따라가 대각선 주행·정면 카메라 사각 |
+| shim `angular_dist_threshold` / `disengage` | 0.26/0.09 (15°/5°) → 0.6/0.2 (35°/11°) → **1.05/0.2 (60°/11°)** | 10-07~09 | 회피 중 shim이 제어권을 놓지 않음(데드존 아래 회전으로 5° 못 맞춤) → 35°; 사용자 요구(회전은 큰 방향 전환에서만) → 60° |
+| shim `rotate_to_heading_once` | false → true → **false** | 10-09 | 회피 경로 재계획마다 반복 회전 → true; 코너 회전 필요 + 60°/0.6 m로 회피 꺾임 무시 → false |
+| shim `forward_sampling_distance` | 0.3 → **0.6** | 10-09 | 장애물 옆 작은 꺾임이 아닌 경로 전체 방향 |
+| shim 기타 | `rotate_to_heading_angular_vel` 0.4, `max_angular_accel` 1.0, `simulate_ahead_time` 1.0, `rotate_to_goal_heading` true, `use_path_orientations` false | 10-07 | DWB 한계와 동일, 최종 yaw도 shim |
+
+**Costmap / Planner**
+| 파라미터 | 변경 | 날짜 | 이유 / 근거 |
+|---|---|---|---|
+| local costmap 레이어 | obstacle(scan+depth) → **obstacle_layer(scan, clearing true) + depth_layer(depth)** | 10-07 | scan clearing false로 LiDAR 점이 영원히 쌓여 통로 막힘(lethal 84→17칸) |
+| global costmap 레이어 | 같은 분리 | 10-09 | LiDAR가 depth 상자를 지워 전역 경로가 상자 관통 |
+| footprint (global/local) | 0.36×0.50 → **0.38×0.28** | 10-09 | 줄자 실측 36×26 cm + 1 cm (이전 값은 미실측 과대) |
+| `inflation_radius` | 0.40 → **0.25** | 10-09 | 실측 footprint(내접 0.14)에서 0.40 비용 띠가 우회를 ~40 cm로 밀어냄. **주행 확인 전** |
+| `cost_scaling_factor` | 5 → **10** | 10-09 | 비용이 빨리 줄어 장애물에 가깝게 (우회 41→36.5 cm) |
+| planner `cost_travel_multiplier` | 4 → **2** | 10-09 | 위와 같음 |
+| collision_monitor `FootprintStop` | [[0.17,0.195]…] → **[[0.20,0.15]…]** | 10-09 | 실측 몸 + 약 2 cm |
+| collision_monitor `FootprintSlow` | [[0.26,0.28]…] → **[[0.28,0.22]…]** | 10-09 | 실측 몸 + 약 10 cm |
+| collision_monitor `visualize` | false → **true** | 10-07 | RViz 확인용 |
+
+**MPPI (`config/mppi_followpath.yaml`, 신규 2026-10-09, Nav2 Jazzy 예제 기반)**
+| 파라미터 | 값 | 비고 |
+|---|---|---|
+| `motion_model` / `time_steps` / `model_dt` / `batch_size` | Omni / 40 / 0.1 / **1000** | batch는 예제 2000의 절반(Orin Nano CPU) — 주기 경고 0회 |
+| `vx_max` / `vx_min` / `vy_max` / `wz_max` | 0.12 / **0.0** / 0.12 / 0.4 | 후진 금지 유지 |
+| `ax_max` / `ax_min` / `ay_max` / `az_max` | 0.5 / -0.5 / 0.5 / 1.0 | DWB·smoother와 동일 |
+| `wz_std` | 0.4 → **0.2** (10-09) | 회피 중 회전 억제 |
+| `TwirlingCritic` | 10 → **30** (10-09) | 정면 유지 + 대각 회피(사용자 요구). **주행 확인 전** |
+| `VelocityDeadbandCritic` | [0.04, 0.04, 0.1], weight 35 | 모터 데드존 |
+| `CostCritic` | weight 3.81, critical 300, footprint 고려, collision 1e6 | 예제값 |
+| `PathAngleCritic` | mode 0, max_angle 1.0 rad | 경로 방향 바라보기(57° 넘을 때만) |
+
+**기타**
+| 파라미터 | 변경 | 날짜 | 이유 |
+|---|---|---|---|
+| `arm_home_pose_rad` joint4 | 1.6043 → **1.45** | 10-09 | depth 바닥 시야 0.21~0.62 → 0.26~0.81 m (`benchmarks/perception/home_pose_20261009.md`) |
+| `sparse_point_cloud` 홈 자세 게이트 | 신규: tol 0.04 → **0.08 rad**, debounce **1 s**, joint_states timeout 2 s | 10-07 | 0.04는 주행 중 백래시로 열림/닫힘 반복 |
+| `motor_stop_frame_on_stop` (base_node) | 신규 true → **false** | 10-08 | 정지 프레임이 바닥 울림을 못 멈춤(032) |
+| `scan_match_init` 확신 기준 | score ≥ 0.8 & margin ≥ 0.1, **또는 score ≥ 0.95 & margin ≥ 0.05** | 10-08 | 0.974/0.883이 거부돼서 |
+| AMCL (`amcl.yaml`) | 변경 없음 | — | — |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

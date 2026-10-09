@@ -207,4 +207,5 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 - 재사용할 스크립트는 `/tmp`가 아니라 `tools/`에 둔다 (재부팅하면 `/tmp`가 지워진다: troubleshooting/008).
 - **`sudo apt install`이나 시스템 전역 설치(커널 모듈 등)를 할 때마다** `setup/ENVIRONMENT_SETUP.md`에 날짜·명령·이유·확인 방법을 추가한다. 사용자에게 설치를 요청할 때도 이 파일에 먼저 적어 둔다.
 - 큰 결정이나 수치(보정값, 시험 결과)는 관련 README/NOTES에 남긴다. 확인하지 않은 것을 사실처럼 쓰지 않는다.
+- **Nav2/인식 파라미터를 바꿀 때마다** 설정 파일 주석(이전 값 → 새 값, 날짜, 이유)과 함께 `docs/benchmarks/navigation/tuning-history.md`에 한 줄을 추가한다. 시도했다가 되돌린 값도 적는다(2026-10-09: 사흘 치 변경이 이 문서에서 빠져 있었다).
 - **새 기능에 처음 착수할 때는** 위 "새 기능 작업 방식(3-File System)"대로 `prd/`에 PRD부터 쓴다.
