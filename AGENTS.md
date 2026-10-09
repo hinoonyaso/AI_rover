@@ -124,6 +124,7 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 - 빌드는 **반드시 `cd ~/jetrover_ws`에서** `colcon build --packages-select jetrover_base`. (`src/`에서 빌드하면 `src/build|install|log`가 생긴다: troubleshooting/005)
 - 실행: `source ~/jetrover_ws/install/setup.bash && ros2 launch jetrover_base base.launch.py` (`base_node` + URDF `robot_state_publisher` + robot_localization EKF).
 - 검사: `colcon test --packages-select jetrover_base` (flake8, uncrustify 등이 통과해야 한다).
+- **새 ROS 패키지를 만들면 `.github/workflows/ci.yml`의 build/test 목록과 apt 의존성에도 추가한다.** 다른 패키지가 exec_depend로 참조하는데 목록에 없으면 colcon이 그 패키지 빌드를 거부한다(2026-10-09~10 CI가 `jetrover_nav_plugins` 누락으로 계속 실패).
 
 ## 테스트 레벨과 완료 기준
 | 레벨 | 내용 | 예 |
