@@ -208,11 +208,13 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [ ] 8.13.14 depth 레이어 `raytrace_min_range`: 새 홈 자세의 사각지대(범퍼~8 cm)에 들어간 상자를 depth 광선이 지우지 않게(회피 단계)
   - [x] 8.13.15 footprint 줄자 실측(2026-10-09): 36×26 cm → 플래너 0.38×0.28(+1 cm), collision_monitor 정지 0.40×0.30 / 감속 0.56×0.44. 이전 0.36×0.50은 미실측 과대값
   - [~] 8.13.16 MPPI(Omni) 설정 `config/mppi_followpath.yaml` + `make_variants.sh`로 `nav2_params_mppi.yaml` 생성. 로드맵 4단계를 앞당김(2026-10-09 사용자 승인). 2회 시험, 튜닝 전
-  - [~] 8.13.17 회피 방식(정면 유지 + 대각 이동, 회전은 큰 방향 전환에서만): MPPI 목표 근처 기준 0.35 m 적용 후 **왕복 3/4 성공**(옆 이동 15~18 cm, 몸 방향 2~11°, 2026-10-09). 실패 1회(F2-4, 48 cm 우회 후 진동) 원인 미조사. M3~M8 접촉 없음
+  - [~] 8.13.17 회피 방식(정면 유지 + 대각 이동, 회전은 큰 방향 전환에서만): MPPI 목표 근처 기준 0.35 m 적용 후 **왕복 3/4 성공**(옆 이동 15~18 cm, 몸 방향 2~11°, 2026-10-09). 실패 1회(F2-4, 48 cm 우회 후 진동): **2026-10-10 bag 분석** — 회전 직후 전역 경로가 41 cm 우회로 바뀌고, 목표가 몸 기준 왼쪽 ~75°인 지점에서 40 s 정체(경로 정상, MPPI 출력 ≈0, 몸 옆 8 cm 안 센서 점). 막은 물체는 bag에 costmap이 없어 미확정 → `straight_trial.py --bag`에 scan/depth 점/costmap 추가(troubleshooting/034). M3~M8 접촉 없음
   - [~] 8.13.18 MPPI LateralRatioCritic(메카넘 대각 45° 제한, PRD `prd/mppi-lateral-ratio-critic.md`)
     - [x] 계산 함수 + 단위시험 6개(45° 경계, slack, 후진, 배치 독립, 30° 변형) — `src/jetrover_nav_plugins`
     - [x] 플러그인 등록·로드 확인(`Critic loaded : mppi::critics::LateralRatioCritic`), colcon test 22개 통과
     - [x] MPPI 연결(weight 50, PathAlign 14→6, PathFollow 5→3)
+    - [x] 판정 지표 `diag50_frac`(`tools/nav/trial_metrics.py`, 단위시험 5개, CI) → `straight_trial.py` v3 CSV. 실기 bag 재계산: 성공 회차 0~1%, F2-4 정체 40%
+    - [~] 시뮬레이션 비교 시나리오 S1/S2/S3 × dwb/mppi/mppi_nolr(`tools/sim/run_scenarios.sh`, `make_variants.sh`가 `nav2_params_mppi_nolr.yaml`도 생성) — 준비만, host 실행 대기
     - [ ] 실기 회피 왕복 4회: 명령 각도 > 50° 시간 비율 < 5%, 성공 ≥ 3, 최대 옆 속도/우회 시작점 비교(배터리 ≥ 10.3 V)
   - [ ] 8.13.6 장기: 기준 영상 차분 대신 TF/URDF self-filter + 바닥 제거(서보 백래시에 둔감하게)
 - [ ] 8.10 성능 지표 기록 (**2026-10-06: 계획 `prd/nav2-baseline-test-plan.md`, 3시나리오×5회=15회, 도구 `tools/nav/benchmark/`(지표 단위시험 통과, bag 분석 미검증), 시험 자체는 미실시. 엔코더 odom 적용 전 baseline 용도**): CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)

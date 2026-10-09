@@ -16,7 +16,10 @@ Metrics (printed and appended to Log/wobble_trials.csv):
   start_yaw_err     robot heading vs the start->goal line at the start (deg)
   yaw_dev_max       max |heading - line| while translating (0.2 m along the line .. 0.2 m before goal):
                     body turned away from the travel direction = diagonal/crab driving (deg)
-(v2 CSV: Log/wobble_trials_v2.csv, 2026-10-08, after RotationShim)
+  diag50_frac       fraction of moving commands > 50 deg off the body front (LateralRatioCritic
+                    test: < 5 %), tools/nav/trial_metrics.py
+(v2 CSV: Log/wobble_trials_v2.csv, 2026-10-08, after RotationShim; v3 Log/wobble_trials_v3.csv
+ 2026-10-10, + diag50_frac)
 """
 import argparse
 import csv
@@ -24,6 +27,7 @@ import math
 import os
 import signal
 import subprocess
+import sys
 import time
 
 from geometry_msgs.msg import PoseStamped, Twist
@@ -33,9 +37,16 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 import tf2_ros
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from trial_metrics import diag_frac  # noqa: E402
+
 TIMEOUT_S = 60.0
+# 2026-10-10: + scan / depth obstacle points / costmaps -- F2-4 (troubleshooting/034) stalled 40 s
+# and the bag could not show what blocked it. 한글: 멈춘 원인(무엇이 막았는지)을 bag으로 볼 수 있게 추가.
 BAG_TOPICS = ('/tf /tf_static /odom /amcl_pose /cmd_vel /cmd_vel_nav /cmd_vel_smoothed /plan '
-              '/collision_monitor_state /joint_states').split()
+              '/collision_monitor_state /joint_states /scan /depth_cam/depth/points_sparse '
+              '/local_costmap/costmap /local_costmap/costmap_updates '
+              '/global_costmap/costmap /global_costmap/costmap_updates').split()
 
 
 def yaw_of(q):
@@ -81,6 +92,8 @@ def main():
                     help='only rotate in place (180 deg, or to face --goal); not logged')
     ap.add_argument('--goal', type=float, nargs=2, metavar=('X', 'Y'),
                     help='fixed map goal instead of --dist ahead; heading = start->goal line')
+    ap.add_argument('--timeout', type=float, default=TIMEOUT_S,
+                    help='s (wall clock) before the goal is canceled; raise it in a slow simulation')
     args = ap.parse_args()
 
     rclpy.init()
@@ -158,7 +171,7 @@ def main():
                         if math.hypot(mo[0] - prev_mo[0], mo[1] - prev_mo[1]) > 0.03 or dyaw > math.radians(2):
                             jumps += 1
                     prev_mo = mo or prev_mo
-                if now - t0 > TIMEOUT_S:
+                if now - t0 > args.timeout:
                     handle.cancel_goal_async()
                     status = 'timeout'
                     break
@@ -220,11 +233,13 @@ def main():
            'vy_rms': round(vy_rms, 4), 'vy_max': round(vy_max, 3), 'wz_rms': round(wz_rms, 3),
            'lat_max_map_cm': round(lat_map * 100, 1), 'lat_max_odom_cm': round(lat_odom * 100, 1),
            'jumps': jumps, 'pos_err_cm': round(pos_err * 100, 1), 'n_cmd': len(node.cmd),
-           'start_yaw_err_deg': round(start_yaw_err, 1), 'yaw_dev_max_deg': round(yaw_dev, 1)}
+           'start_yaw_err_deg': round(start_yaw_err, 1), 'yaw_dev_max_deg': round(yaw_dev, 1),
+           'diag50_frac': round(diag_frac([(c[1], c[2]) for c in node.cmd]), 3)}
     for k, v in row.items():
         print(f'  {k:18s} {v}')
     os.makedirs('Log', exist_ok=True)
-    path = 'Log/wobble_trials_v2.csv'  # new columns (v1: Log/wobble_trials.csv)
+    # v3 (2026-10-10): + diag50_frac (v2: Log/wobble_trials_v2.csv, v1: Log/wobble_trials.csv)
+    path = 'Log/wobble_trials_v3.csv'
     new = not os.path.exists(path)
     with open(path, 'a', newline='') as f:
         w = csv.DictWriter(f, fieldnames=list(row))

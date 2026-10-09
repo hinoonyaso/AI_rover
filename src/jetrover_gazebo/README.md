@@ -51,6 +51,7 @@ ros2 launch jetrover_navigation nav2.launch.py use_sim_time:=true \
 python3 tools/nav/straight_trial.py SIM_mppi --goal 1.0 1.45       # 실기 F2와 같은 A→B
 ```
 자동 위치 추정(scan_match_init)도 그대로 동작한다(같은 지도).
+컨트롤러 비교 시나리오(S1 직진, S2 상자 왕복, S3 F2-4 정체 지점 × dwb/mppi/mppi_nolr)는 `tools/sim/README.md`.
 
 ## 5. depth 장애물(선택)
 sparse_point_cloud는 "기준 depth와 비교" 방식이라 시뮬레이션용 기준이 필요하다:
