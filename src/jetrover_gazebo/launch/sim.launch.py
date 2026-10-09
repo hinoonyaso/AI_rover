@@ -16,8 +16,8 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction,
-                            RegisterEventHandler)
+from launch.actions import (AppendEnvironmentVariable, DeclareLaunchArgument,
+                            IncludeLaunchDescription, OpaqueFunction, RegisterEventHandler)
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -92,8 +92,10 @@ def setup(context):
                                'background_depth_path': os.path.join(
                                    share, 'config', 'depth_background_ref_sim.npy')}, sim_time])
 
+    # scanned-room models (models/room_lap2, Phase 3) / 스캔 방 모델 경로
+    models = AppendEnvironmentVariable('GZ_SIM_RESOURCE_PATH', os.path.join(share, 'models'))
     return [
-        gz, rsp, spawn, bridge, optical_tf, ekf, relay, depth_conv, sparse,
+        models, gz, rsp, spawn, bridge, optical_tf, ekf, relay, depth_conv, sparse,
         RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=[jsb])),
         RegisterEventHandler(OnProcessExit(target_action=jsb, on_exit=[mecanum, arm, arm_hold])),
     ]

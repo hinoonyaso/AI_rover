@@ -1,0 +1,6 @@
+# Git LFS for scanned-room assets (src/jetrover_gazebo/models/*/meshes, textures; prd/gazebo-sim.md Phase 3).
+# 한글: 스캔 방 메쉬/텍스처는 Git LFS로. host에서 git lfs install 필요.
+src/jetrover_gazebo/models/**/meshes/** filter=lfs diff=lfs merge=lfs -text
+src/jetrover_gazebo/models/**/materials/textures/** filter=lfs diff=lfs merge=lfs -text
+*.ply filter=lfs diff=lfs merge=lfs -text
+src/jetrover_gazebo/models/**/.gitkeep !filter !diff !merge text

@@ -161,4 +161,5 @@ STM32 펌웨어(`firmware/rrc_m4`)의 micro-ROS 정적 라이브러리를 Jetson
 - 명령(host, sudo):
   `sudo apt install -y ros-jazzy-ros-gz ros-jazzy-gz-ros2-control ros-jazzy-gz-ros2-control-demos ros-jazzy-ros2-control ros-jazzy-ros2-controllers ros-jazzy-navigation2 ros-jazzy-nav2-bringup ros-jazzy-robot-localization ros-jazzy-xacro ros-jazzy-teleop-twist-keyboard python3-scipy`
 - 확인: `ros2 launch gz_ros2_control_demos mecanum_drive_example.launch.py`가 뜨고 키보드로 옆이동.
+- 디지털 트윈(Phase 2~3)용 추가(host): `sudo apt install ros-jazzy-rtabmap-ros git-lfs && git lfs install`, `pip install open3d`.
 - 상태: **계획(host에서 미실행)** — 실행 후 결과를 여기 갱신.

@@ -27,3 +27,15 @@ EKF(robot_localization) ← sim: 컨트롤러 odom twist + IMU / 실기: wheel_t
 ## 완료 기준
 - L0(Jetson): 빌드, sim_mode=false URDF가 이전과 동일(diff), sim URDF→SDF 변환 성공(`gz sdf -p`), 월드 SDF 검증(`gz sdf -k`), lint.
 - L5-sim(host): 키보드로 전/후/좌/우/회전 이동, /scan·depth·imu·odom 토픽, Nav2 직선 왕복과 상자 회피를 실기와 같은 좌표로 재현.
+
+## 디지털 트윈 확장 (2026-10-09 사용자 승인, Phase 2~4)
+Phase 1 = 위의 지도→벽 월드(완료, L0). 이후:
+- **Phase 2 — RGB-D 스캔(Jetson 녹화, host 처리)**: 스캔용 팔 자세(카메라 수평 근처)로 원본 color/depth/camera_info + /scan + /tf(_static)
+  + /joint_states + /odom을 bag으로 녹화(`tools/scan/`). Nav2 끈 상태, 0.05~0.08 m/s. 위치는 odom(open-loop)을 믿지 않고
+  host에서 RTAB-Map(RGB-D/ICP 오도메트리 + 루프 클로저)으로 추정 → Open3D TSDF로 메쉬.
+- **Phase 3 — Blender(host, 사용자)**: 정리·텍스처·감량, visual/collision 분리. 결과는 git(LFS)으로 공유:
+  `src/jetrover_gazebo/models/room_lap2/`(규칙은 그 README).
+- **좌표 정합**: 메쉬의 LiDAR 높이 단면을 SLAM 지도와 2D ICP로 맞춰 T_map←scan과 잔차를 낸다(`tools/scan/validate_room_alignment.py`).
+  목표: 주요 벽 기준 잔차 중앙값 ≤ 5 cm. 정합 후에야 A/B 등 지도 좌표를 시뮬레이션에서 재사용.
+- **Phase 4 — Sim-to-Real**: 같은 시작/목표로 Nav2(MPPI/DWB)·LiDAR·depth 장애물 결과를 실기와 비교.
+- 비범위: 3DGS(후순위), Isaac Sim(host GPU 사양 부족 추정), 실시간 트윈 동기화.

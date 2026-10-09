@@ -144,6 +144,10 @@ def main():
     ap.add_argument('--height', type=float, default=0.5)
     ap.add_argument('--box', type=float, nargs=5, action='append', default=[],
                     metavar=('X', 'Y', 'SX', 'SY', 'SZ'))
+    # Phase 3 (prd/gazebo-sim.md): include a scanned room model (models/<name>, map frame)
+    # 한글: 스캔한 방 모델 포함(지도 좌표). --no-walls면 지도 벽 상자를 빼고 스캔 모델만.
+    ap.add_argument('--room-model', default=None, help='include model://<name> (e.g. room_lap2)')
+    ap.add_argument('--no-walls', action='store_true', help='omit the walls extruded from the map')
     args = ap.parse_args()
 
     occ, res, (ox, oy) = occupied_grid(args.map_yaml)
@@ -160,7 +164,10 @@ def main():
         for i, (bx, by, sx, sy, sz) in enumerate(args.box))
     head = WORLD_HEAD.format(src=os.path.basename(args.map_yaml), n=n_cells, r=len(rects),
                              h=args.height)
-    sdf = head + links + '    </model>\n' + boxes + '  </world>\n</sdf>\n'
+    walls = '' if args.no_walls else links
+    room = (f'    <include><uri>model://{args.room_model}</uri><pose>0 0 0 0 0 0</pose></include>\n'
+            if args.room_model else '')
+    sdf = head + walls + '    </model>\n' + room + boxes + '  </world>\n</sdf>\n'
     open(args.out_sdf, 'w').write(sdf)
     print(f'{n_cells} occupied cells -> {len(rects)} boxes (cover {covered} cells), '
           f'wrote {args.out_sdf}')
