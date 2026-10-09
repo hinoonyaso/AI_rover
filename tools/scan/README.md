@@ -39,4 +39,15 @@ ICP 핵심(`align2d.py`)은 단위시험됨(`test_align2d.py`: 합성 방, 실�
 월드: `python3 src/jetrover_gazebo/scripts/map_to_world.py maps/lap2_20261005.yaml src/jetrover_gazebo/worlds/room_lap2.sdf --room-model room_lap2 --no-walls`.
 
 ## 스캔 자세
-`tools/perception/arm_set_joint.py`로 설정. 값은 결정 후 여기와 `docs/benchmarks/perception/`에 기록.
+2026-10-10 결정(측정 비교: `docs/benchmarks/perception/scan_pose_20261010.md`): 카메라 높이 0.52 m, 아래로 약 6°.
+```
+# 홈 -> 스캔 자세 (팔이 움직임, 이 순서대로: 이동 중 카메라 높이 >= 0.26 m)
+python3 tools/perception/arm_set_joint.py joint4 1.5
+python3 tools/perception/arm_set_joint.py joint2 -0.15
+python3 tools/perception/arm_set_joint.py joint3 0.30
+# 스캔 자세 -> 홈 (역순)
+python3 tools/perception/arm_set_joint.py joint3 1.6629
+python3 tools/perception/arm_set_joint.py joint2 -0.6618
+python3 tools/perception/arm_set_joint.py joint4 1.45
+```
+팔을 세운 상태라 무게중심이 높다 — 0.05~0.08 m/s 텔레옵만. 이 자세에선 depth 장애물 게이트가 닫힌다.

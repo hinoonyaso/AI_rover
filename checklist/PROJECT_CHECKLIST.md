@@ -260,6 +260,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 8.14.3 sim xacro(ros2_control 바퀴 속도·팔 위치, 메카넘 이방성 마찰, LiDAR/RGB-D/IMU): `gz sdf -p` 변환 성공(센서 3, 플러그인 1, fdir1 4, 회전 바퀴 4)
 - [x] 8.14.4 launch/브리지/EKF/보조 노드(cmd_vel→stamped, depth float→16UC1 mm, 팔 홈 유지), Nav2/localization `use_sim_time` 인자. colcon test 12개 통과
 - [ ] 8.14.5 host 실행(L5-sim): 데모 → JetRover 키보드 전후좌우·회전 방향, 센서 토픽, Nav2 A→B·상자 회피를 실기 좌표로 재현
+- [x] 8.14.6 방 스캔용 팔 자세: 후보 A(손목만, 0.43 m/10.7°)·B(팔 세움, 0.52 m/5.9°) 실측 비교 → **B 채택**, 이동 순서 FK 확인·실기 왕복 확인(`docs/benchmarks/perception/scan_pose_20261010.md`, `tools/scan/README.md`). `arm_set_joint.py`: 첫 명령 유실(DDS 매칭 전) 수정, 실측 기준 0.25 rad 단계
+- [ ] 8.14.7 방 RGB-D 스캔 녹화(`tools/scan/record_room_scan.sh`, B 자세) → host 재구성/정합/Blender
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해

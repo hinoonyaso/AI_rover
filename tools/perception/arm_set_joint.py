@@ -3,7 +3,7 @@
 """Move one arm joint to a target angle via base_node arm/command (THE ARM MOVES).
 
 Usage: python3 tools/perception/arm_set_joint.py joint4 1.45
-Needs base_node with arm_command_enabled:=true. Steps larger than 0.3 rad are split.
+Needs base_node with arm_command_enabled:=true. Moves in steps of <= 0.25 rad from the actual reading.
 Prints the joint readings before and after.
 """
 import sys
@@ -34,16 +34,20 @@ def main():
     if pub.get_subscription_count() == 0:
         sys.exit('base_node is not subscribed to arm/command (arm_command_enabled:=true?)')
     print('before:', {k: round(v, 3) for k, v in sorted(js.items()) if k.startswith('joint')})
-    cur = js[name]
-    while abs(target - cur) > 0.01:
-        nxt = cur + max(-0.3, min(0.3, target - cur))
+    # Step from the ACTUAL reading each time (2026-10-09: stepping from the previous command made
+    # the next step exceed arm_max_step_rad 0.35 while the servo was still moving -> rejected).
+    # 한글: 매 단계 실제 관절값에서 0.25 rad 이하로. 직전 명령값 기준이면 서보가 덜 와서 0.35 제한에 걸렸다.
+    for _ in range(20):
+        cur = js[name]
+        if abs(target - cur) <= 0.02:
+            break
+        nxt = cur + max(-0.25, min(0.25, target - cur))
         msg = JointState(name=[name], position=[nxt])
         msg.header.stamp = node.get_clock().now().to_msg()
         pub.publish(msg)
         t1 = time.time()
-        while time.time() - t1 < 3.0:  # 2 s move + settle / 이동 2초 + 안정
+        while time.time() - t1 < 3.0:  # 2 s move + settle + joint_states refresh / 이동 2초 + 안정
             rclpy.spin_once(node, timeout_sec=0.1)
-        cur = nxt
     t1 = time.time()
     while time.time() - t1 < 2.0:  # let the 5 Hz round-robin refresh all joints
         rclpy.spin_once(node, timeout_sec=0.1)
