@@ -204,7 +204,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [ ] 8.13.9 정지 후 바퀴 울림(미해결): 정지 프레임(0x03)은 바닥에서 효과 없음 → 기본 끔. 근본 대책은 자체 펌웨어에서 정지 시 PWM 0/적분 리셋 — troubleshooting/032
   - [ ] 8.13.3 회피 재시험: 멈출 때 collision_monitor(`<<CM-STOP>>`)인지 DWB/planner(nav=0)인지 판정, 그 결과로 정지/감속 polygon 조정
   - [~] 8.13.4 depth 기준 영상 홈 자세 게이트(`sparse_point_cloud`, ±0.08 rad + 1초 debounce, 벗어나면 발행 중지 → CM 정지). 실기: 팔 접힘(0.65 rad) 차단 확인, 0.04는 주행 중 백래시로 열림/닫힘 반복해서 완화함
-  - [ ] 8.13.5 카메라 감지거리 0.18~0.51 m → 0.8~1.0 m 목표로 홈 자세/카메라 pitch 재설계(팔 움직임 → 사용자 승인 필요, 기준 depth 재촬영). **2026-10-08 도구 준비**: `tools/perception/home_pose_eval.py`(후보 자세 지표 → `Log/home_pose_eval.csv`), `capture_depth_reference.py`(기준 depth 촬영+백업), 합성 바닥 단위시험(CI). 절차는 `tools/perception/README.md`. 실기 측정 전
+  - [x] 8.13.5 카메라 감지거리 재설계(2026-10-09): 손목 joint4 1.6043 → 1.45, 바닥 시야 0.21~0.62 → **0.26~0.81 m**, 자기 바퀴 시야 밖, LiDAR 가림 변화 없음. 기준 depth 재촬영(이전 백업), 빈 바닥 거짓 점 0, 상자 범퍼 10/30/60 cm 모두 검출(60 cm는 아래 4 cm만). 기록 `docs/benchmarks/perception/home_pose_20261009.md`
+  - [ ] 8.13.14 depth 레이어 `raytrace_min_range`: 새 홈 자세의 사각지대(범퍼~8 cm)에 들어간 상자를 depth 광선이 지우지 않게(회피 단계)
   - [ ] 8.13.6 장기: 기준 영상 차분 대신 TF/URDF self-filter + 바닥 제거(서보 백래시에 둔감하게)
 - [ ] 8.10 성능 지표 기록 (**2026-10-06: 계획 `prd/nav2-baseline-test-plan.md`, 3시나리오×5회=15회, 도구 `tools/nav/benchmark/`(지표 단위시험 통과, bag 분석 미검증), 시험 자체는 미실시. 엔코더 odom 적용 전 baseline 용도**): CTE RMS, Goal Position/Yaw Error, Success Rate, Planning/Replanning Latency (표본 2개, 3회차 이후 집계)
 - [ ] 8.11 (여유 있으면) 직선/90도 코너/좁은 통로/장애물 회피 개별 시나리오 — LiDAR 뒤쪽 160° 사각지대(로봇팔에 가려짐)가 costmap에서 오탐지 안 하는지 확인

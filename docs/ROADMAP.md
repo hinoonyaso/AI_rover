@@ -42,7 +42,7 @@ baseline 수치를 엔코더 적용 전 "Before"로 쓰려면 설정 버그가 �
 | 순서 | 작업 | 상태 |
 |---|---|---|
 | 1-1 | 직진 흔들림 A/B: LimitedAccel+RotationShim vs Standard 각 6회 (`tools/nav/straight_trial.py`) | **완료(2026-10-09)**: 둘 다 6/6, 몸 방향 오차 중앙값 4.5° vs 29° → LimitedAccel 채택. 기본 BaseObstacle(0.1)로 재확인은 1-3에서 |
-| 1-2 | 팔 홈 자세 재설계: depth 감지 0.18~0.51 m → near ≤ 0.25, far ≥ 0.8 m (`tools/perception/`) | 도구 완료, 실측 대기(팔 입회) |
+| 1-2 | 팔 홈 자세 재설계: depth 감지 0.18~0.51 m → near ≤ 0.25, far ≥ 0.8 m (`tools/perception/`) | **완료(2026-10-09)**: joint4 1.45, 0.26~0.81 m, 상자 3위치 검출 — `benchmarks/perception/home_pose_20261009.md` |
 | 1-3 | 회피 정리: ~~BaseObstacle 0.02 ↔ 0.1 정합~~(기본 0.1로 직진 3/3, 불필요 — 2026-10-09), global costmap 레이어 분리, collision monitor 개입 확인, footprint 실측, 상자 회피 시험 | 진행 중 |
 | 1-4 | baseline 정식 15회 | 1-1~1-3 후 |
 

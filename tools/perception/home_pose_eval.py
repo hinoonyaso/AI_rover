@@ -84,10 +84,16 @@ def main():
         if time.time() - t0 > args.seconds + 10:
             raise SystemExit('no depth image / camera_info (camera.launch.py running?)')
     frame = node.depths[-1].header.frame_id
-    try:
-        tf = node.buf.lookup_transform('base_footprint', frame, rclpy.time.Time())
-    except Exception as e:  # noqa: BLE001
-        raise SystemExit(f'no TF base_footprint <- {frame}: {e}')
+    # the arm TF arrives at the /joint_states rate -> wait for it / 팔 TF는 joint_states 주기로 오므로 대기
+    tf, err, t1 = None, None, time.time()
+    while tf is None and time.time() - t1 < 10.0:
+        try:
+            tf = node.buf.lookup_transform('base_footprint', frame, rclpy.time.Time())
+        except Exception as e:  # noqa: BLE001
+            err = e
+            rclpy.spin_once(node, timeout_sec=0.1)
+    if tf is None:
+        raise SystemExit(f'no TF base_footprint <- {frame}: {err}')
 
     # Median of the collected frames (denoise) / 여러 프레임 중앙값
     d = np.median(np.stack([np.frombuffer(m.data, dtype=np.uint16).reshape(m.height, m.width)
