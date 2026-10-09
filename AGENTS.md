@@ -91,7 +91,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `src/jetrover_nav_plugins/` | Nav2 플러그인(C++). MPPI `LateralRatioCritic`(메카넘 대각 45° 제한, PRD `prd/mppi-lateral-ratio-critic.md`), gtest |
 | `src/jetrover_manipulation/` | MoveIt2 설정(팔 joint1~5 + 그리퍼), 궤적 브리지(base_node `arm/command_timed`), SRDF(Setup Assistant 충돌 행렬 병합). `~/AI_secretary_robot`의 Humble 설정을 Jazzy로 옮김 |
 | `src/jetrover_gazebo/` | Gazebo Harmonic 시뮬레이션(**실행은 host PC**, PRD `prd/gazebo-sim.md`): sim xacro(ros2_control 메카넘, LiDAR/RGB-D/IMU), 지도→월드 생성기, 디지털 트윈 모델 자리(`models/room_lap2`, Git LFS). 사용법 `src/jetrover_gazebo/README.md` |
-| `tools/viz/` | `snapshot.py`: 스캔/지도/TF를 위에서 본 PNG로 저장 (사용자는 VS Code SSH라 RViz 화면을 못 본다), `tf_pair_rates.py`: /tf 프레임 쌍별 Hz(033) |
+| `tools/viz/` | `snapshot.py`: 스캔/지도/TF를 위에서 본 PNG로 저장 (사용자는 host PC RViz로 실시간으로 본다(`ROS_DOMAIN_ID=25`, `rviz.launch.py`) — PNG는 에이전트 확인/문서 기록용), `tf_pair_rates.py`: /tf 프레임 쌍별 Hz(033) |
 | `src/jetrover_perception/` | 카메라(Orbbec DaBai DCW) launch/설정, depth 장애물 점(`sparse_point_cloud.py`: 기준 depth 차분 + 홈 자세 게이트). 이후 YOLO/3D 인식 |
 | `src/OrbbecSDK_ROS2/` | Orbbec 카메라 드라이버 소스(vendor, `main` 브랜치=SDK v1). 같은 이름(`orbbec_camera`)으로 apt 버전을 오버레이한다 |
 | `drivers/ch341/` | Jetson 커널에 없는 CH340 드라이버 (빌드/설치 스크립트) |

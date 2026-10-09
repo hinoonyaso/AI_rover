@@ -379,11 +379,14 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [ ] Emergency stop / mission cancel
 
 ## 20. Robot Screen UI (본체 HMI, Chromium kiosk mode)
+2026-10-10 확인: 본체 디스플레이는 **1024×600(DP-1), 터치 없음** → **출력 전용 화면**. 조작(Home/Cancel/Stop, Auto/Manual)은
+게임패드·웹(13단계 관제 페이지)·음성으로. 비상정지는 화면에 의존하지 않는다. 현장 시험 모니터링은 host RViz로 해결(별도 화면 불필요).
 - [ ] Battery, Robot state, Current mission
-- [ ] Camera
-- [ ] Auto / Manual
-- [ ] Home, Cancel, Stop
-- [ ] 간단한 음성 상태 표시
+- [ ] Camera / 점검 결과(게이지 사진+판정값, Stack Light 상태)
+- [ ] Auto / Manual **표시**(전환은 게임패드/웹)
+- [ ] Home / Cancel / Stop **상태 표시**(입력은 게임패드/웹/음성)
+- [ ] 간단한 음성 상태 표시(듣는 중/말하는 중)
+- [ ] (데모용, 선택) 로봇 표정 화면
 
 ## 21. Database (초기 MySQL → 최종 PostgreSQL + VectorDB — 2026-09-28 확정, `prd/jetinspect-m.md` 17절)
 **신뢰수준: 계획.** SQLite 단일DB안(직전 결정)은 폐기. 초기 개발은 MySQL + SQLAlchemy로 빠르게 가고,
