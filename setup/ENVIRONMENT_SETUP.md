@@ -125,7 +125,9 @@ STM32_Programmer_CLI --version  # 2.23.0
 ```
 - 날짜: 2026-09-27
 - 확인: 위 두 명령이 버전을 출력하면 정상.
-- **아직 없음**: `openocd`, `stlink-tools`(`st-info`/`st-flash`) — ST-Link 호환보드 도착 후 `sudo apt install openocd stlink-tools`로 설치 예정 (사용자 승인/sudo 필요).
+- **2026-10-10 설치(사용자, sudo)**: `sudo apt install openocd stlink-tools` → openocd 0.12.0-1build2, stlink-tools 1.8.0-1build2.
+  이유: ST-Link(SWD)로 STM32 플래시 백업(`tools/stm32_diagnostics/swd_backup.sh`)·레지스터 읽기(`swd_motor_probe.sh`)·자체 펌웨어 flash.
+  확인: `openocd --version`(0.12.0), `st-info --version`(v1.8.0). ST-Link 연결 시 `st-info --probe`(절차: `firmware/rrc_m4/README.md` "ST-Link 첫날 순서").
 - PATH를 매번 export하지 않으려면 `~/.bashrc`에 추가하는 것을 고려.
 
 ### 9. Fast-DDS WiFi 전용 인터페이스 프로필 (`~/.bashrc`에 환경변수 추가)
