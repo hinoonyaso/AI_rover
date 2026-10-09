@@ -7,7 +7,7 @@
   (+파이프라인 상세 [../prd/jetinspect-m-pipelines.md](../prd/jetinspect-m-pipelines.md)).
   새 기능을 시작할 때의 작업 방식(PRD→Task→실행)은 `AGENTS.md`의 "새 기능 작업 방식" 참고.
 
-## 진행률 (2026-10-06 기준)
+## 진행률 (2026-10-10 기준, 2026-10-06 이후 바뀐 행에 날짜 표시)
 
 | 영역 | 상태 |
 |---|---|
@@ -17,27 +17,29 @@
 | IMU | 완료 (gyro scale 97%, accel 스케일 보정은 보류) |
 | Open-loop odom | 거의 완료 (바닥 주행 1차 완료: 전진·옆 이동은 명령과 일치(0.99), 회전은 명령의 81%) |
 | EKF | 구현 완료 / 실주행 검증 남음 |
-| **STM32 안정성** | **호전됨, 원인 미확정 (hang 9회는 전부 2026-09-27 재플래시 이전). 재플래시 후 2026-10-04까지 일주일 가까이 hang 재발 없음(원인 규명은 아님, `troubleshooting/001` "2026-10-04 업데이트" 참고). RST 버튼으로 즉시 복구 가능, DTR/RTS 자동 리셋 경로는 닫음. 자체 펌웨어 재작성은 별도로 계속 진행 중: UART1 ROM 부트로더 검증·전체 flash 백업·프로토콜 코덱 구현·테스트 완료(`firmware/rrc_m4/`). **ST-Link 도착 대기 중** — 오면 SWD로 핀맵 확정 후 실제 브링업. 계획: `~/.claude/plans/enchanted-chasing-sky.md`** |
+| **STM32 안정성** | **호전됨, 원인 미확정** (hang 9회는 전부 2026-09-27 재플래시 이전, 이후 재발 없음 — `troubleshooting/001`). RST 버튼으로 복구 가능. 자체 펌웨어(`firmware/rrc_m4/`)는 L0까지(빌드·호스트 시험). **2026-10-08 ST-Link 도착 → 2026-10-11 SWD 백업부터 시작**(순서표 `firmware/rrc_m4/README.md` "ST-Link 첫날 순서", 스크립트 `swd_backup.sh`). 바퀴 울림(032)도 같은 날 SWD로 원인 측정 예정 |
 | TF/URDF | **거의 완료**(2026-10-04): Hiwonder 공식 메쉬+5축 팔+그리퍼+뎁스카메라 전부 TF에 포함, 팔은 실제 서보 각도로 실시간 반영(host RViz에서 실물과 비교 확인됨). 실측 footprint만 남음(전부 Hiwonder 공식값) |
 | LiDAR | 동작 (`/scan` 14 Hz, TF·방향 검증 완료). **운영 중 USB 재연결 1회 발견, 드라이버 자동복구 없음** (`troubleshooting/015`) |
 | SLAM | 키보드 조종 한 바퀴 완주, hang 없이 지도 완성. **표준 지도(.pgm/.yaml) 저장도 이미 완료**(이전 기록의 "실패"는 stale였음, 2026-09-28 정정). loop closure 정량화, 반복 주행은 남음 |
 | **AMCL, Localization** | **소프트웨어 스택 실기 검증 완료**(map_server+amcl+lifecycle_manager, `/amcl_pose`·`map→odom` TF 확인). 실제 주행 기반 relocalization/오차 측정은 남음 |
-| Nav2(Costmap/Planner/BT) | **설정 완료, 실주행 1회 성공 + 2회차 중 충돌**(2026-10-05): DDS/RViz 툴 문제(`troubleshooting/018`) 해결 후 Trial 1 성공(거리오차 4.8%, 각도오차 5.3°, 7.2/8.9). 방 재매핑(의자가 진짜 장애물이었음, `lap2_20261005`) + inflation_radius 안전값 보정(`troubleshooting/020`). **Trial 2 중 로봇이 의자 다리에 충돌**(2D LiDAR 사각지대로 추정, `troubleshooting/021`, 미해결) — 자율주행 일시 중단, 반복 시험/지표 기록은 이 안전 문제 해결 후 재개 |
+| Nav2(Costmap/Planner/BT) | **동작, 튜닝 중**(2026-10-10). 직진 흔들림 해결(LimitedAccelGenerator + RotationShim + Twirling, 031). depth 장애물을 local/global costmap 별도 레이어로(LiDAR가 상자 표시를 못 지우게). **상자 회피**: MPPI(Omni, 정면 유지 + 대각 이동)로 왕복 3/4 성공, 우회 15~18 cm(034). 실패 1회(F2-4)는 정체 원인 미확정 → 시험 bag에 costmap 녹화 추가. 메카넘 대각 45° 제한 `LateralRatioCritic` 구현(L0, 주행 전). 시작 시 자동 위치 추정(`scan_match_init`). 파라미터 이력 `docs/benchmarks/navigation/tuning-history.md`. **baseline 15회는 미실시**(분석 도구는 실기 bag으로 검증 완료) |
+| Gazebo 시뮬레이션 / 디지털 트윈 | **L0 완료, host 실행 전**(2026-10-09~10): `jetrover_gazebo`(메카넘 ros2_control, LiDAR/RGB-D/IMU, 지도→월드), 컨트롤러 비교 시나리오 `tools/sim/`. 방 스캔 도구(`tools/scan/`)와 스캔용 팔 자세(카메라 0.52 m) 확정, 녹화는 남음 |
 | RGB-D 카메라 | **완료**(2026-10-05): TF 연결, RGB/Depth 실측, RGB-Depth 픽셀 정렬, camera_info 캘리브레이션, PointCloud 시각 검증까지 전부 확인됨 |
 | Vision AI, 3D Perception | 미완료 |
-| **로봇팔** | 서보 ID 확인 + **실시간 위치 읽기(`/joint_states`) 완료**(관절 1~5, 그리퍼 10, 실물과 RViz 자세 일치 확인). **저수준 위치 명령(`arm/command`)·토크(`arm/torque`)·home pose 완료**(2026-10-05, 실기 검증, 진단/bring-up용 인터페이스). MoveIt2 / IK / `FollowJointTrajectory`(ros2_control)는 미완료 |
+| **로봇팔** | 위치 읽기(`/joint_states`)·저수준 명령(`arm/command`, `arm/torque`)·토크 완료. **MoveIt2 설정 + 궤적 브리지(`arm/command_timed`) 실기 왕복 4/4**(2026-10-06~07, `jetrover_manipulation`), Setup Assistant 충돌 행렬 병합. 주행용 홈 자세 재설계(joint4 1.45, depth 0.26~0.81 m, 2026-10-09). 남은 것: IK/Pose goal, PlanningScene, `ros2_control` 팔 PRD |
 | Mission BT | 미완료 |
 | FastAPI, React 관제, DB | 미완료 |
 | RAG/Memory | 미완료 |
 | **Voice AI(하드웨어)** | **마이크 어레이(XFM-DP)/스피커 하드웨어 확인 완료**(녹음↔재생 왕복 확인). VAD/STT/LLM/TTS는 전부 미착수(엔진 자체 미설치) |
 | 시스템 통합 | 미완료 |
 
-## 지금 당장 남은 일
-개발 순서(PRD 13절) 기준 **1단계(Base/TF)는 끝났고, 2단계(SLAM/Nav2)는 핵심 동작까지 확인됨**:
-1. Nav2: **공식 baseline 15회**(3 시나리오 × 5회, `prd/nav2-baseline-test-plan.md`)로 지표 7개 기록 (8.9~8.10) — 이전의 "3회+" 기준을 대체
-2. AMCL: 실제 로봇을 움직여서 relocalization/localization error 측정 (7.1~7.4)
-3. ST-Link 도착 대기(별도 트랙) → 도착하면 SWD로 STM32 핀맵 확정, 신규 펌웨어 브링업 시작
-4. 2단계 끝나기 전엔 Perception/Voice/MoveIt2 등 뒷 단계는 손대지 않는다 (개발 순서 고정 규칙)
+## 지금 당장 남은 일 (2026-10-10)
+개발 순서(PRD 13절, 2단계 세분화는 `docs/ROADMAP.md`): **2단계(Nav2) 진행 중** — `Nav2 baseline → 엔코더 odom → Before/After → DWB vs MPPI`.
+1. **STM32 SWD 백업 → 자체 펌웨어 브링업**(2026-10-11~, 엔코더 odom의 전제). flash는 단계마다 승인
+2. Nav2 baseline 15회(`prd/nav2-baseline-test-plan.md`) — 엔코더 odom 전 "Before" 값
+3. LateralRatioCritic 주행 시험(실기 왕복 4회, `diag50_frac` < 5%) — 먼저 host Gazebo에서 `tools/sim/run_scenarios.sh`
+4. 방 RGB-D 스캔 녹화(8.14.7) → host 재구성/Blender
+5. Perception/Voice 등 뒷 단계는 순서 규칙상 보류(앞당길 땐 사용자 확인)
 
 ## 2026-10-06 구조 개선 반영 현황 (외부 리뷰 기반)
 표준화·정량평가·재현성 중심으로 전환. 순서/게이트는 `docs/ROADMAP.md`가 기준이다(여기는 진행 요약).
@@ -55,7 +57,7 @@
 - [x] STM32 침묵 중 0이 아닌 `cmd_vel` 거부(저장 안 함 → 복구 후 옛 명령 부활 방지). 0 명령은 허용
 - [x] 시작 시 파라미터 fail-fast: 형상/타임아웃/서보(부호 ±1, pulse 범위, range>0, home pose finite) 검증, 실패 시 `invalid_argument`로 종료(exit 1)
 - [x] 정적 검사 CI `tools/ci/static_checks.py`: Python 문법, YAML/XML 파싱, package.xml/setup.py TODO 검사 (검사 중 `navigate_through_poses_no_backup.xml` 주석의 `--`(XML 위반, 동작엔 영향 없었음) 발견·수정)
-- [x] synthetic rosbag으로 `analyze.py` 검증(`tools/nav/benchmark/test_analyze_bag.py`): CI run 10(ROS Jazzy 컨테이너)에서 통과 — rosbag2 읽기 경로와 지표 수치가 알려진 값과 일치. **실제 로봇이 기록한 bag으로는 아직 미검증**
+- [x] synthetic rosbag으로 `analyze.py` 검증(`tools/nav/benchmark/test_analyze_bag.py`): CI run 10(ROS Jazzy 컨테이너)에서 통과 — rosbag2 읽기 경로와 지표 수치가 알려진 값과 일치. **2026-10-10 실기 bag 4개로도 검증**(시간 일치, 목표 오차는 /tf 기반으로 수정 — `prd/nav2-baseline-test-plan.md`)
 - [ ] **현장 확인 필요(실기)**: ① `cmd_vel` NaN을 일부러 보내도 바퀴가 안 도는지 ② STM32 침묵 상황에서 명령 거부 로그 ③ 잘못된 파라미터로 기동 시 즉시 종료 — 모터 시험이라 사용자 입회(L3, 바퀴 띄움)
 
 ## 문서화 작업 (2026-10-06, 코드 변경 없음)

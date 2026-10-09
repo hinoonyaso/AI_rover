@@ -60,6 +60,25 @@ cmake -S . -B build-arm-uros -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake -D
 모터 2~4의 PWM 쌍/극성, 엔코더 부호, PID 게인·`ticks_per_circle`, IMU 칩→보드 축 변환, 버스 서보 방향 핀 역할, PWM 서보 핀 순서,
 LCD 제어 핀 배정, 게임패드 HID 리포트 레이아웃, 부저 능동/수동 여부.
 
+## ST-Link 첫날 순서 (2026-10-10 작성, 2026-10-11 진행 예정)
+목표: **지금 칩의 플래시를 SWD로 백업**하고 연결을 확인하는 것까지. 자체 펌웨어 flash는 이 순서가 다 끝난 뒤 **따로 승인**받는다.
+
+| # | 할 일 | 명령/기준 | 멈추는 조건 |
+|---|---|---|---|
+| 0 | 설치(sudo, 사용자) | `sudo apt install openocd stlink-tools` → `setup/ENVIRONMENT_SETUP.md` 기록 | |
+| 1 | 준비 | base_node/Nav2 종료(`pgrep -x base_node` 없음), **모터 스위치 OFF**, 바퀴 띄움, 배터리 ≥ 10.5 V | |
+| 2 | 배선 | 보드 SWD 헤더(`firmware_source/BOARD_CONNECTORS.md` "GPIO expansion and SWD debugging") ↔ ST-Link **SWDIO, SWCLK, GND만**. 3.3V 핀 연결 금지(보드는 배터리 전원), NRST는 우선 미연결 | 헤더 핀 순서가 실크와 다르면 멈춤 |
+| 3 | 연결 확인 | `st-info --probe` → chipid 0x413(F40x), flash 524288 | 칩/용량이 다르면 멈춤 |
+| 4 | **백업** | `tools/stm32_diagnostics/swd_backup.sh` → `~/firmware_source/swd_backup_<날짜>/` (512 KB 읽기, sha256, option byte) | 읽기 실패/RDP ≠ 0이면 멈춤(쓰기 시도 금지) |
+| 5 | 백업 확인 | `compare.txt`: 앞부분 == `decompile/RosRobotControllerM4.bin`(09-27 재플래시한 vendor 빌드) 예상. 다르면 기록하고 원인 확인 | |
+| 6 | 백업 이중화 | 백업 폴더를 host PC에도 복사(`firmware_source`는 git 제외) | 복사 전 flash 금지 |
+| 7 | 정상 복귀 확인 | ST-Link 분리 → 전원 재투입 → base_node 기동, IMU/배터리 텔레메트리 정상 | 텔레메트리 없으면 RST 버튼, 그래도 없으면 멈춤 |
+| 8 | (기회되면) 바퀴 울림 측정 | 울리고 있을 때만: `tools/stm32_diagnostics/swd_motor_probe.sh 50 100 > Log/swd_motor_probe_<날짜>.txt` (halt 없음, troubleshooting/032) | 첫 실행에서 보드가 리셋되면 이 방식 중단 |
+| 9 | 다음 승인 지점 | 자체 펌웨어 `-DMOTOR_ENABLE=OFF` 빌드 flash → 브링업 L2(LED→UART→IMU→배터리), `prd/rrc-microros-firmware-test-plan.md` 7번 | **여기서 사용자 승인** |
+
+롤백: 4번 백업(`st-flash write flash_512k.bin 0x08000000`) 또는 vendor `.hex`(UART1 부트로더, troubleshooting/001). 둘 다 쓰기 작업이라 승인 필요.
+주의: 읽기 중 코어가 멈추면 IWDG(약 20 ms)로 리셋될 수 있다 — 모터 스위치를 끄는 이유.
+
 ## 라이선스/출처
 `lib/*`와 `app/*`는 이 프로젝트에서 새로 작성했다(공식 문서의 공개된 알고리즘/프로토콜 설명을 근거로 함, Hiwonder 코드를 복사하지 않음).
 `third_party/`는 `third_party/README.md` 참고(BSD-3-Clause/Apache-2.0/MIT).

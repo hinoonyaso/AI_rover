@@ -87,9 +87,12 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `src/jetrover_base/` | 베이스 드라이버 패키지 (`base_node`, RRC 프로토콜, 시리얼, 크래시 가드, launch, 설정) |
 | `src/jetrover_description/` | URDF(xacro)와 `robot_state_publisher` launch. **2026-10-03부터 Hiwonder 공식 메쉬 사용** (`~/AI_secretary_robot`의 `jetrover_arm_moveit`에서 가져옴, IMU 조인트 회전은 이중변환 방지로 0으로 되돌림 — `src/jetrover_description/README.md`). 팔/그리퍼/카메라까지 TF에 포함됨 |
 | `src/jetrover_bringup/` | 전체 실행 launch(`robot.launch.py`, `lidar.launch.py`, `rviz.launch.py`), LiDAR 설정, RViz 설정 |
-| `src/jetrover_navigation/` | SLAM Toolbox 설정/launch (이후 AMCL, Nav2) |
-| `tools/viz/` | `snapshot.py`: 스캔/지도/TF를 위에서 본 PNG로 저장 (사용자는 VS Code SSH라 RViz 화면을 못 본다) |
-| `src/jetrover_perception/` | 카메라(Orbbec DaBai DCW) launch/설정. 이후 YOLO/Depth 인식 |
+| `src/jetrover_navigation/` | SLAM Toolbox, AMCL(localization), Nav2 설정/launch. `config/nav2_params.yaml`(기본 RotationShim+DWB), `config/mppi_followpath.yaml`(MPPI 변형, `tools/nav/ab_params/make_variants.sh`로 생성), `scripts/scan_match_init.py`(시작 시 자동 위치 추정). 파라미터 변경 이력은 `docs/benchmarks/navigation/tuning-history.md` |
+| `src/jetrover_nav_plugins/` | Nav2 플러그인(C++). MPPI `LateralRatioCritic`(메카넘 대각 45° 제한, PRD `prd/mppi-lateral-ratio-critic.md`), gtest |
+| `src/jetrover_manipulation/` | MoveIt2 설정(팔 joint1~5 + 그리퍼), 궤적 브리지(base_node `arm/command_timed`), SRDF(Setup Assistant 충돌 행렬 병합). `~/AI_secretary_robot`의 Humble 설정을 Jazzy로 옮김 |
+| `src/jetrover_gazebo/` | Gazebo Harmonic 시뮬레이션(**실행은 host PC**, PRD `prd/gazebo-sim.md`): sim xacro(ros2_control 메카넘, LiDAR/RGB-D/IMU), 지도→월드 생성기, 디지털 트윈 모델 자리(`models/room_lap2`, Git LFS). 사용법 `src/jetrover_gazebo/README.md` |
+| `tools/viz/` | `snapshot.py`: 스캔/지도/TF를 위에서 본 PNG로 저장 (사용자는 VS Code SSH라 RViz 화면을 못 본다), `tf_pair_rates.py`: /tf 프레임 쌍별 Hz(033) |
+| `src/jetrover_perception/` | 카메라(Orbbec DaBai DCW) launch/설정, depth 장애물 점(`sparse_point_cloud.py`: 기준 depth 차분 + 홈 자세 게이트). 이후 YOLO/3D 인식 |
 | `src/OrbbecSDK_ROS2/` | Orbbec 카메라 드라이버 소스(vendor, `main` 브랜치=SDK v1). 같은 이름(`orbbec_camera`)으로 apt 버전을 오버레이한다 |
 | `drivers/ch341/` | Jetson 커널에 없는 CH340 드라이버 (빌드/설치 스크립트) |
 | `setup/` | `ENVIRONMENT_SETUP.md`: 이 로봇에 한 sudo/apt/시스템 설치 전체 기록 (새 Jetson 재현용) |
@@ -99,7 +102,11 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `prd/` | 새 기능 착수 전 PRD (3-File System 1번째 파일). 언제/어떻게 쓰는지는 `prd/README.md`. `jetinspect-m.md`(+`-pipelines.md`)가 프로젝트 전체 기획서 |
 | `firmware/rrc_m4/` | STM32 자체 펌웨어 재작성 프로젝트(계획: `~/.claude/plans/enchanted-chasing-sky.md`). `lib/{protocol,core,comm}`(호스트 단위 시험) + `app/`(HAL+FreeRTOS, RRC/micro-ROS 두 빌드). **flash 전**, 개요는 `firmware/rrc_m4/README.md` |
 | `src/jetrover_microros/` | micro-ROS 펌웨어용 호스트 패키지(브리지 노드 + agent launch). `jetrover_base`와 같은 시리얼 포트를 쓰므로 동시에 못 띄움 |
-| `tools/` | 시험/진단 스크립트: `parse_stm32.py`, `sniff_stm32.py`, `imu_calibration/`, `stm32_diagnostics/`(NOTES.md에 hang 조사 전체 기록) |
+| `tools/` | 시험/진단 스크립트: `parse_stm32.py`, `sniff_stm32.py`, `imu_calibration/`, `stm32_diagnostics/`(NOTES.md에 hang 조사 전체 기록, ST-Link `swd_backup.sh`/`swd_motor_probe.sh`), `ci/`(CI 정적 검사) |
+| `tools/nav/` | Nav2 실기 시험: `straight_trial.py`(1회 주행+지표, CSV `Log/wobble_trials_v3.csv`, `--bag`), `bag_timeline.py`(bag 시간순 요약), `trial_metrics.py`(+단위시험), `ab_params/`(변형 파라미터 생성), `benchmark/`(baseline 15회 도구), `stop_nav2.sh`(Nav2 종료 — 같은 Bash 호출에서 pkill 금지) |
+| `tools/perception/` | 팔 자세/depth 평가: `home_pose_eval.py`, `arm_set_joint.py`(팔이 움직임), `capture_depth_reference.py`, `obstacle_check.py` |
+| `tools/scan/` | 방 3D 스캔(디지털 트윈): 녹화 `record_room_scan.sh`, 2D ICP 정합 `align2d.py`, 스캔용 팔 자세. 재구성/Blender는 host |
+| `tools/sim/` | Gazebo 컨트롤러 비교 시나리오(S1 직진/S2 상자 왕복/S3 F2-4 지점), host 실행 |
 | `firmware_source/` | Hiwonder 자료(펌웨어 `.hex` ZIP, 프로토콜 PDF, 실제 칩에서 덤프한 백업 `.bin`, `decompile/`) — **2026-10-06부터 git 추적 제외, 로컬에만 존재**(재배포 권한 불분명; 추적되는 건 `PINMAP.md`/`BOARD_CONNECTORS.md`뿐). 소스는 없음. `BOARD_CONNECTORS.md`에 커넥터/센서/액추에이터 대응표, `PINMAP.md`에 MCU 핀 대응(확정/추정 구분), `decompile/`에 Ghidra 결과 |
 
 새 기능을 `jetrover_base`에 무분별하게 넣지 않는다. 기능 영역이 다르면 별도 ROS2 패키지를 만든다
