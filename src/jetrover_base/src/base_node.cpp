@@ -124,6 +124,30 @@ public:
       throw std::invalid_argument("wheel_twist_covariance_encoder needs 3 values [vx, vy, wz]");
     }
     RCLCPP_INFO(get_logger(), "wheel_twist source: %s", twist_source_name(twist_source_));
+    // Switchable at runtime (ros2 param set /base_node wheel_twist_source encoder) so a Before/After
+    // comparison changes only the odometry source, not the running stack (E6, 2026-10-10).
+    // 한글: 실행 중 변경 가능 — 개선 전후 비교에서 다른 것은 그대로 두고 odom 출처만 바꾸기 위해.
+    param_cb_ = add_on_set_parameters_callback(
+      [this](const std::vector<rclcpp::Parameter> & params) {
+        rcl_interfaces::msg::SetParametersResult result;
+        result.successful = true;
+        for (const auto & p : params) {
+          if (p.get_name() != "wheel_twist_source") {
+            continue;
+          }
+          TwistSource next;
+          if (p.get_type() != rclcpp::ParameterType::PARAMETER_STRING ||
+          !parse_twist_source(p.as_string(), next))
+          {
+            result.successful = false;
+            result.reason = "wheel_twist_source must be command, encoder or auto";
+            return result;
+          }
+          twist_source_ = next;
+          RCLCPP_INFO(get_logger(), "wheel_twist source -> %s", twist_source_name(next));
+        }
+        return result;
+      });
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom_raw", 10);
     twist_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
       "wheel_twist", 10);
@@ -814,6 +838,7 @@ private:
   double wheel_rps_[4]{0.0, 0.0, 0.0, 0.0};
   double last_wheel_feedback_s_{0.0};
   std::vector<double> wheel_twist_cov_encoder_;
+  OnSetParametersCallbackHandle::SharedPtr param_cb_;
   double odom_x_{0.0}, odom_y_{0.0}, odom_yaw_{0.0};
   rclcpp::Time last_odom_time_{0, 0, RCL_ROS_TIME};
 

@@ -121,8 +121,14 @@ void drv_battery_init(void)
     HAL_ADC_ConfigChannel(&hadc1, &ch);
 }
 
+/* 2026-10-10: the battery value never changed after boot (12.192 V for an hour). The DMA runs in NORMAL mode
+ * and there is no DMA2_Stream0 IRQ handler, so after the first transfer the HAL DMA state stayed BUSY and every
+ * later HAL_ADC_Start_DMA() was refused -> the first sample was reported forever (and the low-battery cut-off
+ * never saw a falling voltage). Stop (= abort + reset the HAL states) before every start. troubleshooting/038.
+ * 한글: 첫 측정값만 계속 보고되던 문제 — 매번 정지(상태 초기화) 후 다시 시작한다. */
 void drv_battery_trigger(void)
 {
+    HAL_ADC_Stop_DMA(&hadc1);
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)g_adc, 2);
 }
 

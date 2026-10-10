@@ -23,12 +23,17 @@ from nav2_msgs.action import NavigateThroughPoses, NavigateToPose
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from nav_msgs.msg import Path
 from sensor_msgs.msg import BatteryState
+import tf2_ros
 
 START = (1.05, 0.10, 90.0)
 SCENARIOS = {
     'A': {'goal': (1.05, 1.10, 90.0), 'mode': 'line'},
-    'B': {'goal': (1.05, 1.40, 90.0), 'mode': 'line'},
+    # B: NavigateToPose (2026-10-10 E6): the line waypoints put one pose (1.05, 0.62) inside the box, so
+    # ComputePathThroughPoses failed ("no valid path") and every B run aborted. The "back on the line" check is
+    # the final lateral deviation (<= 0.10 m). 한글: 경유점이 상자 안에 찍혀 경로 실패 → 최종 목표로 바로 보낸다.
+    'B': {'goal': (1.05, 1.40, 90.0), 'mode': 'pose'},
     'C': {'goal': (0.50, 0.80, 180.0), 'mode': 'pose'},
 }
 TOPICS = ('/tf /tf_static /odom /amcl_pose /cmd_vel /cmd_vel_nav /scan /plan /received_global_plan '
@@ -66,7 +71,37 @@ class Trial(Node):
         self.track = []  # (t, x, y)
         self.create_subscription(PoseWithCovarianceStamped, 'amcl_pose', self.on_amcl, 10)
         self.create_subscription(BatteryState, 'battery_state', lambda m: setattr(self, 'volt', m.voltage), 10)
+        # Last planned path end: the planner (tolerance 0.25) ends short when the goal area is blocked, and the
+        # controller then "succeeds" there (2026-10-10 A01: something ~1 m ahead, path cut to 0.97 for 1.10).
+        # 한글: 목표 주변이 막히면 경로가 짧아지고 그 끝에서 '성공'이 나므로 경로 끝을 기록해 무효를 가린다.
+        self.plan_end = None
+        self.create_subscription(Path, 'plan', self.on_plan, 10)
         self.init_pub = self.create_publisher(PoseWithCovarianceStamped, 'initialpose', 1)
+        # /amcl_pose is only published after update_min_d/a of motion, so its last value lags the stop pose
+        # (2026-10-10: A01 "stopped" 31 cm short). The final pose and the line deviation use TF
+        # map->base_footprint sampled at 10 Hz. 한글: AMCL 메시지는 늦게 갱신돼 TF로 최종 위치·궤적을 잰다.
+        self.tf_buf = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buf, self)
+        self.tf_track = []  # (t, x, y)
+        self.create_timer(0.1, self.sample_tf)
+
+    def tf_pose(self):
+        try:
+            t = self.tf_buf.lookup_transform('map', 'base_footprint', rclpy.time.Time())
+        except Exception:  # noqa: BLE001
+            return None
+        tr = t.transform
+        return (tr.translation.x, tr.translation.y, yaw_of(tr.rotation))
+
+    def sample_tf(self):
+        p = self.tf_pose()
+        if p is not None:
+            self.tf_track.append((time.time(), p[0], p[1]))
+
+    def on_plan(self, m):
+        if m.poses:
+            p = m.poses[-1].pose.position
+            self.plan_end = (p.x, p.y)
 
     def on_amcl(self, m):
         p = m.pose.pose
@@ -96,6 +131,10 @@ def main():
     ap.add_argument('scenario', choices=sorted(SCENARIOS))
     ap.add_argument('trial', type=int)
     ap.add_argument('--tag', default='baseline_openloop')
+    # 2026-10-10 E6: stale depth marks (a person standing near the goal earlier) stayed in the global costmap and
+    # forced a 3.5 m detour. Clear both costmaps and let the sensors repopulate before every trial (same for every
+    # condition). 한글: 매 시험 전 costmap을 비우고 센서로 다시 채운다(모든 조건 동일).
+    ap.add_argument('--no-clear', action='store_true', help='do not clear the costmaps before the trial')
     args = ap.parse_args()
     sc = SCENARIOS[args.scenario]
     gx, gy, gyaw = sc['goal']
@@ -108,6 +147,11 @@ def main():
     node = Trial()
     node.spin(1.5)
     battery_start = node.volt
+    if not args.no_clear:
+        for svc in ('/global_costmap/clear_entirely_global_costmap', '/local_costmap/clear_entirely_local_costmap'):
+            subprocess.run(['ros2', 'service', 'call', svc, 'nav2_msgs/srv/ClearEntireCostmap', '{}'],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
+        node.spin(2.0)  # sensors repopulate / 센서가 다시 채우는 시간
     node.set_initial_pose()
     if node.amcl is None or math.hypot(node.amcl[0] - START[0], node.amcl[1] - START[1]) > 0.15:
         sys.exit('AMCL pose %s is not at the start pose %s: place the robot and retry' % (node.amcl, START))
@@ -164,7 +208,8 @@ def main():
     finally:
         elapsed = time.time() - t0
         node.spin(3.0)  # settle so the final pose is stable
-        final = node.amcl
+        final_tf = node.tf_pose()
+        final = final_tf or node.amcl
         os.killpg(bag.pid, signal.SIGINT)
         try:
             bag.wait(timeout=15)
@@ -172,13 +217,18 @@ def main():
             os.killpg(bag.pid, signal.SIGKILL)
 
     line_dev = None
-    if sc['mode'] == 'line' and node.track:
-        line_dev = max(abs(x - START[0]) for _, x, _ in node.track)
+    track = node.tf_track or node.track
+    if args.scenario in ('A', 'B') and track:
+        line_dev = max(abs(x - START[0]) for _, x, _ in track)
     pos_err = math.hypot(final[0] - gx, final[1] - gy) if final else None
     yaw_err = abs(wrap(final[2] - gyaw)) if final else None
-    final_dev = abs(final[0] - START[0]) if (final and sc['mode'] == 'line') else None
+    final_dev = abs(final[0] - START[0]) if (final and args.scenario in ('A', 'B')) else None
     ok = (status == 'succeeded' and elapsed <= 60.0 and pos_err is not None and pos_err <= 0.15 and
           yaw_err is not None and math.radians(yaw_err) <= 0.4 and (final_dev is None or args.scenario != 'B' or final_dev <= 0.10))
+    plan_short = None
+    if node.plan_end is not None:
+        plan_short = math.hypot(node.plan_end[0] - gx, node.plan_end[1] - gy)
+    invalid = plan_short is not None and plan_short > 0.10
     meta = {
         'scenario': args.scenario, 'trial': args.trial, 'goal': {'x': gx, 'y': gy, 'yaw_deg': gyaw},
         'outcome': 'success' if ok else ('abort' if status in ('aborted', 'canceled', 'interrupted', 'timeout') else 'fail'),
@@ -186,11 +236,16 @@ def main():
         'recoveries': fb['recoveries'], 'measured_final': None,
         'auto': {'action_status': status, 'elapsed_s': round(elapsed, 1), 'battery_start_v': battery_start,
                  'amcl_start': start_amcl, 'amcl_final': final, 'pos_err_m': pos_err, 'yaw_err_deg': yaw_err,
-                 'max_line_dev_m': line_dev, 'final_line_dev_m': final_dev},
+                 'max_line_dev_m': line_dev, 'final_line_dev_m': final_dev,
+                 'final_from': 'tf' if final_tf else 'amcl_pose',
+                 'last_plan_end_to_goal_m': plan_short, 'invalid_plan_cut_short': invalid},
         'notes': ''}
     with open(os.path.join(out_dir, 'meta.json'), 'w') as f:
         json.dump(meta, f, indent=1)
     print(json.dumps(meta['auto'], indent=1))
+    if invalid:
+        print('INVALID: the last plan ended %.2f m from the goal (goal area blocked: person/object in front?) '
+              '-> clear the area and repeat this trial number with a new tag or delete %s' % (plan_short, out_dir))
     print('trial %s%02d: auto-outcome=%s (collision still TODO) -> %s/meta.json' % (args.scenario, args.trial, meta['outcome'], out_dir))
     rclpy.shutdown()
 
