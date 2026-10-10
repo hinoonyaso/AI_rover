@@ -12,7 +12,7 @@ set -euo pipefail
 n=${1:-50}
 dt=${2:-100}
 command -v openocd >/dev/null || { echo "openocd not installed (sudo apt install openocd)" >&2; exit 1; }
-openocd -f interface/stlink.cfg -c "transport select hla_swd" -f target/stm32f4x.cfg \
+openocd -f interface/${ADAPTER:-jlink}.cfg -c "transport select $([ "${ADAPTER:-jlink}" = stlink ] && echo hla_swd || echo swd)" -f target/stm32f4x.cfg \
   -c "reset_config none" -c "init" \
   -c "for {set i 0} {\$i < $n} {incr i} {
         echo \"--- sample \$i\"

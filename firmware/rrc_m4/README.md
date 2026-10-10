@@ -60,16 +60,16 @@ cmake -S . -B build-arm-uros -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake -D
 모터 2~4의 PWM 쌍/극성, 엔코더 부호, PID 게인·`ticks_per_circle`, IMU 칩→보드 축 변환, 버스 서보 방향 핀 역할, PWM 서보 핀 순서,
 LCD 제어 핀 배정, 게임패드 HID 리포트 레이아웃, 부저 능동/수동 여부.
 
-## ST-Link 첫날 순서 (2026-10-10 작성, 2026-10-11 진행 예정)
+## SWD 디버거 첫날 순서 (2026-10-10 작성; 실제 디버거는 J-Link OB 클론)
 목표: **지금 칩의 플래시를 SWD로 백업**하고 연결을 확인하는 것까지. 자체 펌웨어 flash는 이 순서가 다 끝난 뒤 **따로 승인**받는다.
 
 | # | 할 일 | 명령/기준 | 멈추는 조건 |
 |---|---|---|---|
-| 0 | 설치(sudo, 사용자) | `sudo apt install openocd stlink-tools` → `setup/ENVIRONMENT_SETUP.md` 기록 | |
+| 0 | 설치(sudo, 사용자) | `sudo apt install openocd stlink-tools` → `setup/ENVIRONMENT_SETUP.md` 기록(2026-10-10 완료) | |
 | 1 | 준비 | base_node/Nav2 종료(`pgrep -x base_node` 없음), **모터 스위치 OFF**, 바퀴 띄움, 배터리 ≥ 10.5 V | |
-| 2 | 배선 | 보드 SWD 헤더(`firmware_source/BOARD_CONNECTORS.md` "GPIO expansion and SWD debugging") ↔ ST-Link **SWDIO, SWCLK, GND만**. 3.3V 핀 연결 금지(보드는 배터리 전원), NRST는 우선 미연결 | 헤더 핀 순서가 실크와 다르면 멈춤 |
-| 3 | 연결 확인 | `st-info --probe` → chipid 0x413(F40x), flash 524288 | 칩/용량이 다르면 멈춤 |
-| 4 | **백업** | `tools/stm32_diagnostics/swd_backup.sh` → `~/firmware_source/swd_backup_<날짜>/` (512 KB 읽기, sha256, option byte) | 읽기 실패/RDP ≠ 0이면 멈춤(쓰기 시도 금지) |
+| 2 | 배선 | 보드 SWD 헤더(`firmware_source/BOARD_CONNECTORS.md` "GPIO expansion and SWD debugging") ↔ 디버거. **2026-10-10 실제 디버거는 J-Link OB 클론**(USB `1366:0101`, 펌웨어 "J-Link ARM-OB STM32" 2012) → **VTref(1번)→보드 3.3V, SWDIO(7), SWCLK(9), GND(4)** 4선(VTref는 전압 감지 입력, 전원 공급 아님. 5V 공급 핀 19번 미연결). ST-Link라면 SWDIO/SWCLK/GND만(3.3V 출력 핀 연결 금지). NRST는 우선 미연결. **SEGGER 공식 툴로 디버거 펌웨어 업데이트 금지**(클론 벽돌 위험) — openocd 사용 | 헤더 핀 순서가 실크와 다르면 멈춤 |
+| 3 | 연결 확인 | `openocd -f interface/jlink.cfg -c "transport select swd" -f target/stm32f4x.cfg -c "reset_config none" -c init -c "dap info" -c shutdown` → VTarget 3.3 V, DPIDR 0x2ba01477, Cortex-M4 (2026-10-10 확인됨, halt 없음) | 전압 0 V/IDCODE 없음이면 배선 확인 |
+| 4 | **백업** | `tools/stm32_diagnostics/swd_backup.sh` (기본 J-Link, `ADAPTER=stlink` 가능) → `~/firmware_source/swd_backup_<날짜>/` (512 KB를 **두 번** 읽어 해시 일치 확인) | 두 번 읽은 값이 다르면 `SPEED=400`으로 재시도, 그래도 다르면 멈춤(쓰기 시도 금지) |
 | 5 | 백업 확인 | `compare.txt`: 앞부분 == `decompile/RosRobotControllerM4.bin`(09-27 재플래시한 vendor 빌드) 예상. 다르면 기록하고 원인 확인 | |
 | 6 | 백업 이중화 | 백업 폴더를 host PC에도 복사(`firmware_source`는 git 제외) | 복사 전 flash 금지 |
 | 7 | 정상 복귀 확인 | ST-Link 분리 → 전원 재투입 → base_node 기동, IMU/배터리 텔레메트리 정상 | 텔레메트리 없으면 RST 버튼, 그래도 없으면 멈춤 |
