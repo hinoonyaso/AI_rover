@@ -13,17 +13,21 @@ import json
 import math
 import sys
 
-START = (1.05, 0.10, 90.0)  # same as run_trial.py
+START = (1.05, 0.10, 90.0)  # nominal start of run_trial.py
 
 tag, sc, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
 fwd, left = float(sys.argv[4]), float(sys.argv[5])
 turn = float(sys.argv[6]) if len(sys.argv) > 6 else 0.0
 path = 'bags/%s/trial_%s%02d/meta.json' % (tag, sc, n)
 m = json.load(open(path))
-h = math.radians(START[2])
-x = START[0] + fwd * math.cos(h) - left * math.sin(h)
-y = START[1] + fwd * math.sin(h) + left * math.cos(h)
-yaw = START[2] + turn
+# The tape is measured from where the robot really started: the scan-matched start (E6 v2) when recorded,
+# else the nominal START (v1 runs forced AMCL there). 한글: 실제 출발 위치(스캔 매칭) 기준으로 환산.
+start = m.get('auto', {}).get('amcl_start') if m.get('auto', {}).get('start_from') == 'scan_match' else None
+sx, sy, syaw = start if start else START
+h = math.radians(syaw)
+x = sx + fwd * math.cos(h) - left * math.sin(h)
+y = sy + fwd * math.sin(h) + left * math.cos(h)
+yaw = syaw + turn
 m['measured_final'] = {'x': round(x, 4), 'y': round(y, 4), 'yaw_deg': round(yaw, 2),
                        'tape': {'forward_m': fwd, 'left_m': left, 'turn_deg': turn}}
 g = m['goal']

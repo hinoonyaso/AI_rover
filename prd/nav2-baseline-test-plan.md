@@ -60,3 +60,11 @@
   bag의 `/tf`(마지막 map→odom × odom→base_footprint)를 우선 사용(`ground_truth` = `tf`), 없을 때만 AMCL.
   단위시험 추가(`compose2d`, 합성 bag의 /tf 경로). 남은 1~3 cm 차이는 임시 meta의 목표(경로 끝점, 격자 반올림) 때문.
 - `record_trial.sh`/`run_trial.py`는 이미 `/tf`를 녹화한다(확인함).
+
+## 2026-10-10 개정 (E6 v2) — 출발 초기화와 실측 기준
+v1 14회(`bags/e6_command|e6_encoder`, `docs/benchmarks/navigation/e6_interim_20261010.md`)에서 오차가 odom이 아니라 위치 추정에 지배됨을 확인해 바꿨다.
+- 출발: `run_trial.py`가 AMCL을 명목 S로 강제하지 않고, 출발 표시 위의 로봇을 **스캔 매칭**(`scan_match_init.py --near S`)으로 찾아 초기화.
+  S에서 15 cm / 10° 넘게 벗어나면 다시 놓는다(`--nominal-start`로 예전 동작).
+- 실측: 줄자(앞/좌) + **최종 방향**을 실제 출발 위치(스캔 매칭) 기준으로 지도 좌표화(`set_measured.py`).
+- 시험 전 costmap 비우기, 통로 점검(`check_clear.py`), 경로 끝 잘림 무효 판정, B는 NavigateToPose — v1 중간에 넣은 것 유지.
+- 태그 `e6v2_command` / `e6v2_encoder`, 30회 전부 새로(조건 번갈아).

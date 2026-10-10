@@ -135,6 +135,11 @@ def main():
     # forced a 3.5 m detour. Clear both costmaps and let the sensors repopulate before every trial (same for every
     # condition). 한글: 매 시험 전 costmap을 비우고 센서로 다시 채운다(모든 조건 동일).
     ap.add_argument('--no-clear', action='store_true', help='do not clear the costmaps before the trial')
+    # 2026-10-10 E6 v2: the nominal START forced into AMCL was ~5 cm off the real start mark and AMCL then stayed
+    # 3-7 cm biased, hiding the odometry difference. Default now: scan-match the robot on the start mark and
+    # initialise AMCL there (the goals stay the same map points). 한글: 출발 위치를 스캔 매칭으로 잡아 AMCL 초기화.
+    ap.add_argument('--nominal-start', action='store_true',
+                    help='old behaviour: force AMCL to the nominal START instead of scan matching')
     args = ap.parse_args()
     sc = SCENARIOS[args.scenario]
     gx, gy, gyaw = sc['goal']
@@ -152,9 +157,21 @@ def main():
             subprocess.run(['ros2', 'service', 'call', svc, 'nav2_msgs/srv/ClearEntireCostmap', '{}'],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
         node.spin(2.0)  # sensors repopulate / 센서가 다시 채우는 시간
-    node.set_initial_pose()
-    if node.amcl is None or math.hypot(node.amcl[0] - START[0], node.amcl[1] - START[1]) > 0.15:
-        sys.exit('AMCL pose %s is not at the start pose %s: place the robot and retry' % (node.amcl, START))
+    if args.nominal_start:
+        node.set_initial_pose()
+    else:
+        node.amcl = None
+        rc = subprocess.run(['ros2', 'run', 'jetrover_navigation', 'scan_match_init.py', '--near',
+                             str(START[0]), str(START[1]), '--near-radius', '0.3'],
+                            capture_output=True, text=True, timeout=90)
+        if 'published /initialpose' not in rc.stdout + rc.stderr:
+            sys.exit('scan matching was not confident at the start: check the start area and retry\n'
+                     + (rc.stdout + rc.stderr)[-600:])
+        node.spin(3.0)
+    if node.amcl is None or math.hypot(node.amcl[0] - START[0], node.amcl[1] - START[1]) > 0.15 or \
+            abs(wrap(node.amcl[2] - START[2])) > 10.0:
+        sys.exit('AMCL pose %s is not at the start pose %s (15 cm / 10 deg): place the robot and retry'
+                 % (node.amcl, START))
     start_amcl = node.amcl
     print('start ok: AMCL %.2f %.2f %.0f deg, battery %s V' % (*start_amcl, battery_start))
 
@@ -238,6 +255,7 @@ def main():
                  'amcl_start': start_amcl, 'amcl_final': final, 'pos_err_m': pos_err, 'yaw_err_deg': yaw_err,
                  'max_line_dev_m': line_dev, 'final_line_dev_m': final_dev,
                  'final_from': 'tf' if final_tf else 'amcl_pose',
+                 'start_from': 'nominal' if args.nominal_start else 'scan_match',
                  'last_plan_end_to_goal_m': plan_short, 'invalid_plan_cut_short': invalid},
         'notes': ''}
     with open(os.path.join(out_dir, 'meta.json'), 'w') as f:
