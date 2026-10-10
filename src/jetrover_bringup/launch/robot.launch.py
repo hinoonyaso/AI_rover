@@ -32,11 +32,15 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'arm_move_home_on_start', default_value='false',
             description='Step the arm to the home (driving) pose at startup'),
+        DeclareLaunchArgument(
+            'wheel_twist_source', default_value='command',
+            description='wheel_twist: command (vendor firmware) / encoder / auto (rrc_m4 firmware)'),
         include('jetrover_base', 'base.launch.py',
                 cmd_vel_timeout=LaunchConfiguration('cmd_vel_timeout'),
                 max_linear=LaunchConfiguration('max_linear'),
                 max_angular=LaunchConfiguration('max_angular'),
                 arm_command_enabled=LaunchConfiguration('arm_command_enabled'),
-                arm_move_home_on_start=LaunchConfiguration('arm_move_home_on_start')),
+                arm_move_home_on_start=LaunchConfiguration('arm_move_home_on_start'),
+                wheel_twist_source=LaunchConfiguration('wheel_twist_source')),
         include('jetrover_bringup', 'lidar.launch.py'),
     ])

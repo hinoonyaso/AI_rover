@@ -25,6 +25,7 @@
 #include "jetrover_base/crash_guard.hpp"
 #include "jetrover_base/link_watchdog.hpp"
 #include "jetrover_base/mecanum.hpp"
+#include "jetrover_base/wheel_twist_source.hpp"
 #include "jetrover_base/rrc_protocol.hpp"
 #include "jetrover_base/serial_port.hpp"
 #include "jetrover_base/servo_convert.hpp"
@@ -106,6 +107,17 @@ public:
     odom_lateral_scale_ = declare_parameter<double>("odom_lateral_scale", 1.0);
     odom_angular_scale_ = declare_parameter<double>("odom_angular_scale", 1.0);
     const double odom_rate = declare_parameter<double>("odom_rate", 50.0);
+    // Where wheel_twist comes from (prd/encoder-odometry.md, decided 2026-10-10: RRC path).
+    // command = commanded velocity (default, vendor firmware behaviour); encoder = measured wheel speeds
+    // from the rrc_m4 firmware (FUNC 0x21); auto = measured when fresh, else command.
+    // 한글: wheel_twist 출처. 기본 command(기존 동작), encoder/auto는 자체 펌웨어의 측정 바퀴 속도 사용.
+    const auto source_name = declare_parameter<std::string>("wheel_twist_source", "command");
+    if (!parse_twist_source(source_name, twist_source_)) {
+      throw std::invalid_argument("wheel_twist_source must be command, encoder or auto: " +
+          source_name);
+    }
+    wheel_feedback_timeout_ = declare_parameter<double>("wheel_feedback_timeout", 0.2);
+    RCLCPP_INFO(get_logger(), "wheel_twist source: %s", twist_source_name(twist_source_));
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom_raw", 10);
     twist_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
       "wheel_twist", 10);
@@ -313,9 +325,23 @@ private:
     last_odom_time_ = stamp;
 
     const bool driving = serial_.is_open() && !watchdog_.stm32_silent();
-    const double vx = driving ? cmd_vx_ * odom_linear_scale_ : 0.0;
-    const double vy = driving ? cmd_vy_ * odom_linear_scale_ * odom_lateral_scale_ : 0.0;
-    const double wz = driving ? cmd_wz_ * odom_angular_scale_ : 0.0;
+    BodyTwist commanded;
+    commanded.vx = driving ? cmd_vx_ * odom_linear_scale_ : 0.0;
+    commanded.vy = driving ? cmd_vy_ * odom_linear_scale_ * odom_lateral_scale_ : 0.0;
+    commanded.wz = driving ? cmd_wz_ * odom_angular_scale_ : 0.0;
+    const bool feedback_fresh = driving && last_wheel_feedback_s_ > 0.0 &&
+      stamp.seconds() - last_wheel_feedback_s_ <= wheel_feedback_timeout_;
+    const TwistChoice choice = choose_wheel_twist(
+      twist_source_, commanded, feedback_fresh, wheel_rps_, wheelbase_, track_width_,
+        wheel_diameter_);
+    if (choice.feedback_stale) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 2000,
+        "wheel_twist_source=encoder but no fresh FUNC 0x21 wheel feedback (vendor firmware?): twist 0");
+    }
+    const double vx = choice.twist.vx;
+    const double vy = choice.twist.vy;
+    const double wz = choice.twist.wz;
 
     odom_x_ += (vx * std::cos(odom_yaw_) - vy * std::sin(odom_yaw_)) * dt;
     odom_y_ += (vx * std::sin(odom_yaw_) + vy * std::cos(odom_yaw_)) * dt;
@@ -333,7 +359,9 @@ private:
     msg.twist.twist.linear.y = vy;
     msg.twist.twist.angular.z = wz;
 
-    // Open-loop: the commanded velocity is only a rough guess of the real one.
+    // Open-loop: the commanded velocity is only a rough guess of the real one. The same values are
+    // kept for the encoder source until they are measured (prd/encoder-odometry.md: covariance from
+    // the straight/strafe/turn error). 한글: 엔코더 공분산은 실측 전까지 같은 값 유지.
     msg.pose.covariance[0] = 0.05;
     msg.pose.covariance[7] = 0.05;
     msg.pose.covariance[35] = 0.1;
@@ -413,6 +441,15 @@ private:
     ImuRaw imu;
     if (decode_imu(packet, imu)) {
       publish_imu(imu);
+      return;
+    }
+
+    WheelFeedback wheels;
+    if (decode_wheel_feedback(packet, wheels)) {
+      for (int i = 0; i < 4; ++i) {
+        wheel_rps_[i] = wheels.rps[i];
+      }
+      last_wheel_feedback_s_ = now().seconds();
       return;
     }
 
@@ -758,6 +795,10 @@ private:
   double odom_lateral_scale_{1.0};
   double odom_angular_scale_{1.0};
   double cmd_vx_{0.0}, cmd_vy_{0.0}, cmd_wz_{0.0};
+  TwistSource twist_source_{TwistSource::Command};
+  double wheel_feedback_timeout_{0.2};
+  double wheel_rps_[4]{0.0, 0.0, 0.0, 0.0};
+  double last_wheel_feedback_s_{0.0};
   double odom_x_{0.0}, odom_y_{0.0}, odom_yaw_{0.0};
   rclcpp::Time last_odom_time_{0, 0, RCL_ROS_TIME};
 

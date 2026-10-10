@@ -21,6 +21,7 @@ add_library(${PROJECT_NAME}_lib
   src/servo_convert.cpp
   src/command_guard.cpp
   src/crash_guard.cpp
+  src/wheel_twist_source.cpp
 )
 target_include_directories(${PROJECT_NAME}_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -48,6 +49,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_command_guard ${PROJECT_NAME}_lib)
   ament_add_gtest(test_link_watchdog test/test_link_watchdog.cpp)
   target_link_libraries(test_link_watchdog ${PROJECT_NAME}_lib)
+  ament_add_gtest(test_wheel_twist_source test/test_wheel_twist_source.cpp)
+  target_link_libraries(test_wheel_twist_source ${PROJECT_NAME}_lib)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)

@@ -19,6 +19,10 @@ constexpr uint8_t kRrcFuncMotor = 0x03;
 constexpr uint8_t kRrcFuncBusServo = 0x05;
 constexpr uint8_t kRrcFuncImu = 0x07;
 constexpr std::size_t kRrcImuPayloadSize = 24;
+// Extension frames sent only by the project firmware (firmware/rrc_m4, lib/protocol/include/rrc_ext.h);
+// the vendor firmware never sends them. 한글: 자체 펌웨어 전용 확장 프레임(vendor 펌웨어는 안 보냄).
+constexpr uint8_t kRrcFuncExtWheel = 0x21;
+constexpr std::size_t kRrcExtWheelPayloadSize = 32;
 // 한글: 버스 서보 서브커맨드: 0x01 이동, 0x05 위치 읽기, 0x0B 토크 켜기, 0x0C 토크 끄기.
 constexpr uint8_t kRrcBusServoSubReadPosition = 0x05;
 constexpr uint8_t kRrcBusServoSubSetPosition = 0x01;
@@ -103,6 +107,18 @@ struct BusServoPosition
 
 // Decode a bus servo position report (FUNC 0x05, DATA = id, 05, success, pulse i16 LE).
 bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out);
+
+// Measured wheel feedback (FUNC 0x21, 50 Hz, rrc_m4 only): rps[4] f32 LE then counter[4] i32 LE.
+// Index 0..3 = board ports 1..4, rps uses the SAME sign convention as MotorCommand (vendor: right
+// wheels negative when rolling forward), so it feeds mecanum_forward() directly. Encoder scale
+// 3,996 ticks/rev (measured 2026-10-10, firmware/rrc_m4/app/inc/app_config.h).
+// 한글: 측정 바퀴 속도(FUNC 0x21). 부호 규약은 MotorCommand와 같아 mecanum_forward()에 바로 넣는다.
+struct WheelFeedback
+{
+  float rps[4]{0, 0, 0, 0};
+  int32_t counter[4]{0, 0, 0, 0};
+};
+bool decode_wheel_feedback(const RrcPacket & packet, WheelFeedback & out);
 
 // Streaming parser: feed raw serial bytes, pop validated packets.
 // Bad CRC frames are discarded and the parser resyncs on the next AA 55.

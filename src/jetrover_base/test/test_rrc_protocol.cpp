@@ -152,6 +152,32 @@ TEST(Decode, ImuRejectsWrongSize)
   EXPECT_FALSE(decode_imu(p, imu));
 }
 
+// 한글: 자체 펌웨어 바퀴 피드백(FUNC 0x21): rps 4개 + 카운터 4개, 리틀엔디안. 실기 값 예(2026-10-10 바퀴 띄움).
+TEST(Decode, WheelFeedbackFromRrcM4)
+{
+  const float rps[4] = {0.5f, -0.25f, 1.5f, -3.0f};
+  const int32_t counter[4] = {11836, -11860, 70000, -1};
+  std::vector<uint8_t> data(32);
+  std::memcpy(data.data(), rps, 16);
+  std::memcpy(data.data() + 16, counter, 16);
+  const auto frame = build_packet(kRrcFuncExtWheel, data);
+  RrcParser parser;
+  parser.feed(frame.data(), frame.size());
+  RrcPacket packet;
+  ASSERT_TRUE(parser.next(packet));
+  WheelFeedback fb;
+  ASSERT_TRUE(decode_wheel_feedback(packet, fb));
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_FLOAT_EQ(fb.rps[i], rps[i]);
+    EXPECT_EQ(fb.counter[i], counter[i]);
+  }
+  // wrong size or function is rejected (vendor firmware never sends 0x21)
+  packet.payload.resize(31);
+  EXPECT_FALSE(decode_wheel_feedback(packet, fb));
+  RrcPacket imu{kRrcFuncImu, std::vector<uint8_t>(32, 0)};
+  EXPECT_FALSE(decode_wheel_feedback(imu, fb));
+}
+
 TEST(BusServo, ReadPositionRequestAndResponse)
 {
   const auto f = build_bus_servo_read_position(3);

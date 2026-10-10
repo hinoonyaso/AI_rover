@@ -47,6 +47,11 @@ def generate_launch_description():
             'arm_move_home_on_start', default_value='false',
             description='Step the arm to base.yaml arm_home_pose_rad at startup '
                         '(needs arm_command_enabled)'),
+        # 한글: wheel_twist 출처(command/encoder/auto). 자체 펌웨어(rrc_m4)에서만 encoder가 의미 있다.
+        DeclareLaunchArgument(
+            'wheel_twist_source', default_value='command',
+            description='wheel_twist from the command (vendor firmware), measured wheel speeds '
+                        '(encoder, rrc_m4 firmware) or auto'),
         Node(
             # 한글: STM32 시리얼 드라이버 노드. base.yaml을 읽고, cmd_vel_timeout/속도 제한은 launch 인자로 덮어쓴다.
             package='jetrover_base',
@@ -63,7 +68,8 @@ def generate_launch_description():
                 'arm_command_enabled': ParameterValue(
                     LaunchConfiguration('arm_command_enabled'), value_type=bool),
                 'arm_move_home_on_start': ParameterValue(
-                    LaunchConfiguration('arm_move_home_on_start'), value_type=bool)}],
+                    LaunchConfiguration('arm_move_home_on_start'), value_type=bool),
+                'wheel_twist_source': LaunchConfiguration('wheel_twist_source')}],
         ),
         # 한글: URDF에서 정적 TF를 만든다. base_node가 IMU 축을 이미 base_link 축으로 돌려 발행하므로 imu_link에는 회전이 없다.
         # URDF -> static TFs (base_footprint -> base_link -> imu_link, lidar_link, ...).

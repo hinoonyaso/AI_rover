@@ -138,6 +138,18 @@ bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out)
   return true;
 }
 
+bool decode_wheel_feedback(const RrcPacket & packet, WheelFeedback & out)
+{
+  if (packet.function != kRrcFuncExtWheel || packet.payload.size() != kRrcExtWheelPayloadSize) {
+    return false;
+  }
+  // 한글: 리틀엔디안 float 4개 + int32 4개.
+  const uint8_t * p = packet.payload.data();
+  std::memcpy(out.rps, p, sizeof(out.rps));
+  std::memcpy(out.counter, p + 16, sizeof(out.counter));
+  return true;
+}
+
 void RrcParser::feed(const uint8_t * data, std::size_t length)
 {
   buffer_.insert(buffer_.end(), data, data + length);

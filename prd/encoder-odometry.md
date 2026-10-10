@@ -29,13 +29,13 @@
 ## 설계 결정 / 열린 질문
 | 항목 | 현재 결정 | 열린 질문 |
 |---|---|---|
-| 호스트 경로 | micro-ROS 주 경로(`/rrc/wheel_rps` → `jetrover_microros/rrc_bridge` → `/wheel_twist`), RRC 폴백은 확장 FUNC 0x21을 `jetrover_base`가 읽도록 추가 | RRC 폴백에서 `base_node`가 FUNC 0x21을 읽는 구현을 할지, micro-ROS만으로 갈지 |
+| 호스트 경로 | **결정(2026-10-10, 사용자): RRC — `base_node`가 FUNC 0x21을 읽어 `wheel_twist` 생성**(`wheel_twist_source: command/encoder/auto`, 기본 command). micro-ROS는 RRC 엔코더 odom·Before/After가 끝난 뒤 **같은 조건 측정 비교**(지연·지터, 메시지 손실, 연결 끊김 시 정지 시간, 재연결, 메모리, Nav2 오차) 후 수치로 나을 때만 전환 | — |
 | FK 중복 | C++ `jetrover_base/mecanum.hpp`(단위시험 있음)와 Python `rrc_bridge.py`(별도 시험)에 각각 존재 | 한쪽으로 통합하거나, 같은 입력에서 두 구현이 같은 값을 내는지 교차검증 시험 추가. (수식 부호 규약은 vx/vy는 일치함을 대수적으로 확인, wz 항은 시험으로 확인 필요) |
 | 두 백엔드 동시 사용 | 불가(같은 시리얼 포트) | 전환 절차를 launch/문서에 명시 |
 | EKF wz | 자이로 yaw rate만 사용(현재) | 엔코더 wz를 추가 입력으로 쓸지는 시험 후 결정 (회전 81% 현상이 엔코더로도 보이면 자이로가 더 신뢰) |
 | 공분산 | `[0.02,0.02,0.05]` 미검증 | 직진/옆이동/회전 시험의 오차 분산에서 산출 |
-| 엔코더 상수 | JGB520 예제값 ticks/rev 1320 등 **추정 기본값**(`PINMAP.md`) | 손으로 바퀴 1회전 시 ticks로 실측 확정 |
-| 부호 | 모터별 엔코더 부호 **미확인** (펌웨어 runaway 래치가 잡는다) | L2/L3에서 확정 후 `ENCODER_SIGN[]` |
+| 엔코더 상수 | **3,996 ticks/rev 실측**(2026-10-10, 30초 10바퀴+10°, 이전 1320 추정 폐기) | 유효 바퀴 지름(현재 0.097 m)은 1 m 이상 반복 주행으로 확정 |
+| 부호 | **확정**(2026-10-10): M2 PWM 짝 교체 후 4개 모두 +1, 부호 가드 추가(troubleshooting/036) | — |
 
 ## 제약 / 안전
 - AGENTS.md 안전 규칙 전부: flash는 승인 후(원본 전체 백업 완료 상태 확인), 모터 시험은 바퀴 띄우고 전원 스위치 옆에서, 정지 `finally`.
