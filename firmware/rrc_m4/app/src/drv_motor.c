@@ -17,11 +17,16 @@ static TIM_HandleTypeDef htim1, htim9, htim10, htim11; /* PWM */
 static TIM_HandleTypeDef htim2, htim3, htim4, htim5;   /* encoders */
 static TIM_HandleTypeDef htim7;
 
-/* motor idx -> pair: 0 = M1 (CONFIRMED), 1..3 ASSUMED */
+/* motor idx -> pair {rev, fwd}; "fwd" is driven for a positive pulse. 2026-10-10 RAW_PWM test (wheels
+ * lifted): M0/M1 positive = roll forward, M3 positive = roll backward (mirrored right side, vendor
+ * convention: right wheels have negative rps forward). M2 rolled FORWARD on positive with the assumed
+ * CH1 rev / CH2 fwd, so its pair is swapped to match M3; then every encoder counts up on a positive
+ * pulse (MOTOR_ENCODER_SIGN all +1). troubleshooting/036.
+ * 한글: M2만 +PWM이 전진이라 짝을 맞바꿈 → 오른쪽 두 바퀴 모두 +PWM = 후진(vendor 규약), 엔코더 부호 전부 +1. */
 static const pwm_pair_t PAIRS[4] = {
     {&htim1, TIM_CHANNEL_3, &htim1, TIM_CHANNEL_4},
     {&htim1, TIM_CHANNEL_1, &htim1, TIM_CHANNEL_2},
-    {&htim9, TIM_CHANNEL_1, &htim9, TIM_CHANNEL_2},
+    {&htim9, TIM_CHANNEL_2, &htim9, TIM_CHANNEL_1},
     {&htim10, TIM_CHANNEL_1, &htim11, TIM_CHANNEL_1},
 };
 /* motor idx -> encoder timer (CONFIRMED: M1=TIM5, M2=TIM2, M3=TIM4, M4=TIM3) */

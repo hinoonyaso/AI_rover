@@ -83,7 +83,9 @@
   - [x] 모터 fault 핀(PD3) 극성 확정(2026-10-10): 모터 스위치 OFF → fault [1,1,1,1](드라이버 무전원), ON → [0,0,0,0]. **High = fault 확정**. uptime 331 s 동안 리셋 없음
   - [x] base_node(호스트, 수정 없이)와 연동(2026-10-10): `/imu/data_raw` 50 Hz(vendor 111 Hz), 자이로 bias 보정 후 ≈0.01 rad/s, |a| 9.43 m/s²; `/battery_state` 12.528 V; `/joint_states` 5 Hz 6관절(버스 서보 FUNC5 읽기 동작 → PE7/PE8 방향 핀 조합 OK); `/odom` 30 Hz(EKF). 오류/silent 로그 없음. 팔·모터 명령은 미시험
   - [ ] 태스크 스택 여유(`uxTaskGetStackHighWaterMark`) 기록
-  - [ ] 모터(바퀴 띄움, MOTOR_ENABLE=ON 빌드, 별도 승인) → 극성/엔코더 부호 → PID
+  - [x] 모터 PWM 핀 짝·방향·엔코더 부호(2026-10-10, 바퀴 띄움, RAW_PWM ±400): 4바퀴 확정 — 왼쪽 +PWM 전진, 오른쪽 +PWM 후진(vendor 규약), 엔코더 전부 +1. M2 PWM 짝이 추정과 반대였음. 중간에 M2 폭주 → 부호 가드·e-stop 유지 추가(troubleshooting/036)
+  - [ ] PID 속도 제어(FUNC3) 저속 추종 + `ticks_per_circle`(현재 1320 추정) 실측 — 바퀴에 표시하고 회전 수 세기
+  - [ ] base_node로 /cmd_vel 주행(바퀴 띄움) → 바닥 저속
 
 
 #### RRC 완성 + micro-ROS 적용 (2026-10-05 착수, PRD `prd/rrc-microros-firmware.md`, 시험 계획 `prd/rrc-microros-firmware-test-plan.md`)
