@@ -77,7 +77,7 @@ LCD 제어 핀 배정, 게임패드 HID 리포트 레이아웃, 부저 능동/�
 | 9 | 다음 승인 지점 | 자체 펌웨어 `-DMOTOR_ENABLE=OFF` 빌드 flash → 브링업 L2(LED→UART→IMU→배터리), `prd/rrc-microros-firmware-test-plan.md` 7번 | **여기서 사용자 승인** |
 
 **2026-10-10 진행 결과**: 0~5 완료 — 연결(3.3 V, DPIDR 0x2ba01477), 백업 2회 해시 일치, vendor 빌드와 동일(나머지 0xFF), RDP 0.
-백업 `~/firmware_source/swd_backup_20261010_130702/`. 남은 것: 6 host 복사, 7 정상 복귀 확인.
+백업 `~/firmware_source/swd_backup_20261010_130702/`. 6 host 복사 완료(사용자). 7 정상 복귀: 디버거 연결된 채 base.launch → IMU 111 Hz, 배터리 12.55 V(1 Hz), 관절 6개 읽기 정상, silent/오류 로그 없음 → **vendor 펌웨어 그대로 정상 동작**. 다음은 9(자체 펌웨어 flash, 승인 지점).
 
 롤백: 4번 백업(`st-flash write flash_512k.bin 0x08000000`) 또는 vendor `.hex`(UART1 부트로더, troubleshooting/001). 둘 다 쓰기 작업이라 승인 필요.
 주의: 읽기 중 코어가 멈추면 IWDG(약 20 ms)로 리셋될 수 있다 — 모터 스위치를 끄는 이유.

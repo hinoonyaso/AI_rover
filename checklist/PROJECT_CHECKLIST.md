@@ -65,7 +65,7 @@
 - [x] **SWD 디버거 확보** (2026-10-08 도착). 실제로는 ST-Link가 아니라 **J-Link OB 클론**(USB `1366:0101`, 펌웨어 "J-Link ARM-OB STM32" 2012) — openocd `interface/jlink.cfg`로 사용, SEGGER 툴 펌웨어 업데이트 금지(클론 벽돌 위험)
 - [x] **SWD 연결 + 플래시 백업 (2026-10-10, 읽기 전용, halt 없음/모터 스위치 OFF)**: VTarget 3.3 V, DPIDR 0x2ba01477, device id 0x101f6413(STM32F40x), flash 512 KiB, RDP 0(읽기 가능).
   `swd_backup.sh`로 512 KB 2회 읽기 해시 일치(`450d63d0…936e`, 64 KiB/s), **앞 82,144바이트 = 09-27 재플래시 vendor 빌드와 동일, 나머지 전부 0xFF** → 현재 칩 펌웨어 확정.
-  백업: `~/firmware_source/swd_backup_20261010_130702/` (host 복사 필요)
+  백업: `~/firmware_source/swd_backup_20261010_130702/` (host에도 복사 완료). 백업 후 base.launch 정상(IMU 111 Hz, 배터리 12.55 V, 관절 읽기, 오류 없음)
 - [~] 툴체인 설치 — `arm-none-eabi-gcc`(13.2.1)/`objdump`, `STM32_Programmer_CLI`(2.23.0)는 사용자가 `~/.local/opt/stm32/`에 설치 완료(`setup/ENVIRONMENT_SETUP.md` 8번). `openocd`/`stlink-tools`는 ST-Link 도착 후 설치 예정
 - [x] UART1 ROM 부트로더 응답 검증 (읽기 전용: 0x7F→ACK, GET, GET_ID) — 완료, 위 1번 섹션 참고
 - [x] RDP 상태 확인 + 전체 flash 백업 — 완료, 위 1번 섹션 참고 (덤으로 vendor hex 재플래시까지 실행됨)
