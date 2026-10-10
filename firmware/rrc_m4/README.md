@@ -1,7 +1,7 @@
 # rrc_m4 — STM32F407 RRC 보드 자체 펌웨어 (코드/빌드 완료, 실기 검증 전)
 
 PRD: `prd/rrc-microros-firmware.md`, 시험 계획: `prd/rrc-microros-firmware-test-plan.md`, 핀맵과 신뢰 수준: `firmware_source/PINMAP.md`.
-**2026-10-10 처음 보드에 올림**(RRC, 모터 출력 OFF): 통신·IMU·배터리 텔레메트리 정상(아래 "SWD 디버거 첫날 순서" 결과, troubleshooting/035). 모터·서보·LCD 표시 등 나머지는 미확인.
+**2026-10-10 처음 보드에 올림**(RRC, 모터 출력 OFF): 통신·IMU·배터리 텔레메트리, LED, 상태 OLED(SSD1306 128×32 I2C — SPI LCD가 아니었음), 버스 서보 읽기, 모터 fault 핀 정상(troubleshooting/035). 모터 구동·서보 쓰기·버튼·SBUS 등은 미확인.
 
 ## 구조
 
@@ -58,7 +58,7 @@ cmake -S . -B build-arm-uros -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake -D
 
 ## 아직 확인되지 않은 것 (브링업에서 확인, `firmware_source/PINMAP.md`의 "추정")
 모터 2~4의 PWM 쌍/극성, 엔코더 부호, PID 게인·`ticks_per_circle`, IMU 칩→보드 축 변환, 버스 서보 방향 핀 역할, PWM 서보 핀 순서,
-LCD 제어 핀 배정, 게임패드 HID 리포트 레이아웃, 부저 능동/수동 여부.
+~~LCD 제어 핀 배정~~(화면은 I2C OLED로 확정), 게임패드 HID 리포트 레이아웃, 부저 능동/수동 여부.
 
 ## SWD 디버거 첫날 순서 (2026-10-10 작성; 실제 디버거는 J-Link OB 클론)
 목표: **지금 칩의 플래시를 SWD로 백업**하고 연결을 확인하는 것까지. 자체 펌웨어 flash는 이 순서가 다 끝난 뒤 **따로 승인**받는다.
