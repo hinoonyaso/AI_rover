@@ -9,6 +9,8 @@ Usage: python3 tools/stm32_diagnostics/rrc_m4_io_test.py <mode> [options]
   gamepad  [--secs 20]          print gamepad changes (FUNC8) and raw HID reports (0x23)
   sbus     [--secs 10]          print SBUS frames (FUNC9) if a receiver is connected
   pwm-servo --id 1 --pulse 1500 [--time 500]   move one PWM servo (FUNC4 sub 0x03); 500..2500 us
+  gripper-range [--step 40]                    THE GRIPPER OPENS/CLOSES FULLY (keep it empty, hands off):
+                                               --step pulses at a time each way until it stops following (end stop)
   bus-torque --id 5 [--hold 4]                 THE JOINT GOES LIMP for --hold s (support it): release torque, read,
                                                move to the current position, load torque, read again (FUNC5 0x0B/0x0C)
   bus-servo --id 1 --delta 20 [--time 1000]    THE ARM MOVES: read the position, move by +delta pulses
@@ -88,6 +90,48 @@ def bus_servo_test(ser, args):
     print(f'  after return: {p2} (off the start by {None if p2 is None else p2 - p0:+d})')
 
 
+def move_bus_servo(ser, sid, pulse, ms):
+    payload = bytes([0x01]) + struct.pack('<H', ms) + bytes([1, sid]) + struct.pack('<H', pulse)
+    ser.write(frame(0x05, payload))
+    time.sleep(ms / 1000 + 0.5)
+
+
+def gripper_range(ser, args):
+    """Walk the gripper (ID 10) away from its start in one direction in small steps until it stops following
+    (end stop or an object), then do the other direction, then return. 한글: 한계(막히는 지점)를 단계적으로 찾는다."""
+    sid, step = 10, min(max(args.step, 10), 50)
+    start = read_bus_servo(ser, sid)
+    if start is None:
+        sys.exit('gripper: no position reading')
+    print(f'gripper start {start}; steps of {step} pulses ({step * 0.24:.0f} deg), safe range 100..900')
+    limits = {}
+    for name, direction in (('close (+)', 1), ('open (-)', -1)):
+        pos = start
+        for i in range(25):
+            target = pos + direction * step
+            if not 100 <= target <= 900:
+                limits[name] = (pos, 'safety clamp reached, not a mechanical limit')
+                break
+            move_bus_servo(ser, sid, target, 1000)
+            now = read_bus_servo(ser, sid)
+            if now is None:
+                sys.exit(f'lost the reading after step {i + 1}; stopping where it is')
+            moved = (now - pos) * direction
+            print(f'  {name} step {i + 1}: commanded {target}, read {now} (moved {moved:+d} of {step})')
+            if moved < step * 0.5:  # not following: end stop or an object
+                limits[name] = (now, 'stopped following')
+                move_bus_servo(ser, sid, now - direction * 8, 600)  # relax the push
+                break
+            pos = now
+        else:
+            limits[name] = (pos, 'no stop within 25 steps')
+        print(f'  -> {name} limit: {limits[name][0]} ({limits[name][1]})')
+        move_bus_servo(ser, sid, start, 1500)
+        back = read_bus_servo(ser, sid)
+        print(f'  back at start: {back} (start was {start})')
+    print('RESULT', {k: v[0] for k, v in limits.items()}, 'start', start)
+
+
 def bus_torque_test(ser, args):
     """Release (0x0B) -> limp for --hold s -> move to the CURRENT position (overwrites the stored target, otherwise
     the servo jumps to its old target when loaded, 2026-10-05) -> load (0x0C). 한글: 해제 → 현재 위치로 이동 → 걸기."""
@@ -120,7 +164,8 @@ def bus_torque_test(ser, args):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument('mode', choices=['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo', 'bus-torque'])
+    modes = ['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo', 'bus-torque', 'gripper-range']
+    ap.add_argument('mode', choices=modes)
     ap.add_argument('--secs', type=float, default=20.0)
     ap.add_argument('--on', type=int, default=100)
     ap.add_argument('--off', type=int, default=100)
@@ -129,6 +174,7 @@ def main():
     ap.add_argument('--id', type=int, default=1)
     ap.add_argument('--pulse', type=int, default=1500)
     ap.add_argument('--time', type=int, default=500)
+    ap.add_argument('--step', type=int, default=40, help='gripper-range: pulses per step (<= 50)')
     ap.add_argument('--hold', type=float, default=4.0, help='bus-torque: seconds the joint stays limp')
     ap.add_argument('--delta', type=int, default=20, help='bus-servo: pulses (0.24 deg each), |delta| <= 40')
     args = ap.parse_args()
@@ -163,6 +209,8 @@ def main():
         bus_servo_test(ser, args)
     elif args.mode == 'bus-torque':
         bus_torque_test(ser, args)
+    elif args.mode == 'gripper-range':
+        gripper_range(ser, args)
     elif args.mode == 'pwm-servo':
         if not 500 <= args.pulse <= 2500:
             sys.exit('pulse must be 500..2500 us')
