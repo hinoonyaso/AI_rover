@@ -80,7 +80,7 @@
   - [x] 배터리 2 Hz 12.528 V(vendor 12.55 V와 일치)
   - [ ] LED 깜빡임·LCD 상태 화면: **2026-10-10 사용자 확인 결과 둘 다 안 보임**. `drv_lcd_init()`은 성공(그리다 스택이 넘쳤으므로) → LCD 제어 핀/LED 핀 배정(PINMAP "추정") 의심, 조사 필요
   - [x] 모터 fault 핀(PD3) 극성 확정(2026-10-10): 모터 스위치 OFF → fault [1,1,1,1](드라이버 무전원), ON → [0,0,0,0]. **High = fault 확정**. uptime 331 s 동안 리셋 없음
-  - [ ] base_node(호스트)와 연동: `/imu/data_raw`, `/battery_state`, 버스 서보 읽기(FUNC5) 동작
+  - [x] base_node(호스트, 수정 없이)와 연동(2026-10-10): `/imu/data_raw` 50 Hz(vendor 111 Hz), 자이로 bias 보정 후 ≈0.01 rad/s, |a| 9.43 m/s²; `/battery_state` 12.528 V; `/joint_states` 5 Hz 6관절(버스 서보 FUNC5 읽기 동작 → PE7/PE8 방향 핀 조합 OK); `/odom` 30 Hz(EKF). 오류/silent 로그 없음. 팔·모터 명령은 미시험
   - [ ] 태스크 스택 여유(`uxTaskGetStackHighWaterMark`) 기록
   - [ ] 모터(바퀴 띄움, MOTOR_ENABLE=ON 빌드, 별도 승인) → 극성/엔코더 부호 → PID
 
