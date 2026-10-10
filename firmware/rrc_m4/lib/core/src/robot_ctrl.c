@@ -1,6 +1,8 @@
 /* 한글: 로봇 제어 API 구현: 명령 수락 조건(enabled, estop 아님, 저전압 아님), 명령 timeout, 바퀴 fault 시 전체 정지. */
 #include "core/robot_ctrl.h"
 
+#include <math.h>
+
 void robot_init(robot_ctrl_t *rc, enc_motor_t *motors[ROBOT_NUM_MOTORS], const mecanum_cfg_t *mecanum,
                 uint8_t enabled)
 {
@@ -18,6 +20,8 @@ void robot_init(robot_ctrl_t *rc, enc_motor_t *motors[ROBOT_NUM_MOTORS], const m
     rc->low_battery = 0;
     rc->last_source = ROBOT_SRC_NONE;
     rc->stop_reason = ROBOT_STOP_NONE;
+    rc->owner = ROBOT_SRC_NONE;
+    rc->rejected_cmds = 0;
 }
 
 /* 한글: 명령을 받아도 되는 상태인가: 모터 활성 + e-stop 아님 + 저전압 아님. */
@@ -30,31 +34,54 @@ static void note_command(robot_ctrl_t *rc, uint32_t now_ms, robot_cmd_source_t s
 {
     rc->last_cmd_ms = now_ms;
     rc->last_source = (uint8_t)src;
+    rc->owner = (uint8_t)src;
     rc->moving = 1;
     rc->stop_reason = ROBOT_STOP_NONE;
 }
 
-void robot_set_velocity(robot_ctrl_t *rc, float vx, float vy, float wz, uint32_t now_ms, robot_cmd_source_t src)
+/* 한글: 다른 출처가 바퀴를 쥐고 있고(이동 중) 그 명령이 아직 timeout 전이면 거부. */
+static int owned_by_other(const robot_ctrl_t *rc, uint32_t now_ms, robot_cmd_source_t src)
+{
+    if (rc->owner == ROBOT_SRC_NONE || rc->owner == (uint8_t)src || !rc->moving) {
+        return 0;
+    }
+    if (rc->cmd_timeout_ms != 0 && (uint32_t)(now_ms - rc->last_cmd_ms) > rc->cmd_timeout_ms) {
+        return 0; /* the owner went silent; robot_tick stops it on the next tick anyway */
+    }
+    return 1;
+}
+
+int robot_set_velocity(robot_ctrl_t *rc, float vx, float vy, float wz, uint32_t now_ms, robot_cmd_source_t src)
 {
     float rps[ROBOT_NUM_MOTORS];
 
     if (!accepting(rc)) {
-        return;
+        return -1;
+    }
+    if (!isfinite(vx) || !isfinite(vy) || !isfinite(wz) || owned_by_other(rc, now_ms, src)) {
+        rc->rejected_cmds++;
+        return -1; /* not a command: the timeout keeps running / 명령으로 치지 않음 */
     }
     mecanum_inverse(&rc->mecanum, vx, vy, wz, rps);
     for (int i = 0; i < ROBOT_NUM_MOTORS; ++i) {
         (void)enc_motor_set_speed(rc->motors[i], rps[i]);
     }
     note_command(rc, now_ms, src);
+    return 0;
 }
 
-void robot_set_wheel_rps(robot_ctrl_t *rc, uint8_t id, float rps, uint32_t now_ms, robot_cmd_source_t src)
+int robot_set_wheel_rps(robot_ctrl_t *rc, uint8_t id, float rps, uint32_t now_ms, robot_cmd_source_t src)
 {
     if (id >= ROBOT_NUM_MOTORS || !accepting(rc)) {
-        return;
+        return -1;
+    }
+    if (!isfinite(rps) || owned_by_other(rc, now_ms, src)) {
+        rc->rejected_cmds++;
+        return -1;
     }
     (void)enc_motor_set_speed(rc->motors[id], rps);
     note_command(rc, now_ms, src);
+    return 0;
 }
 
 void robot_stop(robot_ctrl_t *rc, robot_stop_reason_t reason)
@@ -63,6 +90,7 @@ void robot_stop(robot_ctrl_t *rc, robot_stop_reason_t reason)
         enc_motor_stop(rc->motors[i]);
     }
     rc->moving = 0;
+    rc->owner = ROBOT_SRC_NONE; /* any stop releases the wheels / 정지하면 제어권 해제 */
     rc->stop_reason = (uint8_t)reason;
 }
 

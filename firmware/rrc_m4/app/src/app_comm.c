@@ -120,6 +120,13 @@ void app_publish_status(void)
 #endif
 }
 
+void app_publish_diag(void)
+{
+    rrc_ext_diag_t d;
+    app_fill_diag(&d);
+    rrc_adapter_send_diag(RRC_PRIMARY, &d);
+}
+
 void app_publish_wheel(void)
 {
     rrc_ext_wheel_t w;

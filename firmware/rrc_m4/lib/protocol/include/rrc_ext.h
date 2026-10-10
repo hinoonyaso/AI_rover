@@ -7,6 +7,7 @@
  *   0x21 WHEEL       device -> host, ~50 Hz  (encoder feedback the vendor firmware never exposed)
  *   0x22 DIAG_CMD    host -> device
  *   0x23 RAW_HID     device -> host, raw USB gamepad report (to correct the layout guess)
+ *   0x24 DIAG        device -> host, on DIAG_REQUEST_STATUS: per-task free stack + counters (2026-10-10)
  */
 #ifndef RRC_EXT_H
 #define RRC_EXT_H
@@ -22,6 +23,7 @@ extern "C" {
 #define RRC_FUNC_EXT_WHEEL 0x21
 #define RRC_FUNC_EXT_DIAG_CMD 0x22
 #define RRC_FUNC_EXT_RAW_HID 0x23
+#define RRC_FUNC_EXT_DIAG 0x24
 
 /* STATUS flags */
 #define RRC_STATUS_ESTOP 0x01
@@ -41,6 +43,18 @@ typedef struct {
 } rrc_ext_status_t;
 #define RRC_EXT_STATUS_LEN 16
 size_t rrc_ext_pack_status(const rrc_ext_status_t *s, uint8_t *data_out);
+
+/* Diagnostics (0x24): [n u8][n x (task_id u8, min_free_words u16 LE)][imu_samples u32][imu_errors u32]
+ * [rejected_cmds u32]. min_free = uxTaskGetStackHighWaterMark (words of 4 bytes); task ids in tasks.c.
+ * 한글: 태스크별 최소 여유 스택(워드) + IMU 샘플/오류 + 거부된 이동 명령 수. 진단 요청 시 1회 전송. */
+#define RRC_EXT_DIAG_MAX_TASKS 16
+typedef struct {
+    uint8_t n;
+    uint8_t task_id[RRC_EXT_DIAG_MAX_TASKS];
+    uint16_t min_free_words[RRC_EXT_DIAG_MAX_TASKS];
+    uint32_t imu_samples, imu_errors, rejected_cmds;
+} rrc_ext_diag_t;
+size_t rrc_ext_pack_diag(const rrc_ext_diag_t *d, uint8_t *data_out); /* <= 1 + 48 + 12 bytes */
 
 typedef struct {
     float rps[4];

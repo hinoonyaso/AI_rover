@@ -273,6 +273,12 @@ void rrc_adapter_send_wheel(rrc_adapter_t *a, const rrc_ext_wheel_t *w)
     send_frame(a, RRC_FUNC_EXT_WHEEL, d, rrc_ext_pack_wheel(w, d));
 }
 
+void rrc_adapter_send_diag(rrc_adapter_t *a, const rrc_ext_diag_t *d)
+{
+    uint8_t b[1 + 3 * RRC_EXT_DIAG_MAX_TASKS + 12];
+    send_frame(a, RRC_FUNC_EXT_DIAG, b, rrc_ext_pack_diag(d, b));
+}
+
 void rrc_adapter_send_raw_hid(rrc_adapter_t *a, const uint8_t *report, size_t len)
 {
     uint8_t d[33];

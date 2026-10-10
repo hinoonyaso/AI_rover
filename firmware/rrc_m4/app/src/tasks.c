@@ -496,3 +496,36 @@ void app_create_tasks(void)
     START_TASK(sup_task, "supervisor", 384, 7, sup_slot);
     iwdg_start();
 }
+
+/* Per-task minimum free stack for the 0x24 diag frame (troubleshooting/035: the lcd task overflowed).
+ * Task ids: 0 control, 1 imu, 2 comm_rx, 3 comm_tx, 4 ui, 5 lcd, 6 sbus, 7 usb, 8 bt, 9 supervisor,
+ * 10 uros, 11 host_tx (MICROROS only), 12 idle. 한글: 태스크별 최소 여유 스택(워드). */
+void app_fill_diag(rrc_ext_diag_t *d)
+{
+    task_slot_t *const slots[] = {&control_slot, &imu_slot, &rx_slot, &tx_slot, &ui_slot, &lcd_slot,
+                                  &sbus_slot, &usb_slot, &bt_slot, &sup_slot,
+#if COMM_MODE == COMM_MODE_MICROROS
+                                  &uros_slot, &hosttx_slot,
+#else
+                                  NULL, NULL,
+#endif
+    };
+    d->n = 0;
+    for (uint8_t i = 0; i < sizeof(slots) / sizeof(slots[0]) && d->n < RRC_EXT_DIAG_MAX_TASKS; i++) {
+        if (slots[i] == NULL || slots[i]->handle == NULL) {
+            continue;
+        }
+        d->task_id[d->n] = i;
+        d->min_free_words[d->n] = (uint16_t)uxTaskGetStackHighWaterMark(slots[i]->handle);
+        d->n++;
+    }
+    TaskHandle_t idle = xTaskGetIdleTaskHandle();
+    if (idle != NULL && d->n < RRC_EXT_DIAG_MAX_TASKS) {
+        d->task_id[d->n] = 12;
+        d->min_free_words[d->n] = (uint16_t)uxTaskGetStackHighWaterMark(idle);
+        d->n++;
+    }
+    d->imu_samples = g_app.imu_samples;
+    d->imu_errors = g_app.imu_errors;
+    d->rejected_cmds = g_app.robot.rejected_cmds;
+}

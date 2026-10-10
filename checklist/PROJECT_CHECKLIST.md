@@ -82,7 +82,7 @@
   - [x] 상태 화면: 실제는 **SSD1306 128×32 OLED(I2C 0x3C, IMU 버스 공유)** — SPI2 LCD 가정 폐기, 드라이버 교체 후 4줄 표시 확인, IMU 49.6 Hz 유지(troubleshooting/035)
   - [x] 모터 fault 핀(PD3) 극성 확정(2026-10-10): 모터 스위치 OFF → fault [1,1,1,1](드라이버 무전원), ON → [0,0,0,0]. **High = fault 확정**. uptime 331 s 동안 리셋 없음
   - [x] base_node(호스트, 수정 없이)와 연동(2026-10-10): `/imu/data_raw` 50 Hz(vendor 111 Hz), 자이로 bias 보정 후 ≈0.01 rad/s, |a| 9.43 m/s²; `/battery_state` 12.528 V; `/joint_states` 5 Hz 6관절(버스 서보 FUNC5 읽기 동작 → PE7/PE8 방향 핀 조합 OK); `/odom` 30 Hz(EKF). 오류/silent 로그 없음. 팔·모터 명령은 미시험
-  - [ ] 태스크 스택 여유(`uxTaskGetStackHighWaterMark`) 기록
+  - [~] 태스크 스택 여유: 진단 프레임 0x24(DIAG 0x06 요청 시) + `rrc_m4_diag.py` 구현(2026-10-10), 실기 기록 남음
   - [x] 배터리 값 갱신(2026-10-10): 부팅 첫 값으로 고정되던 ADC DMA 재시작 거부 수정, 실제 11.05 V 확인(troubleshooting/038)
   - [x] 냉간 부팅(전원 완전 차단 후) IMU 동작(2026-10-10): 처음엔 QMI8658 값이 멈춤 → 소프트 리셋 + 멈춘 값 감지 추가 후 정상(troubleshooting/037)
   - [x] 모터 PWM 핀 짝·방향·엔코더 부호(2026-10-10, 바퀴 띄움, RAW_PWM ±400): 4바퀴 확정 — 왼쪽 +PWM 전진, 오른쪽 +PWM 후진(vendor 규약), 엔코더 전부 +1. M2 PWM 짝이 추정과 반대였음. 중간에 M2 폭주 → 부호 가드·e-stop 유지 추가(troubleshooting/036)
@@ -90,7 +90,7 @@
   - [x] base_node(수정 없음) `/cmd_vel` 바퀴 띄움 시험(2026-10-10): 전진 vx 0.05, 왼쪽 옆이동 vy 0.05, 반시계 wz 0.3 각 2초 → 4바퀴 방향 모두 메카넘 기대대로(사용자 육안), 오류 로그 없음, 배터리 12.50 V
   - [x] 바닥 저속 주행(2026-10-10, base_node 경유, 0.05 m/s·3초): 전진 15 cm(바퀴 기준 14.4~15.1 cm, 사용자 실측 15~16), 왼쪽 옆이동 15 cm(사용자 실측), 반시계 0.3 rad/s·3초 → **자이로 51.5°(명령 51.6°), 육안 약 55°** — vendor 펌웨어에서 회전이 명령의 81%였던 것이 약 100%로(폐루프 속도 제어 효과로 추정). 직접 명령 시 바퀴 속도는 0.3~0.5초에 목표 도달. 첫 2초 시험의 "1 cm"는 재시험에서 재현 안 됨(가속 구간 + 표시 없는 눈대중으로 추정)
   - [~] 엔코더 피드백(FUNC 0x21) → base_node `wheel_twist`(2026-10-10, **RRC 경로로 결정**): `decode_wheel_feedback`, `wheel_twist_source: command|encoder|auto`(기본 command, launch 인자, encoder는 끊기면 0+경고, auto는 명령으로 폴백), 단위시험(디코드 1 + 선택 4), colcon test 119개 통과. 실기 바닥 전진 3초 2회: 엔코더 odom 14.3 / 14.7 cm, 실측 약 15 / 15.0 cm(−2 %). **E4 완료(2026-10-10, 각 5회)**: 직진 1 m 엔코더 +0.24 ± 0.41 cm(명령값 −0.68 ± 0.50), 옆이동 1 m −0.48 ± 0.16(명령값 −1.08 ± 0.13), 회전 360° 자이로 +0.5 ± 0.4°·엔코더 −7.4°·명령값 −6.1° → 이동은 엔코더, yaw는 자이로 유지(`docs/benchmarks/navigation/encoder_odom_e4_20261010.md`). **회전 보정(2026-10-10)**: wheelbase/track 0.216/0.195 → 0.2120/0.1914 → 360°×5 실측 359.6°, 명령값 +0.38°, 엔코더 −0.12°, 자이로 +0.28°(보정 전 −6.1/−7.4/+0.5). **공분산(E5)**: 엔코더 twist 분산 vx 1e-4·vy 2e-4(`wheel_twist_covariance_encoder`, 바닥 vx 순간 표준편차 0.004 m/s 근거), 명령값 모드는 0.05 유지. **E5 왕복(사각형 4 m, 3회)**: 실제 어긋남 3~5 cm·최대 4°(롤러 미끄러짐), 엔코더 단독 3.4~5.0 cm 오차, **EKF 0.1~0.4 cm**(자이로 bias 재측정 [0.2075, 0.1660, −0.0162] 후). **E6 진행 중(14/30, `docs/benchmarks/navigation/e6_interim_20261010.md`)**: A 5회씩 두 조건 차이 없음(13.6 대 15.2 cm, goal tolerance 경계), B 2회씩 둘 다 오른쪽 16~27 cm — AMCL이 3~7 cm 왼쪽으로 치우치고 출발 AMCL 강제값이 실제 출발과 5 cm 달라 odom 차이가 묻힘. C·B3~5 남음(출발 초기화 방식 결정 후)
-  - [ ] (micro-ROS 실기 브링업 전 선행 조건, 2026-10-10 외부 검토로 확인) ① `CMD_VEL_MAX_*` 0.5 m/s·2.0 rad/s → RRC 검증값 0.2·1.0으로 통일 ② `clampf()`가 Inf를 최대 속도로 통과 → NaN/Inf 거부 ③ RRC·micro-ROS 제어권 중재(단일 활성 제어원) ④ `jetrover_microros`에 팔(서보·`/joint_states`) 기능 없음 ⑤ RAM 사용률·스택 여유 실측, agent 재연결 반복 시험
+  - [~] (micro-ROS 실기 브링업 전 선행 조건, 2026-10-10 외부 검토로 확인) ~~① `CMD_VEL_MAX_*` 0.2·1.0으로 통일~~ ~~② NaN/Inf 거부(코어 `robot_set_*`·`enc_motor_set_speed`)~~ ~~③ 단일 활성 제어원(`robot_ctrl` owner)~~ — ①~③ 코드·호스트 시험 완료(2026-10-10, 실기 미확인) ④ `jetrover_microros`에 팔(서보·`/joint_states`) 기능 없음 ⑤ RAM 사용률·스택 여유 실측, agent 재연결 반복 시험
 
 
 #### RRC 완성 + micro-ROS 적용 (2026-10-05 착수, PRD `prd/rrc-microros-firmware.md`, 시험 계획 `prd/rrc-microros-firmware-test-plan.md`)

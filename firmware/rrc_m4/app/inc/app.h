@@ -63,6 +63,9 @@ void app_publish_gamepad(const gamepad_state_t *g);
 void app_publish_sbus(const sbus_status_t *s);
 void app_publish_status(void);
 void app_publish_wheel(void);
+/* 0x24 diagnostics (task stacks + counters), sent on DIAG_REQUEST_STATUS. */
+void app_publish_diag(void);
+void app_fill_diag(rrc_ext_diag_t *d);
 void app_publish_raw_hid(const uint8_t *report, size_t len);
 
 /* ---- init / tasks ---- */

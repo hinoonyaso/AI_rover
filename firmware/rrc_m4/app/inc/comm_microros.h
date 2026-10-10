@@ -19,8 +19,9 @@
 
 #include "rrc_ext.h"
 
-#define CMD_VEL_MAX_LINEAR_MPS 0.5f
-#define CMD_VEL_MAX_ANGULAR_RPS 2.0f
+/* 2026-10-10: 0.5 m/s / 2.0 rad/s -> the RRC-verified base_node limits (0.2 / 1.0). 한글: RRC 검증값과 통일. */
+#define CMD_VEL_MAX_LINEAR_MPS 0.2f
+#define CMD_VEL_MAX_ANGULAR_RPS 1.0f
 
 void comm_microros_task(void *arg);
 void comm_microros_publish_imu(const float accel_g[3], const float gyro_dps[3]);

@@ -30,6 +30,21 @@ size_t rrc_ext_pack_status(const rrc_ext_status_t *s, uint8_t *d) {
     return RRC_EXT_STATUS_LEN;
 }
 
+size_t rrc_ext_pack_diag(const rrc_ext_diag_t *s, uint8_t *d) {
+    const uint8_t n = s->n > RRC_EXT_DIAG_MAX_TASKS ? RRC_EXT_DIAG_MAX_TASKS : s->n;
+    size_t k = 0;
+    d[k++] = n;
+    for (uint8_t i = 0; i < n; i++) {
+        d[k++] = s->task_id[i];
+        d[k++] = (uint8_t)(s->min_free_words[i] & 0xFF);
+        d[k++] = (uint8_t)(s->min_free_words[i] >> 8);
+    }
+    wr_u32(&d[k], s->imu_samples);
+    wr_u32(&d[k + 4], s->imu_errors);
+    wr_u32(&d[k + 8], s->rejected_cmds);
+    return k + 12;
+}
+
 size_t rrc_ext_pack_wheel(const rrc_ext_wheel_t *w, uint8_t *d) {
     for (int i = 0; i < 4; i++) {
         wr_f32(&d[i * 4], w->rps[i]);

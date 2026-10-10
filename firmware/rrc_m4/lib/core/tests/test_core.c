@@ -295,6 +295,47 @@ static void test_robot_ctrl(void)
     CHECK(mt[0].pid.set_point == 0.0f, "disabled robot ignores commands");
 }
 
+// 한글: NaN/Inf 명령 폐기, 한 번에 한 출처만 제어(2026-10-10, micro-ROS + RRC 폴백 대비).
+static void test_robot_arbitration(void)
+{
+    enc_motor_t mt[4];
+    enc_motor_t *mp[4] = {&mt[0], &mt[1], &mt[2], &mt[3]};
+    const mecanum_cfg_t cfg = {0.216f, 0.195f, 0.097f};
+    robot_ctrl_t rc;
+    for (int i = 0; i < 4; i++) enc_motor_init(&mt[i], 3996, 3.0f, 63, 2.6f, 2.4f, 60000, 1, set_pulse_noop, NULL);
+    robot_init(&rc, mp, &cfg, 1);
+
+    /* non-finite: dropped, not a command */
+    CHECK(robot_set_velocity(&rc, INFINITY, 0, 0, 100, ROBOT_SRC_MICROROS) == -1 && !rc.moving &&
+          mt[0].pid.set_point == 0.0f, "Inf velocity dropped (used to clamp to full speed)");
+    CHECK(robot_set_velocity(&rc, 0, NAN, 0, 100, ROBOT_SRC_MICROROS) == -1, "NaN velocity dropped");
+    CHECK(robot_set_wheel_rps(&rc, 0, -INFINITY, 100, ROBOT_SRC_RRC) == -1 && mt[0].pid.set_point == 0.0f,
+          "Inf wheel rps dropped");
+    CHECK(rc.rejected_cmds == 3, "rejections counted");
+    enc_motor_set_speed(&mt[3], INFINITY);
+    CHECK(mt[3].pid.set_point == 0.0f, "enc_motor: Inf becomes 0, not the speed limit");
+
+    /* single owner */
+    CHECK(robot_set_velocity(&rc, 0.1f, 0, 0, 1000, ROBOT_SRC_MICROROS) == 0 && rc.owner == ROBOT_SRC_MICROROS,
+          "first mover owns the wheels");
+    const float sp = mt[0].pid.set_point;
+    CHECK(robot_set_wheel_rps(&rc, 0, -1.0f, 1200, ROBOT_SRC_RRC) == -1 && mt[0].pid.set_point == sp,
+          "other source refused while the owner is active");
+    CHECK(robot_set_velocity(&rc, 0.05f, 0, 0, 1300, ROBOT_SRC_MICROROS) == 0, "owner keeps commanding");
+    robot_stop_mask(&rc, 0x0F); /* anyone may stop wheels */
+    CHECK(mt[0].pid.set_point == 0.0f, "stop accepted from anyone");
+    robot_stop(&rc, ROBOT_STOP_COMMAND);
+    CHECK(rc.owner == ROBOT_SRC_NONE, "stop releases ownership");
+    CHECK(robot_set_wheel_rps(&rc, 0, 0.5f, 1400, ROBOT_SRC_RRC) == 0 && rc.owner == ROBOT_SRC_RRC,
+          "after a stop another source can take over");
+    /* owner goes silent -> after the timeout another source may take over even before robot_tick */
+    CHECK(robot_set_velocity(&rc, 0.1f, 0, 0, 1500, ROBOT_SRC_GAMEPAD) == -1, "gamepad refused during RRC");
+    CHECK(robot_set_velocity(&rc, 0.1f, 0, 0, 2500, ROBOT_SRC_GAMEPAD) == 0 && rc.owner == ROBOT_SRC_GAMEPAD,
+          "silent owner (> timeout) loses the wheels");
+    robot_estop(&rc);
+    CHECK(rc.owner == ROBOT_SRC_NONE && rc.estop, "e-stop from anyone releases and latches");
+}
+
 static void test_blink(void)
 {
     blink_t b;
@@ -625,6 +666,7 @@ int main(void)
     test_enc_motor_sign_guard();
     test_mecanum();
     test_robot_ctrl();
+    test_robot_arbitration();
     test_blink();
     test_button();
     test_pwm_servo();

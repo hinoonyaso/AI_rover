@@ -253,6 +253,13 @@ static void test_telemetry(void)
     rrc_ext_wheel_t w = {{1.0f, 0, 0, 0}, {1, 2, 3, -4}};
     rrc_adapter_send_wheel(&r.adapter, &w);
     CHECK(r.mock.tx[4][3] == RRC_EXT_WHEEL_LEN && r.mock.tx[4][4 + 16 + 12] == 0xFC, "wheel frame, int32 counters");
+    rrc_ext_diag_t d; memset(&d, 0, sizeof(d));
+    d.n = 2; d.task_id[0] = 0; d.min_free_words[0] = 0x0102; d.task_id[1] = 5; d.min_free_words[1] = 300;
+    d.imu_samples = 7; d.imu_errors = 1; d.rejected_cmds = 0x0A0B0C0D;
+    rrc_adapter_send_diag(&r.adapter, &d);
+    const uint8_t *f = r.mock.tx[5];
+    CHECK(f[2] == RRC_FUNC_EXT_DIAG && f[3] == 1 + 2 * 3 + 12 && f[4] == 2 && f[5] == 0 && f[6] == 0x02 && f[7] == 0x01 &&
+          f[8] == 5 && f[10 + 1] == 7 && f[10 + 9] == 0x0D && f[10 + 12] == 0x0A, "diag frame (tasks + counters)");
 }
 
 int main(void)

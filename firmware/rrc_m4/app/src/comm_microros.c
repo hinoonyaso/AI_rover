@@ -117,10 +117,12 @@ static void stamp(builtin_interfaces__msg__Time *t)
 }
 
 /* ---------- subscriptions: map to the common control API only ---------- */
+/* Non-finite values are passed through: robot_set_velocity() drops the whole command (it used to turn
+ * NaN into 0 and Inf into the full speed limit here). 한글: NaN/Inf는 그대로 넘겨 코어가 명령 전체를 버린다. */
 static float clampf(float v, float lim)
 {
-    if (!(v == v)) {
-        return 0.0f;
+    if (!isfinite(v)) {
+        return v;
     }
     return v > lim ? lim : (v < -lim ? -lim : v);
 }

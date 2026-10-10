@@ -29,8 +29,8 @@ int enc_motor_set_speed(enc_motor_t *m, float rps)
     if (m->fault == ENC_MOTOR_FAULT_RUNAWAY) {
         return -1;
     }
-    /* 한글: NaN(잘못된 패킷)은 PID에 절대 들어가지 않게 0으로 바꾼다. */
-    if (!(rps == rps)) { /* NaN from a bad packet must never reach the PID */
+    /* 한글: NaN/Inf(잘못된 패킷)는 PID에 절대 들어가지 않게 0으로 바꾼다. Inf가 최대 속도로 잘려 통과하던 것도 막음(2026-10-10). */
+    if (!isfinite(rps)) { /* NaN/Inf from a bad packet must never reach the PID (Inf used to clamp to full speed) */
         rps = 0.0f;
     }
     if (rps > m->rps_limit) {

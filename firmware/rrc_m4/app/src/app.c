@@ -102,6 +102,7 @@ static void svc_request_status(void *hw)
 {
     (void)hw;
     app_publish_status();
+    app_publish_diag(); /* task stacks + counters (0x24) / 스택 여유와 카운터 */
 }
 
 static void motor_pulse(void *ctx, int pulse) { drv_motor_set_pulse((uint8_t)(uintptr_t)ctx, pulse); }

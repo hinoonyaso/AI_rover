@@ -39,6 +39,7 @@ void rrc_adapter_send_gamepad(rrc_adapter_t *a, const rrc_gamepad_state_t *g);
 void rrc_adapter_send_sbus(rrc_adapter_t *a, const rrc_sbus_frame_t *s);
 void rrc_adapter_send_status(rrc_adapter_t *a, const rrc_ext_status_t *s);
 void rrc_adapter_send_wheel(rrc_adapter_t *a, const rrc_ext_wheel_t *w);
+void rrc_adapter_send_diag(rrc_adapter_t *a, const rrc_ext_diag_t *d);
 void rrc_adapter_send_raw_hid(rrc_adapter_t *a, const uint8_t *report, size_t len);
 
 #ifdef __cplusplus

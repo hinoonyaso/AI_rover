@@ -8,6 +8,11 @@
  *  - emergency stop latch (until robot_clear_estop)
  *  - low-battery cutoff with hysteresis
  *  - latched encoder runaway on any wheel stops all wheels
+ *  - non-finite (NaN/Inf) motion commands are dropped (2026-10-10)
+ *  - one command source at a time: the source that started moving owns the wheels until it stops or its
+ *    commands time out; motion commands from any other source are rejected meanwhile. Stop and e-stop are
+ *    always accepted from anyone (2026-10-10, micro-ROS + RRC fallback must never fight over the wheels).
+ * 한글: NaN/Inf 명령 폐기, 한 번에 한 출처만 제어(정지·e-stop은 누구든 가능).
  */
 #ifndef CORE_ROBOT_CTRL_H
 #define CORE_ROBOT_CTRL_H
@@ -56,15 +61,18 @@ typedef struct {
     uint8_t low_battery;
     uint8_t last_source;
     uint8_t stop_reason;
+    uint8_t owner;                /* robot_cmd_source_t holding the wheels, NONE when stopped */
+    uint32_t rejected_cmds;       /* motion commands refused (other source / non-finite) */
 } robot_ctrl_t;
 
 void robot_init(robot_ctrl_t *rc, enc_motor_t *motors[ROBOT_NUM_MOTORS], const mecanum_cfg_t *mecanum,
                 uint8_t enabled);
 
-/* Body velocity (m/s, m/s, rad/s) -> wheel targets via mecanum_inverse. */
-void robot_set_velocity(robot_ctrl_t *rc, float vx, float vy, float wz, uint32_t now_ms, robot_cmd_source_t src);
-/* Direct per-wheel target in rev/s (RRC FUNC3 path). id is 0-based. */
-void robot_set_wheel_rps(robot_ctrl_t *rc, uint8_t id, float rps, uint32_t now_ms, robot_cmd_source_t src);
+/* Body velocity (m/s, m/s, rad/s) -> wheel targets via mecanum_inverse.
+ * Returns 0 if applied, -1 if refused (not accepting, non-finite input, or another source owns the wheels). */
+int robot_set_velocity(robot_ctrl_t *rc, float vx, float vy, float wz, uint32_t now_ms, robot_cmd_source_t src);
+/* Direct per-wheel target in rev/s (RRC FUNC3 path). id is 0-based. Same return as robot_set_velocity. */
+int robot_set_wheel_rps(robot_ctrl_t *rc, uint8_t id, float rps, uint32_t now_ms, robot_cmd_source_t src);
 void robot_stop(robot_ctrl_t *rc, robot_stop_reason_t reason);
 /* RRC FUNC3 subcommands 0x02 (single) / 0x03 (bit mask). */
 void robot_stop_mask(robot_ctrl_t *rc, uint8_t mask);

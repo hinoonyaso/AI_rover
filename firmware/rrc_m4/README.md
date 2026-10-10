@@ -46,6 +46,7 @@ cmake -S . -B build-arm-uros -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake -D
 
 ## 안전 기능 (벤더 펌웨어에 없던 것)
 - 호스트 명령 timeout `CMD_TIMEOUT_MS`(기본 1 s): 명령이 끊기면 MCU가 스스로 바퀴를 정지 (`robot_ctrl.c`)
+- **NaN/Inf 이동 명령 폐기, 한 번에 한 명령 출처만 제어**(먼저 움직인 출처가 정지·timeout까지 바퀴를 쥠, 정지·e-stop은 누구든; 2026-10-10). micro-ROS 속도 제한도 RRC와 같은 0.2 m/s / 1.0 rad/s
 - e-stop 래치, 저전압 차단(9.5 V, 10.0 V에서 해제), 바퀴 하나라도 runaway/stall이면 전체 정지
 - **엔코더 runaway 래치**: 속도 명령이 큰데 PWM이 포화 근처에서 1 s 넘게 실제 속도가 안 따라오면(엔코더 부호 오류 = 양의 되먹임 포함) 래치 (`encoder_motor.c`)
 - 감시 태스크가 control/imu/comm_rx/ui heartbeat를 모두 확인할 때만 IWDG(500 ms)를 먹인다. 하나라도 멈추면 모터 PWM을 즉시 0으로 하고 리셋을 기다린다
@@ -54,7 +55,7 @@ cmake -S . -B build-arm-uros -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake -D
 
 ## 프로토콜 확장 (이 펌웨어만의 FUNC, 벤더/호스트가 모르면 무시)
 `0x20` STATUS(10 Hz), `0x21` WHEEL(엔코더 rps/카운터, 50 Hz — 벤더 펌웨어가 안 주던 값), `0x22` DIAG_CMD(e-stop 해제, timeout, PID, raw PWM),
-`0x23` RAW_HID(게임패드 원시 리포트). 자세한 바이트는 `lib/protocol/include/rrc_ext.h`.
+`0x23` RAW_HID(게임패드 원시 리포트), `0x24` DIAG(진단 요청 시: 태스크별 최소 여유 스택, IMU 샘플/오류, 거부된 이동 명령 수 — `tools/stm32_diagnostics/rrc_m4_diag.py`, 2026-10-10). 자세한 바이트는 `lib/protocol/include/rrc_ext.h`.
 
 ## 아직 확인되지 않은 것 (브링업에서 확인, `firmware_source/PINMAP.md`의 "추정")
 모터 2~4의 PWM 쌍/극성, 엔코더 부호, PID 게인·`ticks_per_circle`, IMU 칩→보드 축 변환, 버스 서보 방향 핀 역할, PWM 서보 핀 순서,
