@@ -9,7 +9,7 @@
 | E2 바퀴 띄운 속도 응답 | L3 | 명령 rps 단계 입력(예: 0.5, 1.0, 1.5 rev/s)에서 측정 rps | 정상상태 오차·응답시간을 수치로 기록(합격선은 첫 측정 후). runaway 래치 오작동 없음 |
 | E3 전체 안전 | L3 | 명령 timeout(MCU), e-stop, 엔코더 이상 감지 | 호스트 명령 중단 시 MCU가 자체 정지 (vendor 펌웨어에 없던 기능) |
 | E4 바닥 직선/옆/회전 ✅(2026-10-10, `docs/benchmarks/navigation/encoder_odom_e4_20261010.md`) | L4 (0.05 m/s부터) | 직진 1 m, 옆 1 m, 제자리 360°를 open-loop odom / encoder odom / 줄자·각도기로 비교, 각 5회 | encoder odom 오차 ≤ open-loop 오차 (수치로). 회전은 현재 약 81%라는 기준선과 비교 |
-| E5 EKF 통합 | L4 | EKF 출력 `odom`의 드리프트(왕복 후 원점 복귀 오차), 공분산 근거 확인 | 공분산을 E4 오차 분산에서 산출해 기록 |
+| E5 EKF 통합 (공분산 ✅ 2026-10-10, 왕복 시험 남음) | L4 | EKF 출력 `odom`의 드리프트(왕복 후 원점 복귀 오차), 공분산 근거 확인 | 공분산을 E4 오차 분산에서 산출해 기록 |
 | E6 Nav2 재시험 | L4 | `prd/nav2-baseline-test-plan.md`와 동일 15회, 태그 `encoder_ekf` | Before/After 표 (성공률, 충돌, goal 오차, CTE RMS, 시간, recovery). 개선이 없거나 악화되면 그 사실도 기록하고 원인 분석 |
 
 ## 비교 프로토콜 (공정성)

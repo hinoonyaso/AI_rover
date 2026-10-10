@@ -107,6 +107,7 @@
 | `scan_match_init` 확신 기준 | score ≥ 0.8 & margin ≥ 0.1, **또는 score ≥ 0.95 & margin ≥ 0.05** | 10-08 | 0.974/0.883이 거부돼서 |
 | AMCL (`amcl.yaml`) | 변경 없음 | — | — |
 | `wheel_twist_source` (base_node, 신규) | 기본 **command**(이전 동작), 시험 시 encoder | 10-10 | 자체 펌웨어 FUNC 0x21 엔코더 odom(RRC 경로 결정) |
+| `wheel_twist_covariance_encoder` (base_node, 신규) | 엔코더 twist 분산 **[1e-4, 2e-4, 1e-3]**(명령값 모드는 0.05/0.05/0.1 유지) | 10-10 | E5: 바닥 vx 순간 표준편차 0.004 m/s, 1 m 치우침 < 0.5 % → 여유 두고 0.01/0.014 m/s. 이전엔 엔코더도 0.05(= 0.22 m/s, 최고속보다 큼) |
 | `wheelbase` / `track_width` (base_node) | 0.216 / 0.195 → **0.2120 / 0.1914** (×0.9815) | 10-10 | E4 회전 360°×5: 실제 366.1°(명령 대비 0.9833), 엔코더 358.7°(0.9797) → 회전 팔 길이 약 2 % 과대. 직진·옆이동 무관. **baseline 비교 시 Before/After 모두 같은 값** |
 
 ## 해석 시 주의

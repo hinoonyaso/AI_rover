@@ -34,6 +34,11 @@ base_node:
     # 한글: command(기본, 기존 동작) / encoder(자체 펌웨어 측정값) / auto(있으면 측정값).
     wheel_twist_source: command
     wheel_feedback_timeout: 0.2
+    # Twist variance [vx, vy, wz] when the twist is measured (encoder/auto with feedback). 2026-10-10 (E5):
+    # floor vx std 0.004 m/s instantaneous, bias < 0.5 % over 1 m -> std 0.01 (vx), 0.014 (vy, roller slip).
+    # The EKF fuses vx, vy only (yaw from the gyro). Command mode keeps 0.05 (velocity unknown).
+    # 한글: 엔코더 속도 분산(실측 근거). EKF는 vx, vy만 사용.
+    wheel_twist_covariance_encoder: [1.0e-4, 2.0e-4, 1.0e-3]
     # Scale factors to calibrate the open-loop odometry against measured distance/rotation
     odom_linear_scale: 1.0
     # Extra factor on vy only. Kept at 1.0: strafing matched the command (tape re-measurement, 0.99)

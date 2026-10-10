@@ -38,6 +38,6 @@
 EKF yaw는 계속 자이로만 사용(엔코더 yaw는 진단·교차검증용).
 
 ## 다음
-- 공분산: 위 오차 분산에서 twist 공분산 산출(E5) — 지금은 open-loop 값 그대로.
+- ~~공분산(E5)~~ 반영: 엔코더 twist 분산 vx 1e-4, vy 2e-4(`wheel_twist_covariance_encoder`) — 바닥 vx 순간 표준편차 0.004 m/s, 1 m 치우침 < 0.5 %. EKF 왕복 원점 복귀 오차는 아직.
 - ~~회전 팔 길이 보정 → 회전 재측정~~ 완료(위).
 - Nav2 baseline 15회 Before/After(E6): Before = `wheel_twist_source:=command`, After = `encoder`, 같은 펌웨어에서 비교.

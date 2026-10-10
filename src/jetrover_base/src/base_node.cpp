@@ -117,6 +117,12 @@ public:
           source_name);
     }
     wheel_feedback_timeout_ = declare_parameter<double>("wheel_feedback_timeout", 0.2);
+    // Twist variance [vx, vy, wz] used when the twist comes from the encoders (E5, 2026-10-10).
+    wheel_twist_cov_encoder_ = declare_parameter<std::vector<double>>(
+      "wheel_twist_covariance_encoder", {1.0e-4, 2.0e-4, 1.0e-3});
+    if (wheel_twist_cov_encoder_.size() != 3) {
+      throw std::invalid_argument("wheel_twist_covariance_encoder needs 3 values [vx, vy, wz]");
+    }
     RCLCPP_INFO(get_logger(), "wheel_twist source: %s", twist_source_name(twist_source_));
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom_raw", 10);
     twist_pub_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
@@ -359,15 +365,23 @@ private:
     msg.twist.twist.linear.y = vy;
     msg.twist.twist.angular.z = wz;
 
-    // Open-loop: the commanded velocity is only a rough guess of the real one. The same values are
-    // kept for the encoder source until they are measured (prd/encoder-odometry.md: covariance from
-    // the straight/strafe/turn error). 한글: 엔코더 공분산은 실측 전까지 같은 값 유지.
+    // Pose covariance (odom_raw pose is never fused). Twist: large for the open-loop command,
+    // measured values for the encoder source (below). 한글: twist 공분산은 출처별로 다르게.
     msg.pose.covariance[0] = 0.05;
     msg.pose.covariance[7] = 0.05;
     msg.pose.covariance[35] = 0.1;
-    msg.twist.covariance[0] = 0.05;
-    msg.twist.covariance[7] = 0.05;
-    msg.twist.covariance[35] = 0.1;
+    if (choice.from_encoder) {
+      // Measured wheel speeds (E5, 2026-10-10): instantaneous vx std 0.004 m/s on the floor, 1 m bias
+      // +0.24 % / strafe -0.48 % (encoder_odom_e4_20261010.md) -> std 0.01 / 0.014 m/s with margin.
+      // 한글: 엔코더 속도의 분산(실측 근거). 명령값일 때는 아래 큰 값 유지.
+      msg.twist.covariance[0] = wheel_twist_cov_encoder_[0];
+      msg.twist.covariance[7] = wheel_twist_cov_encoder_[1];
+      msg.twist.covariance[35] = wheel_twist_cov_encoder_[2];
+    } else {
+      msg.twist.covariance[0] = 0.05;
+      msg.twist.covariance[7] = 0.05;
+      msg.twist.covariance[35] = 0.1;
+    }
 
     odom_pub_->publish(msg);
 
@@ -799,6 +813,7 @@ private:
   double wheel_feedback_timeout_{0.2};
   double wheel_rps_[4]{0.0, 0.0, 0.0, 0.0};
   double last_wheel_feedback_s_{0.0};
+  std::vector<double> wheel_twist_cov_encoder_;
   double odom_x_{0.0}, odom_y_{0.0}, odom_yaw_{0.0};
   rclcpp::Time last_odom_time_{0, 0, RCL_ROS_TIME};
 
