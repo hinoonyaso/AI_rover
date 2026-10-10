@@ -6,8 +6,9 @@
 
 Usage: python3 tools/stm32_diagnostics/rrc_m4_speed_test.py --motor 0 --rps 0.5 --secs 10
 Command convention = vendor: left wheels (0, 1) +rps roll forward, right wheels (2, 3) +rps roll backward.
-Prints the measured rps (firmware estimate from MOTOR_TICKS_PER_CIRCLE, 3996 measured 2026-10-10), its mean/std over the second
-half, and the encoder counter change. Count the real revolutions of a marked wheel:
+Prints the measured rps (firmware estimate from MOTOR_TICKS_PER_CIRCLE, 3996 measured 2026-10-10),
+its mean/std over the second half, and the encoder counter change. Count the real revolutions
+of a marked wheel:
     ticks_per_rev = counter_delta / revolutions
 Clears e-stop to start, and sets e-stop at the end (also on Ctrl+C) so the PID stops acting.
 """
@@ -36,6 +37,9 @@ def main():
     ap.add_argument('--motor', type=int, required=True, choices=[0, 1, 2, 3])
     ap.add_argument('--rps', type=float, default=0.5)
     ap.add_argument('--secs', type=float, default=10.0)
+    ap.add_argument('--brake', type=float, default=0.0,
+                    help='s of speed-0 commands (PID brakes, like base_node stopping) before the e-stop; '
+                         '0 = e-stop right away (PWM cut, the wheel coasts ~0.2 rev at 0.5 rps)')
     args = ap.parse_args()
     if abs(args.rps) > 2.0:
         raise SystemExit('|rps| <= 2.0 for this test')
@@ -63,6 +67,14 @@ def main():
                 next_print += 1.0
             time.sleep(0.1)
         delta = rd.counter[args.motor] - c0
+        tb = time.time()
+        while time.time() - tb < args.brake:  # PID brake / PID로 정지
+            ser.write(speed_cmd(args.motor, 0.0))
+            time.sleep(0.1)
+        delta_brake = rd.counter[args.motor] - c0 - delta
+        if args.brake > 0:
+            print(f'brake {args.brake:.1f} s with speed 0: {delta_brake} ticks '
+                  f'= {delta_brake / 3996:.3f} rev')
     finally:
         ser.write(speed_cmd(args.motor, 0.0))
         ser.write(frame(FUNC_DIAG, bytes([DIAG_ESTOP])))
