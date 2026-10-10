@@ -76,6 +76,9 @@ LCD 제어 핀 배정, 게임패드 HID 리포트 레이아웃, 부저 능동/�
 | 8 | (기회되면) 바퀴 울림 측정 | 울리고 있을 때만: `tools/stm32_diagnostics/swd_motor_probe.sh 50 100 > Log/swd_motor_probe_<날짜>.txt` (halt 없음, troubleshooting/032) | 첫 실행에서 보드가 리셋되면 이 방식 중단 |
 | 9 | 다음 승인 지점 | 자체 펌웨어 `-DMOTOR_ENABLE=OFF` 빌드 flash → 브링업 L2(LED→UART→IMU→배터리), `prd/rrc-microros-firmware-test-plan.md` 7번 | **여기서 사용자 승인** |
 
+**2026-10-10 진행 결과**: 0~5 완료 — 연결(3.3 V, DPIDR 0x2ba01477), 백업 2회 해시 일치, vendor 빌드와 동일(나머지 0xFF), RDP 0.
+백업 `~/firmware_source/swd_backup_20261010_130702/`. 남은 것: 6 host 복사, 7 정상 복귀 확인.
+
 롤백: 4번 백업(`st-flash write flash_512k.bin 0x08000000`) 또는 vendor `.hex`(UART1 부트로더, troubleshooting/001). 둘 다 쓰기 작업이라 승인 필요.
 주의: 읽기 중 코어가 멈추면 IWDG(약 20 ms)로 리셋될 수 있다 — 모터 스위치를 끄는 이유.
 
