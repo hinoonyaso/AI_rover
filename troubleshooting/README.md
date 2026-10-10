@@ -63,3 +63,4 @@
 | 034 | [상자 회피 시험: DWB·MPPI 모두 상자 앞에서 진행 못 함(shim 반복 회전, global에 상자 없음, 좁은 통로)](034-box-avoidance-stuck-dwb-mppi.md) | 해결 (MPPI 3/3 성공), 우회 폭 조정 중 (footprint 실측 반영, inflation 0.25 미확인) |
 | 035 | [자체 펌웨어 첫 flash: lockup(크리스털 16 MHz를 8 MHz로 가정 → 336 MHz) + 0.8초마다 IWDG 리셋(LCD 태스크 스택 넘침)](035-rrc-m4-first-flash-lockup-and-reset-loop.md) | 해결 (HSE 16 MHz/PLL vendor와 동일, LCD 버퍼 정적화, 실기 확인) |
 | 036 | [자체 펌웨어 모터 첫 시험: 오른쪽 앞바퀴 엔코더 부호 반전 → PID(목표 0)가 최대 PWM까지 가속, e-stop도 못 멈춤](036-rrc-m4-right-wheel-runaway-encoder-sign.md) | 해결 (M2 PWM 짝 교체·부호 전부 +1, 부호 가드, e-stop 유지 — 4바퀴 실기 확인) |
+| 037 | [자체 펌웨어: 전원 완전 차단 후 IMU 값이 멈춤(소프트 리셋 누락)](037-rrc-m4-imu-frozen-after-cold-boot.md) | 해결 (QMI8658 소프트 리셋, 멈춘 값 감지, 냉간 부팅 확인) |

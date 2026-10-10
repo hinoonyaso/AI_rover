@@ -4,8 +4,13 @@ base_node:
     port: /dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00
     baudrate: 1000000
     poll_period_ms: 5
-    wheelbase: 0.216
-    track_width: 0.195
+    # Effective rotation geometry (only (wheelbase + track_width)/2 enters the kinematics, as the arm of wz).
+    # 2026-10-10: 0.216 / 0.195 (Hiwonder values) -> x0.9815 = 0.2120 / 0.1914. Floor test E4 (rrc_m4, 360 deg x5):
+    # the robot turned 366.1 deg for 360 commanded (ratio 0.9833) and the encoder yaw read 358.7 (0.9797);
+    # mean 0.9815. Straight/strafe are unaffected. docs/benchmarks/navigation/encoder_odom_e4_20261010.md
+    # 한글: 회전 팔 길이 실측 보정(이전 0.216/0.195). 직진·옆이동에는 영향 없음.
+    wheelbase: 0.2120
+    track_width: 0.1914
     wheel_diameter: 0.097
     max_linear: 0.2
     max_angular: 1.0

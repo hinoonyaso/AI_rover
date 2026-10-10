@@ -507,7 +507,11 @@ static int fb_write(void *ctx, uint8_t addr, uint8_t reg, const uint8_t *d, size
 {
     fakebus_t *f = ctx;
     if (addr == 0x68 && f->has_mpu) { memcpy(&f->mpu_regs[reg], d, n); return 0; }
-    if (addr == 0x6B && f->has_qmi) { memcpy(&f->qmi_regs[reg], d, n); return 0; }
+    if (addr == 0x6B && f->has_qmi) {
+        memcpy(&f->qmi_regs[reg], d, n);
+        if (reg == 0x60 && d[0] == 0xB0) f->qmi_regs[0x4D] = 0x80; /* soft reset done / 리셋 완료 */
+        return 0;
+    }
     return -1;
 }
 static void fb_delay(uint32_t ms) { (void)ms; }
@@ -552,6 +556,18 @@ static void test_imu(void)
     imu_read(&imu, a, g);
     NEAR(a[0], 1.0f, 1e-4f, "QMI accel x");
     NEAR(g[2], 10.0f, 1e-3f, "QMI gyro z");
+    CHECK(fb.qmi_regs[0x60] == 0xB0 && fb.qmi_regs[0x08] == 0x03, "QMI soft reset then sensors enabled");
+
+    /* frozen data: identical raw samples -> IMU_ERR_FROZEN after IMU_FROZEN_SAMPLES, recovers on change */
+    int frozen_at = -1;
+    for (int i = 0; i < 40; i++) {
+        if (imu_read(&imu, a, g) == IMU_ERR_FROZEN && frozen_at < 0) frozen_at = i;
+    }
+    CHECK(frozen_at == IMU_FROZEN_SAMPLES - 1, "frozen sensor reported after IMU_FROZEN_SAMPLES identical reads");
+    fb.qmi_regs[0x35] ^= 1; /* LSB noise returns */
+    CHECK(imu_read(&imu, a, g) == 0, "changing data reads fine again");
+    fb.qmi_regs[0x35] ^= 1;
+    CHECK(imu_read(&imu, a, g) == 0 && imu.same_count == 0, "alternating noise is never frozen");
 
     memset(&fb, 0, sizeof(fb));
     CHECK(imu_init(&imu, &bus, NULL) == -1 && imu.kind == IMU_NONE, "no IMU -> error, not a crash");

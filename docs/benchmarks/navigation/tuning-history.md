@@ -106,6 +106,8 @@
 | `motor_stop_frame_on_stop` (base_node) | 신규 true → **false** | 10-08 | 정지 프레임이 바닥 울림을 못 멈춤(032) |
 | `scan_match_init` 확신 기준 | score ≥ 0.8 & margin ≥ 0.1, **또는 score ≥ 0.95 & margin ≥ 0.05** | 10-08 | 0.974/0.883이 거부돼서 |
 | AMCL (`amcl.yaml`) | 변경 없음 | — | — |
+| `wheel_twist_source` (base_node, 신규) | 기본 **command**(이전 동작), 시험 시 encoder | 10-10 | 자체 펌웨어 FUNC 0x21 엔코더 odom(RRC 경로 결정) |
+| `wheelbase` / `track_width` (base_node) | 0.216 / 0.195 → **0.2120 / 0.1914** (×0.9815) | 10-10 | E4 회전 360°×5: 실제 366.1°(명령 대비 0.9833), 엔코더 358.7°(0.9797) → 회전 팔 길이 약 2 % 과대. 직진·옆이동 무관. **baseline 비교 시 Before/After 모두 같은 값** |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

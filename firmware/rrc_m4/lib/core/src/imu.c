@@ -1,6 +1,8 @@
 /* 한글: IMU 구현: MPU6050 설정(SMPLRT_DIV=8 → 약 111Hz, ±500dps, ±2g), QMI8658 설정(±512dps, ±4g, 125Hz). */
 #include "core/imu.h"
 
+#include <string.h>
+
 #define MPU_ADDR_LO 0x68
 #define MPU_ADDR_HI 0x69
 #define MPU_REG_SMPLRT_DIV 0x19
@@ -22,6 +24,11 @@
 #define QMI_REG_CTRL3 0x04
 #define QMI_REG_CTRL7 0x08
 #define QMI_REG_AX_L 0x35
+#define QMI_REG_RESET 0x60         /* write 0xB0 = soft reset */
+#define QMI_RESET_VALUE 0xB0
+#define QMI_REG_RESET_DONE 0x4D    /* reads 0x80 when the reset has finished (vendor firmware polls it) */
+#define QMI_RESET_DONE_VALUE 0x80
+#define QMI_RESET_TIMEOUT_MS 100
 
 const imu_axis_map_t IMU_AXIS_MAP_IDENTITY = {{0, 1, 2}, {1, 1, 1}};
 
@@ -82,6 +89,18 @@ static int try_qmi(imu_t *imu, uint8_t addr)
     imu->accel_lsb_per_g = 8192.0f;  /* +-4 g */
     imu->gyro_lsb_per_dps = 64.0f;   /* +-512 dps */
 
+    /* Soft reset and wait for it to finish, as the vendor firmware does. Without it the sensor stayed
+     * frozen after a cold power-on (2026-10-10); it only worked while the vendor had initialised the chip.
+     * 한글: vendor처럼 소프트 리셋 후 완료(0x4D=0x80)를 기다린다. 없으면 전원 투입 직후 측정이 멈췄다. */
+    (void)wr1(b, addr, QMI_REG_RESET, QMI_RESET_VALUE);
+    for (uint32_t waited = 0; waited < QMI_RESET_TIMEOUT_MS; waited += 10) {
+        uint8_t done = 0;
+        if (b->delay_ms) b->delay_ms(10);
+        if (b->read(b->ctx, addr, QMI_REG_RESET_DONE, &done, 1) == 0 && done == QMI_RESET_DONE_VALUE) {
+            break;
+        }
+    }
+
     int rc = wr1(b, addr, QMI_REG_CTRL1, 0x40);  /* address auto-increment */
     rc |= wr1(b, addr, QMI_REG_CTRL2, 0x16);     /* accel +-4 g, 125 Hz */
     rc |= wr1(b, addr, QMI_REG_CTRL3, 0x56);     /* gyro +-512 dps, 125 Hz */
@@ -93,6 +112,8 @@ int imu_init(imu_t *imu, const i2c_bus_t *bus, const imu_axis_map_t *map)
 {
     imu->bus = bus;
     imu->kind = IMU_NONE;
+    imu->same_count = 0;
+    memset(imu->last_raw, 0, sizeof(imu->last_raw));
     imu->map = map ? *map : IMU_AXIS_MAP_IDENTITY;
 
     if (try_mpu(imu, MPU_ADDR_LO) == 0 || try_mpu(imu, MPU_ADDR_HI) == 0 ||
@@ -138,6 +159,16 @@ int imu_read(imu_t *imu, float accel_g[3], float gyro_dps[3])
         }
     } else {
         return -1;
+    }
+    const size_t n = imu->kind == IMU_MPU6050 ? 14u : 12u;
+    if (memcmp(raw, imu->last_raw, n) == 0) {
+        if (imu->same_count < 0xFFFF) imu->same_count++;
+        if (imu->same_count >= IMU_FROZEN_SAMPLES) {
+            return IMU_ERR_FROZEN;
+        }
+    } else {
+        imu->same_count = 0;
+        memcpy(imu->last_raw, raw, n);
     }
     for (int i = 0; i < 3; ++i) {
         const int s = imu->map.src[i];
