@@ -23,6 +23,14 @@ extern "C" {
 #define ENC_MOTOR_GUARD_MIN_RPS 0.3f
 #define ENC_MOTOR_GUARD_PULSE 900.0f
 #define ENC_MOTOR_GUARD_TICKS 100 /* 1 s at the 10 ms control period */
+/* Encoder-sign guard (2026-10-10 bring-up: a wrong ENCODER_SIGN made the PID accelerate a coasting
+ * wheel to full PWM at set point 0, which the stall guard above never sees). A driven wheel must turn
+ * the way it is pushed: |pulse| >= 600 while the measured speed is >= 1 rps the OTHER way and not
+ * slowing down for 200 ms -> latch RUNAWAY. Normal reversals decelerate, so they do not count.
+ * 한글: 큰 PWM과 반대 방향으로 1 rps 넘게 돌면서 감속하지 않는 상태가 200 ms면 래치(엔코더 부호 오류). */
+#define ENC_MOTOR_SIGN_GUARD_PULSE 600.0f
+#define ENC_MOTOR_SIGN_GUARD_RPS 1.0f
+#define ENC_MOTOR_SIGN_GUARD_TICKS 20
 
 typedef enum {
     ENC_MOTOR_FAULT_NONE = 0,
@@ -46,6 +54,8 @@ struct enc_motor {
     void *ctx;
     uint8_t fault;          /* enc_motor_fault_t */
     uint16_t guard_count;
+    uint16_t sign_guard_count;
+    float sign_guard_last_rps; /* |rps| at the previous tick, to tell braking from runaway */
 };
 
 void enc_motor_init(enc_motor_t *m, int32_t ticks_per_circle, float rps_limit,

@@ -62,3 +62,4 @@
 | 033 | [팔을 움직인 뒤 팔 관절 TF·카메라 color TF가 안 나옴](033-arm-tf-stops-after-arm-moves.md) | 미해결 (launch 재시작으로 복구, 재발 없음) |
 | 034 | [상자 회피 시험: DWB·MPPI 모두 상자 앞에서 진행 못 함(shim 반복 회전, global에 상자 없음, 좁은 통로)](034-box-avoidance-stuck-dwb-mppi.md) | 해결 (MPPI 3/3 성공), 우회 폭 조정 중 (footprint 실측 반영, inflation 0.25 미확인) |
 | 035 | [자체 펌웨어 첫 flash: lockup(크리스털 16 MHz를 8 MHz로 가정 → 336 MHz) + 0.8초마다 IWDG 리셋(LCD 태스크 스택 넘침)](035-rrc-m4-first-flash-lockup-and-reset-loop.md) | 해결 (HSE 16 MHz/PLL vendor와 동일, LCD 버퍼 정적화, 실기 확인) |
+| 036 | [자체 펌웨어 모터 첫 시험: 오른쪽 앞바퀴 엔코더 부호 반전 → PID(목표 0)가 최대 PWM까지 가속, e-stop도 못 멈춤](036-rrc-m4-right-wheel-runaway-encoder-sign.md) | 해결(코드), 실기 재확인 대기 (부호 수정, 부호 가드, e-stop 유지) |

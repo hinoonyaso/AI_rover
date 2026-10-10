@@ -20,6 +20,8 @@ void enc_motor_init(enc_motor_t *m, int32_t ticks_per_circle, float rps_limit,
     m->ctx = ctx;
     m->fault = ENC_MOTOR_FAULT_NONE;
     m->guard_count = 0;
+    m->sign_guard_count = 0;
+    m->sign_guard_last_rps = 0.0f;
 }
 
 int enc_motor_set_speed(enc_motor_t *m, float rps)
@@ -46,6 +48,7 @@ void enc_motor_stop(enc_motor_t *m)
     rrc_pid_reset(&m->pid);
     m->current_pulse = 0.0f;
     m->guard_count = 0;
+    m->sign_guard_count = 0;
     if (m->set_pulse) {
         m->set_pulse(m->ctx, 0);
     }
@@ -99,6 +102,22 @@ void enc_motor_control(enc_motor_t *m, float period, int driver_fault)
             pulse = -ENC_MOTOR_PWM_LIMIT;
         }
     }
+
+    /* Encoder-sign guard (see encoder_motor.h). 한글: 엔코더 부호 오류 감시. */
+    const float abs_rps = fabsf(m->rps);
+    if (fabsf(pulse) >= ENC_MOTOR_SIGN_GUARD_PULSE && pulse * m->rps < 0.0f &&
+        abs_rps >= ENC_MOTOR_SIGN_GUARD_RPS && abs_rps >= m->sign_guard_last_rps - 0.05f) {
+        if (++m->sign_guard_count >= ENC_MOTOR_SIGN_GUARD_TICKS) {
+            m->sign_guard_last_rps = abs_rps;
+            m->fault = ENC_MOTOR_FAULT_RUNAWAY;
+            m->current_pulse = 0.0f;
+            m->set_pulse(m->ctx, 0);
+            return;
+        }
+    } else {
+        m->sign_guard_count = 0;
+    }
+    m->sign_guard_last_rps = abs_rps;
 
     /* 한글: 폭주/막힘 감시. 속도 명령이 큰데 PWM이 포화 근처이고 실제 속도가 명령 방향으로 10%도 안 되는 상태가 100틱(1초) 이어지면 래치한다. */
     /* Runaway/stall guard. */

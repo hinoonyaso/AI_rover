@@ -96,6 +96,45 @@ static void test_enc_motor_tracks(void)
     NEAR(m.pid.set_point, 0.0f, 1e-6f, "NaN command becomes 0");
 }
 
+// 한글: 엔코더 부호가 틀린 바퀴가 목표 0에서 관성으로 돌 때(2026-10-10 실기 재현) 200 ms 안팎에 래치되는지,
+//       정상 바퀴의 급반전(+4 → -4 rps)은 래치되지 않는지 확인.
+static void test_enc_motor_sign_guard(void)
+{
+    plant_t p = {3.0f, 8.0f, 0.15f, 0, -1.0f, 0}; /* reversed encoder, wheel already coasting at 3 rps */
+    enc_motor_t m;
+    int64_t unwrapped = 0;
+    enc_motor_init(&m, 1320, 5.0f, 63.0f, 2.6f, 2.4f, 60000, 1, plant_set_pulse, &p);
+    int latched_at = -1, max_pulse = 0;
+    for (int i = 0; i < 300; i++) { /* set point stays 0 (old code: full PWM forever) */
+        plant_step(&p, 0.01f, 1320.0f);
+        feed_motor(&m, &p, 60000, &unwrapped);
+        enc_motor_control(&m, 0.01f, 0);
+        if (abs(p.pulse) > max_pulse) max_pulse = abs(p.pulse);
+        if (m.fault == ENC_MOTOR_FAULT_RUNAWAY && latched_at < 0) latched_at = i;
+    }
+    CHECK(latched_at > 0 && latched_at < 60, "sign guard latches within 0.6 s at set point 0");
+    CHECK(p.pulse == 0, "pulse 0 after the sign-guard latch");
+
+    plant_t q = {0, 8.0f, 0.15f, 0, 1.0f, 0}; /* healthy, fast wheel */
+    enc_motor_t m2;
+    unwrapped = 0;
+    enc_motor_init(&m2, 1320, 5.0f, 63.0f, 2.6f, 2.4f, 60000, 1, plant_set_pulse, &q);
+    enc_motor_set_speed(&m2, 4.0f);
+    for (int i = 0; i < 300; i++) {
+        plant_step(&q, 0.01f, 1320.0f);
+        feed_motor(&m2, &q, 60000, &unwrapped);
+        enc_motor_control(&m2, 0.01f, 0);
+    }
+    enc_motor_set_speed(&m2, -4.0f);
+    for (int i = 0; i < 300; i++) {
+        plant_step(&q, 0.01f, 1320.0f);
+        feed_motor(&m2, &q, 60000, &unwrapped);
+        enc_motor_control(&m2, 0.01f, 0);
+    }
+    CHECK(m2.fault == ENC_MOTOR_FAULT_NONE, "full reversal +4 -> -4 rps does not trip the sign guard");
+    NEAR(m2.rps, -4.0f, 0.3f, "reversal reaches -4 rps");
+}
+
 // 한글: 60000 오버플로(상향/하향)를 넘어도 속도가 변하지 않는지 확인.
 static void test_enc_motor_wraps(void)
 {
@@ -567,6 +606,7 @@ int main(void)
     test_enc_motor_wraps();
     test_enc_motor_dead_zone_and_fault();
     test_enc_motor_runaway_latch();
+    test_enc_motor_sign_guard();
     test_mecanum();
     test_robot_ctrl();
     test_blink();

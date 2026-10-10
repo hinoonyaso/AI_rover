@@ -44,8 +44,13 @@
 #define MOTOR_PID_KI 2.6f
 #define MOTOR_PID_KD 2.4f
 #define MOTOR_ENCODER_TIM_OVERFLOW 60000
-/* Encoder direction per motor (+1 / -1): ASSUMED +1. A wrong sign trips the runaway latch. */
-#define MOTOR_ENCODER_SIGN {1, 1, 1, 1}
+/* Encoder direction per motor (+1 / -1). */
+/* 2026-10-10 bring-up (RAW_PWM, wheels lifted): +PWM drives every tested wheel forward; encoder count
+ * follows +PWM on M0 (left front) and M1 (left rear) but is NEGATIVE on M2 (right front) -> -1.
+ * M3 (right rear) not tested yet: -1 assumed like M2 (vendor: right wheels have negative rps forward);
+ * a wrong sign is now caught by the encoder-sign guard (encoder_motor.h). troubleshooting/036.
+ * 한글: M2 엔코더 부호 반전 실측, M3는 미시험(-1 추정). */
+#define MOTOR_ENCODER_SIGN {1, 1, -1, -1}
 
 /* ---- safety ---- */
 #define CMD_TIMEOUT_MS 1000

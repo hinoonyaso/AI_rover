@@ -78,6 +78,17 @@ static void control_task(void *arg)
         taskEXIT_CRITICAL();
 
         robot_tick(&g_app.robot, now);
+        if (g_app.robot.estop) {
+            /* Hold every wheel at 0 while e-stopped: robot_estop() zeroes the PWM once, but running the
+             * PID afterwards drove a coasting wheel again (2026-10-10 bring-up, troubleshooting/036).
+             * 한글: e-stop 동안은 매 주기 정지 유지, PID를 돌리지 않는다. */
+            for (uint8_t i = 0; i < 4; i++) {
+                g_app.raw_pwm[i] = 0;
+                enc_motor_stop(&g_app.motors[i]);
+            }
+            hb_beat(HB_CONTROL);
+            continue;
+        }
         for (uint8_t i = 0; i < 4; i++) {
             if (g_app.raw_pwm[i] != 0) {
                 if ((int32_t)(now - g_app.raw_pwm_until_ms[i]) > 0 || g_app.robot.estop) {
