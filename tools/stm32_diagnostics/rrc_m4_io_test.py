@@ -9,6 +9,8 @@ Usage: python3 tools/stm32_diagnostics/rrc_m4_io_test.py <mode> [options]
   gamepad  [--secs 20]          print gamepad changes (FUNC8) and raw HID reports (0x23)
   sbus     [--secs 10]          print SBUS frames (FUNC9) if a receiver is connected
   pwm-servo --id 1 --pulse 1500 [--time 500]   move one PWM servo (FUNC4 sub 0x03); 500..2500 us
+  bus-servo --id 1 --delta 20 [--time 1000]    THE ARM MOVES: read the position, move by +delta pulses
+                                               (0.24 deg each), read back, move back, read back (FUNC5)
 Needs base_node NOT running (it owns the serial port).
 """
 import argparse
@@ -43,9 +45,50 @@ def listen(ser, secs, want, show):
     return seen
 
 
+def read_bus_servo(ser, sid, tries=4):
+    """FUNC5 read-position request [05, id] -> response [id, 05, success, pulse i16 LE]. None on failure."""
+    for _ in range(tries):
+        ser.reset_input_buffer()
+        ser.write(frame(0x05, bytes([0x05, sid])))
+        buf, t0 = b'', time.time()
+        while time.time() - t0 < 0.4:
+            buf += ser.read(512)
+            for f, d in frames(buf):
+                if f == 0x05 and len(d) == 5 and d[1] == 0x05 and d[0] == sid and d[2] == 0:
+                    return struct.unpack('<h', d[3:5])[0]
+    return None
+
+
+def bus_servo_test(ser, args):
+    if not 1 <= args.id <= 5 and args.id != 10:
+        sys.exit('servo id must be 1..5 (arm) or 10 (gripper)')
+    if abs(args.delta) > 40 or not 200 <= args.time <= 5000:
+        sys.exit('|delta| <= 40 pulses (about 10 deg), time 200..5000 ms')
+    p0 = read_bus_servo(ser, args.id)
+    if p0 is None:
+        sys.exit(f'servo {args.id}: no position reading (bus servo direction pins? servo powered?)')
+    target = p0 + args.delta
+    if not 100 <= target <= 900:
+        sys.exit(f'target {target} outside the safe 100..900 pulse range')
+    print(f'servo {args.id}: position {p0} -> moving to {target} in {args.time} ms')
+
+    def move(pulse):
+        payload = bytes([0x01]) + struct.pack('<H', args.time) + bytes([1, args.id])
+        payload += struct.pack('<H', pulse)
+        ser.write(frame(0x05, payload))
+        time.sleep(args.time / 1000 + 0.6)
+    move(target)
+    p1 = read_bus_servo(ser, args.id)
+    print(f'  after move: {p1} (moved {None if p1 is None else p1 - p0:+d})')
+    print(f'servo {args.id}: moving back to {p0}')
+    move(p0)
+    p2 = read_bus_servo(ser, args.id)
+    print(f'  after return: {p2} (off the start by {None if p2 is None else p2 - p0:+d})')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument('mode', choices=['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo'])
+    ap.add_argument('mode', choices=['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo'])
     ap.add_argument('--secs', type=float, default=20.0)
     ap.add_argument('--on', type=int, default=100)
     ap.add_argument('--off', type=int, default=100)
@@ -54,6 +97,7 @@ def main():
     ap.add_argument('--id', type=int, default=1)
     ap.add_argument('--pulse', type=int, default=1500)
     ap.add_argument('--time', type=int, default=500)
+    ap.add_argument('--delta', type=int, default=20, help='bus-servo: pulses (0.24 deg each), |delta| <= 40')
     args = ap.parse_args()
     ser = serial.Serial(PORT, 1_000_000, timeout=0.05)
     ser.reset_input_buffer()
@@ -82,6 +126,8 @@ def main():
         n = listen(ser, args.secs, {0x09}, lambda t, f, d: print(
             f'  {t:5.1f} s  ch1-4 {struct.unpack("<4h", d[:8])} loss {d[34]} failsafe {d[35]}'))
         print(f'{n} SBUS frames' + ('' if n else ' (no receiver connected, or no signal)'))
+    elif args.mode == 'bus-servo':
+        bus_servo_test(ser, args)
     elif args.mode == 'pwm-servo':
         if not 500 <= args.pulse <= 2500:
             sys.exit('pulse must be 500..2500 us')
