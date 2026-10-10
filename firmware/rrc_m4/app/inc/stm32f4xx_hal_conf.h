@@ -18,8 +18,9 @@
 #define HAL_UART_MODULE_ENABLED
 #define HAL_EXTI_MODULE_ENABLED
 
-// 한글: 외부 크리스털 8MHz, LSI 32kHz(IWDG 클럭).
-#define HSE_VALUE 8000000U
+// 한글: 외부 크리스털 16MHz(2026-10-10 vendor 바이너리로 확정, 8MHz 아님), LSI 32kHz(IWDG 클럭).
+// External crystal 16 MHz (confirmed from the vendor binary 2026-10-10; was wrongly 8 MHz).
+#define HSE_VALUE 16000000U
 #define HSE_STARTUP_TIMEOUT 100U
 #define HSI_VALUE 16000000U
 #define LSI_VALUE 32000U

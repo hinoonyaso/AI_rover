@@ -69,6 +69,6 @@ PE7=1, PE8=1, PE10=0, PB10=0, PB11=0, PD11=1, PD12=1, PD13=0, PD14=1, PC8=1, PC9
 DMA1 stream 0/1/3/4/5/6, TIM2/3/4/5, TIM7, TIM13(IRQ 44), USART2/3, EXTI15_10(IRQ 40), UART5(IRQ 53), USART6(IRQ 71), OTG_HS(IRQ 77).
 
 ## 시스템
-- 클럭: 8 MHz 외부 크리스털, HCLK 168 MHz, APB1 타이머 84 MHz, APB2 타이머 168 MHz [D 1.1.1 "168MHz", 3.9 "TIM6 APB1 84MHz"].
+- 클럭: **16 MHz 외부 크리스털**(2026-10-10 **확정** [B]: vendor `HAL_RCC_GetSysClockFreq`가 16000000 사용, SystemClock_Config M=8 N=168 P=2 Q=7. 이전의 "8 MHz"는 추정이었고 **폐기** — 이 값으로 자체 펌웨어가 336 MHz로 오버클럭돼 lockup, troubleshooting/035), HCLK 168 MHz, APB1 타이머 84 MHz, APB2 타이머 168 MHz [D 1.1.1 "168MHz", 3.9 "TIM6 APB1 84MHz"].
 - RTOS: CMSIS-RTOS(FreeRTOS), 태스크 9개: default/oled/bluetooth/gui/app/imu/sbus_rx/packet_rx/packet_tx [B 문자열].
 - IWDG: 바이너리에서 prescaler=3(÷32?), reload=0x13 → 약 20 ms로 매우 짧고 `app_task`만 먹임 (`troubleshooting/001`). 새 펌웨어는 태스크별 heartbeat를 모두 확인하는 감시 태스크가 먹인다.

@@ -115,26 +115,33 @@ void drv_lcd_backlight(int on)
     HAL_GPIO_WritePin(LCD_BLK_PORT, LCD_BLK_PIN, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
+/* Pixel buffers are static, not on the stack: the 2.5 KB text-line buffer alone filled the whole
+ * lcd task stack (640 words) and the FreeRTOS overflow check reset the board ~275 ms after boot
+ * (2026-10-10 bring-up, troubleshooting/035). Only the lcd task calls this driver, so no locking.
+ * 한글: 픽셀 버퍼를 스택에서 정적 메모리로 옮김 — 2.5 KB 버퍼가 lcd 태스크 스택(2.5 KB)을 넘쳐 부팅 275 ms마다 리셋됐다. */
+static uint8_t g_line_buf[160 * 2];
+static uint8_t g_text_buf[160 * 2 * 8]; /* 8 pixel rows of the text line */
+
 void drv_lcd_clear(uint16_t color)
 {
     if (!g_ready) return;
-    uint8_t line[160 * 2];
+    uint8_t *line = g_line_buf;
     for (int i = 0; i < 160; i++) {
         line[2 * i] = (uint8_t)(color >> 8);
         line[2 * i + 1] = (uint8_t)color;
     }
     set_window(0, 0, 159, 79);
     for (int y = 0; y < 80; y++) {
-        write_data(line, sizeof(line));
+        write_data(line, sizeof(g_line_buf));
     }
 }
 
 void drv_lcd_print(uint8_t row, const char *text, uint16_t fg, uint16_t bg)
 {
-    uint8_t buf[160 * 2 * 8]; /* 8 pixel rows of the text line */
+    uint8_t *buf = g_text_buf;
     if (!g_ready || row >= LCD_ROWS) return;
 
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0, sizeof(g_text_buf));
     for (int px = 0; px < 160; px++) {
         for (int py = 0; py < 8; py++) {
             buf[(py * 160 + px) * 2] = (uint8_t)(bg >> 8);
@@ -157,5 +164,5 @@ void drv_lcd_print(uint8_t row, const char *text, uint16_t fg, uint16_t bg)
         }
     }
     set_window(0, (uint16_t)(row * 8), 159, (uint16_t)(row * 8 + 7));
-    write_data(buf, sizeof(buf));
+    write_data(buf, sizeof(g_text_buf));
 }

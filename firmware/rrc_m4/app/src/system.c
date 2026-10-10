@@ -21,7 +21,11 @@ void system_capture_reset_cause(void)
     __HAL_RCC_CLEAR_RESET_FLAGS();
 }
 
-/* HSE 8 MHz -> SYSCLK 168 MHz, USB 48 MHz, APB1 42 MHz (timers 84 MHz), APB2 84 MHz (timers 168 MHz). */
+/* HSE 16 MHz -> SYSCLK 168 MHz, USB 48 MHz, APB1 42 MHz (timers 84 MHz), APB2 84 MHz (timers 168 MHz).
+ * 2026-10-10: the crystal is 16 MHz, not 8 MHz (vendor binary: HAL_RCC_GetSysClockFreq uses 16000000 for
+ * the PLL source, SystemClock_Config M=8 N=168 P=2). With the old 8 MHz assumption (M=8 N=336) the chip ran
+ * at 336 MHz (VCO 672 MHz > 432 max), flash reads went random and the core locked up (troubleshooting/035).
+ * 한글: 크리스털은 16 MHz(vendor 바이너리로 확인). 8 MHz 가정이면 336 MHz로 2배 오버클럭되어 lockup이 났다. */
 void system_clock_config(void)
 {
     RCC_OscInitTypeDef osc = {0};
@@ -34,8 +38,8 @@ void system_clock_config(void)
     osc.LSIState = RCC_LSI_ON;
     osc.PLL.PLLState = RCC_PLL_ON;
     osc.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    osc.PLL.PLLM = 8;
-    osc.PLL.PLLN = 336;
+    osc.PLL.PLLM = 8;   /* 16 MHz / 8 = 2 MHz VCO input (ST's recommended value, low jitter) */
+    osc.PLL.PLLN = 168; /* VCO 336 MHz; /P2 = 168 MHz, /Q7 = 48 MHz (same as the vendor firmware) */
     osc.PLL.PLLP = RCC_PLLP_DIV2;
     osc.PLL.PLLQ = 7;
     if (HAL_RCC_OscConfig(&osc) != HAL_OK) {

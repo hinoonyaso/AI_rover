@@ -1,7 +1,7 @@
 # rrc_m4 — STM32F407 RRC 보드 자체 펌웨어 (코드/빌드 완료, 실기 검증 전)
 
 PRD: `prd/rrc-microros-firmware.md`, 시험 계획: `prd/rrc-microros-firmware-test-plan.md`, 핀맵과 신뢰 수준: `firmware_source/PINMAP.md`.
-**아직 한 번도 보드에 올리지 않았다.** 이 디렉터리의 결과는 L0(빌드 + 호스트 단위 시험)까지 확인된 것이다.
+**2026-10-10 처음 보드에 올림**(RRC, 모터 출력 OFF): 통신·IMU·배터리 텔레메트리 정상(아래 "SWD 디버거 첫날 순서" 결과, troubleshooting/035). 모터·서보·LCD 표시 등 나머지는 미확인.
 
 ## 구조
 
@@ -78,6 +78,12 @@ LCD 제어 핀 배정, 게임패드 HID 리포트 레이아웃, 부저 능동/�
 
 **2026-10-10 진행 결과**: 0~5 완료 — 연결(3.3 V, DPIDR 0x2ba01477), 백업 2회 해시 일치, vendor 빌드와 동일(나머지 0xFF), RDP 0.
 백업 `~/firmware_source/swd_backup_20261010_130702/`. 6 host 복사 완료(사용자). 7 정상 복귀: 디버거 연결된 채 base.launch → IMU 111 Hz, 배터리 12.55 V(1 Hz), 관절 6개 읽기 정상, silent/오류 로그 없음 → **vendor 펌웨어 그대로 정상 동작**. 다음은 9(자체 펌웨어 flash, 승인 지점).
+
+**2026-10-10 9단계(자체 펌웨어 flash, 사용자 승인·사용자 실행)**: `build-arm-bringup`(RRC, `MOTOR_ENABLE=OFF`).
+첫 flash는 lockup(크리스털 16 MHz를 8 MHz로 가정), 두 번째는 0.8초마다 IWDG 리셋(LCD 태스크 스택 넘침) — 둘 다 수정(troubleshooting/035).
+세 번째: uptime 연속 증가, IMU/WHEEL 50 Hz, STATUS 10 Hz, 배터리 2 Hz 12.528 V, CRC 오류 0.
+flash 명령(사용자 실행, 쓰기): `openocd -f interface/jlink.cfg -c "transport select swd" -c "adapter speed 400" -f target/stm32f4x.cfg -c "reset_config none" -c init -c "reset halt" -c "stm32f2x mass_erase 0" -c "flash write_image build-arm-bringup/rrc_m4.elf" -c "verify_image build-arm-bringup/rrc_m4.elf" -c "reset run" -c shutdown`
+(`adapter speed 400`은 target cfg가 2000 kHz로 덮어씀 — 출력의 "clock speed 2000 kHz", 그래도 문제없었음).
 
 롤백: 4번 백업(`st-flash write flash_512k.bin 0x08000000`) 또는 vendor `.hex`(UART1 부트로더, troubleshooting/001). 둘 다 쓰기 작업이라 승인 필요.
 주의: 읽기 중 코어가 멈추면 IWDG(약 20 ms)로 리셋될 수 있다 — 모터 스위치를 끄는 이유.

@@ -73,7 +73,16 @@
 - [x] 프로토콜 코덱(CRC8-MAXIM + FUNC 0~9) 순수 C, 호스트 유닛테스트 — `firmware/rrc_m4/lib/protocol/` (완료: FUNC0~9 pack/unpack, 골든벡터=PDF 예제+오늘 실제로 로봇에 보낸 프레임, 호스트 테스트 전부 통과, Cortex-M4 타겟 프리스탠딩 컴파일도 확인. 버스서보 부가 서브커맨드·PWM서보 deviation upload 서브커맨드 값은 미확정으로 남겨둠)
 - [x] `firmware/rrc_m4/` 프로젝트 뼈대 (CMake) — 코덱 라이브러리만 있음, ARM 링크/CMSIS/HAL vendor는 아직
 - [ ] (ST-Link 도착 후) SWD로 정품 펌웨어 관찰하며 핀맵 확정
-- [ ] 신규 펌웨어 단계별 브링업 (LED→UART→프로토콜/IWDG 재설계→IMU→배터리→**모터**→부저/LED→버튼→SBUS→PWM서보→버스서보→OLED/블루투스/게임패드 USB Host)
+- [~] 신규 펌웨어 단계별 브링업 (LED→UART→프로토콜/IWDG 재설계→IMU→배터리→**모터**→부저/LED→버튼→SBUS→PWM서보→버스서보→OLED/블루투스/게임패드 USB Host)
+  - [x] 2026-10-10 첫 flash(RRC, MOTOR_ENABLE=OFF, J-Link+openocd): 두 문제 수정 후 동작 — 크리스털 16 MHz(8 MHz 가정으로 336 MHz 오버클럭 lockup), LCD 태스크 스택 넘침(0.8초 IWDG 리셋). troubleshooting/035
+  - [x] UART(USART3 1 Mbaud) 텔레메트리 CRC 오류 0, IWDG 감독 정상(uptime 연속), STATUS 10 Hz / WHEEL 50 Hz
+  - [x] IMU(QMI8658 자동판별) 50 Hz, |a| 0.96 g, 자이로 bias가 vendor 시절 `base.yaml` 값과 일치
+  - [x] 배터리 2 Hz 12.528 V(vendor 12.55 V와 일치)
+  - [ ] LED 깜빡임·LCD 상태 화면 육안 확인(사용자)
+  - [ ] 모터 fault 핀(PD3): 스위치 OFF에서 4개 모두 fault=1 → 스위치 ON에서 해제되는지(극성 추정 확인)
+  - [ ] base_node(호스트)와 연동: `/imu/data_raw`, `/battery_state`, 버스 서보 읽기(FUNC5) 동작
+  - [ ] 태스크 스택 여유(`uxTaskGetStackHighWaterMark`) 기록
+  - [ ] 모터(바퀴 띄움, MOTOR_ENABLE=ON 빌드, 별도 승인) → 극성/엔코더 부호 → PID
 
 
 #### RRC 완성 + micro-ROS 적용 (2026-10-05 착수, PRD `prd/rrc-microros-firmware.md`, 시험 계획 `prd/rrc-microros-firmware-test-plan.md`)
