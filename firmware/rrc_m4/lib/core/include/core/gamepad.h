@@ -1,9 +1,10 @@
 /* 한글: USB 게임패드 리포트→FUNC8. 이 수신기의 원시 HID 레이아웃은 문서가 없어서 기본 레이아웃은 "추정(미검증)"이며 테이블로 고칠 수 있다. */
 /* USB gamepad (2.4 GHz PS2-style receiver on the USB HOST port) report -> FUNC8 state.
- * Vendor button masks are from the program analysis 3.12 (usbh_hid_gamepad.h). The raw HID
- * report layout of this receiver is NOT documented anywhere we have: the default layout below
- * is an assumption (UNVERIFIED) and the layout is table-driven so it can be corrected after
- * capturing a real report with the raw-report debug function (see app/usb_gamepad.c). */
+ * Vendor button masks are from the program analysis 3.12 (usbh_hid_gamepad.h). The raw HID report
+ * layout of this receiver is not documented anywhere; it was MEASURED on 2026-10-10 from raw 0x23
+ * captures (see gamepad.c) and the parser is table-driven. L1's vendor mask (0x0400) is assigned by
+ * function, not by bit position: the L1 key is raw byte6 bit6 on this receiver. The host side of the
+ * vendor FUNC8 semantics (which mask the Jetson expects for L1) is unverified. */
 #ifndef CORE_GAMEPAD_H
 #define CORE_GAMEPAD_H
 
@@ -18,6 +19,7 @@ extern "C" {
 #define GAMEPAD_MASK_R2 0x0002u
 #define GAMEPAD_MASK_SELECT 0x0004u
 #define GAMEPAD_MASK_START 0x0008u
+#define GAMEPAD_MASK_MODE 0x0010u /* the receiver's MODE button; not in the vendor mask list (gap at 0x10) */
 #define GAMEPAD_MASK_L3 0x0020u
 #define GAMEPAD_MASK_R3 0x0040u
 #define GAMEPAD_MASK_CROSS 0x0100u

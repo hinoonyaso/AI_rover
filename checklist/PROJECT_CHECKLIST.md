@@ -80,6 +80,9 @@
   - [x] 배터리 2 Hz 12.528 V(vendor 12.55 V와 일치)
   - [x] LED: PE10, 호스트 LED 명령(FUNC1)으로 깜빡임 확인(평소 꺼짐은 설계대로)
   - [x] 상태 화면: 실제는 **SSD1306 128×32 OLED(I2C 0x3C, IMU 버스 공유)** — SPI2 LCD 가정 폐기, 드라이버 교체 후 4줄 표시 확인, IMU 49.6 Hz 유지(troubleshooting/035)
+  - [x] 버튼 2개(PE0/PE1, 2026-10-11): PRESSED / CLICK / LONGPRESS / DOUBLE_CLICK 모두 두 버튼에서 수신(SWD로도 누르면 핀이 0). 어느 물리 버튼이 id 1/2인지는 미표시
+  - [x] 부저(FUNC2, 2026-10-11): 0.2초 × 3회 소리 확인(사용자)
+  - [x] USB 게임패드(2026-10-11): 중립에서 버튼이 눌린 것으로 읽던 버그 수정(HID 리포트 ID 때문에 한 칸씩 밀림, 레이아웃 실측 확정) → 전 버튼·방향키·스틱 FUNC8 정상(troubleshooting/039)
   - [x] 모터 fault 핀(PD3) 극성 확정(2026-10-10): 모터 스위치 OFF → fault [1,1,1,1](드라이버 무전원), ON → [0,0,0,0]. **High = fault 확정**. uptime 331 s 동안 리셋 없음
   - [x] base_node(호스트, 수정 없이)와 연동(2026-10-10): `/imu/data_raw` 50 Hz(vendor 111 Hz), 자이로 bias 보정 후 ≈0.01 rad/s, |a| 9.43 m/s²; `/battery_state` 12.528 V; `/joint_states` 5 Hz 6관절(버스 서보 FUNC5 읽기 동작 → PE7/PE8 방향 핀 조합 OK); `/odom` 30 Hz(EKF). 오류/silent 로그 없음. 팔·모터 명령은 미시험
   - [~] 태스크 스택 여유: 진단 프레임 0x24(DIAG 0x06 요청 시) + `rrc_m4_diag.py` 구현(2026-10-10), 실기 기록 남음

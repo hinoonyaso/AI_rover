@@ -517,15 +517,46 @@ static void test_sbus(void)
     CHECK(got == 1 && st.channels[15] == 192 + 1500, "stream front-end resyncs after junk");
 }
 
+// 한글: 2026-10-10 실측 리포트(바퀴 띄운 채 가만히 두고, 버튼을 알려 준 순서대로 하나씩 눌러 캡처)를 그대로 시험 값으로 쓴다.
 static void test_gamepad(void)
 {
-    const uint8_t rep[8] = {128, 0, 255, 128, 0x20 | 0x02, 0x00, 0, 0}; /* hat=2, button bit5 (CROSS) */
+    /* 07 | LX LY RX RY | hat | byte6 | byte7 | R2a L2a | 0 */
+    const uint8_t idle[11] = {0x07, 0x7f, 0x7f, 0x7f, 0x7f, 0x0f, 0, 0, 0, 0, 0};
     gamepad_state_t g;
-    CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, rep, 8, &g) == 0, "parse");
-    CHECK(g.lx == 0 && g.ly == -128 && g.rx == 127 && g.ry == 0, "axes centred at 128");
-    CHECK(g.hat == (0x08 | 2), "hat pressed");
-    CHECK(g.buttons == GAMEPAD_MASK_CROSS, "button mapped");
-    CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, rep, 3, &g) == -1, "short report rejected");
+    CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, idle, 11, &g) == 0, "parse idle");
+    CHECK(g.buttons == 0 && g.hat == 0, "idle: no buttons, hat released (was buttons 0x8f03 with the old guess)");
+    CHECK(g.lx == -1 && g.ly == -1 && g.rx == -1 && g.ry == -1, "idle sticks ~ centre (0x7f)");
+
+    struct { int idx; uint8_t val; uint16_t want; const char *name; } keys[] = {
+        {6, 0x10, GAMEPAD_MASK_TRIANGLE, "Y"}, {6, 0x02, GAMEPAD_MASK_CIRCLE, "B"},
+        {6, 0x01, GAMEPAD_MASK_CROSS, "A"}, {6, 0x08, GAMEPAD_MASK_SQUARE, "X"},
+        {6, 0x40, GAMEPAD_MASK_L1, "L1"}, {6, 0x80, GAMEPAD_MASK_R1, "R1"},
+        {7, 0x01, GAMEPAD_MASK_L2, "L2"}, {7, 0x02, GAMEPAD_MASK_R2, "R2"},
+        {7, 0x04, GAMEPAD_MASK_SELECT, "SELECT"}, {7, 0x08, GAMEPAD_MASK_START, "START"},
+        {7, 0x10, GAMEPAD_MASK_MODE, "MODE"}, {7, 0x20, GAMEPAD_MASK_L3, "L3"}, {7, 0x40, GAMEPAD_MASK_R3, "R3"},
+    };
+    for (size_t k = 0; k < sizeof(keys) / sizeof(keys[0]); k++) {
+        uint8_t r[11];
+        memcpy(r, idle, sizeof(r));
+        r[keys[k].idx] = keys[k].val;
+        char msg[40];
+        snprintf(msg, sizeof(msg), "button %s", keys[k].name);
+        CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, r, 11, &g) == 0 && g.buttons == keys[k].want, msg);
+    }
+    const uint8_t hats[4] = {0x00, 0x02, 0x04, 0x06}; /* up, right, down, left */
+    for (int k = 0; k < 4; k++) {
+        uint8_t r[11];
+        memcpy(r, idle, sizeof(r));
+        r[5] = hats[k];
+        CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, r, 11, &g) == 0 && g.hat == (0x08 | hats[k] >> 0) &&
+              g.buttons == 0, "hat direction");
+    }
+    uint8_t s2[11];
+    memcpy(s2, idle, sizeof(s2));
+    s2[1] = 0xff; s2[2] = 0x00; s2[3] = 0x00; s2[4] = 0xff; /* LX right, LY up, RX left, RY down */
+    CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, s2, 11, &g) == 0 && g.lx == 127 && g.ly == -128 &&
+          g.rx == -128 && g.ry == 127, "stick extremes (0 = left/up, 0xff = right/down)");
+    CHECK(gamepad_parse_report(&GAMEPAD_LAYOUT_DEFAULT, idle, 7, &g) == -1, "short report rejected");
 }
 
 // 한글: 가짜 I2C 버스: MPU6050/QMI8658 탐색과 변환을 하드웨어 없이 시험한다.
