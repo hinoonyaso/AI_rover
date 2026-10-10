@@ -225,30 +225,26 @@ static void ui_task(void *arg)
 static void lcd_task(void *arg)
 {
     (void)arg;
-    char line[LCD_COLS + 1];
+    char line[48]; /* longer than a display row: drv_lcd_print stops at LCD_COLS / 한 줄보다 길게, 출력 때 잘림 */
 
     if (drv_lcd_init() != 0) {
         vTaskDelete(NULL);
     }
     for (;;) {
+        /* 128x32 OLED: 4 lines x 21 chars (2026-10-10, was 7 lines for the assumed 80x160 LCD).
+         * 한글: 128x32 OLED라 4줄 x 21자로 줄임. */
         const robot_ctrl_t *r = &g_app.robot;
-        snprintf(line, sizeof(line), "JETROVER RRC-M4");
-        drv_lcd_print(0, line, LCD_CYAN, LCD_BLACK);
-        snprintf(line, sizeof(line), "COMM %s", COMM_MODE == COMM_MODE_MICROROS ? "MICRO-ROS" : "RRC");
-        drv_lcd_print(1, line, LCD_WHITE, LCD_BLACK);
-        snprintf(line, sizeof(line), "BAT %u.%03u V", g_app.battery.millivolts / 1000, g_app.battery.millivolts % 1000);
-        drv_lcd_print(2, line, g_app.robot.low_battery ? LCD_RED : LCD_GREEN, LCD_BLACK);
-        snprintf(line, sizeof(line), "IMU %s %lu/s", g_app.imu_ok ? (g_app.imu.kind == IMU_MPU6050 ? "MPU6050" : "QMI8658") : "NONE",
-                 (unsigned long)g_app.imu_samples);
-        drv_lcd_print(3, line, g_app.imu_ok ? LCD_WHITE : LCD_RED, LCD_BLACK);
-        snprintf(line, sizeof(line), "MOTOR %s %s", r->enabled ? "EN" : "OFF", r->estop ? "ESTOP" : (r->moving ? "RUN" : "IDLE"));
-        drv_lcd_print(4, line, r->estop ? LCD_RED : LCD_WHITE, LCD_BLACK);
-        snprintf(line, sizeof(line), "FAULT %d %d %d %d", g_app.motors[0].fault, g_app.motors[1].fault,
-                 g_app.motors[2].fault, g_app.motors[3].fault);
-        drv_lcd_print(5, line, LCD_YELLOW, LCD_BLACK);
-        snprintf(line, sizeof(line), "R%02lX %lus H%uK", (unsigned long)g_app.reset_cause, (unsigned long)(app_now_ms() / 1000),
-                 (unsigned)(xPortGetMinimumEverFreeHeapSize() / 1024));
-        drv_lcd_print(6, line, LCD_WHITE, LCD_BLACK);
+        snprintf(line, sizeof(line), "RRC-M4 %s %lus R%02lX", COMM_MODE == COMM_MODE_MICROROS ? "UROS" : "RRC",
+                 (unsigned long)(app_now_ms() / 1000), (unsigned long)g_app.reset_cause);
+        drv_lcd_print(0, line, LCD_WHITE, LCD_BLACK);
+        snprintf(line, sizeof(line), "BAT %u.%03uV%s", g_app.battery.millivolts / 1000, g_app.battery.millivolts % 1000,
+                 g_app.robot.low_battery ? " LOW" : "");
+        drv_lcd_print(1, line, LCD_WHITE, g_app.robot.low_battery ? LCD_WHITE : LCD_BLACK);
+        snprintf(line, sizeof(line), "IMU %s", g_app.imu_ok ? (g_app.imu.kind == IMU_MPU6050 ? "MPU6050" : "QMI8658") : "NONE");
+        drv_lcd_print(2, line, LCD_WHITE, g_app.imu_ok ? LCD_BLACK : LCD_WHITE);
+        snprintf(line, sizeof(line), "MOT %s %s F%d%d%d%d", r->enabled ? "EN" : "OFF", r->estop ? "ESTOP" : (r->moving ? "RUN" : "IDLE"),
+                 g_app.motors[0].fault, g_app.motors[1].fault, g_app.motors[2].fault, g_app.motors[3].fault);
+        drv_lcd_print(3, line, LCD_WHITE, r->estop ? LCD_WHITE : LCD_BLACK);
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
@@ -466,6 +462,7 @@ void app_create_tasks(void)
 {
     app_comm_init();
     drv_gpio_safe_init();
+    drv_i2c_shared_init(); /* IMU + OLED bus and its mutex, before any task touches it */
     drv_motor_init((enc_motor_t *[]){&g_app.motors[0], &g_app.motors[1], &g_app.motors[2], &g_app.motors[3]});
     drv_battery_init();
     drv_pwm_servo_init();

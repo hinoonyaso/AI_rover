@@ -1,168 +1,85 @@
-/* 한글: ST7735S 드라이버(가로 모드, 오프셋 x=1,y=26). 한 줄(8픽셀 높이)씩 그려 RAM을 아낀다. */
+/* 한글: 보드 상태 화면 = SSD1306 128x32 흑백 OLED, I2C 주소 0x3C, IMU와 같은 소프트웨어 I2C 버스(PB10/PB11)를 뮤텍스로 공유.
+ *       2026-10-10 vendor 바이너리 분석으로 확인(u8g2 ssd1306_128x32_univision 초기화, oled_mutex) — 이전의 "ST7735 SPI2 LCD"는 추정이 틀렸다.
+ *       한 줄 = 한 페이지(8픽셀)씩 보내고 버스를 놓아 IMU가 오래 기다리지 않게 한다. */
+/* Status display: SSD1306 128x32 monochrome OLED at I2C 0x3C on the bit-banged IMU bus (PB10/PB11),
+ * shared through the bus mutex in drv_imu.c. Identified 2026-10-10 from the vendor binary (u8g2
+ * ssd1306_128x32_univision init sequence, "oled_mutex"); the earlier ST7735/SPI2 assumption was wrong
+ * (troubleshooting/035). Each text row is one 8-pixel page sent in its own transaction, so the IMU
+ * waits at most one page (~5 ms at ~250 kHz). Only the lcd task calls this driver. */
 #include "drv_lcd.h"
 
 #include <string.h>
 
-#include "FreeRTOS.h"
-#include "board.h"
+#include "drv_imu.h"
 #include "lcd_font.h"
-#include "task.h"
 
-static SPI_HandleTypeDef hspi2;
+#define OLED_ADDR 0x3C
+#define OLED_W 128
+
 static uint8_t g_ready;
+static uint8_t g_page[1 + OLED_W]; /* control byte 0x40 + one 128-column page */
 
-#define X_OFFSET 1
-#define Y_OFFSET 26
+/* Vendor init sequence (u8x8 ssd1306_128x32_univision): display off, clock, mux 32, offset 0,
+ * start line 0, charge pump on, horizontal addressing, segment/COM remap, COM pins 0x02,
+ * contrast 0x8F, precharge, VCOMH, scroll off, resume RAM, normal (not inverted), display on. */
+static const uint8_t INIT_CMDS[] = {
+    0x00, /* control byte: command stream */
+    0xAE, 0xD5, 0x80, 0xA8, 0x1F, 0xD3, 0x00, 0x40, 0x8D, 0x14, 0x20, 0x00, 0xA1, 0xC8,
+    0xDA, 0x02, 0x81, 0x8F, 0xD9, 0xF1, 0xDB, 0x40, 0x2E, 0xA4, 0xA6, 0xAF,
+};
 
-static inline void cs(int v) { HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, v ? GPIO_PIN_SET : GPIO_PIN_RESET); }
-static inline void dc(int v) { HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, v ? GPIO_PIN_SET : GPIO_PIN_RESET); }
+static int send_cmds(const uint8_t *c, size_t n) { return drv_i2c_write_raw(OLED_ADDR, c, n); }
 
-static void write_cmd(uint8_t c)
+/* 한글: 페이지(행) 하나를 열 0~127에 쓴다. */
+static int flush_page(uint8_t row)
 {
-    dc(0);
-    cs(0);
-    HAL_SPI_Transmit(&hspi2, &c, 1, 10);
-    cs(1);
-}
-
-static void write_data(const uint8_t *d, uint16_t n)
-{
-    dc(1);
-    cs(0);
-    HAL_SPI_Transmit(&hspi2, (uint8_t *)d, n, 50);
-    cs(1);
-}
-
-static void cmd_args(uint8_t c, const uint8_t *a, uint8_t n)
-{
-    write_cmd(c);
-    if (n) write_data(a, n);
-}
-
-static void delay(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms) ? pdMS_TO_TICKS(ms) : 1); }
-
-static void set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
-{
-    const uint8_t xa[4] = {0, (uint8_t)(x0 + X_OFFSET), 0, (uint8_t)(x1 + X_OFFSET)};
-    const uint8_t ya[4] = {0, (uint8_t)(y0 + Y_OFFSET), 0, (uint8_t)(y1 + Y_OFFSET)};
-    cmd_args(0x2A, xa, 4);
-    cmd_args(0x2B, ya, 4);
-    write_cmd(0x2C);
+    const uint8_t win[] = {0x00, 0x21, 0x00, OLED_W - 1, 0x22, row, row}; /* column / page range */
+    if (send_cmds(win, sizeof(win))) return -1;
+    g_page[0] = 0x40; /* control byte: data stream */
+    return drv_i2c_write_raw(OLED_ADDR, g_page, sizeof(g_page));
 }
 
 int drv_lcd_init(void)
 {
-    GPIO_InitTypeDef g = {0};
-
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOD_CLK_ENABLE();
-    __HAL_RCC_SPI2_CLK_ENABLE();
-    g.Mode = GPIO_MODE_AF_PP;
-    g.Pull = GPIO_NOPULL;
-    g.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    g.Alternate = GPIO_AF5_SPI2;
-    g.Pin = GPIO_PIN_13; /* SCK */
-    HAL_GPIO_Init(GPIOB, &g);
-    g.Pin = GPIO_PIN_3; /* MOSI */
-    HAL_GPIO_Init(GPIOC, &g);
-
-    hspi2.Instance = SPI2;
-    hspi2.Init.Mode = SPI_MODE_MASTER;
-    hspi2.Init.Direction = SPI_DIRECTION_1LINE;
-    hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
-    hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
-    hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
-    hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; /* 10.5 MHz */
-    hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
-    hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    if (HAL_SPI_Init(&hspi2) != HAL_OK) {
-        return -1;
+    drv_i2c_shared_init();
+    if (send_cmds(INIT_CMDS, sizeof(INIT_CMDS))) {
+        return -1; /* no ACK at 0x3C: no display */
     }
-
-    HAL_GPIO_WritePin(LCD_RES_PORT, LCD_RES_PIN, GPIO_PIN_RESET);
-    delay(20);
-    HAL_GPIO_WritePin(LCD_RES_PORT, LCD_RES_PIN, GPIO_PIN_SET);
-    delay(120);
-    write_cmd(0x11); /* sleep out */
-    delay(120);
-    static const uint8_t frm[6] = {0x01, 0x2C, 0x2D, 0x01, 0x2C, 0x2D};
-    cmd_args(0xB1, frm, 3);
-    cmd_args(0xB2, frm, 3);
-    cmd_args(0xB3, frm, 6);
-    cmd_args(0xB4, (const uint8_t[]){0x07}, 1);
-    cmd_args(0xC0, (const uint8_t[]){0xA2, 0x02, 0x84}, 3);
-    cmd_args(0xC1, (const uint8_t[]){0xC5}, 1);
-    cmd_args(0xC2, (const uint8_t[]){0x0A, 0x00}, 2);
-    cmd_args(0xC3, (const uint8_t[]){0x8A, 0x2A}, 2);
-    cmd_args(0xC4, (const uint8_t[]){0x8A, 0xEE}, 2);
-    cmd_args(0xC5, (const uint8_t[]){0x0E}, 1);
-    write_cmd(0x21); /* inversion on (IPS panel) */
-    cmd_args(0x36, (const uint8_t[]){0xA8}, 1); /* landscape, BGR */
-    cmd_args(0x3A, (const uint8_t[]){0x05}, 1); /* RGB565 */
-    write_cmd(0x13);
-    write_cmd(0x29); /* display on */
     g_ready = 1;
     drv_lcd_clear(LCD_BLACK);
-    drv_lcd_backlight(1);
     return 0;
 }
 
 void drv_lcd_backlight(int on)
 {
-    HAL_GPIO_WritePin(LCD_BLK_PORT, LCD_BLK_PIN, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    if (!g_ready) return;
+    const uint8_t c[] = {0x00, (uint8_t)(on ? 0xAF : 0xAE)}; /* OLED: display on/off */
+    send_cmds(c, sizeof(c));
 }
-
-/* Pixel buffers are static, not on the stack: the 2.5 KB text-line buffer alone filled the whole
- * lcd task stack (640 words) and the FreeRTOS overflow check reset the board ~275 ms after boot
- * (2026-10-10 bring-up, troubleshooting/035). Only the lcd task calls this driver, so no locking.
- * 한글: 픽셀 버퍼를 스택에서 정적 메모리로 옮김 — 2.5 KB 버퍼가 lcd 태스크 스택(2.5 KB)을 넘쳐 부팅 275 ms마다 리셋됐다. */
-static uint8_t g_line_buf[160 * 2];
-static uint8_t g_text_buf[160 * 2 * 8]; /* 8 pixel rows of the text line */
 
 void drv_lcd_clear(uint16_t color)
 {
     if (!g_ready) return;
-    uint8_t *line = g_line_buf;
-    for (int i = 0; i < 160; i++) {
-        line[2 * i] = (uint8_t)(color >> 8);
-        line[2 * i + 1] = (uint8_t)color;
-    }
-    set_window(0, 0, 159, 79);
-    for (int y = 0; y < 80; y++) {
-        write_data(line, sizeof(g_line_buf));
+    memset(&g_page[1], color != LCD_BLACK ? 0xFF : 0x00, OLED_W);
+    for (uint8_t row = 0; row < LCD_ROWS; row++) {
+        flush_page(row);
     }
 }
 
+/* Monochrome: pixels are lit where fg != black; bg != black draws inverted text. */
 void drv_lcd_print(uint8_t row, const char *text, uint16_t fg, uint16_t bg)
 {
-    uint8_t *buf = g_text_buf;
     if (!g_ready || row >= LCD_ROWS) return;
-
-    memset(buf, 0, sizeof(g_text_buf));
-    for (int px = 0; px < 160; px++) {
-        for (int py = 0; py < 8; py++) {
-            buf[(py * 160 + px) * 2] = (uint8_t)(bg >> 8);
-            buf[(py * 160 + px) * 2 + 1] = (uint8_t)bg;
-        }
-    }
+    const uint8_t invert = (bg != LCD_BLACK) || (fg == LCD_BLACK);
+    memset(&g_page[1], 0, OLED_W);
     for (int col = 0; col < LCD_COLS && text[col]; col++) {
         int c = text[col];
         if (c >= 'a' && c <= 'z') c -= 32;
         if (c < 32 || c > 95) c = '?';
-        const uint8_t *glyph = LCD_FONT5X7[c - 32];
-        for (int gx = 0; gx < 5; gx++) {
-            for (int gy = 0; gy < 7; gy++) {
-                if ((glyph[gx] >> gy) & 1) {
-                    const int idx = (gy * 160 + col * 6 + gx) * 2;
-                    buf[idx] = (uint8_t)(fg >> 8);
-                    buf[idx + 1] = (uint8_t)fg;
-                }
-            }
-        }
+        memcpy(&g_page[1 + col * 6], LCD_FONT5X7[c - 32], 5); /* column bytes, LSB = top row */
     }
-    set_window(0, (uint16_t)(row * 8), 159, (uint16_t)(row * 8 + 7));
-    write_data(buf, sizeof(g_text_buf));
+    if (invert) {
+        for (int i = 1; i <= OLED_W; i++) g_page[i] = (uint8_t)~g_page[i];
+    }
+    flush_page(row);
 }

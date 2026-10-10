@@ -78,7 +78,8 @@
   - [x] UART(USART3 1 Mbaud) 텔레메트리 CRC 오류 0, IWDG 감독 정상(uptime 연속), STATUS 10 Hz / WHEEL 50 Hz
   - [x] IMU(QMI8658 자동판별) 50 Hz, |a| 0.96 g, 자이로 bias가 vendor 시절 `base.yaml` 값과 일치
   - [x] 배터리 2 Hz 12.528 V(vendor 12.55 V와 일치)
-  - [ ] LED 깜빡임·LCD 상태 화면: **2026-10-10 사용자 확인 결과 둘 다 안 보임**. `drv_lcd_init()`은 성공(그리다 스택이 넘쳤으므로) → LCD 제어 핀/LED 핀 배정(PINMAP "추정") 의심, 조사 필요
+  - [x] LED: PE10, 호스트 LED 명령(FUNC1)으로 깜빡임 확인(평소 꺼짐은 설계대로)
+  - [x] 상태 화면: 실제는 **SSD1306 128×32 OLED(I2C 0x3C, IMU 버스 공유)** — SPI2 LCD 가정 폐기, 드라이버 교체 후 4줄 표시 확인, IMU 49.6 Hz 유지(troubleshooting/035)
   - [x] 모터 fault 핀(PD3) 극성 확정(2026-10-10): 모터 스위치 OFF → fault [1,1,1,1](드라이버 무전원), ON → [0,0,0,0]. **High = fault 확정**. uptime 331 s 동안 리셋 없음
   - [x] base_node(호스트, 수정 없이)와 연동(2026-10-10): `/imu/data_raw` 50 Hz(vendor 111 Hz), 자이로 bias 보정 후 ≈0.01 rad/s, |a| 9.43 m/s²; `/battery_state` 12.528 V; `/joint_states` 5 Hz 6관절(버스 서보 FUNC5 읽기 동작 → PE7/PE8 방향 핀 조합 OK); `/odom` 30 Hz(EKF). 오류/silent 로그 없음. 팔·모터 명령은 미시험
   - [ ] 태스크 스택 여유(`uxTaskGetStackHighWaterMark`) 기록

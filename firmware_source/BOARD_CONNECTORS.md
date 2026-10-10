@@ -18,7 +18,7 @@ Phase A/B(정적 리버스엔지니어링 + ST-Link/SWD 실측)에서 한다.
 | MPU6050 IMU (보드 라벨에 명시) | 온보드 IMU 칩, STM32 내부 버스(추정: I2C)로 직결 | **확정(칩 정체)**: FUNC7, 6×float32(accel g / gyro deg/s), 약 111 Hz. 원시축 X=오른쪽,Y=뒤,Z=아래. I2C 핀 번호는 미확인 |
 | Power interface | 배터리팩 커넥터 | **확정**: FUNC0 응답(`04`+u16LE mV). 오늘 완충 12.5 V 확인. ADC 채널/분압비는 미확인 |
 | Buzzer (보드 라벨) | 온보드 부저, GPIO/타이머로 직결 | **확정**: FUNC2 (freq u16, on_ms u16, off_ms u16, cycles u16, 전부 LE). 2026-09-27 실제 소리로 확인 |
-| 0.96-inch LCD display interface (8-pin SPI, "색상 화면") | 외부 소형 디스플레이 모듈(흔히 OLED라고 부르는 것) | **확정(동작)**: 3번째 줄에 배터리 mV 표시. **호스트에서 제어하는 FUNC가 프로토콜에 없음** — 펌웨어가 자체적으로만 그림/문자를 그린다(추정). 컨트롤러 칩 정체·SPI 핀은 미확인 |
+| 0.96-inch LCD display interface (8-pin SPI, "색상 화면") | 외부 소형 디스플레이 모듈(흔히 OLED라고 부르는 것) | **확정(동작)**: 3번째 줄에 배터리 mV 표시. **호스트에서 제어하는 FUNC가 프로토콜에 없음** — 펌웨어가 자체적으로만 그린다. **2026-10-10 확정: 실제로 달린 화면은 SSD1306 128×32 흑백 OLED, I2C 0x3C, IMU와 같은 PB10/PB11 버스**(라벨의 SPI 컬러 LCD가 아님, `PINMAP.md`) |
 | Bus servo interface (1채널, half-duplex UART로 데이지체인) | 로봇팔 6개 서보 | **확정(2026-09-27)**: FUNC5, subcommand 0x01(이동)/0x05(위치 읽기). **ID 1~5 = 팔 관절**(pulse 0~1000 ↔ 0~240°), **ID 10 = 그리퍼**. ID 0,6~9,11~15 무응답 |
 | Battery voltage powered PWM servo interface / 5V power supply PWM servo interface (합쳐서 4채널) | PWM(아날로그) 서보 4개 슬롯 | **시험함, 응답은 하지만 미사용으로 보임**: FUNC4, subcommand 0x03(단일 이동)/0x05(위치 읽기), pulse 500~2500 ↔ 0~180°. 채널 1~4 전부 읽으면 1500(중앙) 응답하고 명령도 받아들이지만, **실제로 움직여도 육안으로 아무 변화 없음** → 지금 이 로봇엔 이 커넥터에 아무것도 안 꽂혀 있거나 팔과 무관한 용도로 보임(추정) |
 | 4-ch encoded motor interface ×2 (보드에 라벨이 두 번 나옴) | 메카넘 휠 4개(엔코더 내장 모터) | **확정**: FUNC3, `01,N,N×(id0based u8, rps f32LE)`. ID 0 왼앞·1 왼뒤·2 오른앞·3 오른뒤(오른쪽 부호반전). **엔코더 신호 자체는 모터에 있지만 호스트로 안 옴**(프로토콜에 업로드 FUNC 없음, 재플래시 후에도 동일) |

@@ -1,16 +1,18 @@
-/* 한글: ST7735S 0.96인치 80x160 LCD(SPI2) 상태 화면 드라이버. 제어 핀 배정은 추정. */
+/* 한글: 보드 상태 화면 드라이버 — SSD1306 128x32 흑백 OLED(I2C 0x3C, IMU 버스 공유). 2026-10-10 vendor 바이너리로 확인(이전 ST7735 SPI 가정은 틀림). */
 #ifndef DRV_LCD_H
 #define DRV_LCD_H
 
 #include <stdint.h>
 
-#define LCD_COLS 26 /* 160 px / 6 px per glyph */
-#define LCD_ROWS 10 /* 80 px / 8 px per glyph */
+#define LCD_COLS 21 /* 128 px / 6 px per glyph */
+#define LCD_ROWS 4  /* 32 px / 8 px per page */
 
-/* ST7735S 0.96" 80x160 IPS on SPI2 (landscape). Returns 0 on success. Pins: PINMAP.md (control pins ASSUMED). */
+/* SSD1306 128x32 OLED on the shared bit-banged I2C bus (0x3C). Returns 0 on success (display ACKs). */
 int drv_lcd_init(void);
+/* OLED has no backlight: display on/off. */
 void drv_lcd_backlight(int on);
-/* Draws one text line (padded with spaces to the full width). Colours are RGB565. */
+/* Draws one text line (padded to the full width). Colours keep the RGB565 names for the API:
+ * monochrome, fg != black is lit; bg != black inverts the line. */
 void drv_lcd_print(uint8_t row, const char *text, uint16_t fg, uint16_t bg);
 void drv_lcd_clear(uint16_t color);
 

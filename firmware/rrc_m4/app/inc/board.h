@@ -47,15 +47,9 @@
 #define PWM_SERVO_PINS_INIT { \
     {GPIOC, GPIO_PIN_8}, {GPIOC, GPIO_PIN_9}, {GPIOA, GPIO_PIN_11}, {GPIOA, GPIO_PIN_12} }
 
-/* ---- LCD ST7735 80x160 on SPI2: PB13 SCK, PC3 MOSI -- CONFIRMED; control pins ASSUMED ---- */
-#define LCD_RES_PORT GPIOD
-#define LCD_RES_PIN GPIO_PIN_14
-#define LCD_DC_PORT GPIOD
-#define LCD_DC_PIN GPIO_PIN_13
-#define LCD_CS_PORT GPIOD
-#define LCD_CS_PIN GPIO_PIN_12
-#define LCD_BLK_PORT GPIOD
-#define LCD_BLK_PIN GPIO_PIN_11
+/* ---- status display: SSD1306 128x32 OLED at I2C 0x3C on the IMU bus (PB10/PB11) -- CONFIRMED
+ * 2026-10-10 from the vendor binary. The SPI2 "LCD" (PB13/PC3, PD11..14) did not react when probed:
+ * those pins are left in their vendor reset levels by drv_gpio_safe_init and otherwise unused. ---- */
 
 /* ---- battery ADC1: PB0 (IN8) + Vrefint (IN17), DMA2 stream 0 channel 0 -- CONFIRMED ---- */
 

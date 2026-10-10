@@ -9,6 +9,13 @@
 static StaticSemaphore_t g_drdy_buf;
 static SemaphoreHandle_t g_drdy;
 
+/* The bus is shared with the SSD1306 status OLED (0x3C), as in the vendor firmware ("oled_mutex",
+ * 2026-10-10 reverse engineering, troubleshooting/035). Every transaction holds this mutex.
+ * 한글: IMU와 OLED가 같은 버스를 쓰므로 트랜잭션마다 뮤텍스를 잡는다. */
+static StaticSemaphore_t g_bus_mtx_buf;
+static SemaphoreHandle_t g_bus_mtx;
+static int g_bus_gpio_ready;
+
 #define HALF_PERIOD_CYCLES (SystemCoreClock / 250000U / 2U) /* ~250 kHz */
 
 static void dwt_init(void)
@@ -104,7 +111,7 @@ static uint8_t read_byte(int ack)
     return b;
 }
 
-void drv_imu_bus_recover(void)
+static void bus_recover_locked(void)
 {
     sda(1);
     for (int i = 0; i < 9; i++) {
@@ -116,21 +123,77 @@ void drv_imu_bus_recover(void)
     stop_cond();
 }
 
+static void bus_lock(void)
+{
+    if (g_bus_mtx) xSemaphoreTake(g_bus_mtx, portMAX_DELAY);
+}
+
+static void bus_unlock(void)
+{
+    if (g_bus_mtx) xSemaphoreGive(g_bus_mtx);
+}
+
+/* 한글: 버스 GPIO(오픈드레인)와 뮤텍스를 한 번만 준비한다. 태스크 시작 전에 app_create_tasks에서 호출. */
+void drv_i2c_shared_init(void)
+{
+    GPIO_InitTypeDef g = {0};
+
+    if (!g_bus_mtx) {
+        g_bus_mtx = xSemaphoreCreateMutexStatic(&g_bus_mtx_buf);
+    }
+    if (g_bus_gpio_ready) {
+        return;
+    }
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    dwt_init();
+    g.Pin = IMU_SCL_PIN | IMU_SDA_PIN;
+    g.Mode = GPIO_MODE_OUTPUT_OD;
+    g.Pull = GPIO_NOPULL; /* external 10k pull-ups on the board */
+    g.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &g);
+    scl(1);
+    sda(1);
+    bus_recover_locked();
+    g_bus_gpio_ready = 1;
+}
+
+void drv_imu_bus_recover(void)
+{
+    bus_lock();
+    bus_recover_locked();
+    bus_unlock();
+}
+
+int drv_i2c_write_raw(uint8_t addr, const uint8_t *d, size_t n)
+{
+    bus_lock();
+    int rc = start_cond();
+    if (!rc) rc = write_byte((uint8_t)(addr << 1));
+    for (size_t i = 0; !rc && i < n; i++) rc = write_byte(d[i]);
+    stop_cond();
+    if (rc) bus_recover_locked();
+    bus_unlock();
+    return rc;
+}
+
 static int i2c_write(void *ctx, uint8_t addr, uint8_t reg, const uint8_t *d, size_t n)
 {
     (void)ctx;
+    bus_lock();
     int rc = start_cond();
     if (!rc) rc = write_byte((uint8_t)(addr << 1));
     if (!rc) rc = write_byte(reg);
     for (size_t i = 0; !rc && i < n; i++) rc = write_byte(d[i]);
     stop_cond();
-    if (rc) drv_imu_bus_recover();
+    if (rc) bus_recover_locked();
+    bus_unlock();
     return rc;
 }
 
 static int i2c_read(void *ctx, uint8_t addr, uint8_t reg, uint8_t *d, size_t n)
 {
     (void)ctx;
+    bus_lock();
     int rc = start_cond();
     if (!rc) rc = write_byte((uint8_t)(addr << 1));
     if (!rc) rc = write_byte(reg);
@@ -138,7 +201,8 @@ static int i2c_read(void *ctx, uint8_t addr, uint8_t reg, uint8_t *d, size_t n)
     if (!rc) rc = write_byte((uint8_t)((addr << 1) | 1));
     for (size_t i = 0; !rc && i < n; i++) d[i] = read_byte(i + 1 < n);
     stop_cond();
-    if (rc) drv_imu_bus_recover();
+    if (rc) bus_recover_locked();
+    bus_unlock();
     return rc;
 }
 
@@ -151,17 +215,10 @@ int drv_imu_init(imu_t *imu)
     GPIO_InitTypeDef g = {0};
     static const imu_axis_map_t map = {IMU_MAP_SRC, IMU_MAP_SIGN};
 
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-    g_drdy = xSemaphoreCreateBinaryStatic(&g_drdy_buf);
-    dwt_init();
-
-    g.Pin = IMU_SCL_PIN | IMU_SDA_PIN;
-    g.Mode = GPIO_MODE_OUTPUT_OD;
-    g.Pull = GPIO_NOPULL; /* external 10k pull-ups on the board */
-    g.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOB, &g);
-    scl(1);
-    sda(1);
+    if (!g_drdy) {
+        g_drdy = xSemaphoreCreateBinaryStatic(&g_drdy_buf); /* once: init is retried every 2 s */
+    }
+    drv_i2c_shared_init(); /* bus GPIO + mutex (no-op when app_create_tasks already did it) */
     drv_imu_bus_recover();
 
     g.Pin = IMU_INT_PIN;

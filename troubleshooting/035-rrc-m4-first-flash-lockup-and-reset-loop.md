@@ -41,6 +41,13 @@ LCD 픽셀 버퍼 두 개(`g_line_buf` 320 B, `g_text_buf` 2,560 B)를 정적 �
 (0.209, 0.172, −0.017) rad/s로 `base.yaml`의 기존 `gyro_bias`(0.197, 0.168, −0.017)와 일치 → 센서 고유 bias, 펌웨어 정상.
 모터 fault 4개 모두 1(드라이버 fault 핀 PD3 High) — 모터 스위치 OFF(드라이버 무전원) 때문으로 **추정**, 스위치 ON에서 확인 필요.
 
+## 추가 (같은 날) — 상태 화면이 안 바뀜: 화면 종류 자체가 달랐다
+LED는 정상(호스트 LED 명령에만 깜빡이는 설계, PE10 토글 확인). 보드 화면은 vendor 시절 그림이 그대로 남아 있었고,
+추정 제어 핀 PD11~14를 SWD로 하나씩 토글해도 무반응. vendor `oled_task`를 따라가 보니 **SSD1306 128×32 흑백 OLED,
+I2C 0x3C, IMU와 같은 소프트웨어 I2C 버스(PB10/PB11)를 `oled_mutex`로 공유**(u8g2 ssd1306_128x32_univision).
+`drv_lcd.c`를 SSD1306 I2C 드라이버로 교체하고, `drv_imu.c`에 버스 뮤텍스 + `drv_i2c_write_raw`를 추가(한 번에 1페이지씩 보내 IMU 대기 ≤ 약 5 ms).
+결과: 4줄 표시(사용자 확인), IMU 49.6 Hz(전 50.2), CRC 오류 0, uptime 단조 증가.
+
 ## 재발 방지
 - 하드웨어 상수(크리스털, 핀 극성)는 문서만 믿지 말고 vendor 바이너리와 교차 확인한다(`PINMAP.md`의 [B] 표시).
 - 태스크 스택보다 큰 지역 배열을 두지 않는다. 브링업 때 `uxTaskGetStackHighWaterMark`로 여유를 기록할 것(체크리스트에 추가).
