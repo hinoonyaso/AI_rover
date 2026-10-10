@@ -9,6 +9,8 @@ Usage: python3 tools/stm32_diagnostics/rrc_m4_io_test.py <mode> [options]
   gamepad  [--secs 20]          print gamepad changes (FUNC8) and raw HID reports (0x23)
   sbus     [--secs 10]          print SBUS frames (FUNC9) if a receiver is connected
   pwm-servo --id 1 --pulse 1500 [--time 500]   move one PWM servo (FUNC4 sub 0x03); 500..2500 us
+  bus-torque --id 5 [--hold 4]                 THE JOINT GOES LIMP for --hold s (support it): release torque, read,
+                                               move to the current position, load torque, read again (FUNC5 0x0B/0x0C)
   bus-servo --id 1 --delta 20 [--time 1000]    THE ARM MOVES: read the position, move by +delta pulses
                                                (0.24 deg each), read back, move back, read back (FUNC5)
 Needs base_node NOT running (it owns the serial port).
@@ -86,9 +88,36 @@ def bus_servo_test(ser, args):
     print(f'  after return: {p2} (off the start by {None if p2 is None else p2 - p0:+d})')
 
 
+def bus_torque_test(ser, args):
+    """Release (0x0B) -> limp for --hold s -> move to the CURRENT position (overwrites the stored target, otherwise
+    the servo jumps to its old target when loaded, 2026-10-05) -> load (0x0C). 한글: 해제 → 현재 위치로 이동 → 걸기."""
+    if not 1 <= args.id <= 5 and args.id != 10:
+        sys.exit('servo id must be 1..5 (arm) or 10 (gripper)')
+    p0 = read_bus_servo(ser, args.id)
+    if p0 is None:
+        sys.exit(f'servo {args.id}: no position reading')
+    print(f'servo {args.id}: holding at {p0}; releasing torque for {args.hold:g} s (support the joint)...')
+    ser.write(frame(0x05, bytes([0x0B, args.id])))
+    time.sleep(1.0)
+    p1 = read_bus_servo(ser, args.id)
+    time.sleep(max(0.0, args.hold - 1.0))
+    p2 = read_bus_servo(ser, args.id)
+    print(f'  while limp: {p1} -> {p2} (a free joint may droop / be moved by hand)')
+    if p2 is None or not 100 <= p2 <= 900:
+        sys.exit('no safe reading while limp; leaving the servo limp -- hold it and re-run')
+    payload = bytes([0x01]) + struct.pack('<H', 500) + bytes([1, args.id]) + struct.pack('<H', p2)
+    ser.write(frame(0x05, payload))  # pin the target at the current position before loading
+    time.sleep(0.9)
+    ser.write(frame(0x05, bytes([0x0C, args.id])))
+    print(f'servo {args.id}: torque loaded at {p2}')
+    time.sleep(1.5)
+    p3 = read_bus_servo(ser, args.id)
+    print(f'  after loading: {p3} (held {None if p3 is None else p3 - p2:+d} pulses from where it was loaded)')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument('mode', choices=['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo'])
+    ap.add_argument('mode', choices=['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo', 'bus-torque'])
     ap.add_argument('--secs', type=float, default=20.0)
     ap.add_argument('--on', type=int, default=100)
     ap.add_argument('--off', type=int, default=100)
@@ -97,6 +126,7 @@ def main():
     ap.add_argument('--id', type=int, default=1)
     ap.add_argument('--pulse', type=int, default=1500)
     ap.add_argument('--time', type=int, default=500)
+    ap.add_argument('--hold', type=float, default=4.0, help='bus-torque: seconds the joint stays limp')
     ap.add_argument('--delta', type=int, default=20, help='bus-servo: pulses (0.24 deg each), |delta| <= 40')
     args = ap.parse_args()
     ser = serial.Serial(PORT, 1_000_000, timeout=0.05)
@@ -128,6 +158,8 @@ def main():
         print(f'{n} SBUS frames' + ('' if n else ' (no receiver connected, or no signal)'))
     elif args.mode == 'bus-servo':
         bus_servo_test(ser, args)
+    elif args.mode == 'bus-torque':
+        bus_torque_test(ser, args)
     elif args.mode == 'pwm-servo':
         if not 500 <= args.pulse <= 2500:
             sys.exit('pulse must be 500..2500 us')
