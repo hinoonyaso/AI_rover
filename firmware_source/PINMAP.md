@@ -50,7 +50,7 @@
 | IMU 출력율 | 약 111 Hz = 1 kHz/(1+8) | **확정** [실기 111 Hz] → MPU6050 SMPLRT_DIV=8, DLPF on |
 | IMU 칩→보드 축 변환 | FUNC7 축: X=오른쪽, Y=뒤, Z=아래 [실기] | **미확인**: 칩 자체의 축 방향은 모른다. 기본값 항등 + `tools/imu_calibration/check_axes.py`로 확인 후 `IMU_AXIS_MAP`을 고친다 |
 | 배터리 | ADC1: PB0(IN8) + 내부 Vrefint(IN17), DMA, 50 ms마다. mV = 1210/adc[0]·adc[1]·11, 필터 0.95/0.05, 20 V 초과 거부 | **확정** [D 3.4.6] [B: PB0 아날로그, ADC1 사용] [실기: FUNC0 mV] |
-| 버튼 K1/K2 | PE0, PE1 입력(외부 풀업, 누르면 Low) | **확정** [D 1.2.6/3.3.5] [B: PE0/PE1 입력]. K1/K2와 PE0/PE1의 대응(어느 쪽이 button_id 1)은 **추정**: id1=PE0, id2=PE1 |
+| 버튼 K1/K2 | PE0, PE1 입력(외부 풀업, 누르면 Low) | **확정** [D 1.2.6/3.3.5] [B: PE0/PE1 입력]. K1/K2와 PE0/PE1의 대응: **실측(2026-10-11)** — 보드에 K1이라 적힌 버튼을 누르면 (id1=PE0 가정에서) id 2가 왔으므로 **K1 = PE1 = button_id 1, K2 = PE0 = id 2**로 확정(이 문서가 "button 1" 예시만 주고 라벨 대응은 없어 K1 = id 1은 자연스러운 규약으로 가정) |
 
 ## 출력
 | 기능 | 핀 | 상태 |

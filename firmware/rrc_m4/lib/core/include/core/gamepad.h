@@ -2,9 +2,9 @@
 /* USB gamepad (2.4 GHz PS2-style receiver on the USB HOST port) report -> FUNC8 state.
  * Vendor button masks are from the program analysis 3.12 (usbh_hid_gamepad.h). The raw HID report
  * layout of this receiver is not documented anywhere; it was MEASURED on 2026-10-10 from raw 0x23
- * captures (see gamepad.c) and the parser is table-driven. L1's vendor mask (0x0400) is assigned by
- * function, not by bit position: the L1 key is raw byte6 bit6 on this receiver. The host side of the
- * vendor FUNC8 semantics (which mask the Jetson expects for L1) is unverified. */
+ * captures (see gamepad.c) and the parser is table-driven. With L1 = 0x4000 every mask equals its raw
+ * report bit (byte7 | byte6 << 8). Whether the Jetson-side vendor SDK expects exactly these values is
+ * unverified. */
 #ifndef CORE_GAMEPAD_H
 #define CORE_GAMEPAD_H
 
@@ -24,7 +24,11 @@ extern "C" {
 #define GAMEPAD_MASK_R3 0x0040u
 #define GAMEPAD_MASK_CROSS 0x0100u
 #define GAMEPAD_MASK_CIRCLE 0x0200u
-#define GAMEPAD_MASK_L1 0x0400u
+/* L1 is 0x4000, not the 0x0400 of the vendor program-analysis doc (2026-10-11): 10 of the 11 documented masks equal
+ * the raw report bits (byte7 | byte6 << 8) exactly, L1 on this receiver is byte6 bit6 = 0x4000, and 0x0400 is that
+ * value with two digits swapped -> treated as a doc typo (vendor firmware assumed to pass the raw bits through).
+ * Not verified against the vendor firmware; confirm by flashing the vendor image and pressing L1 (FUNC8). */
+#define GAMEPAD_MASK_L1 0x4000u
 #define GAMEPAD_MASK_SQUARE 0x0800u
 #define GAMEPAD_MASK_TRIANGLE 0x1000u
 #define GAMEPAD_MASK_R1 0x8000u

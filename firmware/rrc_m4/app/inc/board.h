@@ -25,11 +25,13 @@
 #define BUZZER_PORT GPIOA
 #define BUZZER_PIN GPIO_PIN_8
 
-/* ---- buttons PE0 / PE1, active Low -- pins CONFIRMED, id mapping ASSUMED ---- */
+/* ---- buttons PE0 / PE1, active Low -- pins CONFIRMED. id mapping MEASURED 2026-10-11: the button silk-screened
+ * K1 sent button id 2 with the first assignment (id 1 = PE0), so K1 = PE1: KEY1 (id 1) is PE1 and KEY2 (id 2) is PE0.
+ * 한글: 보드에 K1이라 적힌 버튼이 id 2로 와서(실측) K1 = PE1로 맞바꿨다. */
 #define KEY1_PORT GPIOE
-#define KEY1_PIN GPIO_PIN_0
+#define KEY1_PIN GPIO_PIN_1
 #define KEY2_PORT GPIOE
-#define KEY2_PIN GPIO_PIN_1
+#define KEY2_PIN GPIO_PIN_0
 
 /* ---- IMU: soft I2C PB10 SCL / PB11 SDA, INT on PB12 -- CONFIRMED ---- */
 #define IMU_SCL_PORT GPIOB
