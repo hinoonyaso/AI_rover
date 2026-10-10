@@ -65,6 +65,8 @@ rosbag2_*/
 /firmware/rrc_m4/build/
 /firmware/rrc_m4/build-arm/
 /firmware/rrc_m4/build-arm-uros/
+/firmware/rrc_m4/build-arm-motor/
+/firmware/rrc_m4/build-arm-bringup/
 /firmware/rrc_m4/micro_ros/firmware/
 /firmware/rrc_m4/micro_ros/setup_ws/
 /firmware/rrc_m4/micro_ros/setup_src/
