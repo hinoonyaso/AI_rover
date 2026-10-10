@@ -38,6 +38,10 @@ base_node:
     # 한글: command(기본, 기존 동작) / encoder(자체 펌웨어 측정값) / auto(있으면 측정값).
     wheel_twist_source: command
     wheel_feedback_timeout: 0.2
+    # Send the rrc_m4 "clear e-stop" frame (DIAG 0x22/0x01) when the serial port opens. The firmware keeps an e-stop latched
+    # until cleared (test scripts leave it set), so without this base_node could not drive after one. Vendor: ignored.
+    # 한글: 시작할 때 자체 펌웨어의 e-stop 래치를 푼다(시험 스크립트가 걸어 둔 상태 대비).
+    clear_estop_on_start: true
     # Twist variance [vx, vy, wz] when the twist is measured (encoder/auto with feedback). 2026-10-10 (E5):
     # floor vx std 0.004 m/s instantaneous, bias < 0.5 % over 1 m -> std 0.01 (vx), 0.014 (vy, roller slip).
     # The EKF fuses vx, vy only (yaw from the gyro). Command mode keeps 0.05 (velocity unknown).

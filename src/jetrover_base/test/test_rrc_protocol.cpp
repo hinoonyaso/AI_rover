@@ -178,6 +178,20 @@ TEST(Decode, WheelFeedbackFromRrcM4)
   EXPECT_FALSE(decode_wheel_feedback(imu, fb));
 }
 
+// 한글: 자체 펌웨어 e-stop 해제 프레임(실기에서 쓴 바이트와 같아야 한다).
+TEST(Protocol, ClearEstopFrame)
+{
+  const auto f = build_diag_clear_estop();
+  const std::vector<uint8_t> want = {0xAA, 0x55, 0x22, 0x01, 0x01, 0x00};
+  ASSERT_EQ(f.size(), want.size());
+  for (size_t i = 0; i + 1 < f.size(); ++i) {
+    EXPECT_EQ(f[i], want[i]);
+  }
+  // CRC-8/MAXIM over FUNC, LEN, DATA
+  const uint8_t body[3] = {0x22, 0x01, 0x01};
+  EXPECT_EQ(f.back(), crc8_maxim(body, 3));
+}
+
 TEST(BusServo, ReadPositionRequestAndResponse)
 {
   const auto f = build_bus_servo_read_position(3);

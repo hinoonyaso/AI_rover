@@ -79,6 +79,12 @@ bool decode_battery(const RrcPacket & packet, uint16_t & millivolts);
 bool decode_imu(const RrcPacket & packet, ImuRaw & imu);
 
 // Build a bus servo read-position request: FUNC 0x05, DATA = 05, servo_id.
+// Extension frame of the rrc_m4 firmware: DIAG_CMD (0x22) subcommand 0x01 = clear the e-stop latch. The vendor
+// firmware ignores unknown functions, so it is safe to send to either firmware. 한글: e-stop 해제(자체 펌웨어 전용).
+constexpr uint8_t kRrcFuncExtDiagCmd = 0x22;
+constexpr uint8_t kRrcDiagClearEstop = 0x01;
+std::vector<uint8_t> build_diag_clear_estop();
+
 std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id);
 
 struct BusServoTarget

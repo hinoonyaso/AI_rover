@@ -96,6 +96,10 @@ void robot_stop(robot_ctrl_t *rc, robot_stop_reason_t reason)
 
 void robot_stop_mask(robot_ctrl_t *rc, uint8_t mask)
 {
+    if ((mask & 0x0F) == 0x0F) { /* every wheel: a complete stop, so release the wheels too (2026-10-10 review) */
+        robot_stop(rc, ROBOT_STOP_COMMAND);
+        return;
+    }
     for (int i = 0; i < ROBOT_NUM_MOTORS; ++i) {
         if (mask & (1u << i)) {
             enc_motor_stop(rc->motors[i]);

@@ -322,10 +322,11 @@ static void test_robot_arbitration(void)
     CHECK(robot_set_wheel_rps(&rc, 0, -1.0f, 1200, ROBOT_SRC_RRC) == -1 && mt[0].pid.set_point == sp,
           "other source refused while the owner is active");
     CHECK(robot_set_velocity(&rc, 0.05f, 0, 0, 1300, ROBOT_SRC_MICROROS) == 0, "owner keeps commanding");
-    robot_stop_mask(&rc, 0x0F); /* anyone may stop wheels */
-    CHECK(mt[0].pid.set_point == 0.0f, "stop accepted from anyone");
-    robot_stop(&rc, ROBOT_STOP_COMMAND);
-    CHECK(rc.owner == ROBOT_SRC_NONE, "stop releases ownership");
+    robot_stop_mask(&rc, 0x03); /* a partial mask stops those wheels only */
+    CHECK(mt[0].pid.set_point == 0.0f && rc.owner == ROBOT_SRC_MICROROS, "partial stop keeps the owner");
+    robot_stop_mask(&rc, 0x0F); /* anyone may stop wheels; the full mask releases them */
+    CHECK(mt[0].pid.set_point == 0.0f && rc.owner == ROBOT_SRC_NONE && !rc.moving &&
+          rc.stop_reason == ROBOT_STOP_COMMAND, "full stop mask: stopped and released, reason command");
     CHECK(robot_set_wheel_rps(&rc, 0, 0.5f, 1400, ROBOT_SRC_RRC) == 0 && rc.owner == ROBOT_SRC_RRC,
           "after a stop another source can take over");
     /* owner goes silent -> after the timeout another source may take over even before robot_tick */

@@ -93,6 +93,11 @@ bool decode_imu(const RrcPacket & packet, ImuRaw & imu)
   return true;
 }
 
+std::vector<uint8_t> build_diag_clear_estop()
+{
+  return build_packet(kRrcFuncExtDiagCmd, {kRrcDiagClearEstop});
+}
+
 std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id)
 {
   return build_packet(kRrcFuncBusServo, {kRrcBusServoSubReadPosition, servo_id});

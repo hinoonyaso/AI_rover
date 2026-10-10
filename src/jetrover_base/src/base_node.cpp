@@ -117,6 +117,7 @@ public:
           source_name);
     }
     wheel_feedback_timeout_ = declare_parameter<double>("wheel_feedback_timeout", 0.2);
+    clear_estop_on_start_ = declare_parameter<bool>("clear_estop_on_start", true);
     // Twist variance [vx, vy, wz] used when the twist comes from the encoders (E5, 2026-10-10).
     wheel_twist_cov_encoder_ = declare_parameter<std::vector<double>>(
       "wheel_twist_covariance_encoder", {1.0e-4, 2.0e-4, 1.0e-3});
@@ -303,6 +304,14 @@ private:
       RCLCPP_INFO(get_logger(), "Opened %s @ %d", port_name_.c_str(), baudrate_);
       watchdog_.on_open(now().seconds());
       stop_motors();
+      if (clear_estop_on_start_) {
+        // The rrc_m4 firmware latches an e-stop (a test script, a fault) until it is cleared; starting this node is a
+        // deliberate act, so release it. Vendor firmware ignores the frame. 한글: 시작할 때 e-stop 해제(벤더 펌웨어는 무시).
+        const auto clear = build_diag_clear_estop();
+        if (!serial_.write(clear.data(), clear.size())) {
+          RCLCPP_ERROR(get_logger(), "clear e-stop write failed: %s", serial_.last_error().c_str());
+        }
+      }
       const auto stop_frame = build_motor_packet({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
       crash_guard::arm(serial_.fd(), stop_frame);
       return true;
@@ -835,6 +844,7 @@ private:
   double cmd_vx_{0.0}, cmd_vy_{0.0}, cmd_wz_{0.0};
   TwistSource twist_source_{TwistSource::Command};
   double wheel_feedback_timeout_{0.2};
+  bool clear_estop_on_start_{true};
   double wheel_rps_[4]{0.0, 0.0, 0.0, 0.0};
   double last_wheel_feedback_s_{0.0};
   std::vector<double> wheel_twist_cov_encoder_;
