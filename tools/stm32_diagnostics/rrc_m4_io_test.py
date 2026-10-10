@@ -98,11 +98,14 @@ def bus_torque_test(ser, args):
         sys.exit(f'servo {args.id}: no position reading')
     print(f'servo {args.id}: holding at {p0}; releasing torque for {args.hold:g} s (support the joint)...')
     ser.write(frame(0x05, bytes([0x0B, args.id])))
-    time.sleep(1.0)
-    p1 = read_bus_servo(ser, args.id)
-    time.sleep(max(0.0, args.hold - 1.0))
+    series, t0 = [], time.time()
+    while time.time() - t0 < args.hold:  # sample while limp: a joint moved by hand must show up here
+        series.append(read_bus_servo(ser, args.id, tries=1))
+        time.sleep(0.3)
     p2 = read_bus_servo(ser, args.id)
-    print(f'  while limp: {p1} -> {p2} (a free joint may droop / be moved by hand)')
+    print(f'  while limp ({len(series)} reads): {series}')
+    ok = [x for x in series if x is not None]
+    print(f'  last: {p2} (min {min(ok) if ok else None}, max {max(ok) if ok else None})')
     if p2 is None or not 100 <= p2 <= 900:
         sys.exit('no safe reading while limp; leaving the servo limp -- hold it and re-run')
     payload = bytes([0x01]) + struct.pack('<H', 500) + bytes([1, args.id]) + struct.pack('<H', p2)
