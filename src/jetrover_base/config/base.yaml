@@ -24,7 +24,11 @@ base_node:
     imu_frame: imu_link
     gravity: 9.80665
     # rad/s in the published (base_link-aligned) axes. Measure with tools/imu_calibration/measure_gyro_bias.py
-    gyro_bias: [0.197, 0.168, -0.017]
+    # 2026-10-10: re-measured on the rrc_m4 firmware (its QMI8658 config differs from the vendor one):
+    # [0.197, 0.168, -0.017] (vendor firmware) -> [0.2075, 0.1660, -0.0162], 30 s still, std ~0.001.
+    # The old z left +0.049 deg/s -> 2.1 deg drift in the 42 s E5 square. Vendor firmware needs the old value.
+    # 한글: 자체 펌웨어 기준 재측정(vendor 펌웨어로 되돌리면 이전 값 사용).
+    gyro_bias: [0.2075, 0.1660, -0.0162]
     odom_frame: odom
     base_frame: base_footprint
     odom_rate: 50.0
