@@ -84,7 +84,7 @@
   - [x] base_node(호스트, 수정 없이)와 연동(2026-10-10): `/imu/data_raw` 50 Hz(vendor 111 Hz), 자이로 bias 보정 후 ≈0.01 rad/s, |a| 9.43 m/s²; `/battery_state` 12.528 V; `/joint_states` 5 Hz 6관절(버스 서보 FUNC5 읽기 동작 → PE7/PE8 방향 핀 조합 OK); `/odom` 30 Hz(EKF). 오류/silent 로그 없음. 팔·모터 명령은 미시험
   - [ ] 태스크 스택 여유(`uxTaskGetStackHighWaterMark`) 기록
   - [x] 모터 PWM 핀 짝·방향·엔코더 부호(2026-10-10, 바퀴 띄움, RAW_PWM ±400): 4바퀴 확정 — 왼쪽 +PWM 전진, 오른쪽 +PWM 후진(vendor 규약), 엔코더 전부 +1. M2 PWM 짝이 추정과 반대였음. 중간에 M2 폭주 → 부호 가드·e-stop 유지 추가(troubleshooting/036)
-  - [ ] PID 속도 제어(FUNC3) 저속 추종 + `ticks_per_circle`(현재 1320 추정) 실측 — 바퀴에 표시하고 회전 수 세기
+  - [~] PID 속도 제어(FUNC3, 왼쪽 앞): 목표 0.5/1.0(구 단위) → 후반 평균 0.506/1.002, std 0.07~0.08(진동 있음, 튜닝 여지). **한 바퀴 = 3,996 카운트 실측**(30초 10바퀴+10°, 이전 1320 추정은 약 3배 틀림) → 펌웨어 반영, `MOTOR_RPS_LIMIT` 3.0. 새 값으로 4바퀴 추종 확인 남음
   - [ ] base_node로 /cmd_vel 주행(바퀴 띄움) → 바닥 저속
 
 

@@ -37,9 +37,15 @@
 #define ROBOT_TRACK_WIDTH_M 0.195f
 #define ROBOT_WHEEL_DIAMETER_M 0.097f
 
-/* ---- motor model: ASSUMED (Hiwonder JGB520 example values; not in the public docs) ---- */
-#define MOTOR_TICKS_PER_CIRCLE 1320
-#define MOTOR_RPS_LIMIT 5.0f
+/* ---- motor model ---- */
+/* Encoder ticks per wheel revolution: MEASURED 2026-10-10 (wheels lifted, left front, closed loop 30 s,
+ * 40,071 ticks for 10 rev + ~10 deg counted on a marked wheel -> 3,996). Was 1320 (JGB520 example, wrong
+ * by ~3x: every rps was reported ~3x too high). Common 520-motor design value 11 PPR x4 x 90 = 3,960 (-0.9 %).
+ * 한글: 실측 3,996 카운트/회전(이전 1320 추정은 약 3배 틀림). */
+#define MOTOR_TICKS_PER_CIRCLE 3996
+/* Wheel speed limit [rev/s]: ~1.4 rev/s measured at 40 % PWM (so ~3.5 at full); base_node needs < 1. */
+#define MOTOR_RPS_LIMIT 3.0f
+/* PID gains: Hiwonder docs values (defined for real wheel rev/s, i.e. with the correct tick count). */
 #define MOTOR_PID_KP 63.0f
 #define MOTOR_PID_KI 2.6f
 #define MOTOR_PID_KD 2.4f
