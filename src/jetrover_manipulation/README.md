@@ -43,3 +43,10 @@ RViz(MotionPlanning)는 host에서 같은 ROS_DOMAIN_ID로 띄운다.
 3. `ros2 launch jetrover_manipulation execution.launch.py dry_run:=false` (기본은 true = 명령 미발행)
 4. RViz에서 **아주 작은** 목표(joint1 ±0.1 rad)부터 Plan -> Execute.
 MoveIt 컨트롤러: arm_controller(default), gripper_controller(default: false -- 둘 다 default면 move_group이 segfault).
+
+
+## 브리지 안전성 (T4, 2026-10-11, `prd/arm-control-path.md` R7)
+- **관절별 신선도**: `/joint_states` 헤더는 base_node가 캐시 값을 계속 재발행해서 항상 최신처럼 보인다. 브리지는 이제 base_node의 `arm/servo_stats`(서보 응답 프레임이 실제로 도착한 시각 기준)의 `age_s`를 구독해, **궤적에 쓰이는 관절 각각**이 `joint_age_limit_s`(기본 1.5 s)보다 오래됐거나 한 번도 응답한 적이 없으면 목표를 거부/중단한다(중단 시 팔 관절만 hold). `arm_poll_hz` 20 Hz에서 연속 무응답 최대 공백이 0.9 s(5 Hz는 2.4 s)라서 **`arm_poll_hz` 12 Hz 이상이 전제**다(`docs/benchmarks/arm_poll_bench_20261011.md`). `arm/servo_stats`가 3 s 넘게 안 오면 그것도 거부. `require_servo_stats:=false`는 base_node 없는 dry run 전용(`execution.launch.py`가 dry_run일 때만 자동으로 끈다).
+- **목표 수락은 원자적**: `BusyGate`가 한 번의 잠금 아래에서 확인·설정한다(옛 `_busy`는 수락 콜백에서 확인하고 실행에서 설정해, 팔·그리퍼 목표가 동시에 오면 둘 다 수락될 수 있었다). 실행 중 예외가 나도 `finally`로 해제하고, 120 s 넘은 토큰은 새어 나간 것으로 보고 넘겨받는다.
+- **그리퍼는 hold하지 않는다**: 취소·실패 시 "현재 읽은 위치로 이동"은 파지 중 조임을 풀어 물체를 떨어뜨리므로, hold는 팔 관절에만 보낸다.
+- 시험: `test/test_bridge_logic.py`(관절 신선도 6, 경쟁 조건 3, hold 정책 4 + 기존 7; ROS 없이 실행, CI 포함)와 실제 노드 스모크(동시 목표 1개만 수락, 서보 하나만 침묵하면 중단, 복구 후 재수락).

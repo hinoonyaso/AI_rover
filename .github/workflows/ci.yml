@@ -33,6 +33,8 @@ jobs:
         run: python3 tools/stm32_diagnostics/test_arm_poll_bench.py
       - name: Gripper contact detection (simulated) unit tests
         run: python3 tools/stm32_diagnostics/test_grasp_contact.py
+      - name: MoveIt execution bridge logic tests (rclpy mocked)
+        run: python3 src/jetrover_manipulation/test/test_bridge_logic.py
       - name: Home pose floor-metric unit tests
         run: python3 tools/perception/test_floor_metrics.py
       - name: Room scan 2D ICP unit tests

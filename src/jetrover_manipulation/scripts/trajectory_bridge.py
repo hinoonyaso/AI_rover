@@ -17,6 +17,7 @@ import time
 
 import rclpy
 from control_msgs.action import FollowJointTrajectory
+from diagnostic_msgs.msg import DiagnosticArray
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
@@ -77,6 +78,64 @@ def validate_plan(start, samples, limits, max_step):
     return ''
 
 
+def joint_age_error(joints, joint_servo, ages, now, limit_s, stats_timeout_s):
+    """'' if every joint's own servo reading is fresh, else a reason. Pure (unit-tested).
+    한글: 관절별 신선도 검사. /joint_states의 헤더 시각은 base_node가 캐시 값을 계속 재발행해서 항상 최신처럼 보이므로 쓰지 않고,
+    base_node의 arm/servo_stats가 알려 주는 서보별 "마지막 응답 프레임 이후 경과 시간"(age_s)을 쓴다.
+    ages: {servo_id: (age_s_when_reported, monotonic_time_of_report)}; age_s < 0 = that servo never answered.
+    A servo with a few failed reads in a row can legitimately be silent for ~1 s (T1: up to 0.9 s at 20 Hz), so limit_s must
+    be longer than that. Per joint, not per message: one silent servo must not hide behind five fresh ones."""
+    if not ages:
+        return 'no arm/servo_stats received (is base_node running with arm joint polling?)'
+    newest = max(t for _, t in ages.values())
+    if now - newest > stats_timeout_s:
+        return f'arm/servo_stats is stale ({now - newest:.1f}s)'
+    for j in joints:
+        sid = joint_servo.get(j)
+        if sid is None or sid not in ages:
+            return f'no servo stats for joint {j}'
+        age, reported = ages[sid]
+        if age < 0:
+            return f'joint {j} (servo {sid}) has never answered'
+        eff = age + (now - reported)
+        if eff > limit_s:
+            return f'joint {j} (servo {sid}) reading is {eff:.1f}s old (limit {limit_s:.1f}s)'
+    return ''
+
+
+class BusyGate:
+    """Atomic single-trajectory gate. acquire() is one locked test-and-set, so two goal requests arriving at the same
+    moment can never both be accepted (the old plain bool was checked in the goal callback and set later in execute).
+    A token older than `max_hold_s` is treated as leaked (e.g. an execute that never ran) and taken over.
+    한글: 목표 수락을 한 번의 잠금 아래에서 원자적으로 한다. 오래된 토큰(실행이 안 돌았을 때)은 넘겨받는다."""
+
+    def __init__(self, max_hold_s=120.0, clock=time.monotonic):
+        self._lock = threading.Lock()
+        self._since = None
+        self._max = max_hold_s
+        self._clock = clock
+        self.takeovers = 0
+
+    def acquire(self):
+        with self._lock:
+            now = self._clock()
+            if self._since is not None:
+                if now - self._since <= self._max:
+                    return False
+                self.takeovers += 1
+            self._since = now
+            return True
+
+    def release(self):
+        with self._lock:
+            self._since = None
+
+    @property
+    def busy(self):
+        with self._lock:
+            return self._since is not None
+
+
 class TrajectoryBridge(Node):
     def __init__(self):
         super().__init__('trajectory_bridge')
@@ -92,6 +151,14 @@ class TrajectoryBridge(Node):
         self.declare_parameter('goal_tolerance_rad', 0.06)
         self.declare_parameter('state_timeout_s', 1.5)     # /joint_states가 이보다 오래되면 거부 / stale limit
         self.declare_parameter('settle_timeout_s', 3.0)
+        # 관절별 신선도(arm/servo_stats). joint->servo id 대응은 base.yaml arm_joint_names/arm_servo_ids와 같아야 한다.
+        self.declare_parameter('stats_joint_names', ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'r_joint'])
+        self.declare_parameter('stats_servo_ids', [1, 2, 3, 4, 5, 10])
+        # > longest silent gap seen at 20 Hz (0.9 s); needs arm_poll_hz >= 12 (5 Hz had 2.4 s gaps)
+        self.declare_parameter('joint_age_limit_s', 1.5)
+        self.declare_parameter('stats_timeout_s', 3.0)       # arm/servo_stats itself is 1 Hz
+        self.declare_parameter('require_servo_stats', True)  # False only for dry runs without base_node
+        self.declare_parameter('busy_max_hold_s', 120.0)
         self.declare_parameter('dry_run', False)           # True면 명령을 발행하지 않고 검사/로그만 / validate+log only
 
         gp = self.get_parameter
@@ -104,13 +171,22 @@ class TrajectoryBridge(Node):
         self.state_timeout = float(gp('state_timeout_s').value)
         self.settle_timeout = float(gp('settle_timeout_s').value)
         self.dry_run = bool(gp('dry_run').value)
+        names = [str(n) for n in gp('stats_joint_names').value]
+        ids = [int(i) for i in gp('stats_servo_ids').value]
+        self.joint_servo = dict(zip(names, ids))
+        self.joint_age_limit = float(gp('joint_age_limit_s').value)
+        self.stats_timeout = float(gp('stats_timeout_s').value)
+        self.require_stats = bool(gp('require_servo_stats').value)
+        self.gripper_set = {str(j) for j in gp('gripper_joints').value}
+        self._ages = {}
 
         self._lock = threading.Lock()
         self._state = {}      # joint -> position
         self._state_time = 0.0
-        self._busy = False
+        self._gate = BusyGate(float(gp('busy_max_hold_s').value))
         cbg = ReentrantCallbackGroup()
         self.create_subscription(JointState, 'joint_states', self._on_state, 20, callback_group=cbg)
+        self.create_subscription(DiagnosticArray, 'arm/servo_stats', self._on_stats, 10, callback_group=cbg)
         self.pub = self.create_publisher(JointTrajectory, str(gp('command_topic').value), 10)
 
         self._servers = []
@@ -132,6 +208,17 @@ class TrajectoryBridge(Node):
                 self._state[n] = p
             self._state_time = time.monotonic()
 
+    def _on_stats(self, msg):
+        t = time.monotonic()
+        with self._lock:
+            for st in msg.status:
+                try:
+                    sid = int(st.hardware_id)
+                    age = next(float(kv.value) for kv in st.values if kv.key == 'age_s')
+                except (ValueError, StopIteration):
+                    continue
+                self._ages[sid] = (age, t)
+
     def _current(self, joints):
         """Returns (positions, error). 한글: 최신 관절값, 없거나 오래되면 에러 문자열."""
         with self._lock:
@@ -141,6 +228,11 @@ class TrajectoryBridge(Node):
             missing = [j for j in joints if j not in self._state]
             if missing:
                 return None, f'no joint state for {missing}'
+            if self.require_stats:
+                err = joint_age_error(joints, self.joint_servo, self._ages, time.monotonic(), self.joint_age_limit,
+                                      self.stats_timeout)
+                if err:
+                    return None, err
             return [self._state[j] for j in joints], ''
 
     def _on_goal(self, req, joints):
@@ -149,7 +241,7 @@ class TrajectoryBridge(Node):
             self.get_logger().warn(
                 f'reject goal: joints {list(traj.joint_names)} != controller joints {joints}')
             return GoalResponse.REJECT
-        if self._busy:
+        if not self._gate.acquire():
             self.get_logger().warn('reject goal: another trajectory is executing')
             return GoalResponse.REJECT
         return GoalResponse.ACCEPT
@@ -168,10 +260,14 @@ class TrajectoryBridge(Node):
 
     def _finish(self, gh, code, text, joints=None, hold=False):
         """한글: 중단/실패 시 현재 자세를 유지시키고 결과를 돌려준다. / Hold the current pose on failure."""
-        if hold and joints:
-            cur, err = self._current(joints)
+        # 한글: 그리퍼는 hold 명령을 보내지 않는다 — "현재 읽은 위치로 이동"은 파지 중 조임을 풀어 물체를 떨어뜨린다.
+        # 조임은 파지 상태 기계가 소유한다(prd/arm-control-path.md R7·D5). 팔 관절만 hold.
+        # Never hold the gripper: commanding its current reading would release a squeeze.
+        hold_joints = [j for j in (joints or []) if j not in self.gripper_set]
+        if hold and hold_joints:
+            cur, err = self._current(hold_joints)
             if cur is not None:
-                self._send(joints, cur, self.period)
+                self._send(hold_joints, cur, self.period)
         res = Result()
         res.error_code = code
         res.error_string = text
@@ -183,11 +279,15 @@ class TrajectoryBridge(Node):
             gh.abort()
         if code != Result.SUCCESSFUL:
             self.get_logger().warn(f'trajectory not completed: {text}')
-        self._busy = False
         return res
 
     def _execute(self, gh, joints):
-        self._busy = True
+        try:
+            return self._execute_locked(gh, joints)
+        finally:
+            self._gate.release()   # 예외가 나도 반드시 해제 / released even if the body raises
+
+    def _execute_locked(self, gh, joints):
         traj = gh.request.trajectory
         order = [list(traj.joint_names).index(j) for j in joints]
         times = [point_time(p) for p in traj.points]

@@ -88,7 +88,7 @@
 - 변경: base_node가 위 표대로 `arm/command`·`arm/command_timed`·홈 이동·토크 명령을 판정한다(ID 10 포함 여부 + 관절 1~5 이동은 상태에 따라). 브리지 `gripper_controller` 목표도 IDLE이 아니면 거부(base_node 상태 토픽 `arm/grasp_state` 구독) — 두 겹.
 - 통과 기준: ① HOLDING 중 ID 10 명령 20회 주입 → 20회 거부, 조임 위치 변화 ±2 눈금 이내 ② HOLDING 중 MoveIt 팔 이동 허용(관절 1~5 이동 성공) ③ CLOSING/SQUEEZE/RELEASING 중 관절 이동 명령 거부 ④ Release 후에만 FJT 그리퍼 명령이 다시 통한다.
 
-### R7. 기존 브리지 안전성
+### R7. 기존 브리지 안전성 (**2026-10-11 구현·시험 완료**, 팔 이동 중 동작은 T7)
 - ① **관절별 신선도**: R1의 `arm/servo_stats`(또는 `/joint_states`에 관절별 시각 병행)로 브리지가 개별 관절 데이터가 `state_timeout_s`보다 오래되면 거부한다. 변경: `trajectory_bridge.py`, `base_node.cpp`.
 - ② **목표 수락 경쟁 조건**: 수락 콜백에서 잠금 아래 `_busy`를 원자적으로 확보하고, 실행은 try/finally로 해제. 팔·그리퍼 동시 목표 요청 시험을 단위로 만든다(`test_bridge_logic.py`).
 - ③ **hold 정책**: 그리퍼는 hold 명령을 보내지 않는다(파지 상태 기계가 소유). 팔 관절 hold는 유지.
