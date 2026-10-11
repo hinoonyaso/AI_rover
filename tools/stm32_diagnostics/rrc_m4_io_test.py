@@ -23,6 +23,9 @@ Usage: python3 tools/stm32_diagnostics/rrc_m4_io_test.py <mode> [options]
 Needs base_node NOT running (it owns the serial port).
 """
 import argparse
+import json
+import random
+import statistics
 import os
 import struct
 import sys
@@ -33,6 +36,7 @@ import serial
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rrc_m4_diag import frames  # noqa: E402
 from rrc_m4_raw_pwm_test import frame, PORT  # noqa: E402
+import grasp_contact as gc  # noqa: E402
 
 EVENTS = {0x01: 'PRESSED', 0x02: 'LONGPRESS', 0x20: 'CLICK', 0x40: 'DOUBLE_CLICK'}
 
@@ -134,10 +138,10 @@ def check_temps(ser, ids=(10, 1), label=''):
     return temps
 
 
-def move_bus_servo(ser, sid, pulse, ms):
+def move_bus_servo(ser, sid, pulse, ms, settle=0.5):
     payload = bytes([0x01]) + struct.pack('<H', ms) + bytes([1, sid]) + struct.pack('<H', pulse)
     ser.write(frame(0x05, payload))
-    time.sleep(ms / 1000 + 0.5)
+    time.sleep(ms / 1000 + settle)
 
 
 def find_contact(ser, args):
@@ -230,6 +234,73 @@ def grasp_levels(ser, args):
     check_temps(ser, label='after')
 
 
+def contact_validate(ser, args):
+    """T3 (prd/arm-control-path.md R3): repeat the contact detection and record what it finds. THE GRIPPER CLOSES.
+    --kind cube    : each trial beeps once (put the 3 cm cube between the open jaws; hands off after --place-s s), the
+                     gripper closes until blocked, squeezes +--squeeze, holds 2 s (position must stay within 3 pulses),
+                     beeps twice (take the cube away), reopens.
+    --kind empty   : nothing between the jaws; the detector must NOT report a contact (no prompts).
+    --kind blocked : each trial beeps 3 times: pinch the jaws with a finger/something that is NOT the cube; the contact
+                     must be classified outside the cube window.
+    --drop-prob p  : randomly turns a fraction p of the position readings into 'missing' (software injection) -- the
+                     detector must find the same contact or stop, never a wrong one.
+    한글: 접촉 감지 반복 검증. 큐브/빈 닫기/손가락으로 막기/읽기 누락 주입. 그리퍼가 닫힌다."""
+    lo, hi = (int(x) for x in args.window.split(','))
+    rng = random.Random(args.seed)
+
+    def read():
+        return None if rng.random() < args.drop_prob else read_bus_servo(ser, 10, tries=1)
+
+    def move(pulse, ms):
+        move_bus_servo(ser, 10, pulse, args.step_ms, settle=0.2)
+
+    check_temps(ser, label='before')
+    rows = []
+    for k in range(1, args.trials + 1):
+        start = read_bus_servo(ser, 10)
+        if start is None or start > 450:
+            sys.exit(f'gripper is at {start}; open it first (gripper-goto --pulse 200)')
+        if args.kind != 'empty':
+            beep(ser, 1 if args.kind == 'cube' else 3)
+            what = 'put the cube between the jaws' if args.kind == 'cube' else 'pinch the jaws with a finger'
+            print(f'trial {k}/{args.trials}: {what} ({args.place_s:g} s)')
+            time.sleep(args.place_s)
+        t0 = time.monotonic()
+        r = gc.find_contact(move, read, step=args.step, max_pulse=args.max_pulse, retries=2,
+                            log=print if args.verbose else None)
+        took = time.monotonic() - t0
+        verdict = gc.classify(r, (lo, hi))
+        hold = None
+        if r['status'] == 'contact' and args.squeeze:
+            move_bus_servo(ser, 10, r['contact'] + args.squeeze, 400)
+            ok, hmin, hmax = gc.hold_check(lambda: read_bus_servo(ser, 10, tries=1), r['contact'] + args.squeeze, 2.0)
+            hold = {'ok': ok, 'min': hmin, 'max': hmax}
+        rows.append({'trial': k, 'kind': args.kind, 'status': r['status'], 'contact': r['contact'], 'lag': r['lag'],
+                     'steps': r['steps'], 'verdict': verdict, 'seconds': round(took, 1), 'hold': hold})
+        print(f'  -> {verdict}: contact {r["contact"]} lag {r["lag"]} steps {r["steps"]} in {took:.1f} s'
+              + ('' if hold is None else f', held {hold["min"]}..{hold["max"]} ({"ok" if hold["ok"] else "MOVED"})'))
+        if args.kind != 'empty':
+            beep(ser, 2)
+            print('  take the object away now')
+            time.sleep(args.place_s * 0.7)
+        move_bus_servo(ser, 10, start, 1500)
+        if k % 5 == 0:
+            check_temps(ser, label=f'after {k}')
+    check_temps(ser, label='after')
+    contacts = [r['contact'] for r in rows if r['contact'] is not None]
+    summary = {'kind': args.kind, 'trials': args.trials, 'window': [lo, hi], 'drop_prob': args.drop_prob,
+               'verdicts': {v: sum(1 for r in rows if r['verdict'] == v) for v in sorted({r['verdict'] for r in rows})},
+               'contact_min': min(contacts) if contacts else None, 'contact_max': max(contacts) if contacts else None,
+               'contact_mean': round(statistics.mean(contacts), 1) if contacts else None,
+               'contact_sd': round(statistics.pstdev(contacts), 1) if contacts else None,
+               'holds_moved': sum(1 for r in rows if r['hold'] and not r['hold']['ok'])}
+    os.makedirs('Log', exist_ok=True)
+    path = 'Log/contact_validate_%s_%s.json' % (args.kind, time.strftime('%Y%m%d_%H%M%S'))
+    json.dump({'summary': summary, 'rows': rows}, open(path, 'w'), indent=1)
+    print('SUMMARY', json.dumps(summary, ensure_ascii=False))
+    print('raw:', path)
+
+
 def swing_joint1(ser):
     """Joint 1 (base yaw) +-40 pulses (about 10 deg) twice at 0.8 s per leg while the gripper keeps squeezing."""
     p0 = read_bus_servo(ser, 1)
@@ -311,7 +382,7 @@ def bus_torque_test(ser, args):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     modes = ['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo', 'bus-torque', 'gripper-range',
-             'gripper-goto', 'grasp-cube', 'grasp-levels']
+             'gripper-goto', 'grasp-cube', 'grasp-levels', 'contact-validate']
     ap.add_argument('mode', choices=modes)
     ap.add_argument('--secs', type=float, default=20.0)
     ap.add_argument('--on', type=int, default=100)
@@ -332,6 +403,14 @@ def main():
     ap.add_argument('--width-mm', type=float, default=30.0, help='grasp-cube: width of the object between the jaws')
     ap.add_argument('--hold', type=float, default=4.0, help='bus-torque: seconds the joint stays limp')
     ap.add_argument('--delta', type=int, default=20, help='bus-servo: pulses (0.24 deg each), |delta| <= 40')
+    ap.add_argument('--kind', choices=['cube', 'empty', 'blocked'], default='cube', help='contact-validate: what is tested')
+    ap.add_argument('--trials', type=int, default=10, help='contact-validate: closings')
+    ap.add_argument('--window', default='495,555', help='contact-validate: contact positions accepted as the cube (lo,hi)')
+    ap.add_argument('--squeeze', type=int, default=16, help='contact-validate: pulses beyond the contact (0 = no squeeze)')
+    ap.add_argument('--place-s', type=float, default=6.0, help='contact-validate: seconds to put/take the object')
+    ap.add_argument('--step-ms', type=int, default=250, help='contact-validate: time given to each closing step')
+    ap.add_argument('--drop-prob', type=float, default=0.0, help='contact-validate: fraction of readings turned into missing')
+    ap.add_argument('--seed', type=int, default=1)
     args = ap.parse_args()
     ser = serial.Serial(PORT, 1_000_000, timeout=0.05)
     ser.reset_input_buffer()
@@ -366,6 +445,8 @@ def main():
         bus_torque_test(ser, args)
     elif args.mode == 'gripper-range':
         gripper_range(ser, args)
+    elif args.mode == 'contact-validate':
+        contact_validate(ser, args)
     elif args.mode == 'gripper-goto':
         if not 125 <= args.pulse <= 693:
             sys.exit('gripper-goto: pulse must be 125..693 (measured range 2026-10-11)')
