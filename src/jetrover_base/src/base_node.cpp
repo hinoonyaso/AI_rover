@@ -665,9 +665,14 @@ private:
         ++it;
         continue;
       }
+      // 한글: 직전 보정 뒤에도 읽은 값이 그대로면 서보가 안 움직인 것(데드밴드 안): 그때만 데드밴드 몫을 더 얹는다.
+      // Add the dead band share only when the previous trim did not move the servo (reading unchanged); an
+      // unconditional boost overshot joint 4 at the home pose (2026-10-11).
+      const int64_t reading = arm_servo_ticks_[id];
+      const bool stuck = p.retries > 0 && reading == p.last_read;
       const auto r = feedback_trim(
         p.target, arm_servo_ticks_[id], p.cmd, arm_trim_threshold_, arm_trim_max_error_,
-        arm_deadband_overshoot_[i], arm_pulse_min_, arm_pulse_max_);
+        stuck ? arm_deadband_overshoot_[i] : 0, arm_pulse_min_, arm_pulse_max_);
       if (r.action == TrimAction::Retry && p.retries < arm_trim_max_retries_) {
         const auto frame = build_bus_servo_set_position(
           0.3, std::vector<BusServoTarget>{{id, static_cast<uint16_t>(r.cmd)}});
@@ -677,6 +682,7 @@ private:
           static_cast<long>(p.target), arm_servo_ticks_[id], static_cast<long>(r.cmd),
           static_cast<long>(p.retries + 1));
         p.cmd = r.cmd;
+        p.last_read = reading;
         p.retries++;
         p.settle_s = t + 0.3 + 0.6;
         ++it;
@@ -803,7 +809,7 @@ private:
       if (std::find(arm_trim_ids_.begin(), arm_trim_ids_.end(), arm_servo_ids_[i]) !=
         arm_trim_ids_.end())
       {
-        new_pending.push_back({i, ArmPending{clamped, pulse, 0.0, 0.0, 0}});
+        new_pending.push_back({i, ArmPending{clamped, pulse, 0.0, 0.0, 0, INT64_MIN}});
       }
     }
     // Logged only once validation passed for every joint -- a mid-loop log here would
@@ -993,6 +999,7 @@ private:
     double settle_s;
     double last_request_s;
     int64_t retries;
+    int64_t last_read;  // reading at the previous trim step (stuck detection)
   };
   std::map<std::size_t, ArmPending> arm_pending_;
   std::map<uint8_t, double> arm_servo_stamp_;
