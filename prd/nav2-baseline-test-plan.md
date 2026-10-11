@@ -23,6 +23,9 @@
 상자: 신발 상자(높이 약 0.12 m, LiDAR에 안 보임, depth로만 보임). 시험마다 같은 위치에 다시 놓는다(바닥에 테이프 표시 권장).
 
 ## 기록 / 판정
+**2026-10-11 갱신(`tools/nav/benchmark/trial_judge.py`)**: 최종 자세는 출처별로 따로 기록한다 — `auto.amcl_final`(Nav2/AMCL 추정), `scan_final`(정지 후 스캔-지도 매칭 **추정**: AMCL과 같은 LiDAR·지도라 독립 정답이 아님, 신뢰 기준은 `scan_match_init.py`와 같음), `manual_final`(줄자). 판정은 줄자 > 신뢰 기준을 넘은 스캔 매칭 순이며 둘 다 없으면 `unmeasured`.
+결과 상태: `invalid`(경로 끝 잘림 > 10 cm) / `fail`(충돌 또는 기준 초과) / `abort`(Nav2 실패) / `unmeasured`(측정 실패) / `pending_collision`(충돌 미확인) / `success`.
+**운영 규칙(사용자, 2026-10-11)**: 충돌은 사용자가 말하지 않으면 없음 — `run_trial.py`가 다음 회차를 시작할 때 이전 회차를 '충돌 없음'으로 확정하고 출처를 남긴다. 있었다면 그 전에 `set_meta.py ... y`.
 - 절차 자동화: `tools/nav/benchmark/run_trial.py` (rosbag + `meta.json` 틀 + 자동 판정 항목). 사람 판정은 충돌 여부와 줄자 실측.
 - **사람이 판정**: 충돌(상자나 벽에 닿았는가, 상자가 밀렸는가), 선택적으로 줄자/각도기로 `measured_final`. AMCL 자기 자세는 독립 정답이 아니다.
 - **자동 판정**: 액션 결과(SUCCEEDED/ABORTED), 소요 시간, recovery 횟수, AMCL 최종 자세, B의 선 이탈 최대값/최종값.

@@ -16,8 +16,8 @@ IMU yaw rate만 실측이다. 이 상태로 Perception/Manipulation을 올리면
 | 0 | 저장소 정리: README, 라이선스, package.xml, CI, ROS2 unit test | 불필요 | CI 초록, README가 실제 상태와 일치 | 완료 (unit test: RRC 코덱·메카넘·서보 변환·watchdog·명령 검증, CI 포함. 안전 로직 L0 보강 — `checklist/README.md`) |
 | 1 | **Nav2 baseline** (open-loop odom, 15회) | 로봇 L4 | `prd/nav2-baseline-test-plan.md` 완료 기준 4개 | 계획·도구 완료, **선행 정리(1-1~1-3) 진행 중**(아래), 시험 미실시 |
 | 2 | STM32 엔코더 bring-up | ST-Link, 로봇 L2~L3 | `prd/encoder-odometry-test-plan.md` E1~E3 | ST-Link 도착(2026-10-08), 착수 예정 금요일(2026-10-09) |
-| 3 | encoder odom + EKF 재구성 | 로봇 L3~L4 | 같은 baseline을 `encoder_ekf` 태그로 재시험, Before/After 표 | 계획 (`prd/encoder-odometry.md`) |
-| 4 | DWB vs MPPI A/B | 로봇 L4 | `prd/nav2-mppi-ab-test-plan.md` | **앞당겨 착수(2026-10-09 사용자 승인)**: DWB 회피가 구조적 문제를 반복해서. MPPI 설정 완료, 공정 비교는 footprint 실측 후 |
+| 3 | encoder odom + EKF 재구성 | 로봇 L3~L4 | 같은 baseline을 `encoder` 조건으로 재시험, Before/After 표 | **완료(2026-10-11)**: 개루프 정확도 개선(E4/E5), Nav2 폐루프 30회에서는 차이 없음(허용 오차·AMCL 편향에 가려짐) → 기본값 `auto` |
+| 4 | DWB vs MPPI A/B | 로봇 L4 | `prd/nav2-mppi-ab-test-plan.md` | **완료(잠정, 2026-10-11, 각 15회)**: 직선은 MPPI, 정면 상자·대각 회전은 DWB 우세 → **기본값 DWB 유지**, MPPI는 변형으로 보관. `docs/benchmarks/navigation/dwb_vs_mppi_20261011.md` |
 | 5 | Arm: ros2_control + FollowJointTrajectory 설계 | 불필요(설계) → 로봇 L2 | PRD 승인 → hardware interface가 `arm/command`와 같은 동작 재현 | **3·4 이후에 PRD 작성** |
 | 6 | MoveIt2 단독 joint-space 이동 | 로봇 L2~L3(팔) | perception 없이 목표 관절각 도달·충돌 회피 | 계획 |
 | 7 | RGB-D → XYZ → TF | 로봇 | 알려진 위치 물체의 base_link 좌표 오차 측정 | 계획 |
@@ -28,6 +28,9 @@ IMU yaw rate만 실측이다. 이 상태로 Perception/Manipulation을 올리면
 | 12 | Voice | 마이크/스피커 | 명령 세트 intent 정확도 | 계획 |
 | 13 | Dashboard | — | 필요한 최소 화면 | 마지막 |
 | 14 | RAG | — | **정말 필요할 때만** | 보류 |
+
+
+**2026-10-11 판단**: 주행 단계는 goal 허용 오차 0.15 대 0.10 단일 실험 하나만 남기고 종료 기준(체크리스트 8, 위치 정확도와 장애물 안전 분리)을 채우면 Nav2 설정을 동결한다. MVP가 요구하는 주행은 "근처 ±10 cm + 카메라 재검출 보정"(PLAN_ARM_TO_MVP 8단계)이므로 정면 상자 회피 개선·추가 DWB/MPPI 튜닝·대규모 시뮬레이션은 우선순위를 낮춘다. 그다음 AprilTag 정렬(체크리스트 10)과 팔 단계(5~8)로 간다.
 
 게이트를 통과하지 못하면 다음 단계로 넘어가지 않는다. 게이트 결과는 수치로 `checklist/`에 남긴다.
 5~13단계의 구체 작업·게이트 수치·준비물·위험은 [PLAN_ARM_TO_MVP.md](PLAN_ARM_TO_MVP.md)(계획, 2026-10-08).
