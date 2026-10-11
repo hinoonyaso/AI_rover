@@ -32,4 +32,4 @@ E6 v2(2026-10-11, `docs/benchmarks/navigation/e6v2_20261011.md`)가 끝나 선�
 - 한계: DWB 쪽은 오전·MPPI는 오후라 배터리(12.0 → 11.6 V)와 서보 발열 차이가 끼어든다. MPPI와 DWB 결과가 애매하게 겹치면 DWB를 나중에 5회 더 재서 순서 효과를 본다.
 
 ## 상태
-- [~] 2026-10-11 착수: DWB 기준(E6 v2 encoder 15회) 확보, MPPI 15회 진행 예정.
+- [x] 2026-10-11 완료(잠정): DWB 기준 = E6 v2 encoder 15회, MPPI 15회 측정. 결과 `docs/benchmarks/navigation/dwb_vs_mppi_20261011.md` — 직선은 MPPI, 정면 상자 우회·대각 회전은 DWB가 강함. DWB의 CPU·속도 프로파일은 미측정.
