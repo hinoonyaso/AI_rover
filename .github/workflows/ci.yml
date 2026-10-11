@@ -29,6 +29,8 @@ jobs:
         run: python3 tools/nav/benchmark/test_metrics.py
       - name: Benchmark trial judge unit tests
         run: python3 tools/nav/benchmark/test_trial_judge.py
+      - name: Arm poll benchmark rule unit tests
+        run: python3 tools/stm32_diagnostics/test_arm_poll_bench.py
       - name: Home pose floor-metric unit tests
         run: python3 tools/perception/test_floor_metrics.py
       - name: Room scan 2D ICP unit tests

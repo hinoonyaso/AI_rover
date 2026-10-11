@@ -12,6 +12,8 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
 add_library(${PROJECT_NAME}_lib
@@ -22,6 +24,7 @@ add_library(${PROJECT_NAME}_lib
   src/command_guard.cpp
   src/crash_guard.cpp
   src/wheel_twist_source.cpp
+  src/servo_stats.cpp
 )
 target_include_directories(${PROJECT_NAME}_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -30,7 +33,7 @@ target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_17)
 
 add_executable(base_node src/base_node.cpp)
 target_link_libraries(base_node ${PROJECT_NAME}_lib)
-ament_target_dependencies(base_node rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs trajectory_msgs)
+ament_target_dependencies(base_node rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs trajectory_msgs diagnostic_msgs std_srvs)
 
 install(TARGETS base_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
@@ -51,6 +54,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_link_watchdog ${PROJECT_NAME}_lib)
   ament_add_gtest(test_wheel_twist_source test/test_wheel_twist_source.cpp)
   target_link_libraries(test_wheel_twist_source ${PROJECT_NAME}_lib)
+  ament_add_gtest(test_servo_stats test/test_servo_stats.cpp)
+  target_link_libraries(test_servo_stats ${PROJECT_NAME}_lib)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)

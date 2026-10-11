@@ -113,6 +113,7 @@
 | `wheel_twist_source` (base_node) | **command → auto** (launch 인자 기본값·`base.yaml`·노드 기본값) | 10-11 | 엔코더 odom이 개루프에서 더 정확(E4 직진 0.68 → 0.24 cm/m, E5 왕복 0.1~0.4 cm)하고 Nav2 E6 v2 30회에서 차이 없음(성공 6/15 대 5/15) → 비용 없음. auto는 FUNC 0x21 피드백이 끊기면 명령값으로 폴백하고 전환을 로그로 남김. 실기 확인: 구동 시 공분산 0.0001(엔코더), 피드백 유효 시간을 0.0001 s로 줘 끊김을 흉내 내면 0.05(명령값)·경고 로그. 되돌리려면 `wheel_twist_source:=command` |
 | MPPI `VelocityDeadbandCritic` (시험 변형만, 기본값 아님) | 켬 → **끔**(`nav2_params_mppi_nodb.yaml`, `make_variants.sh`) | 10-11 | 자체 펌웨어에서 0.02 m/s도 추종(데드존 소멸) + 상자 앞 망설임 의심. 상자 B 1회: 32 s·회전-직진-회전 그대로 → **가설 지지 못함, 채택 안 함**. 기본 `mppi_followpath.yaml`은 그대로 |
 | 컨트롤러 기본값 | **DWB 유지**(MPPI 전환 안 함) | 10-11 | A/B 15회씩: 직선 MPPI 우세, 정면 상자·대각 회전 DWB 우세(`dwb_vs_mppi_20261011.md`). 다음 단일 실험은 goal 허용 오차 0.15 대 0.10 |
+| `arm_poll_hz` (base_node) | 5.0 → **20.0** (코드 기본값·`base.yaml`, 실행 중 변경 가능) | 10-11 | T1 폴링 벤치마크(`docs/benchmarks/arm_poll_bench_20261011.md`): 읽기 전용에서 IMU·루프 불변, 프레임 유실 0, 서보 응답률이 5 Hz와 같음. 팔이 움직일 때는 T7에서 확인, 문제면 5~12 Hz |
 | goal 허용 오차 (**기본값 적용 10-11**, 되돌리기 `tools/nav/ab_params/nav2_params_tol015.yaml`) | `general_goal_checker.xy_goal_tolerance` 0.15 → **0.10**, `FollowPath.xy_goal_tolerance` 0.12 → **0.08** | 10-11 | 자체 펌웨어에서 모터 데드존 소멸(0.02 m/s 추종). D·C 각 5회: 위치 오차 약 3.5 cm 개선, 10 cm 안 9/10(0.15는 2/10), 정체·진동 없음. 외부 리뷰의 조건부 승인(줄자 독립 확인 3~5회·시험 순서 효과 확인은 남음) |
 
 ## 해석 시 주의

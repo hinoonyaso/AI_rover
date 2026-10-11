@@ -378,8 +378,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] Gripper (ID10으로 확인됨)
 - [ ] **팔 제어 경로 확정 + 접촉 파지 (로드맵 5단계, PRD `prd/arm-control-path.md`, TEST_PLAN `prd/arm-control-path-test-plan.md`, 2026-10-11 PRD 작성 — 구현 전)**
   결정: 제어 경로 A 확정(`trajectory_bridge.py → arm/command_timed → base_node`), ros2_control은 MVP 이후 PoC. 접촉 파지는 base_node 통신 경로 + 취소·피드백 Action, 파지 중 ID 10 배타 제어, 접촉 감지 신뢰성 확인 전에는 3 cm 큐브 프로파일(+16)만 제한 사용(다른 물체로 일반화 금지). **측정 안 한 값은 "미정(측정 후)"이며 확정값이 아니다.** 순서: 폴링 벤치마크 → 접촉 감지 검증 → 파지 Action → MoveIt 실기 통합.
-  - [ ] T1 폴링 벤치마크: `arm/servo_stats`(서보별 응답 시각·누락) + `arm_poll_bench.py`. 5·12·20(·30) Hz에서 서보별/그리퍼 응답 주기, 누락, IMU 수신률, 시리얼 부하, `cmd_vel` 지연 기록. (`arm_poll_hz`는 서보 하나씩 읽는 타이머 주기라 서보당 갱신 = 6/Hz. 12 Hz는 2026-10-06 실기에서 사용(manipulation README)했으나 정량 측정 없음. 읽기 전용이라 `arm_command_enabled:=false`·홈 이동 끔. `arm/servo_stats`는 서보 응답 프레임이 실제 도착한 시각 기준)
-  - [ ] T2 그리퍼 우선 폴링(T1 결과로 필요성 판단, 필요 없으면 만들지 않음)
+  - [x] T1 폴링 벤치마크 완료(2026-10-11, 읽기 전용, `docs/benchmarks/arm_poll_bench_20261011.md`): 5·12·20·30 Hz + 5 Hz 재측정을 로봇 정지·base_node 단독과 실운용 부하(로봇+카메라+Nav2)에서 60 s씩. IMU 50.5 Hz·base_node 루프 불변, 프레임 유실 0, 지연 3~5 ms, 서보 무응답 5~8 %가 모든 속도에서 비슷(성공률 92~95 %, 같은 5 Hz의 구간 간 잡음 약 3점) → **20 Hz를 기본값으로 채택**(서보당 갱신 0.3 s, 최대 공백 0.9 s). 팔이 움직이는 동안은 미측정(T7에서 확인). 구현: `arm/servo_stats`(서보 응답 프레임 실제 도착 시각 기준)·`arm/servo_stats_reset`·`arm_poll_hz` 실행 중 변경·`ServoStats` 단위시험 7개·벤치 판정 규칙 단위시험 10개. 원래 항목: `arm/servo_stats`(서보별 응답 시각·누락) + `arm_poll_bench.py`. 5·12·20(·30) Hz에서 서보별/그리퍼 응답 주기, 누락, IMU 수신률, 시리얼 부하, `cmd_vel` 지연 기록. (`arm_poll_hz`는 서보 하나씩 읽는 타이머 주기라 서보당 갱신 = 6/Hz. 12 Hz는 2026-10-06 실기에서 사용(manipulation README)했으나 정량 측정 없음. 읽기 전용이라 `arm_command_enabled:=false`·홈 이동 끔. `arm/servo_stats`는 서보 응답 프레임이 실제 도착한 시각 기준)
+  - [ ] T2 그리퍼 우선 폴링 — **보류**(T1 결과로 20 Hz면 그리퍼 0.3 s 갱신·최대 공백 0.9 s; 접촉 감지에 필요한 주기는 T3에서 정함. 파지 상태 기계가 ID 10을 직접 읽는 방식도 후보, 그리퍼 단독 20~50 Hz는 미측정. 필요 없으면 만들지 않음)
   - [ ] T3 접촉 감지 검증: 큐브 위치 반복, 빈 닫기(끝점 693) 오판, 손으로 막기, 응답 누락 주입
   - [ ] T4 브리지 안전성: 관절별 신선도(오래된 개별 관절 거부), 목표 수락 경쟁 조건(`_busy` 잠금 없음)·예외 시 해제, 파지 중 그리퍼 hold 금지
   - [ ] T5 `GraspStateMachine`(순수 C++) 단위 시험: 정상/빈 닫기/접촉 창 밖/타임아웃/응답 누락/온도 80 ℃/취소

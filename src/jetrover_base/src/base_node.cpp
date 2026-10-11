@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "std_srvs/srv/trigger.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -25,6 +27,7 @@
 #include "jetrover_base/crash_guard.hpp"
 #include "jetrover_base/link_watchdog.hpp"
 #include "jetrover_base/mecanum.hpp"
+#include "jetrover_base/servo_stats.hpp"
 #include "jetrover_base/wheel_twist_source.hpp"
 #include "jetrover_base/rrc_protocol.hpp"
 #include "jetrover_base/serial_port.hpp"
@@ -133,6 +136,21 @@ public:
         rcl_interfaces::msg::SetParametersResult result;
         result.successful = true;
         for (const auto & p : params) {
+          if (p.get_name() == "arm_poll_hz") {
+            // 선언 시점(파라미터 파일 값)에는 타이머가 아직 없어 검증만 하고 통과시킨다.
+            // At declaration time (value from the params file) the timers do not exist yet: validate only.
+            if (p.get_type() != rclcpp::ParameterType::PARAMETER_DOUBLE || p.as_double() < 1.0 ||
+            p.as_double() > 60.0)
+            {
+              result.successful = false;
+              result.reason = "arm_poll_hz must be a double in [1, 60]";
+              return result;
+            }
+            if (arm_poll_timer_) {
+              set_arm_poll_hz(p.as_double());
+            }
+            continue;
+          }
           if (p.get_name() != "wheel_twist_source") {
             continue;
           }
@@ -181,7 +199,7 @@ public:
       const double servo_range_deg = declare_parameter<double>("arm_servo_range_deg", 240.0);
       const double servo_ticks_range = declare_parameter<double>("arm_servo_ticks_range", 1000.0);
       arm_rad_per_tick_ = rad_per_tick(servo_range_deg, servo_ticks_range);
-      const double arm_poll_hz = declare_parameter<double>("arm_poll_hz", 5.0);
+      const double arm_poll_hz = declare_parameter<double>("arm_poll_hz", 20.0);
 
       if (arm_joint_names_.size() != arm_servo_ids_.size() ||
         arm_joint_names_.size() != arm_center_ticks_.size() ||
@@ -195,12 +213,22 @@ public:
         publish_arm_joint_states_ = false;
       } else {
         joint_state_pub_ = create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
-        arm_poll_timer_ = create_wall_timer(
-          std::chrono::duration<double>(1.0 / std::max(1.0, arm_poll_hz)),
-          [this]() {poll_next_arm_servo();});
-        joint_state_timer_ = create_wall_timer(
-          std::chrono::duration<double>(1.0 / std::max(1.0, arm_poll_hz)),
-          [this]() {publish_arm_joint_states();});
+        // 한글: 서보별 읽기 요청/응답 통계(응답 프레임이 실제로 도착한 시각 기준). arm_poll_hz는 실행 중 변경 가능.
+        // Per-servo read request/reply stats measured on the wire (not /joint_states header times); arm_poll_hz is
+        // settable at runtime (T1 poll-rate benchmark, prd/arm-control-path.md).
+        servo_stats_pub_ =
+          create_publisher<diagnostic_msgs::msg::DiagnosticArray>("arm/servo_stats", 10);
+        servo_stats_timer_ = create_wall_timer(1s, [this]() {publish_servo_stats();});
+        // 벤치마크가 구간마다 통계를 0에서 다시 세도록 / lets the benchmark restart the counters per window
+        servo_stats_reset_srv_ = create_service<std_srvs::srv::Trigger>(
+          "arm/servo_stats_reset",
+          [this](const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+          std::shared_ptr<std_srvs::srv::Trigger::Response> res) {
+            arm_stats_.reset();
+            res->success = true;
+            res->message = "servo stats reset";
+          });
+        set_arm_poll_hz(arm_poll_hz);
 
         // 한글: 팔 구동 가드: 한 번에 움직일 수 있는 각도(arm_max_step_rad)와 펄스 범위(100~900)를 제한해 잘못된 명령이 관절을 때리지 못하게 한다.
         // Arm motion is off by default: the first software-driven arm move on this robot
@@ -535,6 +563,7 @@ private:
 
     BusServoPosition servo_pos;
     if (decode_bus_servo_position(packet, servo_pos)) {
+      arm_stats_.record_reply(servo_pos.id, mono_s(), servo_pos.success == 0);
       if (servo_pos.success == 0) {
         arm_servo_ticks_[servo_pos.id] = servo_pos.pulse;
         arm_servo_stamp_[servo_pos.id] = now().seconds();
@@ -545,6 +574,43 @@ private:
   // Bus servo positions are request/response (the STM32 doesn't stream them on its
   // own), unlike IMU/battery. Cycle through the configured servo IDs one at a time
   // so this stays a low, steady request rate rather than bursting.
+  static double mono_s()
+  {
+    return std::chrono::duration<double>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+  }
+
+  // Every read request goes through here so the request/reply bookkeeping is complete.
+  // 한글: 읽기 요청은 모두 여기를 거쳐 요청/응답 통계가 빠짐없이 센다.
+  bool request_arm_servo_position(uint8_t servo_id)
+  {
+    const auto frame = build_bus_servo_read_position(servo_id);
+    if (!serial_.write(frame.data(), frame.size())) {
+      return false;
+    }
+    arm_stats_.record_request(servo_id, mono_s());
+    return true;
+  }
+
+  // The poll timer fires once per servo, so each servo is refreshed every (#servos / hz) seconds.
+  // 한글: 타이머 한 번에 서보 하나를 읽으므로 서보당 갱신 주기 = 서보 수 / hz.
+  void set_arm_poll_hz(double hz)
+  {
+    const auto period = std::chrono::duration<double>(1.0 / std::max(1.0, hz));
+    if (arm_poll_timer_) {
+      arm_poll_timer_->cancel();
+    }
+    if (joint_state_timer_) {
+      joint_state_timer_->cancel();
+    }
+    arm_poll_timer_ = create_wall_timer(period, [this]() {poll_next_arm_servo();});
+    joint_state_timer_ = create_wall_timer(period, [this]() {publish_arm_joint_states();});
+    arm_poll_hz_ = hz;
+    RCLCPP_INFO(
+      get_logger(), "arm_poll_hz = %.1f (each servo refreshed every %.2f s)", hz,
+      static_cast<double>(arm_servo_ids_.size()) / std::max(1.0, hz));
+  }
+
   void poll_next_arm_servo()
   {
     if (!serial_.is_open() || arm_servo_ids_.empty()) {
@@ -552,12 +618,48 @@ private:
     }
     const uint8_t servo_id = static_cast<uint8_t>(arm_servo_ids_[arm_poll_index_]);
     arm_poll_index_ = (arm_poll_index_ + 1) % arm_servo_ids_.size();
-    const auto frame = build_bus_servo_read_position(servo_id);
-    if (!serial_.write(frame.data(), frame.size())) {
+    if (!request_arm_servo_position(servo_id)) {
       RCLCPP_ERROR_THROTTLE(
         get_logger(), *get_clock(), 5000, "Arm servo poll write failed: %s",
         serial_.last_error().c_str());
     }
+  }
+
+  // 1 Hz diagnostics: one status per servo with the measured request/reply numbers.
+  // 한글: 1 Hz 진단 — 서보마다 측정값(요청·응답·누락·지연·응답 간격·마지막 응답 이후 경과).
+  void publish_servo_stats()
+  {
+    diagnostic_msgs::msg::DiagnosticArray arr;
+    arr.header.stamp = now();
+    const double t = mono_s();
+    for (const auto id : arm_servo_ids_) {
+      const auto s = arm_stats_.snapshot(static_cast<uint8_t>(id), t);
+      diagnostic_msgs::msg::DiagnosticStatus st;
+      st.name = "arm_servo_" + std::to_string(id);
+      st.hardware_id = std::to_string(id);
+      st.level = (s.requests > 0 &&
+        s.last_reply_t < 0.0) ? diagnostic_msgs::msg::DiagnosticStatus::ERROR :
+        diagnostic_msgs::msg::DiagnosticStatus::OK;
+      st.message = "poll_hz=" + std::to_string(arm_poll_hz_);
+      auto kv = [&st](const std::string & k, double v) {
+          diagnostic_msgs::msg::KeyValue x;
+          x.key = k;
+          x.value = std::to_string(v);
+          st.values.push_back(x);
+        };
+      kv("requests", static_cast<double>(s.requests));
+      kv("replies", static_cast<double>(s.replies));
+      kv("failed_replies", static_cast<double>(s.failed_replies));
+      kv("misses", static_cast<double>(s.misses));
+      kv("unmatched_replies", static_cast<double>(s.unmatched_replies));
+      kv("age_s", s.last_reply_t < 0.0 ? -1.0 : t - s.last_reply_t);
+      kv("mean_latency_s", s.mean_latency_s);
+      kv("max_latency_s", s.max_latency_s);
+      kv("mean_period_s", s.mean_period_s);
+      kv("max_period_s", s.max_period_s);
+      arr.status.push_back(st);
+    }
+    servo_stats_pub_->publish(arr);
   }
 
   // Torque on = servo holds position (stiff), off = limp. Applied to every configured arm servo.
@@ -672,8 +774,7 @@ private:
       const auto stamp = arm_servo_stamp_.find(id);
       if (stamp == arm_servo_stamp_.end() || stamp->second < p.settle_s) {
         if (t - p.last_request_s > 0.25) {  // ask for a fresh reading now instead of waiting for the poll cycle
-          const auto req = build_bus_servo_read_position(id);
-          serial_.write(req.data(), req.size());
+          request_arm_servo_position(id);
           p.last_request_s = t;
         }
         ++it;
@@ -999,6 +1100,11 @@ private:
   std::map<uint8_t, int16_t> arm_servo_ticks_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::TimerBase::SharedPtr arm_poll_timer_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr servo_stats_pub_;
+  rclcpp::TimerBase::SharedPtr servo_stats_timer_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr servo_stats_reset_srv_;
+  ServoStats arm_stats_;
+  double arm_poll_hz_{20.0};
   rclcpp::TimerBase::SharedPtr joint_state_timer_;
   bool arm_command_enabled_{false};
   bool motor_stop_frame_on_stop_{false};
