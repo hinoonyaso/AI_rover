@@ -36,7 +36,11 @@ base_node:
     # (vendor firmware has no wheel feedback); encoder = measured wheel speeds from the rrc_m4 firmware
     # (FUNC 0x21); auto = measured when fresh, else command. Override with the launch arg.
     # 한글: command(기본, 기존 동작) / encoder(자체 펌웨어 측정값) / auto(있으면 측정값).
-    wheel_twist_source: command
+    # 2026-10-11: default command -> auto. Encoder odom is more accurate in open loop (E4: straight 0.68 -> 0.24 cm/m,
+    # E5 square return 0.1-0.4 cm with the EKF) and Nav2 E6 v2 (30 trials) showed no difference, so there is no cost;
+    # auto falls back to the command when the FUNC 0x21 feed is stale (vendor firmware, dead encoder) and logs the switch.
+    # 한글: 2026-10-11 기본값 command → auto. 엔코더가 더 정확하고(E4/E5) Nav2 주행 성능은 같음(E6 v2). 피드백이 끊기면 명령값으로 폴백.
+    wheel_twist_source: auto
     wheel_feedback_timeout: 0.2
     # Send the rrc_m4 "clear e-stop" frame (DIAG 0x22/0x01) when the serial port opens. The firmware keeps an e-stop latched
     # until cleared (test scripts leave it set), so without this base_node could not drive after one. Vendor: ignored.

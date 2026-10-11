@@ -49,7 +49,7 @@ def generate_launch_description():
                         '(needs arm_command_enabled)'),
         # 한글: wheel_twist 출처(command/encoder/auto). 자체 펌웨어(rrc_m4)에서만 encoder가 의미 있다.
         DeclareLaunchArgument(
-            'wheel_twist_source', default_value='command',
+            'wheel_twist_source', default_value='auto',
             description='wheel_twist from the command (vendor firmware), measured wheel speeds '
                         '(encoder, rrc_m4 firmware) or auto'),
         Node(

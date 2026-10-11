@@ -33,8 +33,9 @@ def generate_launch_description():
             'arm_move_home_on_start', default_value='false',
             description='Step the arm to the home (driving) pose at startup'),
         DeclareLaunchArgument(
-            'wheel_twist_source', default_value='command',
-            description='wheel_twist: command (vendor firmware) / encoder / auto (rrc_m4 firmware)'),
+            'wheel_twist_source', default_value='auto',
+            description='wheel_twist: command (vendor firmware) / encoder / auto (default; '
+                        'measured when fresh, else command)'),
         include('jetrover_base', 'base.launch.py',
                 cmd_vel_timeout=LaunchConfiguration('cmd_vel_timeout'),
                 max_linear=LaunchConfiguration('max_linear'),

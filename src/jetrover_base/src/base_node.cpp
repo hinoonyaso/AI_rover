@@ -111,7 +111,7 @@ public:
     // command = commanded velocity (default, vendor firmware behaviour); encoder = measured wheel speeds
     // from the rrc_m4 firmware (FUNC 0x21); auto = measured when fresh, else command.
     // 한글: wheel_twist 출처. 기본 command(기존 동작), encoder/auto는 자체 펌웨어의 측정 바퀴 속도 사용.
-    const auto source_name = declare_parameter<std::string>("wheel_twist_source", "command");
+    const auto source_name = declare_parameter<std::string>("wheel_twist_source", "auto");
     if (!parse_twist_source(source_name, twist_source_)) {
       throw std::invalid_argument("wheel_twist_source must be command, encoder or auto: " +
           source_name);
@@ -392,6 +392,20 @@ private:
     const TwistChoice choice = choose_wheel_twist(
       twist_source_, commanded, feedback_fresh, wheel_rps_, wheelbase_, track_width_,
         wheel_diameter_);
+    // 한글: auto 모드에서 엔코더 ↔ 명령값 전환이 일어나면 한 번씩 로그를 남긴다(엔코더 고장이 조용히 묻히지 않게).
+    // Log each encoder <-> command switch in auto mode so a dead encoder feed can't hide silently.
+    if (twist_source_ == TwistSource::Auto &&
+      static_cast<int>(choice.from_encoder) != auto_twist_state_)
+    {
+      if (choice.from_encoder) {
+        RCLCPP_INFO(get_logger(), "wheel_twist_source=auto: using measured wheel speeds (encoder)");
+      } else {
+        RCLCPP_WARN(
+          get_logger(),
+          "wheel_twist_source=auto: no fresh FUNC 0x21 wheel feedback -> falling back to the command");
+      }
+      auto_twist_state_ = static_cast<int>(choice.from_encoder);
+    }
     if (choice.feedback_stale) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 2000,
@@ -951,6 +965,7 @@ private:
   bool clear_estop_on_start_{true};
   double wheel_rps_[4]{0.0, 0.0, 0.0, 0.0};
   double last_wheel_feedback_s_{0.0};
+  int auto_twist_state_{-1};  // -1 unknown (the first decision is always logged), 0 command, 1 encoder
   std::vector<double> wheel_twist_cov_encoder_;
   OnSetParametersCallbackHandle::SharedPtr param_cb_;
   double odom_x_{0.0}, odom_y_{0.0}, odom_yaw_{0.0};
