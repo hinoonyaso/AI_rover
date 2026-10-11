@@ -53,3 +53,6 @@ IWDG 약 20 ms라 halt하면 리셋됨). `tools/stm32_diagnostics/swd_motor_prob
 - 덤: 바퀴 띄우고 한 바퀴씩 돌릴 때 0이 아닌 CCR을 보면 PINMAP의 M2~M4 PWM 핀 배정(추정)이 확인된다.
 준비: `sudo apt install openocd stlink-tools`(setup/ENVIRONMENT_SETUP.md에 기록됨), ST-Link는 SWDIO/SWCLK/GND만(3.3V 미연결).
 스크립트는 작성만 했고 openocd 미설치라 미실행(`reset_config none` + `init`이 halt하지 않는지 첫 실행에서 확인).
+
+## 2026-10-11 업데이트 (사용자 관찰)
+자체 펌웨어(rrc_m4)로 바꾼 뒤 **정지 후 울림은 처음 한 번 잠깐 있었고 그 뒤로는 한 번도 없었다**(사용자 보고; 같은 날 E3·E6 v2 30회 등 바닥 주행·정지 수십 회 포함). 자체 펌웨어는 목표 0 + 저속에서 PWM 0/적분 리셋(sign guard·정지 처리)을 하므로 limit cycle 가설과 일치하지만, **SWD로 울림 중 PWM/CNT를 재서 확정한 것은 아니다** — 원인은 "추정(유력)", 증상은 "재발 없음". 미해결 → `[~]`(관찰상 해결, 측정 확정 없음)로 올린다. 다시 울리면 `swd_motor_probe.sh`로 바로 측정한다.

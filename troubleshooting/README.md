@@ -58,7 +58,7 @@
 | 029 | [NaN/Inf 명령이 std::clamp와 팔 step 검사를 통과](029-cmd-nan-passes-clamp-and-arm-step-check.md) | 해결 (L0, 실기 미검증) |
 | 030 | [MoveIt2 설정/Setup Assistant 충돌 매트릭스(TRAC-IK 5자유도 실패, 그리퍼 쌍 누락 등)](030-moveit-setup-and-srdf-collision-matrix.md) | 해결 (plan_only 검증) |
 | 031 | [Nav2 직진 중 좌우 흔들림(DWB 후보가 매 주기 vy 전 범위), min_speed_xy 무효, depth 기준이 팔 자세에 종속](031-nav2-lateral-wobble-and-depth-reference-gate.md) | 조치함, 실기 미검증 (LimitedAccelGenerator, 홈 자세 게이트, 진단 도구) |
-| 032 | [Nav2 시험 후 정지 상태에서 바퀴 "웅" 소리(탭하면 멈춤)](032-wheel-hum-after-nav2-stop.md) | 미해결 (정지 프레임 0x03 효과 없음, 펌웨어 속도 루프 미세진동 추정, 탭하면 멈춤) |
+| 032 | [Nav2 시험 후 정지 상태에서 바퀴 "웅" 소리(탭하면 멈춤)](032-wheel-hum-after-nav2-stop.md) | 관찰상 재발 없음(2026-10-11, 자체 펌웨어 이후, 측정 확정은 아님) (이전: 정지 프레임 0x03 효과 없음, 펌웨어 속도 루프 미세진동 추정, 탭하면 멈춤) |
 | 033 | [팔을 움직인 뒤 팔 관절 TF·카메라 color TF가 안 나옴](033-arm-tf-stops-after-arm-moves.md) | 미해결 (launch 재시작으로 복구, 재발 없음) |
 | 034 | [상자 회피 시험: DWB·MPPI 모두 상자 앞에서 진행 못 함(shim 반복 회전, global에 상자 없음, 좁은 통로)](034-box-avoidance-stuck-dwb-mppi.md) | 해결 (MPPI 3/3 성공), 우회 폭 조정 중 (footprint 실측 반영, inflation 0.25 미확인) |
 | 035 | [자체 펌웨어 첫 flash: lockup(크리스털 16 MHz를 8 MHz로 가정 → 336 MHz) + 0.8초마다 IWDG 리셋(LCD 태스크 스택 넘침)](035-rrc-m4-first-flash-lockup-and-reset-loop.md) | 해결 (HSE 16 MHz/PLL vendor와 동일, LCD 버퍼 정적화, 실기 확인) |
