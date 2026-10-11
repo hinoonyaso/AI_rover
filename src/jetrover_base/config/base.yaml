@@ -89,6 +89,14 @@ base_node:
     # Joints 2-4 also sag by gravity (-1.5/-4.5/-1.4 pulses at the rest pose) -- pose dependent, not compensated here.
     # 한글: 서보별 데드밴드 보정 눈금 수. 관절 2~4의 중력 처짐은 자세에 따라 달라 여기서 보정하지 않는다.
     arm_deadband_overshoot: [2, 1, 2, 2, 1, 2]
+    # Read-back trim (2026-10-11): after a move settles, read the servo again and add the remaining error to the
+    # command (max 2 retries, gives up beyond 15 pulses = blocked). Fixes the gravity sag of joints 2-4 (-1.5/-4.5/-1.4
+    # pulses at the rest pose) that a fixed offset can't. The gripper (10) is excluded: it grasps by contact.
+    # 한글: 이동이 끝난 뒤 다시 읽어 남은 오차만큼 한 번 더 명령(중력 처짐 보정). 그리퍼는 접촉 파지라 제외.
+    arm_feedback_trim_ids: [1, 2, 3, 4, 5]
+    arm_feedback_trim_threshold: 2
+    arm_feedback_trim_max_error: 15
+    arm_feedback_trim_max_retries: 3
     # Home pose = "driving pose" (2026-10-05, checklist 8.12 / 14, found on hardware by moving
     # joint2-5 while watching the camera + measuring /scan coverage + depth/image_raw):
     #  - near_bottom (closest point seen) ~145mm -- the robot's OWN wheel is in frame, so there is

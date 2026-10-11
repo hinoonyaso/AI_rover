@@ -97,3 +97,24 @@ TEST(DeadbandOvershoot, StaysInsideSafetyClamp)
   EXPECT_EQ(deadband_overshoot(899, 800, 3, 100, 900), 900);
   EXPECT_EQ(deadband_overshoot(101, 200, 3, 100, 900), 100);
 }
+
+TEST(FeedbackTrim, DoneWhenCloseEnough)
+{
+  const auto r = feedback_trim(500, 499, 502, 2, 15, 2, 100, 900);
+  EXPECT_EQ(r.action, TrimAction::Done);
+}
+
+TEST(FeedbackTrim, RetryShiftsCommandByRemainingError)
+{
+  auto r = feedback_trim(500, 496, 502, 2, 15, 2, 100, 900);  // sagged 4 low
+  EXPECT_EQ(r.action, TrimAction::Retry);
+  EXPECT_EQ(r.cmd, 508);
+  r = feedback_trim(500, 504, 498, 2, 15, 2, 100, 900);  // too high
+  EXPECT_EQ(r.cmd, 492);
+}
+
+TEST(FeedbackTrim, GivesUpWhenFarOffAndClamps)
+{
+  EXPECT_EQ(feedback_trim(500, 450, 502, 2, 15, 2, 100, 900).action, TrimAction::GiveUp);
+  EXPECT_EQ(feedback_trim(899, 894, 899, 2, 15, 2, 100, 900).cmd, 900);
+}

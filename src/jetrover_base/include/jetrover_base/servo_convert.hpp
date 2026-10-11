@@ -36,4 +36,19 @@ int64_t deadband_overshoot(
   int64_t target, int64_t current, int64_t overshoot, int64_t lo,
   int64_t hi);
 
+// Read-back trim after a move: compare where the servo ended with the wanted target. Corrects gravity sag and
+// whatever dead band is left. `boost` (the servo's dead band overshoot) is added again in the correcting direction:
+// a shift smaller than the dead band does not move the servo at all (measured 2026-10-11). Done = close enough; Retry = send `cmd`; GiveUp = too far off (blocked/not settled).
+// 한글: 이동이 끝난 뒤 읽은 위치와 목표를 비교해 처짐/남은 데드밴드를 보정한다. Done=충분히 가까움,
+// Retry=cmd를 다시 보냄, GiveUp=너무 멀어 막힌 것으로 보고 포기.
+enum class TrimAction { Done, Retry, GiveUp };
+struct TrimResult
+{
+  TrimAction action;
+  int64_t cmd;
+};
+TrimResult feedback_trim(
+  int64_t target, int64_t reading, int64_t last_cmd, int64_t threshold, int64_t max_error,
+  int64_t boost, int64_t lo, int64_t hi);
+
 }  // namespace jetrover_base

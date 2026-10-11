@@ -219,6 +219,14 @@ public:
               "arm_deadband_overshoot length mismatch; compensation disabled");
           arm_deadband_overshoot_.assign(arm_servo_ids_.size(), 0);
         }
+        // 한글: 이동 뒤 읽기 피드백 보정(처짐/남은 데드밴드). ids가 비면 끔. 그리퍼(10)는 접촉 파지가 있어 넣지 않는다.
+        // Read-back trim after a move (gravity sag, leftover dead band); empty list = off.
+        const auto trim_ids = declare_parameter<std::vector<int64_t>>(
+          "arm_feedback_trim_ids", std::vector<int64_t>{});
+        arm_trim_ids_.assign(trim_ids.begin(), trim_ids.end());
+        arm_trim_threshold_ = declare_parameter<int64_t>("arm_feedback_trim_threshold", 2);
+        arm_trim_max_error_ = declare_parameter<int64_t>("arm_feedback_trim_max_error", 15);
+        arm_trim_max_retries_ = declare_parameter<int64_t>("arm_feedback_trim_max_retries", 3);
         arm_home_pose_rad_ = declare_parameter<std::vector<double>>(
           "arm_home_pose_rad", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
         if (arm_home_pose_rad_.size() != arm_joint_names_.size()) {
@@ -249,6 +257,9 @@ public:
             "arm/command", 1,
             [this](sensor_msgs::msg::JointState::ConstSharedPtr msg) {on_arm_command(*msg);});
           arm_tx_timer_ = create_wall_timer(150ms, [this]() {pump_arm_tx_queue();});
+          if (!arm_trim_ids_.empty()) {
+            arm_trim_timer_ = create_wall_timer(100ms, [this]() {arm_trim_tick();});
+          }
           // 한글: MoveIt 실행 브리지용. 점마다 이동 시간(time_from_start)을 지정할 수 있다. 검증/클램프는 arm/command와 동일.
           // Timed variant for the MoveIt execution bridge: the first point's time_from_start sets
           // the move duration; every guard is the same as arm/command.
@@ -512,6 +523,7 @@ private:
     if (decode_bus_servo_position(packet, servo_pos)) {
       if (servo_pos.success == 0) {
         arm_servo_ticks_[servo_pos.id] = servo_pos.pulse;
+        arm_servo_stamp_[servo_pos.id] = now().seconds();
       }
     }
   }
@@ -617,6 +629,61 @@ private:
     }
   }
 
+  // 한글: 명령한 서보가 멈출 때까지(settle) 기다렸다가, 새로 읽은 위치로 목표와 비교해 모자라면 모자란 만큼 더 얹어
+  // 다시 명령한다(최대 arm_feedback_trim_max_retries회). 새 명령이 오면 그 서보의 대기 상태를 덮어쓴다(궤적 중간점은 건너뜀).
+  // After a command the servo is given time to settle, then the fresh reading is compared with the wanted
+  // target and the remaining error is added to the command (up to max_retries times).
+  void arm_trim_tick()
+  {
+    if (arm_pending_.empty() || !serial_.is_open()) {
+      return;
+    }
+    const double t = now().seconds();
+    for (auto it = arm_pending_.begin(); it != arm_pending_.end(); ) {
+      auto & p = it->second;
+      const std::size_t i = it->first;
+      const uint8_t id = static_cast<uint8_t>(arm_servo_ids_[i]);
+      if (t < p.settle_s) {
+        ++it;
+        continue;
+      }
+      const auto stamp = arm_servo_stamp_.find(id);
+      if (stamp == arm_servo_stamp_.end() || stamp->second < p.settle_s) {
+        if (t - p.last_request_s > 0.25) {  // ask for a fresh reading now instead of waiting for the poll cycle
+          const auto req = build_bus_servo_read_position(id);
+          serial_.write(req.data(), req.size());
+          p.last_request_s = t;
+        }
+        ++it;
+        continue;
+      }
+      const auto r = feedback_trim(
+        p.target, arm_servo_ticks_[id], p.cmd, arm_trim_threshold_, arm_trim_max_error_,
+        arm_deadband_overshoot_[i], arm_pulse_min_, arm_pulse_max_);
+      if (r.action == TrimAction::Retry && p.retries < arm_trim_max_retries_) {
+        const auto frame = build_bus_servo_set_position(
+          0.3, std::vector<BusServoTarget>{{id, static_cast<uint16_t>(r.cmd)}});
+        serial_.write(frame.data(), frame.size());
+        RCLCPP_INFO(
+          get_logger(), "arm trim: id=%u target %ld read %d -> cmd %ld (try %ld)", id,
+          static_cast<long>(p.target), arm_servo_ticks_[id], static_cast<long>(r.cmd),
+          static_cast<long>(p.retries + 1));
+        p.cmd = r.cmd;
+        p.retries++;
+        p.settle_s = t + 0.3 + 0.6;
+        ++it;
+        continue;
+      }
+      if (r.action == TrimAction::GiveUp) {
+        RCLCPP_WARN(
+          get_logger(), "arm trim: id=%u target %ld read %d, too far off -- not trimming", id,
+          static_cast<long>(p.target), arm_servo_ticks_[id]);
+      }
+      it = arm_pending_.erase(it);
+      break;  // one map change per tick keeps the iterator logic trivial (map is tiny)
+    }
+  }
+
   void pump_arm_tx_queue()
   {
     if (arm_tx_queue_.empty() || !serial_.is_open()) {
@@ -692,6 +759,7 @@ private:
       return;
     }
     std::vector<BusServoTarget> targets;
+    std::vector<std::pair<std::size_t, ArmPending>> new_pending;
     for (std::size_t k = 0; k < msg.name.size(); ++k) {
       const auto joint_it = std::find(
         arm_joint_names_.begin(), arm_joint_names_.end(), msg.name[k]);
@@ -724,6 +792,11 @@ private:
         clamped, static_cast<int64_t>(cur->second), arm_deadband_overshoot_[i], arm_pulse_min_,
         arm_pulse_max_);
       targets.push_back({id, static_cast<uint16_t>(pulse)});
+      if (std::find(arm_trim_ids_.begin(), arm_trim_ids_.end(), arm_servo_ids_[i]) !=
+        arm_trim_ids_.end())
+      {
+        new_pending.push_back({i, ArmPending{clamped, pulse, 0.0, 0.0, 0}});
+      }
     }
     // Logged only once validation passed for every joint -- a mid-loop log here would
     // misleadingly claim a move that a later joint's check could still reject.
@@ -735,6 +808,12 @@ private:
     const auto frame = build_bus_servo_set_position(duration_s, targets);
     if (!serial_.write(frame.data(), frame.size())) {
       RCLCPP_ERROR(get_logger(), "arm move write failed: %s", serial_.last_error().c_str());
+      return;
+    }
+    const double settle = now().seconds() + duration_s + 0.6;
+    for (auto & np : new_pending) {
+      np.second.settle_s = settle;
+      arm_pending_[np.first] = np.second;
     }
   }
 
@@ -899,6 +978,21 @@ private:
   int64_t arm_pulse_min_{100};
   int64_t arm_pulse_max_{900};
   std::vector<int64_t> arm_deadband_overshoot_;
+  struct ArmPending
+  {
+    int64_t target;
+    int64_t cmd;
+    double settle_s;
+    double last_request_s;
+    int64_t retries;
+  };
+  std::map<std::size_t, ArmPending> arm_pending_;
+  std::map<uint8_t, double> arm_servo_stamp_;
+  std::vector<int64_t> arm_trim_ids_;
+  int64_t arm_trim_threshold_{2};
+  int64_t arm_trim_max_error_{15};
+  int64_t arm_trim_max_retries_{3};
+  rclcpp::TimerBase::SharedPtr arm_trim_timer_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr arm_cmd_sub_;
   rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_timed_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr arm_torque_sub_;

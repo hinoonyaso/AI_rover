@@ -35,4 +35,20 @@ int64_t deadband_overshoot(
   return std::min<int64_t>(std::max<int64_t>(cmd, lo), hi);
 }
 
+TrimResult feedback_trim(
+  int64_t target, int64_t reading, int64_t last_cmd, int64_t threshold, int64_t max_error,
+  int64_t boost, int64_t lo, int64_t hi)
+{
+  const int64_t err = target - reading;
+  const int64_t mag = err < 0 ? -err : err;
+  if (mag < threshold) {
+    return {TrimAction::Done, last_cmd};
+  }
+  if (mag > max_error) {
+    return {TrimAction::GiveUp, last_cmd};
+  }
+  return {TrimAction::Retry,
+    std::min<int64_t>(std::max<int64_t>(last_cmd + err + (err > 0 ? boost : -boost), lo), hi)};
+}
+
 }  // namespace jetrover_base
