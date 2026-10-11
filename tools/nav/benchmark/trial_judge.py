@@ -19,6 +19,12 @@ Outcome, in order of precedence:
   fail               errors outside the test plan limits
   pending_collision  everything passes but the collision check is not confirmed yet (collision is None)
   success
+A scan match is only taken once the robot was confirmed standing still (auto.stopped_before_measure); otherwise
+scan_final.status is 'not_stopped' and the trial stays 'unmeasured' unless a manual (tape) pose is entered later.
+
+Separately, meta['mvp'] is the MVP approach check (docs/PLAN_ARM_TO_MVP.md: Nav2 gets within +-10 cm, the camera
+does the rest): Nav2 succeeded, robot stopped, collision False, judged position error <= MVP_POS_TOL_M and yaw within
+YAW_TOL_RAD. pass is None while anything is still unknown (no pose, collision unconfirmed, stop unknown).
 """
 import math
 import re
@@ -29,6 +35,7 @@ LINE_TOL_M = 0.10           # scenario B: back on the x = START_X line
 TIME_LIMIT_S = 60.0
 START_X = 1.05
 PLAN_CUT_M = 0.10           # run_trial.py: plan end farther than this from the goal -> invalid
+MVP_POS_TOL_M = 0.10        # MVP approach: Nav2 within +-10 cm, camera re-detection does the rest (2026-10-11)
 
 # Same confidence rule as jetrover_navigation/scripts/scan_match_init.py (--min-score 0.80 --min-margin 0.10,
 # --strong-score 0.95 --strong-margin 0.05). Keep both in sync. 한글: 초기화와 같은 신뢰 기준.
@@ -120,6 +127,26 @@ def judge(meta):
     return 'success', src
 
 
+def mvp_check(meta):
+    """MVP approach check, separate from the test-plan outcome. pass None = not decidable yet."""
+    auto = meta.get('auto', {})
+    err = meta.get('measured_err')
+    checks = {
+        'nav2_succeeded': auto.get('action_status') == NAV_OK and not auto.get('invalid_plan_cut_short'),
+        'stopped': auto.get('stopped_before_measure'),
+        'no_collision': None if meta.get('collision') is None else not meta['collision'],
+        'pos_within_10cm': None if err is None else err['pos_m'] <= MVP_POS_TOL_M,
+        'yaw_within_tol': None if err is None else math.radians(err['yaw_deg']) <= YAW_TOL_RAD,
+    }
+    if any(v is False for v in checks.values()):
+        ok = False
+    elif any(v is None for v in checks.values()):
+        ok = None
+    else:
+        ok = True
+    return dict(checks, **{'pass': ok, 'pos_tol_m': MVP_POS_TOL_M})
+
+
 def rejudge(meta):
     """Recompute outcome and the derived measured_final/measured_err (kept for analyze.py)."""
     pose, src = judged_pose(meta)
@@ -130,6 +157,7 @@ def rejudge(meta):
         meta['measured_final'] = None
         meta['measured_err'] = None
     meta['outcome'], meta['outcome_reason'] = judge(meta)
+    meta['mvp'] = mvp_check(meta)
     return meta
 
 

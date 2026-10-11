@@ -78,7 +78,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
             ├── Perception (RGB-D, YOLO)
             └── MoveIt2 ── Arm
 [구현] EKF (robot_localization) ← wheel_twist + imu/data_raw
-[구현] jetrover_base (base_node) ── RRC, 1 Mbps ── STM32F407 ── 모터 / IMU / 팔 bus servo 위치(읽기)
+[구현] jetrover_base (base_node) ── RRC, 1 Mbps ── STM32F407(rrc_m4) ── 모터(엔코더 피드백) / IMU / 팔 bus servo(읽기·쓰기)
 ```
 
 ## 폴더
@@ -142,7 +142,7 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 
 ## 확정된 사실 (다시 조사하지 않는다)
 - 링크: CH9102 USB-UART(`/dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00`), STM32 UART2, **1,000,000 baud**.
-- 프레임: `AA 55 FUNC LEN DATA CRC8-MAXIM` (CRC는 FUNC+LEN+DATA). FUNC 0 배터리(`04`+u16 mV), 3 모터, 5 버스 서보(관절1~5+그리퍼10, read-position subcommand `05`: 요청 `[05,id]`→응답 `[id,05,success,pulse i16LE]`, pulse 0~1000↔0~240°), 7 IMU(가속도 g, 자이로 deg/s, float32×6), 8 게임패드. `base_node`가 FUNC5를 5Hz round-robin으로 폴링해서 `/joint_states`로 publish한다(2026-10-03, 쓰기/모터 제어는 아직 없음 — `checklist` 14번).
+- 프레임: `AA 55 FUNC LEN DATA CRC8-MAXIM` (CRC는 FUNC+LEN+DATA). FUNC 0 배터리(`04`+u16 mV), 3 모터, 5 버스 서보(관절1~5+그리퍼10, read-position subcommand `05`: 요청 `[05,id]`→응답 `[id,05,success,pulse i16LE]`, pulse 0~1000↔0~240°), 7 IMU(가속도 g, 자이로 deg/s, float32×6), 8 게임패드. `base_node`가 FUNC5를 5Hz round-robin으로 폴링해서 `/joint_states`로 publish한다(2026-10-03). 팔 쓰기는 `arm/command`·`arm/command_timed`·`arm/torque`(2026-10-05~06, `arm_command_enabled`일 때만), 서보별 데드밴드 보정과 읽기 피드백 보정(2026-10-11, `base.yaml arm_deadband_overshoot`/`arm_feedback_trim_*`). rrc_m4는 확장 프레임 0x20 상태·0x21 바퀴·0x22 진단 명령·0x24 진단도 쓴다(`firmware/rrc_m4/README.md`).
 - **모터 ID는 0~3이다** (`DATA = 01, N, N×(id u8, rps f32)`).
   - ID 0 왼쪽 앞, ID 1 왼쪽 뒤, ID 2 오른쪽 앞, ID 3 오른쪽 뒤.
   - 오른쪽 모터(ID 2, 3)는 전진 방향의 rps 부호가 **음수**이다.
@@ -158,10 +158,11 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 - **TF 트리**: `odom → base_footprint`(EKF) `→ base_link → {imu_link, lidar_link, link1..5(팔)+gripper_link(그리퍼), 바퀴}`(URDF, 2026-10-03부터 실제 메쉬+팔 전체 포함, `src/jetrover_description/README.md`). `base_node`의 `odom_raw`/`wheel_twist` 프레임도 `base_footprint`. 깊이 카메라(`camera_connect_link`→`depth_cam_link`→`depth_cam_depth_frame`/`depth_cam_color_optical_frame` 등)는 로봇팔 끝(`link4`)에 붙어 있어 팔 자세에 따라 위치가 바뀐다 — **실제 카메라 드라이버(`orbbec_camera`)의 frame_id와 URDF 프레임 이름이 정확히 일치함을 확인함(2026-10-04)**: `base_link→link4→camera_connect_link→depth_cam_link→depth_cam_color_optical_frame` 전체가 `lookup_transform`으로 연결됨.
 - **LiDAR**: RPLIDAR **A1M8**(fw 1.29, 사용자 확인 + GET_INFO). 커널이 `ch341`을 빼고 빌드돼서 `drivers/ch341/`의 모듈을 설치해 썼다(`sudo ./install.sh`, 재부팅 후 자동 로드, 커널 업데이트 시 재빌드: troubleshooting/012). **`ttyUSB` 번호는 재부팅마다 바뀌므로** 포트는 by-path(`/dev/serial/by-path/platform-3610000.usb-usb-0:2.1.4:1.0-port0`, LiDAR를 같은 USB 포트에 꽂아 둘 것)로 지정한다. `/scan`은 약 14 Hz(실제 회전 속도), 프레임은 `lidar_frame`(URDF에서 `lidar_link` 기준 yaw 180°)이고 실제 스캔으로 방향을 검증했다. **로봇 뒤쪽 약 160°는 로봇팔에 가려 반환이 없다.** 다른 CH340(`ttyUSB` 나머지 하나)은 정체 미상이며 아무것도 보내지 않는다.
 - 실행: `ros2 launch jetrover_bringup robot.launch.py`(베이스 + URDF + EKF + LiDAR), RViz는 `ros2 launch jetrover_bringup rviz.launch.py`, SLAM은 `ros2 launch jetrover_navigation slam.launch.py`(`slam_toolbox` 설치 필요).
-- STM32는 **엔코더/바퀴 속도를 호스트로 보내지 않는다** (캡처, SDK, 공식 PDF로 확인). 그래서 odom은 명령 속도를 적분하는 open-loop이고, EKF에는 `wheel_twist`(vx, vy)와 자이로 yaw rate만 넣는다. open-loop 위치는 EKF에 넣지 않는다.
-- STM32에는 **호스트 명령 timeout이 없다.** 호스트가 죽으면 바퀴가 마지막 속도로 계속 돈다. 정지는 host 쪽 watchdog(`cmd_vel_timeout` 0.5초), 종료 시 stop, 크래시 시 stop 프레임이 담당한다.
-  - host의 stop 수단은 **best-effort**이다. SIGKILL, kernel panic, Jetson 전원 손실, USB 단절, STM32 hang에서는 정지 패킷 전송을 보장하지 못한다.
-- **STM32 hang**: 9회 발생했다 — **전부 2026-09-23까지, 2026-09-27 펌웨어 재플래시 이전이다.** 재플래시(기존 빌드와 15% 다른 vendor `.hex`로 교체, 1번 섹션 "자체 STM32 펌웨어 재작성" 참고) 이후 2026-10-04까지 hang 재발 없음 — **호전된 것으로 보이지만 원인 규명은 아니다**(`troubleshooting/001` "2026-10-04 업데이트" 참고, 표본 늘었을 뿐 반증 실험은 안 함). **보드의 RST 버튼을 누르면 hang 상태에서도 즉시 복구된다**(2026-09-23 확인, 아래 "전원을 껐다 켜야만"은 그 전 기록). DTR/RTS 소프트웨어 리셋은 4×4 조합까지 시험했지만 없고, ISP 포트(`/dev/ttyACM1`)에서 `DTR=0 & RTS=1`은 오히려 hang을 만든다. 8·9차는 이 시험 중 발생. 아래는 7차까지의 기록) (7차는 **완충(~12 V) 상태**에서 주행 직후 idle 몇 분 만에 발생 — 저전압 단독 가설은 약해졌다. 6차는 주행 중 배터리 **9.47 V 실측**에서 발생. 4, 5차는 로봇이 정지한 상태에서 전원 재시작 후 약 20~50분에 발생. LiDAR는 원인이 아닌 것으로 확인. 3차는 바닥 6초 주행 직후. 충전 직후 11.5 V로 시작했지만 **hang 시점 전압은 미측정**이고 재부팅 후 무부하 전압이 10.5 V였으므로, 저전압 가능성은 배제되지 않았다). IMU/배터리 송신과 모든 명령이 멈추고 USB는 살아 있으며, **로봇 전원을 껐다 켜야만** 복구됐다. **원인은 미확정**이다.
+- **펌웨어별로 다른 사실 (2026-10-11 정리, 사용자 승인)** — 지금 보드에는 **자체 펌웨어 `firmware/rrc_m4`**가 올라가 있다(2026-10-10~). vendor `.hex`로 되돌리면 아래 "vendor" 줄이 다시 적용된다.
+  - **엔코더 피드백**: vendor = 호스트로 보내지 않는다(캡처, SDK, 공식 PDF로 확인) → odom은 명령 속도를 적분하는 open-loop. **rrc_m4 = 확장 프레임 0x21(바퀴 rps[4] + 누적 카운트[4])을 보낸다**(3,996 ticks/rev, 2026-10-10 실측) → base_node 기본값 `wheel_twist_source: auto`(피드백이 있으면 측정값, 끊기면 명령값으로 폴백+경고). 어느 쪽이든 EKF에는 `wheel_twist`(vx, vy)와 자이로 yaw rate만 넣고, odom 위치는 EKF에 넣지 않는다(회전 yaw는 자이로가 더 정확 — E4).
+  - **호스트 명령 timeout**: vendor = 없다(호스트가 죽으면 바퀴가 마지막 속도로 계속 돈다, 13초 확인). **rrc_m4 = 있다(1,000 ms)**: 실기 E3(2026-10-11, 바퀴 띄움) — 명령만 끊으면 1.04 s, base_node `kill -9`(정지 프레임 없음)에서 1.30 s, e-stop 0.86 s에 정지, NaN 명령 거부.
+  - 호스트 쪽 정지 수단(watchdog `cmd_vel_timeout` 0.5초, 종료 시 stop, 크래시 시 stop 프레임)은 두 펌웨어 모두 유지한다. 이것은 **best-effort**이다(SIGKILL, kernel panic, 전원 손실, USB 단절, MCU 멈춤에서는 정지 패킷을 보장 못 함) — rrc_m4에서는 MCU 쪽 timeout이 그 뒤를 받친다. 단, MCU 자체가 멈추면(IWDG 리셋 전) 이 보장도 없다.
+- **STM32 hang**(vendor 펌웨어 기록): 9회 발생했다 — **전부 2026-09-23까지, 2026-09-27 펌웨어 재플래시 이전이다.** 자체 펌웨어(rrc_m4, 2026-10-10~)에서는 hang 0회: 유휴 8 h + 부하 포함 10 h 40 m SWD 소크에서 리셋·멈춤 0(`troubleshooting/001` 2026-10-11) — 원인 규명이 아니라 펌웨어 교체로 우회한 것. 재플래시(기존 빌드와 15% 다른 vendor `.hex`로 교체, 1번 섹션 "자체 STM32 펌웨어 재작성" 참고) 이후 2026-10-04까지 hang 재발 없음 — **호전된 것으로 보이지만 원인 규명은 아니다**(`troubleshooting/001` "2026-10-04 업데이트" 참고, 표본 늘었을 뿐 반증 실험은 안 함). **보드의 RST 버튼을 누르면 hang 상태에서도 즉시 복구된다**(2026-09-23 확인, 아래 "전원을 껐다 켜야만"은 그 전 기록). DTR/RTS 소프트웨어 리셋은 4×4 조합까지 시험했지만 없고, ISP 포트(`/dev/ttyACM1`)에서 `DTR=0 & RTS=1`은 오히려 hang을 만든다. 8·9차는 이 시험 중 발생. 아래는 7차까지의 기록) (7차는 **완충(~12 V) 상태**에서 주행 직후 idle 몇 분 만에 발생 — 저전압 단독 가설은 약해졌다. 6차는 주행 중 배터리 **9.47 V 실측**에서 발생. 4, 5차는 로봇이 정지한 상태에서 전원 재시작 후 약 20~50분에 발생. LiDAR는 원인이 아닌 것으로 확인. 3차는 바닥 6초 주행 직후. 충전 직후 11.5 V로 시작했지만 **hang 시점 전압은 미측정**이고 재부팅 후 무부하 전압이 10.5 V였으므로, 저전압 가능성은 배제되지 않았다). IMU/배터리 송신과 모든 명령이 멈추고 USB는 살아 있으며, **로봇 전원을 껐다 켜야만** 복구됐다. **원인은 미확정**이다.
   - 바이너리 분석상 IWDG가 켜져 있고(prescaler 32, reload 19, LSI 32 kHz 가정 시 약 20 ms), `app_task`가 약 10 ms마다 refresh하는 경로가 확인됐다.
   - 따라서 `app_task`가 살아 있는 채로 다른 태스크만 데드락되면 watchdog 리셋이 일어나지 않을 **수 있다**. 이것이 세 hang의 실제 원인이었는지는 **미확정**이다.
   - 자세한 내용은 `troubleshooting/001-stm32-firmware-hang.md`, `tools/stm32_diagnostics/NOTES.md`.

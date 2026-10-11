@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 
-from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from nav2_msgs.action import NavigateThroughPoses, NavigateToPose
 import rclpy
 from rclpy.action import ActionClient
@@ -30,6 +30,7 @@ import tf2_ros
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import trial_judge as judge  # noqa: E402
 from set_measured_scan import run_scan  # noqa: E402
+from confirm_last_trial import confirm as confirm_last  # noqa: E402
 
 LAST_TRIAL = 'Log/last_trial.json'  # operator convention: starting the next trial confirms 'no collision' for this one
 
@@ -155,15 +156,8 @@ class Trial(Node):
 
 def confirm_previous_trial():
     """Operator convention (2026-10-11): an unreported collision means none. Starting the next trial confirms it."""
-    try:
-        path = json.load(open(LAST_TRIAL))['meta']
-        m = judge.migrate_legacy(json.load(open(path)))
-    except (OSError, ValueError, KeyError):
-        return
-    if m.get('collision') is None:
-        m = judge.set_collision(m, False, 'convention: no collision reported before the next trial started')
-        with open(path, 'w') as f:
-            json.dump(m, f, indent=1)
+    path, m = confirm_last(False, 'convention: no collision reported before the next trial started', path_file=LAST_TRIAL)
+    if path and m.get('collision_source', '').startswith('convention: no collision reported before'):
         print('previous trial %s: collision none (confirmed) -> %s' % (path, m['outcome']))
 
 
@@ -271,12 +265,30 @@ def main():
     finally:
         elapsed = time.time() - t0
         stopped = node.wait_stopped()
+        stop_recovery = None
+        if not stopped:
+            # 2026-10-11 review: never measure a robot that may still be moving. Cancel the goal, send zero velocity
+            # and check again; the measurement is skipped either way and the trial stays 'unmeasured'.
+            # 한글: 정지 확인 실패면 목표 취소 + 정지 명령 후 다시 확인하고, 측정은 하지 않는다(판정 보류).
+            if handle is not None:
+                handle.cancel_goal_async()
+            stop_pub = node.create_publisher(Twist, 'cmd_vel', 10)
+            for _ in range(10):
+                stop_pub.publish(Twist())
+                node.spin(0.1)
+            stop_recovery = 'stopped after cancel + zero cmd_vel' if node.wait_stopped() else 'STILL MOVING'
+            print('WARNING: robot not confirmed stopped after the goal (%s) -- no scan match' % stop_recovery)
         node.spin(1.0)  # settle so the final pose is stable
         final_tf = node.tf_pose()
         final = final_tf or node.amcl
         # Scan-match while the bag is still recording, so the scans the match used stay in the bag for re-checking.
         # 한글: bag 녹화 중에 스캔 매칭을 돌려, 매칭에 쓴 스캔이 bag에 남게 한다(나중에 재검증 가능).
-        scan = {'status': 'skipped'} if args.no_scan or status == 'interrupted' else run_scan(gx, gy)
+        if not stopped:
+            scan = {'status': 'not_stopped'}
+        elif args.no_scan or status == 'interrupted':
+            scan = {'status': 'skipped'}
+        else:
+            scan = run_scan(gx, gy)
         os.killpg(bag.pid, signal.SIGINT)
         try:
             bag.wait(timeout=15)
@@ -305,7 +317,7 @@ def main():
                  'final_from': 'tf' if final_tf else 'amcl_pose',
                  'start_from': 'nominal' if args.nominal_start else 'scan_match',
                  'last_plan_end_to_goal_m': plan_short, 'invalid_plan_cut_short': invalid,
-                 'stopped_before_measure': stopped},
+                 'stopped_before_measure': stopped, 'stop_recovery': stop_recovery},
         'notes': ''}
     meta = judge.apply_scan(meta, scan)
     with open(os.path.join(out_dir, 'meta.json'), 'w') as f:
@@ -323,6 +335,7 @@ def main():
     if invalid:
         print('INVALID: the last plan ended %.2f m from the goal (goal area blocked: person/object in front?) '
               '-> clear the area and repeat this trial number with a new tag or delete %s' % (plan_short, out_dir))
+    print('MVP approach (<= %.0f cm): %s' % (judge.MVP_POS_TOL_M * 100, meta['mvp']['pass']))
     print('trial %s%02d: outcome=%s (%s) -> %s/meta.json'
           % (args.scenario, args.trial, meta['outcome'], meta['outcome_reason'], out_dir))
     print('collision: say so now if there was one (set_meta.py ... y); starting the next trial records "none"')

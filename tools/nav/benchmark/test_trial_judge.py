@@ -87,6 +87,34 @@ class Outcome(unittest.TestCase):
         self.assertEqual(j.set_collision(j.apply_scan(slow, scan()), False, 'test')['outcome'], 'fail')
 
 
+class StopAndMvp(unittest.TestCase):
+    def test_not_stopped_blocks_the_scan_judgement(self):
+        m = meta()
+        m['auto']['stopped_before_measure'] = False
+        m = j.set_collision(j.apply_scan(m, {'status': 'not_stopped'}), False, 'test')
+        self.assertEqual(m['outcome'], 'unmeasured')
+        self.assertIn('not_stopped', m['outcome_reason'])
+        self.assertFalse(m['mvp']['pass'])
+
+    def test_mvp_is_separate_from_the_15cm_outcome(self):
+        m = meta()
+        m['auto']['stopped_before_measure'] = True
+        m = j.set_collision(j.apply_scan(m, scan(y=0.97)), False, 'test')   # 13 cm short
+        self.assertEqual(m['outcome'], 'success')            # test plan: <= 15 cm
+        self.assertFalse(m['mvp']['pass'])                   # MVP: <= 10 cm
+        m2 = j.set_collision(j.apply_scan(meta(), scan(y=1.03)), False, 'test')
+        m2['auto']['stopped_before_measure'] = True
+        self.assertTrue(j.rejudge(m2)['mvp']['pass'])
+
+    def test_mvp_pending_until_everything_is_known(self):
+        m = meta()
+        m['auto']['stopped_before_measure'] = True
+        m = j.apply_scan(m, scan(y=1.03))
+        self.assertIsNone(m['mvp']['pass'])                  # collision unconfirmed
+        legacy = j.set_collision(j.apply_scan(meta(), scan(y=1.03)), False, 'test')
+        self.assertIsNone(legacy['mvp']['pass'])             # stop state unknown (old records)
+
+
 class Preservation(unittest.TestCase):
     def test_failed_scan_keeps_previous_good_scan(self):
         m = j.apply_scan(meta(), scan(y=1.02))
@@ -133,6 +161,27 @@ class Legacy(unittest.TestCase):
         m = j.migrate_legacy(old)
         self.assertEqual(m['outcome'], 'unmeasured')
         self.assertEqual(m['outcome_legacy'], 'success')
+
+
+class ConfirmLast(unittest.TestCase):
+    def test_confirm_sets_none_once_and_reports_collisions(self):
+        import json
+        import tempfile
+        import confirm_last_trial as c
+        with tempfile.TemporaryDirectory() as d:
+            mp, lp = os.path.join(d, 'meta.json'), os.path.join(d, 'last.json')
+            m = meta()
+            m['auto']['stopped_before_measure'] = True
+            json.dump(j.apply_scan(m, scan(y=1.03)), open(mp, 'w'))
+            json.dump({'meta': mp}, open(lp, 'w'))
+            _, out = c.confirm(path_file=lp)
+            self.assertIs(out['collision'], False)
+            self.assertEqual(out['outcome'], 'success')
+            _, again = c.confirm(path_file=lp)                # already confirmed: untouched
+            self.assertEqual(again['collision_source'], out['collision_source'])
+            _, hit = c.confirm(True, 'operator', path_file=lp)
+            self.assertEqual(hit['outcome'], 'fail')
+            self.assertEqual(c.confirm(path_file=os.path.join(d, 'missing.json')), (None, None))
 
 
 if __name__ == '__main__':
