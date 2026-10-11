@@ -1,0 +1,81 @@
+{
+ "summary": {
+  "kind": "cube",
+  "trials": 5,
+  "window": [
+   495,
+   555
+  ],
+  "drop_prob": 0.3,
+  "verdicts": {
+   "no_reading": 4,
+   "object": 1
+  },
+  "contact_min": 523,
+  "contact_max": 523,
+  "contact_mean": 523,
+  "contact_sd": 0.0,
+  "holds_moved": 0
+ },
+ "rows": [
+  {
+   "trial": 1,
+   "kind": "cube",
+   "status": "no_reading",
+   "contact": null,
+   "lag": null,
+   "steps": 14,
+   "verdict": "no_reading",
+   "seconds": 7.0,
+   "hold": null
+  },
+  {
+   "trial": 2,
+   "kind": "cube",
+   "status": "no_reading",
+   "contact": null,
+   "lag": null,
+   "steps": 6,
+   "verdict": "no_reading",
+   "seconds": 3.0,
+   "hold": null
+  },
+  {
+   "trial": 3,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 523,
+   "lag": 11,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.0,
+   "hold": {
+    "ok": true,
+    "min": 524,
+    "max": 525
+   }
+  },
+  {
+   "trial": 4,
+   "kind": "cube",
+   "status": "no_reading",
+   "contact": null,
+   "lag": null,
+   "steps": 8,
+   "verdict": "no_reading",
+   "seconds": 4.0,
+   "hold": null
+  },
+  {
+   "trial": 5,
+   "kind": "cube",
+   "status": "no_reading",
+   "contact": null,
+   "lag": null,
+   "steps": 12,
+   "verdict": "no_reading",
+   "seconds": 6.0,
+   "hold": null
+  }
+ ]
+}

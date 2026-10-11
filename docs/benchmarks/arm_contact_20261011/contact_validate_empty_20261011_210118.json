@@ -1,0 +1,76 @@
+{
+ "summary": {
+  "kind": "empty",
+  "trials": 5,
+  "window": [
+   495,
+   555
+  ],
+  "drop_prob": 0.0,
+  "verdicts": {
+   "no_contact": 5
+  },
+  "contact_min": null,
+  "contact_max": null,
+  "contact_mean": null,
+  "contact_sd": null,
+  "holds_moved": 0
+ },
+ "rows": [
+  {
+   "trial": 1,
+   "kind": "empty",
+   "status": "no_contact",
+   "contact": null,
+   "lag": null,
+   "steps": 34,
+   "verdict": "no_contact",
+   "seconds": 17.9,
+   "hold": null
+  },
+  {
+   "trial": 2,
+   "kind": "empty",
+   "status": "no_contact",
+   "contact": null,
+   "lag": null,
+   "steps": 34,
+   "verdict": "no_contact",
+   "seconds": 19.2,
+   "hold": null
+  },
+  {
+   "trial": 3,
+   "kind": "empty",
+   "status": "no_contact",
+   "contact": null,
+   "lag": null,
+   "steps": 35,
+   "verdict": "no_contact",
+   "seconds": 17.6,
+   "hold": null
+  },
+  {
+   "trial": 4,
+   "kind": "empty",
+   "status": "no_contact",
+   "contact": null,
+   "lag": null,
+   "steps": 35,
+   "verdict": "no_contact",
+   "seconds": 18.8,
+   "hold": null
+  },
+  {
+   "trial": 5,
+   "kind": "empty",
+   "status": "no_contact",
+   "contact": null,
+   "lag": null,
+   "steps": 35,
+   "verdict": "no_contact",
+   "seconds": 18.4,
+   "hold": null
+  }
+ ]
+}

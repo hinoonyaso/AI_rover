@@ -1,0 +1,171 @@
+{
+ "summary": {
+  "kind": "cube",
+  "trials": 10,
+  "window": [
+   495,
+   555
+  ],
+  "drop_prob": 0.0,
+  "verdicts": {
+   "object": 10
+  },
+  "contact_min": 521,
+  "contact_max": 532,
+  "contact_mean": 525.2,
+  "contact_sd": 3.4,
+  "holds_moved": 1
+ },
+ "rows": [
+  {
+   "trial": 1,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 522,
+   "lag": 12,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.4,
+   "hold": {
+    "ok": true,
+    "min": 523,
+    "max": 524
+   }
+  },
+  {
+   "trial": 2,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 528,
+   "lag": 14,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 13.1,
+   "hold": {
+    "ok": true,
+    "min": 528,
+    "max": 529
+   }
+  },
+  {
+   "trial": 3,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 521,
+   "lag": 9,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.0,
+   "hold": {
+    "ok": false,
+    "min": 521,
+    "max": 525
+   }
+  },
+  {
+   "trial": 4,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 526,
+   "lag": 14,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 15.1,
+   "hold": {
+    "ok": true,
+    "min": 526,
+    "max": 529
+   }
+  },
+  {
+   "trial": 5,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 525,
+   "lag": 14,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 13.5,
+   "hold": {
+    "ok": true,
+    "min": 524,
+    "max": 526
+   }
+  },
+  {
+   "trial": 6,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 523,
+   "lag": 11,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.8,
+   "hold": {
+    "ok": true,
+    "min": 524,
+    "max": 524
+   }
+  },
+  {
+   "trial": 7,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 529,
+   "lag": 14,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 13.1,
+   "hold": {
+    "ok": true,
+    "min": 531,
+    "max": 532
+   }
+  },
+  {
+   "trial": 8,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 524,
+   "lag": 10,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 12.6,
+   "hold": {
+    "ok": true,
+    "min": 524,
+    "max": 525
+   }
+  },
+  {
+   "trial": 9,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 532,
+   "lag": 12,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 13.1,
+   "hold": {
+    "ok": true,
+    "min": 531,
+    "max": 532
+   }
+  },
+  {
+   "trial": 10,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 522,
+   "lag": 12,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.0,
+   "hold": {
+    "ok": true,
+    "min": 523,
+    "max": 524
+   }
+  }
+ ]
+}

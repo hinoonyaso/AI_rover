@@ -1,0 +1,97 @@
+{
+ "summary": {
+  "kind": "cube",
+  "trials": 5,
+  "window": [
+   495,
+   555
+  ],
+  "drop_prob": 0.0,
+  "verdicts": {
+   "object": 5
+  },
+  "contact_min": 520,
+  "contact_max": 528,
+  "contact_mean": 522.8,
+  "contact_sd": 2.9,
+  "holds_moved": 0,
+  "note": "labelled --kind empty by mistake: the cube was still between the jaws (user confirmed). Valid as 5 cube closings without prompts."
+ },
+ "rows": [
+  {
+   "trial": 1,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 520,
+   "lag": 15,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 12.6,
+   "hold": {
+    "ok": true,
+    "min": 520,
+    "max": 520
+   }
+  },
+  {
+   "trial": 2,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 520,
+   "lag": 14,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.4,
+   "hold": {
+    "ok": true,
+    "min": 517,
+    "max": 520
+   }
+  },
+  {
+   "trial": 3,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 523,
+   "lag": 13,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.0,
+   "hold": {
+    "ok": true,
+    "min": 523,
+    "max": 524
+   }
+  },
+  {
+   "trial": 4,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 528,
+   "lag": 14,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 14.4,
+   "hold": {
+    "ok": true,
+    "min": 528,
+    "max": 529
+   }
+  },
+  {
+   "trial": 5,
+   "kind": "cube",
+   "status": "contact",
+   "contact": 523,
+   "lag": 13,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 13.0,
+   "hold": {
+    "ok": true,
+    "min": 523,
+    "max": 524
+   }
+  }
+ ]
+}

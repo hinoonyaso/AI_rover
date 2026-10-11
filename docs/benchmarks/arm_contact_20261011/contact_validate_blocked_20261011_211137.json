@@ -1,0 +1,65 @@
+{
+ "summary": {
+  "kind": "blocked",
+  "trials": 4,
+  "window": [
+   495,
+   555
+  ],
+  "drop_prob": 0.0,
+  "verdicts": {
+   "outside_window": 4
+  },
+  "contact_min": 438,
+  "contact_max": 486,
+  "contact_mean": 460.8,
+  "contact_sd": 22.8,
+  "holds_moved": 0
+ },
+ "rows": [
+  {
+   "trial": 1,
+   "kind": "blocked",
+   "status": "contact",
+   "contact": 486,
+   "lag": 11,
+   "steps": 22,
+   "verdict": "outside_window",
+   "seconds": 12.0,
+   "hold": null
+  },
+  {
+   "trial": 2,
+   "kind": "blocked",
+   "status": "contact",
+   "contact": 438,
+   "lag": 9,
+   "steps": 18,
+   "verdict": "outside_window",
+   "seconds": 9.6,
+   "hold": null
+  },
+  {
+   "trial": 3,
+   "kind": "blocked",
+   "status": "contact",
+   "contact": 481,
+   "lag": 12,
+   "steps": 21,
+   "verdict": "outside_window",
+   "seconds": 11.9,
+   "hold": null
+  },
+  {
+   "trial": 4,
+   "kind": "blocked",
+   "status": "contact",
+   "contact": 438,
+   "lag": 9,
+   "steps": 18,
+   "verdict": "outside_window",
+   "seconds": 10.0,
+   "hold": null
+  }
+ ]
+}
