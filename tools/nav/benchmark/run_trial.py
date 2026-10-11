@@ -42,6 +42,15 @@ SCENARIOS = {
     # the final lateral deviation (<= 0.10 m). 한글: 경유점이 상자 안에 찍혀 경로 실패 → 최종 목표로 바로 보낸다.
     'B': {'goal': (1.05, 1.40, 90.0), 'mode': 'pose'},
     'C': {'goal': (0.50, 0.80, 180.0), 'mode': 'pose'},
+    # D (2026-10-11): A's goal sent as a single NavigateToPose. A uses NavigateThroughPoses whose BT deletes the last
+    # waypoint at RemovePassedGoals radius 0.12 m, so A always stops ~12 cm short whatever the goal checker says
+    # (found with the tolerance 0.10 test) -- D is the straight-line trial where the goal checker tolerance applies.
+    # 한글: A는 BT가 0.12 m에서 마지막 경유점을 지워 허용 오차와 무관하게 약 12 cm 앞에서 끝난다 → 허용 오차 시험은 D(NavigateToPose).
+    'D': {'goal': (1.05, 1.10, 90.0), 'mode': 'pose'},
+    # E (2026-10-11): C mirrored to the right (turn 90 deg CW). There is an object on the left that cannot be removed and
+    # disturbed C; the right side of the map is tighter (clearance 0.34 m at the goal vs 0.65 m for C).
+    # 한글: C의 좌우 대칭(오른쪽 대각 + 시계 90° 회전). 왼쪽에 치울 수 없는 물체가 있어 C가 영향을 받음.
+    'E': {'goal': (1.50, 0.70, 0.0), 'mode': 'pose'},
 }
 TOPICS = ('/tf /tf_static /odom /amcl_pose /cmd_vel /cmd_vel_nav /scan /plan /received_global_plan '
           '/depth_cam/depth/points_sparse /global_costmap/costmap /local_costmap/costmap '
@@ -297,11 +306,11 @@ def main():
 
     line_dev = None
     track = node.tf_track or node.track
-    if args.scenario in ('A', 'B') and track:
+    if args.scenario in ('A', 'B', 'D') and track:
         line_dev = max(abs(x - START[0]) for _, x, _ in track)
     pos_err = math.hypot(final[0] - gx, final[1] - gy) if final else None
     yaw_err = abs(wrap(final[2] - gyaw)) if final else None
-    final_dev = abs(final[0] - START[0]) if (final and args.scenario in ('A', 'B')) else None
+    final_dev = abs(final[0] - START[0]) if (final and args.scenario in ('A', 'B', 'D')) else None
     plan_short = None
     if node.plan_end is not None:
         plan_short = math.hypot(node.plan_end[0] - gx, node.plan_end[1] - gy)
