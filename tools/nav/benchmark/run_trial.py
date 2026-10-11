@@ -93,7 +93,7 @@ class Trial(Node):
         self.plan_end = None
         self.create_subscription(Path, 'plan', self.on_plan, 10)
         # 한글: 정지 확인용 속도(EKF /odom). 측정은 로봇이 실제로 멈춘 뒤에 한다.
-        self.speed = None
+        self.odom_samples = []   # (time.monotonic(), v, |wz|)
         self.create_subscription(Odometry, 'odom', self.on_odom, 10)
         self.init_pub = self.create_publisher(PoseWithCovarianceStamped, 'initialpose', 1)
         # /amcl_pose is only published after update_min_d/a of motion, so its last value lags the stop pose
@@ -124,21 +124,34 @@ class Trial(Node):
 
     def on_odom(self, m):
         t = m.twist.twist
-        self.speed = (math.hypot(t.linear.x, t.linear.y), abs(t.angular.z))
+        now = time.monotonic()
+        self.odom_samples.append((now, math.hypot(t.linear.x, t.linear.y), abs(t.angular.z)))
+        del self.odom_samples[:-200]
 
     def wait_stopped(self, hold=1.0, limit=6.0):
-        """True once |v| < 1 cm/s and |w| < 0.02 rad/s for `hold` s (gives up after `limit` s)."""
-        t0 = time.time()
-        still_since = None
-        while time.time() - t0 < limit:
+        """(True, reason) once /odom has been FRESH and below the stop limits for `hold` s (trial_judge.stop_state).
+        A silent /odom is never counted as stopped. 한글: /odom이 끊기면 마지막 값(0)을 믿지 않고 정지로 치지 않는다."""
+        t0 = time.monotonic()
+        reason = 'no_odom'
+        while time.monotonic() - t0 < limit:
             self.spin(0.1)
-            if self.speed is not None and self.speed[0] < 0.01 and self.speed[1] < 0.02:
-                still_since = still_since or time.time()
-                if time.time() - still_since >= hold:
-                    return True
-            else:
-                still_since = None
-        return False
+            ok, reason = judge.stop_state(self.odom_samples, time.monotonic(), hold)
+            if ok:
+                return True, reason
+        return False, reason
+
+    def cancel_goal(self, handle, timeout=3.0):
+        """Cancel and wait for the action server's answer. Returns (acknowledged, text)."""
+        if handle is None:
+            return True, 'no goal'
+        fut = handle.cancel_goal_async()
+        t0 = time.monotonic()
+        while not fut.done() and time.monotonic() - t0 < timeout:
+            self.spin(0.05)
+        if not fut.done():
+            return False, 'cancel request not answered in %.0f s' % timeout
+        codes = [c.goal_info.goal_id for c in fut.result().goals_canceling]
+        return True, 'canceled' if codes else 'nothing to cancel (already finished)'
 
     def on_amcl(self, m):
         p = m.pose.pose
@@ -250,6 +263,7 @@ def main():
         fb['recoveries'] = f.feedback.number_of_recoveries
         fb['remaining'] = f.feedback.distance_remaining
     handle = None
+    cancel_ok, cancel_msg = True, 'not needed'
     try:
         send = client.send_goal_async(goal, feedback_callback=on_fb)
         rclpy.spin_until_future_complete(node, send)
@@ -261,32 +275,40 @@ def main():
             while not res.done():
                 rclpy.spin_once(node, timeout_sec=0.05)
                 if time.time() - t0 > TIMEOUT_S:
-                    handle.cancel_goal_async()  # 한글: 시간 초과면 목표를 취소해 로봇을 세운다
+                    cancel_ok, cancel_msg = node.cancel_goal(handle)  # 한글: 시간 초과면 취소하고 응답을 확인한다
                     node.spin(2.0)
                     status = 'timeout'
                     break
             if status is None:
                 status = {4: 'succeeded', 5: 'canceled', 6: 'aborted'}.get(res.result().status, str(res.result().status))
     except KeyboardInterrupt:
-        if handle is not None:
-            handle.cancel_goal_async()
+        cancel_ok, cancel_msg = node.cancel_goal(handle)
         status = 'interrupted'
     finally:
         elapsed = time.time() - t0
-        stopped = node.wait_stopped()
+        stopped, stop_reason = node.wait_stopped()
         stop_recovery = None
+        safety_error = None
+        if not cancel_ok:
+            safety_error = 'goal cancel not acknowledged: %s' % cancel_msg
         if not stopped:
-            # 2026-10-11 review: never measure a robot that may still be moving. Cancel the goal, send zero velocity
-            # and check again; the measurement is skipped either way and the trial stays 'unmeasured'.
-            # 한글: 정지 확인 실패면 목표 취소 + 정지 명령 후 다시 확인하고, 측정은 하지 않는다(판정 보류).
-            if handle is not None:
-                handle.cancel_goal_async()
+            # 2026-10-11 review: never measure a robot that may still be moving, and never trust a silent /odom.
+            # Cancel (and wait for the answer), send zero velocity, check again; the measurement is skipped either way.
+            # 한글: 정지 확인 실패 → 취소(응답 확인) + 정지 명령 후 다시 확인, 측정은 하지 않는다.
+            ok2, msg2 = node.cancel_goal(handle)
+            if not ok2:
+                safety_error = 'goal cancel not acknowledged: %s' % msg2
             stop_pub = node.create_publisher(Twist, 'cmd_vel', 10)
             for _ in range(10):
                 stop_pub.publish(Twist())
                 node.spin(0.1)
-            stop_recovery = 'stopped after cancel + zero cmd_vel' if node.wait_stopped() else 'STILL MOVING'
-            print('WARNING: robot not confirmed stopped after the goal (%s) -- no scan match' % stop_recovery)
+            stopped2, stop_reason2 = node.wait_stopped()
+            stop_recovery = 'stopped after cancel + zero cmd_vel' if stopped2 else 'NOT stopped (%s)' % stop_reason2
+            if not stopped2:
+                safety_error = (safety_error + '; ' if safety_error else '') + \
+                    'robot not confirmed stopped (%s -> %s)' % (stop_reason, stop_reason2)
+            print('WARNING: robot not confirmed stopped after the goal (%s) -- no scan match%s' %
+                  (stop_recovery, '' if not safety_error else '; SAFETY ERROR: ' + safety_error))
         node.spin(1.0)  # settle so the final pose is stable
         final_tf = node.tf_pose()
         final = final_tf or node.amcl
@@ -326,7 +348,8 @@ def main():
                  'final_from': 'tf' if final_tf else 'amcl_pose',
                  'start_from': 'nominal' if args.nominal_start else 'scan_match',
                  'last_plan_end_to_goal_m': plan_short, 'invalid_plan_cut_short': invalid,
-                 'stopped_before_measure': stopped, 'stop_recovery': stop_recovery},
+                 'stopped_before_measure': stopped, 'stop_reason': stop_reason, 'stop_recovery': stop_recovery,
+                 'cancel': cancel_msg, 'safety_error': safety_error},
         'notes': ''}
     meta = judge.apply_scan(meta, scan)
     with open(os.path.join(out_dir, 'meta.json'), 'w') as f:

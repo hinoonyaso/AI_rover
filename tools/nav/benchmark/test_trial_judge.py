@@ -115,6 +115,37 @@ class StopAndMvp(unittest.TestCase):
         self.assertIsNone(legacy['mvp']['pass'])             # stop state unknown (old records)
 
 
+class StopCheck(unittest.TestCase):
+    def samples(self, t0, t1, v=0.0, w=0.0, hz=20):
+        n = int((t1 - t0) * hz)
+        return [(t0 + i / hz, v, w) for i in range(n + 1)]
+
+    def test_fresh_and_still_is_stopped(self):
+        ok, why = j.stop_state(self.samples(10.0, 12.0), now=12.0)
+        self.assertTrue(ok)
+
+    def test_silent_odom_is_never_stopped(self):
+        ok, why = j.stop_state(self.samples(10.0, 12.0), now=13.0)   # last message 1 s ago
+        self.assertFalse(ok)
+        self.assertEqual(why, 'odom_stale')
+        self.assertEqual(j.stop_state([], now=5.0), (False, 'no_odom'))
+
+    def test_moving_or_too_short_is_not_stopped(self):
+        moving = self.samples(10.0, 11.5) + self.samples(11.55, 12.0, v=0.05)
+        self.assertEqual(j.stop_state(moving, now=12.0), (False, 'moving'))
+        self.assertEqual(j.stop_state(self.samples(11.7, 12.0), now=12.0), (False, 'window_too_short'))
+        self.assertEqual(j.stop_state(self.samples(10.0, 12.0, w=0.05), now=12.0)[1], 'moving')
+
+    def test_safety_error_blocks_success_and_scan_judgement(self):
+        m = meta()
+        m['auto']['stopped_before_measure'] = True
+        m['auto']['safety_error'] = 'goal cancel not acknowledged: cancel request not answered in 3 s'
+        m = j.set_collision(j.apply_scan(m, scan()), False, 'test')
+        self.assertEqual(m['outcome'], 'safety_error')
+        self.assertIn('cancel', m['outcome_reason'])
+        self.assertFalse(m['mvp']['pass'] is True)
+
+
 class Preservation(unittest.TestCase):
     def test_failed_scan_keeps_previous_good_scan(self):
         m = j.apply_scan(meta(), scan(y=1.02))

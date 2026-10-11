@@ -13,6 +13,7 @@ The judged pose is manual_final, else a trusted scan_final, else none ('unmeasur
 
 Outcome, in order of precedence:
   invalid            the last global plan ended > PLAN_CUT_M from the goal (goal area blocked)
+  safety_error       the goal cancel was not acknowledged or the robot could not be confirmed stopped (auto.safety_error)
   fail               collision is True
   abort              Nav2 did not report success (aborted / canceled / timeout / interrupted / rejected)
   unmeasured         no manual pose and no trusted scan match (measurement failure, kept apart from Nav2 failure)
@@ -97,6 +98,8 @@ def judge(meta):
     auto = meta.get('auto', {})
     if auto.get('invalid_plan_cut_short'):
         return 'invalid', 'plan ended %.2f m from the goal' % (auto.get('last_plan_end_to_goal_m') or 0.0)
+    if auto.get('safety_error'):
+        return 'safety_error', auto['safety_error']
     if meta.get('collision') is True:
         return 'fail', 'collision'
     status = auto.get('action_status')
@@ -127,13 +130,36 @@ def judge(meta):
     return 'success', src
 
 
+ODOM_MAX_AGE_S = 0.5        # an /odom message older than this is not evidence that the robot stands still
+STOP_V_MPS, STOP_W_RPS = 0.01, 0.02
+
+
+def stop_state(odom_samples, now, hold=1.0, max_age=ODOM_MAX_AGE_S):
+    """Pure stop check from [(t_monotonic, speed m/s, |wz| rad/s)] samples (newest last).
+    Returns (stopped, reason): True only if the newest sample is fresh AND every sample of the last `hold` s
+    (with at least one older than hold/2 so a single reading is not enough) is below the stop limits.
+    A silent /odom (no new message for max_age s) is 'odom_stale', never 'stopped'.
+    """
+    if not odom_samples:
+        return False, 'no_odom'
+    if now - odom_samples[-1][0] > max_age:
+        return False, 'odom_stale'
+    window = [s for s in odom_samples if now - s[0] <= hold]
+    if not window or now - window[0][0] < hold * 0.5:
+        return False, 'window_too_short'
+    if any(s[1] >= STOP_V_MPS or s[2] >= STOP_W_RPS for s in window):
+        return False, 'moving'
+    return True, 'stopped'
+
+
 def mvp_check(meta):
     """MVP approach check, separate from the test-plan outcome. pass None = not decidable yet."""
     auto = meta.get('auto', {})
     err = meta.get('measured_err')
     checks = {
         'nav2_succeeded': auto.get('action_status') == NAV_OK and not auto.get('invalid_plan_cut_short'),
-        'stopped': auto.get('stopped_before_measure'),
+        'stopped': (None if auto.get('stopped_before_measure') is None
+                    else bool(auto['stopped_before_measure']) and not auto.get('safety_error')),
         'no_collision': None if meta.get('collision') is None else not meta['collision'],
         'pos_within_10cm': None if err is None else err['pos_m'] <= MVP_POS_TOL_M,
         'yaw_within_tol': None if err is None else math.radians(err['yaw_deg']) <= YAW_TOL_RAD,

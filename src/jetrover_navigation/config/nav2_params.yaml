@@ -112,7 +112,12 @@ controller_server:
       plugin: "nav2_controller::SimpleGoalChecker"
       # 0.1 -> 0.2 (2026-10-05): 모든 시험에서 목표 0.15 m 앞에서 "Failed to make progress"로 멈췄다. 목표 근처에서
       # DWB가 모터 데드존(펌웨어 PWM ±250) 아래의 아주 느린 속도를 내서 바퀴가 안 도는 것으로 추정. 정밀 정렬은 이후 AprilTag 단계.
-      xy_goal_tolerance: 0.15  # 0.1은 막힘(80초+recovery 7회), 0.2는 도착점이 어긋남 -> 절충 (2026-10-05)
+      # 0.15 -> 0.10 (2026-10-11, docs/benchmarks/navigation/goal_tolerance_20261011.md): the 2026-10-05 dead-zone assumption no
+      # longer holds with the own firmware (wheels follow 0.02 m/s at ratio 1.00). D/C x5: stop position error -3.5 cm
+      # (D 10.7 -> 7.1, C 12.7 -> 9.5 cm, scan-match estimate), within 10 cm 9/10 (0.15: 2/10), no stall/oscillation, +0.8 s.
+      # Roll back: tools/nav/ab_params/nav2_params_tol015.yaml (0.15 / DWB 0.12).
+      # 한글: 자체 펌웨어에서 모터 데드존이 사라져 0.10 가능. 정지 위치가 약 3.5 cm 가까워짐. 되돌리기: nav2_params_tol015.yaml.
+      xy_goal_tolerance: 0.10  # was 0.15 (0.1은 80초+recovery 7회 막힘 — 옛 펌웨어 데드존 때문이었음, 2026-10-05)
       yaw_goal_tolerance: 0.4  # 0.25는 미세조정이 오래 걸림, 0.5는 우회 후 20도 틀어진 채 끝남 -> 절충 (2026-10-05)
       stateful: true
     FollowPath:
@@ -218,7 +223,8 @@ controller_server:
       # short of every goal and failed with "Failed to make progress" (likely also 028's "always stops 0.15 m short").
       # Keep it a bit below the goal checker's 0.15. 한글: DWB 자체 허용오차(기본 0.25)가 goal checker(0.15)보다 커서
       # 목표 0.15~0.25 m 앞에서 이동을 멈추고 실패했다. goal checker보다 약간 작게 맞춘다.
-      xy_goal_tolerance: 0.12
+      # 0.12 -> 0.08 (2026-10-11): keep it below the goal checker's 0.10 (same rule as above).
+      xy_goal_tolerance: 0.08  # was 0.12
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
