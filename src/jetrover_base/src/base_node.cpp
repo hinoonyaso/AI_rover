@@ -621,6 +621,14 @@ private:
     if (done) {
       arm_home_timer_->cancel();
       RCLCPP_WARN(get_logger(), "arm reached home pose");
+      // 한글: 수렴 기준(0.03 rad)이 느슨하므로 마지막에 홈 자세를 일반 명령 경로로 한 번 더 보낸다 --
+      // 데드밴드 보정과 읽기 피드백 보정(처짐)이 거기서 적용된다.
+      // The convergence test (0.03 rad) is loose: send the home pose once more through the normal command path so
+      // the dead band overshoot and the read-back trim apply.
+      sensor_msgs::msg::JointState home;
+      home.name = arm_joint_names_;
+      home.position = arm_home_pose_rad_;
+      on_arm_command(home, 1.0);
       return;
     }
     const auto frame = build_bus_servo_set_position(arm_move_duration_s_, step);
