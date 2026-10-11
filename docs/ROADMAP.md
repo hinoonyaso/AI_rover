@@ -20,7 +20,7 @@
 | 2 | STM32 엔코더 bring-up | ST-Link, 로봇 L2~L3 | `prd/encoder-odometry-test-plan.md` E1~E3 | **완료(2026-10-10~11)**: 자체 펌웨어 flash·bring-up(`docs/benchmarks/firmware_bringup_20261010.md`), 3,996 ticks/rev, E3 안전 시험 통과(timeout 1.04 s, e-stop 0.86 s, 호스트 SIGKILL 1.30 s), 유휴 8 h·부하 포함 10 h 40 m 소크 리셋 0 |
 | 3 | encoder odom + EKF 재구성 | 로봇 L3~L4 | 같은 baseline을 `encoder` 조건으로 재시험, Before/After 표 | **완료(2026-10-11)**: 개루프 정확도 개선(E4/E5), Nav2 폐루프 30회에서는 차이 없음(허용 오차·AMCL 편향에 가려짐) → 기본값 `auto` |
 | 4 | DWB vs MPPI A/B | 로봇 L4 | `prd/nav2-mppi-ab-test-plan.md` | **완료(잠정, 2026-10-11, 각 15회)**: 직선은 MPPI, 정면 상자·대각 회전은 DWB 우세 → **기본값 DWB 유지**, MPPI는 변형으로 보관. `docs/benchmarks/navigation/dwb_vs_mppi_20261011.md` |
-| 5 | Arm: ros2_control + FollowJointTrajectory 설계 | 불필요(설계) → 로봇 L2 | PRD 승인 → hardware interface가 `arm/command`와 같은 동작 재현 | **다음 차례**(Nav2 동결 후 PRD 작성). 선행 완료: 서보별 데드밴드 보정·읽기 피드백 보정(오차 ±1~2 펄스), 홈 자세 ±1 펄스(2026-10-11) |
+| 5 | Arm: ros2_control + FollowJointTrajectory 설계 | 불필요(설계) → 로봇 L2 | PRD 승인 → hardware interface가 `arm/command`와 같은 동작 재현 | **PRD 작성 완료(2026-10-11)**: `prd/arm-control-path.md` + test-plan, 경로 A 확정·접촉 파지 Action 설계, 구현은 폴링 벤치마크부터. 선행 완료: 서보별 데드밴드 보정·읽기 피드백 보정(오차 ±1~2 펄스), 홈 자세 ±1 펄스(2026-10-11) |
 | 6 | MoveIt2 단독 joint-space 이동 | 로봇 L2~L3(팔) | perception 없이 목표 관절각 도달·충돌 회피 | 계획 |
 | 7 | RGB-D → XYZ → TF | 로봇 | 알려진 위치 물체의 base_link 좌표 오차 측정 | 계획 |
 | 8 | 단순 블록 Pick & Place | 로봇 L3~L4 | 성공률 측정(MVP 최소 N회) | 계획 |
