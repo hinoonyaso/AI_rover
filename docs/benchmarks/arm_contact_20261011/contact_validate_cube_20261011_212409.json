@@ -1,0 +1,102 @@
+{
+ "summary": {
+  "kind": "cube",
+  "trials": 5,
+  "window": [
+   495,
+   555
+  ],
+  "drop_prob": 0.0,
+  "verdicts": {
+   "object": 4,
+   "outside_window": 1
+  },
+  "contact_min": 382,
+  "contact_max": 535,
+  "contact_mean": 499,
+  "contact_sd": 58.6,
+  "holds_moved": 0
+ },
+ "rows": [
+  {
+   "trial": 1,
+   "kind": "cube",
+   "placement": "tip",
+   "status": "contact",
+   "contact": 535,
+   "lag": 12,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 13.1,
+   "hold": {
+    "ok": true,
+    "min": 551,
+    "max": 551
+   }
+  },
+  {
+   "trial": 2,
+   "kind": "cube",
+   "placement": "inner",
+   "status": "contact",
+   "contact": 525,
+   "lag": 13,
+   "steps": 24,
+   "verdict": "object",
+   "seconds": 12.6,
+   "hold": {
+    "ok": true,
+    "min": 525,
+    "max": 526
+   }
+  },
+  {
+   "trial": 3,
+   "kind": "cube",
+   "placement": "middle",
+   "status": "contact",
+   "contact": 526,
+   "lag": 16,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 13.9,
+   "hold": {
+    "ok": true,
+    "min": 525,
+    "max": 527
+   }
+  },
+  {
+   "trial": 4,
+   "kind": "cube",
+   "placement": "tilted",
+   "status": "contact",
+   "contact": 382,
+   "lag": 10,
+   "steps": 14,
+   "verdict": "outside_window",
+   "seconds": 8.0,
+   "hold": {
+    "ok": true,
+    "min": 384,
+    "max": 385
+   }
+  },
+  {
+   "trial": 5,
+   "kind": "cube",
+   "placement": "tip",
+   "status": "contact",
+   "contact": 527,
+   "lag": 15,
+   "steps": 25,
+   "verdict": "object",
+   "seconds": 13.5,
+   "hold": {
+    "ok": true,
+    "min": 526,
+    "max": 527
+   }
+  }
+ ]
+}

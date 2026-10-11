@@ -254,16 +254,22 @@ def contact_validate(ser, args):
     def move(pulse, ms):
         move_bus_servo(ser, 10, pulse, args.step_ms, settle=0.2)
 
+    labels = [x.strip() for x in args.labels.split(',')] if args.labels else []
     check_temps(ser, label='before')
+    if args.start_delay > 0:
+        beep(ser, 1)
+        print(f'starting in {args.start_delay:g} s')
+        time.sleep(args.start_delay)
     rows = []
     for k in range(1, args.trials + 1):
+        label = labels[k - 1] if k - 1 < len(labels) else None
         start = read_bus_servo(ser, 10)
         if start is None or start > 450:
             sys.exit(f'gripper is at {start}; open it first (gripper-goto --pulse 200)')
         if args.kind != 'empty':
             beep(ser, 1 if args.kind == 'cube' else 3)
             what = 'put the cube between the jaws' if args.kind == 'cube' else 'pinch the jaws with a finger'
-            print(f'trial {k}/{args.trials}: {what} ({args.place_s:g} s)')
+            print(f'trial {k}/{args.trials}: {what}{" [" + label + "]" if label else ""} ({args.place_s:g} s)')
             time.sleep(args.place_s)
         t0 = time.monotonic()
         r = gc.find_contact(move, read, step=args.step, max_pulse=args.max_pulse, retries=2,
@@ -275,9 +281,9 @@ def contact_validate(ser, args):
             move_bus_servo(ser, 10, r['contact'] + args.squeeze, 400)
             ok, hmin, hmax = gc.hold_check(lambda: read_bus_servo(ser, 10, tries=1), r['contact'] + args.squeeze, 2.0)
             hold = {'ok': ok, 'min': hmin, 'max': hmax}
-        rows.append({'trial': k, 'kind': args.kind, 'status': r['status'], 'contact': r['contact'], 'lag': r['lag'],
+        rows.append({'trial': k, 'kind': args.kind, 'placement': label, 'status': r['status'], 'contact': r['contact'], 'lag': r['lag'],
                      'steps': r['steps'], 'verdict': verdict, 'seconds': round(took, 1), 'hold': hold})
-        print(f'  -> {verdict}: contact {r["contact"]} lag {r["lag"]} steps {r["steps"]} in {took:.1f} s'
+        print(f'  -> {label or ""} {verdict}: contact {r["contact"]} lag {r["lag"]} steps {r["steps"]} in {took:.1f} s'
               + ('' if hold is None else f', held {hold["min"]}..{hold["max"]} ({"ok" if hold["ok"] else "MOVED"})'))
         if args.kind != 'empty':
             beep(ser, 2)
@@ -411,6 +417,8 @@ def main():
     ap.add_argument('--step-ms', type=int, default=250, help='contact-validate: time given to each closing step')
     ap.add_argument('--drop-prob', type=float, default=0.0, help='contact-validate: fraction of readings turned into missing')
     ap.add_argument('--seed', type=int, default=1)
+    ap.add_argument('--labels', default='', help='contact-validate: comma separated placement names, one per trial')
+    ap.add_argument('--start-delay', type=float, default=0.0, help='contact-validate: seconds (and one beep) before the first trial')
     args = ap.parse_args()
     ser = serial.Serial(PORT, 1_000_000, timeout=0.05)
     ser.reset_input_buffer()
