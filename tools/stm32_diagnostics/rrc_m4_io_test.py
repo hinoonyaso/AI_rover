@@ -9,6 +9,11 @@ Usage: python3 tools/stm32_diagnostics/rrc_m4_io_test.py <mode> [options]
   gamepad  [--secs 20]          print gamepad changes (FUNC8) and raw HID reports (0x23)
   sbus     [--secs 10]          print SBUS frames (FUNC9) if a receiver is connected
   pwm-servo --id 1 --pulse 1500 [--time 500]   move one PWM servo (FUNC4 sub 0x03); 500..2500 us
+  gripper-goto --pulse 200 [--time 2000]       move the gripper (ID 10) to a position (125..693 only)
+  grasp-cube [--step 12] [--width-mm 30]        THE GRIPPER CLOSES on an object you hold between the open jaws:
+                                               small steps until the reading stops following (contact), squeeze, reopen
+  grasp-levels [--levels 8,14,20] [--swing]    contact, then squeeze each level 5 s (1/2/3 beeps);
+                                               --swing: also swing joint 1 by +-10 deg at the last level
   gripper-range [--step 40]                    THE GRIPPER OPENS/CLOSES FULLY (keep it empty, hands off):
                                                --step pulses at a time each way until it stops following (end stop)
   bus-torque --id 5 [--hold 4]                 THE JOINT GOES LIMP for --hold s (support it): release torque, read,
@@ -90,10 +95,150 @@ def bus_servo_test(ser, args):
     print(f'  after return: {p2} (off the start by {None if p2 is None else p2 - p0:+d})')
 
 
+TEMP_LIMIT_C = 60  # stop and cool down above this (2026-10-11: gripper 53 C / joint 1 61 C after repeated squeezes + swings)
+
+
+def servo_temp(ser, sid):
+    """FUNC5 temperature read [09, id] -> [id, 09, success, deg C]. None on failure. 한글: 서보 온도."""
+    for _ in range(3):
+        ser.reset_input_buffer()
+        ser.write(frame(0x05, bytes([0x09, sid])))
+        buf, t0 = b'', time.time()
+        while time.time() - t0 < 0.4:
+            buf += ser.read(256)
+            for f, d in frames(buf):
+                if f == 0x05 and len(d) >= 4 and d[0] == sid and d[1] == 0x09 and d[2] == 0:
+                    return d[3]
+    return None
+
+
+def cool_down(ser, ids=(10, 1), limit=TEMP_LIMIT_C - 10):
+    """Wait (up to 3 min) until every listed servo is below `limit` deg C."""
+    t0 = time.time()
+    while time.time() - t0 < 180:
+        temps = {i: servo_temp(ser, i) for i in ids}
+        if all(v is None or v < limit for v in temps.values()):
+            return temps
+        print(f'  waiting to cool down: {temps}')
+        time.sleep(10)
+    return temps
+
+
+def check_temps(ser, ids=(10, 1), label=''):
+    temps = {i: servo_temp(ser, i) for i in ids}
+    print(f'  servo temperatures {label}: ' + ', '.join(f'ID {i} {v} C' for i, v in temps.items()))
+    if any(v is not None and v >= TEMP_LIMIT_C for v in temps.values()):
+        print(f'  >= {TEMP_LIMIT_C} C: cooling down before going on')
+        cool_down(ser, ids)
+    return temps
+
+
 def move_bus_servo(ser, sid, pulse, ms):
     payload = bytes([0x01]) + struct.pack('<H', ms) + bytes([1, sid]) + struct.pack('<H', pulse)
     ser.write(frame(0x05, payload))
     time.sleep(ms / 1000 + 0.5)
+
+
+def find_contact(ser, args):
+    """Close from the open position until the jaws are blocked; returns (start, contact). 한글: 접촉 눈금 찾기."""
+    sid, step, closed_end, dead_band = 10, min(max(args.step, 6), 16), 693, 8
+    start = read_bus_servo(ser, sid)
+    if start is None:
+        sys.exit('gripper: no position reading')
+    if start > 450:
+        sys.exit(f'gripper is at {start}; open it first (gripper-goto --pulse 200), object between the jaws')
+    print(f'start {start}; closing in steps of {step} pulses ({step * 0.24:.1f} deg); blocked = lag > {dead_band} and '
+          f'a repeat of the command does not move it')
+    target, now, contact = start, start, None
+    for i in range(80):
+        target = now + step
+        if target > min(args.max_pulse, closed_end - 6):
+            print(f'  reached the limit {args.max_pulse} without contact')
+            break
+        move_bus_servo(ser, sid, target, 350)
+        now = read_bus_servo(ser, sid)
+        if now is None:
+            sys.exit('lost the reading; stopping')
+        lag = target - now
+        if args.verbose:
+            print(f'  step {i + 1}: commanded {target}, read {now} (lag {lag})')
+        if lag > dead_band:  # candidate: send the same target again and see if it gives
+            move_bus_servo(ser, sid, target, 350)
+            again = read_bus_servo(ser, sid)
+            if again is not None and abs(again - now) <= 1:
+                contact = again
+                print(f'  step {i + 1}: commanded {target}, read {now} then {again} -> BLOCKED at {contact} '
+                      f'(lag {target - again})')
+                break
+            now = again if again is not None else now
+    else:
+        print('  no contact within 80 steps')
+    if contact is None:
+        move_bus_servo(ser, sid, start, 2000)
+        sys.exit('no contact found; reopened')
+    return start, contact
+
+
+def grasp_cube(ser, args):
+    """Find the contact, squeeze a little, hold 2 s, reopen. Prints pulses/mm from the closed end 693."""
+    closed_end = 693
+    start, contact = find_contact(ser, args)
+    squeeze = contact + 4
+    move_bus_servo(ser, 10, squeeze, 500)
+    time.sleep(2.0)
+    held = read_bus_servo(ser, 10)
+    print(f'squeeze target {squeeze} (contact + 4), read after 2 s: {held}')
+    per_mm = (closed_end - contact) / args.width_mm
+    print(f'RESULT contact {contact} for {args.width_mm:g} mm -> {per_mm:.2f} pulses/mm; '
+          f'closed end {closed_end} = 0 mm; open end 125 = about {(closed_end - 125) / per_mm:.0f} mm '
+          f'(linear estimate)')
+    print('opening again (take the object)...')
+    move_bus_servo(ser, 10, start, 2000)
+    print(f'back at {read_bus_servo(ser, 10)}')
+
+
+def beep(ser, n):
+    """n short beeps as an audible cue (FUNC2). 한글: 사용자에게 단계를 알리는 부저."""
+    ser.write(frame(0x02, struct.pack('<HHHH', 2000, 150, 150, n)))
+
+
+def grasp_levels(ser, args):
+    """Contact, then squeeze +8, +14, +20 pulses for 5 s each (1/2/3 beeps at the start of each level) while the user
+    pulls on the object; with --swing the same squeeze is also held while joint 1 swings +-40 pulses (about 10 deg)."""
+    check_temps(ser, label='before')
+    start, contact = find_contact(ser, args)
+    levels = [int(x) for x in args.levels.split(',')]
+    print(f'contact {contact}; levels {levels}; each held {args.hold_s:g} s (beeps = level number)')
+    for k, extra in enumerate(levels, 1):
+        if not args.no_beep:
+            beep(ser, k)
+            time.sleep(0.6 + 0.3 * k)
+        move_bus_servo(ser, 10, contact + extra, 400)
+        held = read_bus_servo(ser, 10)
+        print(f'  level {k}: +{extra} -> target {contact + extra}, read {held}')
+        if args.swing and k == len(levels):
+            # long cue: let go of the object now (keep a hand under it); the swing starts 4 s later
+            ser.write(frame(0x02, struct.pack('<HHHH', 1500, 900, 100, 1)))
+            time.sleep(4.0)
+            swing_joint1(ser)
+        else:
+            time.sleep(args.hold_s)
+    print('opening again (take the object)...')
+    move_bus_servo(ser, 10, start, 2000)
+    print(f'back at {read_bus_servo(ser, 10)}')
+    check_temps(ser, label='after')
+
+
+def swing_joint1(ser):
+    """Joint 1 (base yaw) +-40 pulses (about 10 deg) twice at 0.8 s per leg while the gripper keeps squeezing."""
+    p0 = read_bus_servo(ser, 1)
+    if p0 is None:
+        print('  joint 1: no reading, no swing')
+        return
+    print(f'  swinging joint 1 around {p0}: +40, -40 twice')
+    for target in (p0 + 40, p0 - 40, p0 + 40, p0 - 40, p0):
+        move_bus_servo(ser, 1, target, 800)
+    print(f'  joint 1 back at {read_bus_servo(ser, 1)}; gripper still at {read_bus_servo(ser, 10)}')
 
 
 def gripper_range(ser, args):
@@ -164,7 +309,8 @@ def bus_torque_test(ser, args):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    modes = ['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo', 'bus-torque', 'gripper-range']
+    modes = ['buttons', 'buzzer', 'gamepad', 'sbus', 'pwm-servo', 'bus-servo', 'bus-torque', 'gripper-range',
+             'gripper-goto', 'grasp-cube', 'grasp-levels']
     ap.add_argument('mode', choices=modes)
     ap.add_argument('--secs', type=float, default=20.0)
     ap.add_argument('--on', type=int, default=100)
@@ -174,7 +320,15 @@ def main():
     ap.add_argument('--id', type=int, default=1)
     ap.add_argument('--pulse', type=int, default=1500)
     ap.add_argument('--time', type=int, default=500)
-    ap.add_argument('--step', type=int, default=40, help='gripper-range: pulses per step (<= 50)')
+    ap.add_argument('--step', type=int, default=40,
+                    help='gripper-range: pulses per step (<= 50); grasp-cube: 6..16 (use 12)')
+    ap.add_argument('--verbose', action='store_true', help='grasp-cube: print every step')
+    ap.add_argument('--max-pulse', type=int, default=687, help='grasp-cube: never close beyond this pulse')
+    ap.add_argument('--levels', default='8,14,20', help='grasp-levels: squeeze pulses beyond contact, comma separated')
+    ap.add_argument('--hold-s', type=float, default=5.0, help='grasp-levels: seconds per level')
+    ap.add_argument('--no-beep', action='store_true', help='grasp-levels: silent (no buzzer cues), to hear the servo itself')
+    ap.add_argument('--swing', action='store_true', help='grasp-levels: swing joint 1 +-10 deg at the last level')
+    ap.add_argument('--width-mm', type=float, default=30.0, help='grasp-cube: width of the object between the jaws')
     ap.add_argument('--hold', type=float, default=4.0, help='bus-torque: seconds the joint stays limp')
     ap.add_argument('--delta', type=int, default=20, help='bus-servo: pulses (0.24 deg each), |delta| <= 40')
     args = ap.parse_args()
@@ -211,6 +365,16 @@ def main():
         bus_torque_test(ser, args)
     elif args.mode == 'gripper-range':
         gripper_range(ser, args)
+    elif args.mode == 'gripper-goto':
+        if not 125 <= args.pulse <= 693:
+            sys.exit('gripper-goto: pulse must be 125..693 (measured range 2026-10-11)')
+        before = read_bus_servo(ser, 10)
+        move_bus_servo(ser, 10, args.pulse, max(args.time, 1500))
+        print(f'gripper {before} -> {read_bus_servo(ser, 10)} (asked {args.pulse})')
+    elif args.mode == 'grasp-cube':
+        grasp_cube(ser, args)
+    elif args.mode == 'grasp-levels':
+        grasp_levels(ser, args)
     elif args.mode == 'pwm-servo':
         if not 500 <= args.pulse <= 2500:
             sys.exit('pulse must be 500..2500 us')
