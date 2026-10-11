@@ -95,7 +95,8 @@ def bus_servo_test(ser, args):
     print(f'  after return: {p2} (off the start by {None if p2 is None else p2 - p0:+d})')
 
 
-TEMP_LIMIT_C = 75  # stop and cool down above this (user-set safety limit 2026-10-11; 60 C is normal for plain motion)
+# Stop and cool down above this (user-set 2026-10-11: 60 -> 75 -> 80). The servo cuts its own torque at 85 C, so keep 5 C.
+TEMP_LIMIT_C = 80
 
 
 def servo_temp(ser, sid):
