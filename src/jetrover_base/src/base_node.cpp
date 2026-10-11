@@ -211,6 +211,14 @@ public:
         arm_pulse_min_ = declare_parameter<int64_t>("arm_pulse_min", 100);
         arm_pulse_max_ = declare_parameter<int64_t>("arm_pulse_max", 900);
         arm_move_home_on_start_ = declare_parameter<bool>("arm_move_home_on_start", false);
+        // 한글: 서보별 데드밴드 보정(이동 방향으로 더 얹는 눈금 수). 길이는 arm_servo_ids와 같다. 0 = 끔.
+        arm_deadband_overshoot_ = declare_parameter<std::vector<int64_t>>(
+          "arm_deadband_overshoot", std::vector<int64_t>(arm_servo_ids_.size(), 0));
+        if (arm_deadband_overshoot_.size() != arm_servo_ids_.size()) {
+          RCLCPP_ERROR(get_logger(),
+              "arm_deadband_overshoot length mismatch; compensation disabled");
+          arm_deadband_overshoot_.assign(arm_servo_ids_.size(), 0);
+        }
         arm_home_pose_rad_ = declare_parameter<std::vector<double>>(
           "arm_home_pose_rad", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
         if (arm_home_pose_rad_.size() != arm_joint_names_.size()) {
@@ -711,7 +719,10 @@ private:
         return;
       }
       const double raw = std::round(arm_rad_to_ticks(i, msg.position[k]));
-      const int64_t pulse = clamp_pulse(raw, arm_pulse_min_, arm_pulse_max_);
+      const int64_t clamped = clamp_pulse(raw, arm_pulse_min_, arm_pulse_max_);
+      const int64_t pulse = deadband_overshoot(
+        clamped, static_cast<int64_t>(cur->second), arm_deadband_overshoot_[i], arm_pulse_min_,
+        arm_pulse_max_);
       targets.push_back({id, static_cast<uint16_t>(pulse)});
     }
     // Logged only once validation passed for every joint -- a mid-loop log here would
@@ -887,6 +898,7 @@ private:
   double arm_max_step_rad_{0.35};
   int64_t arm_pulse_min_{100};
   int64_t arm_pulse_max_{900};
+  std::vector<int64_t> arm_deadband_overshoot_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr arm_cmd_sub_;
   rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_timed_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr arm_torque_sub_;

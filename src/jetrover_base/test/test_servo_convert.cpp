@@ -82,3 +82,18 @@ TEST(ClampPulse, ClampsToLimits)
   EXPECT_EQ(clamp_pulse(100.0, 100, 900), 100);
   EXPECT_EQ(clamp_pulse(900.0, 100, 900), 900);
 }
+
+TEST(DeadbandOvershoot, PushesBeyondTargetInTravelDirection)
+{
+  EXPECT_EQ(deadband_overshoot(500, 400, 2, 100, 900), 502);
+  EXPECT_EQ(deadband_overshoot(500, 600, 2, 100, 900), 498);
+  EXPECT_EQ(deadband_overshoot(500, 500, 2, 100, 900), 500);
+  EXPECT_EQ(deadband_overshoot(500, 400, 0, 100, 900), 500);
+  EXPECT_EQ(deadband_overshoot(500, 400, -3, 100, 900), 500);
+}
+
+TEST(DeadbandOvershoot, StaysInsideSafetyClamp)
+{
+  EXPECT_EQ(deadband_overshoot(899, 800, 3, 100, 900), 900);
+  EXPECT_EQ(deadband_overshoot(101, 200, 3, 100, 900), 100);
+}

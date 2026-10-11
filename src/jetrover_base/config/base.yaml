@@ -84,6 +84,11 @@ base_node:
     arm_max_step_rad: 0.35       # ~20 deg max jump per command; send several small steps instead
     arm_pulse_min: 100           # servo pulse clamp (0..1000 = 0..240 deg), stays off the end stops
     arm_pulse_max: 900
+    # Servo dead band compensation (2026-10-11, tools/stm32_diagnostics/servo_deadband.py): pulses added beyond the
+    # target in the travel direction, per arm_servo_ids [1,2,3,4,5,10]. Residual error -1..+1 pulse (0 was -4..+1).
+    # Joints 2-4 also sag by gravity (-1.5/-4.5/-1.4 pulses at the rest pose) -- pose dependent, not compensated here.
+    # 한글: 서보별 데드밴드 보정 눈금 수. 관절 2~4의 중력 처짐은 자세에 따라 달라 여기서 보정하지 않는다.
+    arm_deadband_overshoot: [2, 1, 2, 2, 1, 2]
     # Home pose = "driving pose" (2026-10-05, checklist 8.12 / 14, found on hardware by moving
     # joint2-5 while watching the camera + measuring /scan coverage + depth/image_raw):
     #  - near_bottom (closest point seen) ~145mm -- the robot's OWN wheel is in frame, so there is

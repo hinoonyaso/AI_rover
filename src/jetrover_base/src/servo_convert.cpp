@@ -26,4 +26,13 @@ int64_t clamp_pulse(double raw, int64_t lo, int64_t hi)
   return std::min<int64_t>(std::max<int64_t>(static_cast<int64_t>(raw), lo), hi);
 }
 
+int64_t deadband_overshoot(
+  int64_t target, int64_t current, int64_t overshoot, int64_t lo,
+  int64_t hi)
+{
+  const int64_t n = std::max<int64_t>(overshoot, 0);
+  const int64_t cmd = target > current ? target + n : target < current ? target - n : target;
+  return std::min<int64_t>(std::max<int64_t>(cmd, lo), hi);
+}
+
 }  // namespace jetrover_base
