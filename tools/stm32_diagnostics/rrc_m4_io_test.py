@@ -95,7 +95,7 @@ def bus_servo_test(ser, args):
     print(f'  after return: {p2} (off the start by {None if p2 is None else p2 - p0:+d})')
 
 
-TEMP_LIMIT_C = 60  # stop and cool down above this (2026-10-11: gripper 53 C / joint 1 61 C after repeated squeezes + swings)
+TEMP_LIMIT_C = 75  # stop and cool down above this (user-set safety limit 2026-10-11; 60 C is normal for plain motion)
 
 
 def servo_temp(ser, sid):
@@ -112,7 +112,7 @@ def servo_temp(ser, sid):
     return None
 
 
-def cool_down(ser, ids=(10, 1), limit=TEMP_LIMIT_C - 10):
+def cool_down(ser, ids=(10, 1), limit=TEMP_LIMIT_C - 15):
     """Wait (up to 3 min) until every listed servo is below `limit` deg C."""
     t0 = time.time()
     while time.time() - t0 < 180:
