@@ -153,7 +153,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - **2026-10-06 구체화(계획)**: PRD `prd/encoder-odometry.md`, 시험 `prd/encoder-odometry-test-plan.md`(E0~E6). 선행: Nav2 baseline(`prd/nav2-baseline-test-plan.md`). 현재 순서/게이트는 `docs/ROADMAP.md`.
   - [x] E0 `mecanum_forward` C++(`jetrover_base`)↔Python(`jetrover_microros/rrc_bridge.py`) 교차검증 (L0): 골든 벡터 5건을 양쪽 단위시험이 공유(2026-10-06). 두 구현의 수식 일치도 대수적으로 확인
   - [ ] E1 엔코더 부호·ticks/rev 실측 (L2, ST-Link·flash 승인 필요)
-  - [ ] E2/E3 바퀴 띄운 속도 응답, MCU 자체 정지 시험 (L3)
+  - [x] E3 MCU 자체 정지 시험 (L3, 바퀴 띄움, 배터리 12.54 V, 2026-10-11, `rrc_m4_e3_test.py`): A 명령 timeout — 4바퀴 0.5 rps 중 명령만 끊으면 **1.04 s에 정지**(CMD_TIMEOUT_MS 1000), B NaN 속도 명령 3개 → rejected_cmds 0→3·바퀴 정지 유지, C e-stop — 주행 중 e-stop **0.86 s에 정지**, e-stop 중 명령이 계속 와도 0 rps 유지, 해제 후 다시 구동. **호스트 강제 종료**: base_node가 0.1 m/s로 구동 중 `kill -9`(정지 프레임 없음) → **1.30 s에 바퀴 정지**. 소유권 중재(게임패드 ↔ 호스트)는 호스트 단위 시험만(게임패드 동시 입력 실기는 안 함). 이전 시도가 `ros2 run` 래퍼만 죽여 base_node가 살아 있던 것을 확인 후 폐기하고 실제 PID로 재시험
+  - [ ] E2 바퀴 띄운 속도 응답 (L3) — 속도 PID 시험(troubleshooting/035~038)으로 사실상 완료, 표로 정리하지 않음
   - [ ] E4/E5 바닥 직선·회전에서 open-loop vs encoder odom 비교, EKF 공분산 근거 설정 (L4)
   - [ ] E6 Nav2 baseline 15회 재시험(`encoder_ekf` 태그) + Before/After 표
 
