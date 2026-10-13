@@ -1,0 +1,5 @@
+# 한글: 파지한 물체를 놓는다. HOLDING일 때만 수락되고, 열린 뒤 그리퍼 소유권이 IDLE로 반환된다.
+# Open the gripper and give the ownership back. Accepted only while HOLDING.
+---
+bool success
+string message

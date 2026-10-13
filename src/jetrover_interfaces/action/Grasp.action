@@ -1,0 +1,22 @@
+# 한글: 접촉 파지 Action (prd/arm-control-path.md R5). goal은 프로파일 이름 하나. 서보는 힘을 알려 주지 않으므로 결과의
+#       성공은 "접촉을 찾고 조임이 2 s 유지됨"을 뜻하며 파지력(N)을 보증하지 않는다. 성공해도 그리퍼 소유권은 HOLDING으로 유지되고
+#       Release 서비스로만 반환된다.
+# Contact grasp action. The goal is just a profile name. The servo reports no force: success means "a contact was found and the
+# squeeze held still for 2 s", not a grip force in newtons. After a success the gripper stays owned (HOLDING) until Release.
+
+# --- goal ---
+string profile          # "cube3cm" (the only validated profile; +16 squeeze is NOT a default for other objects)
+---
+# --- result ---
+bool success
+string reason           # "" on success, else the failure reason (TempHigh, NoContact, OutsideWindow, NoReading, Timeout, ...)
+int32 contact_position  # gripper pulses where the jaws were blocked, -1 if none
+int32 final_position    # gripper pulses when the action ended, -1 if unknown
+---
+# --- feedback ---
+string state            # Check, Closing, Squeeze, Holding, ...
+int32 gripper_position  # latest reading, -1 if none
+int32 contact_position  # -1 until found
+float32 temperature_c   # latest gripper servo temperature, -1.0 if none
+float32 elapsed_s
+string note

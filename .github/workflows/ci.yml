@@ -61,13 +61,14 @@ jobs:
           source /opt/ros/jazzy/setup.bash
           # jetrover_nav_plugins: jetrover_navigation exec_depends on it, colcon refuses to build
           # navigation without it (CI red since 2026-10-09 4823968).
-          colcon build --packages-select jetrover_description jetrover_base jetrover_microros \
+          # jetrover_interfaces: jetrover_base depends on its Grasp action / Release service (same trap as nav_plugins).
+          colcon build --packages-select jetrover_interfaces jetrover_description jetrover_base jetrover_microros \
             jetrover_bringup jetrover_nav_plugins jetrover_navigation jetrover_perception
       - name: Test
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon test --packages-select jetrover_base jetrover_microros jetrover_nav_plugins
+          colcon test --packages-select jetrover_interfaces jetrover_base jetrover_microros jetrover_nav_plugins
           colcon test-result --verbose
       - name: Benchmark analyzer on a synthetic rosbag
         shell: bash

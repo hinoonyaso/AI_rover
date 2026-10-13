@@ -88,6 +88,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `src/jetrover_description/` | URDF(xacro)와 `robot_state_publisher` launch. **2026-10-03부터 Hiwonder 공식 메쉬 사용** (`~/AI_secretary_robot`의 `jetrover_arm_moveit`에서 가져옴, IMU 조인트 회전은 이중변환 방지로 0으로 되돌림 — `src/jetrover_description/README.md`). 팔/그리퍼/카메라까지 TF에 포함됨 |
 | `src/jetrover_bringup/` | 전체 실행 launch(`robot.launch.py`, `lidar.launch.py`, `rviz.launch.py`), LiDAR 설정, RViz 설정 |
 | `src/jetrover_navigation/` | SLAM Toolbox, AMCL(localization), Nav2 설정/launch. `config/nav2_params.yaml`(기본 RotationShim+DWB), `config/mppi_followpath.yaml`(MPPI 변형, `tools/nav/ab_params/make_variants.sh`로 생성), `scripts/scan_match_init.py`(시작 시 자동 위치 추정). 파라미터 변경 이력은 `docs/benchmarks/navigation/tuning-history.md` |
+| `src/jetrover_interfaces/` | 인터페이스 정의만(코드 없음): `action/Grasp.action`(접촉 파지), `srv/Release.srv`(파지 해제). 2026-10-14 신설(PRD `prd/arm-control-path.md` R5/R6). `jetrover_base`가 의존하므로 CI 빌드 목록 맨 앞에 있어야 한다 |
 | `src/jetrover_nav_plugins/` | Nav2 플러그인(C++). MPPI `LateralRatioCritic`(메카넘 대각 45° 제한, PRD `prd/mppi-lateral-ratio-critic.md`), gtest |
 | `src/jetrover_manipulation/` | MoveIt2 설정(팔 joint1~5 + 그리퍼), 궤적 브리지(base_node `arm/command_timed`), SRDF(Setup Assistant 충돌 행렬 병합). `~/AI_secretary_robot`의 Humble 설정을 Jazzy로 옮김 |
 | `src/jetrover_gazebo/` | Gazebo Harmonic 시뮬레이션(**실행은 host PC**, PRD `prd/gazebo-sim.md`): sim xacro(ros2_control 메카넘, LiDAR/RGB-D/IMU), 지도→월드 생성기, 디지털 트윈 모델 자리(`models/room_lap2`, Git LFS). 사용법 `src/jetrover_gazebo/README.md` |

@@ -14,6 +14,8 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(jetrover_interfaces REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
 add_library(${PROJECT_NAME}_lib
@@ -34,7 +36,7 @@ target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_17)
 
 add_executable(base_node src/base_node.cpp)
 target_link_libraries(base_node ${PROJECT_NAME}_lib)
-ament_target_dependencies(base_node rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs trajectory_msgs diagnostic_msgs std_srvs)
+ament_target_dependencies(base_node rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs trajectory_msgs diagnostic_msgs std_srvs rclcpp_action jetrover_interfaces)
 
 install(TARGETS base_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
