@@ -28,6 +28,7 @@ add_library(${PROJECT_NAME}_lib
   src/wheel_twist_source.cpp
   src/servo_stats.cpp
   src/grasp_state_machine.cpp
+  src/grasp_controller.cpp
 )
 target_include_directories(${PROJECT_NAME}_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -36,7 +37,9 @@ target_compile_features(${PROJECT_NAME}_lib PUBLIC cxx_std_17)
 
 add_executable(base_node src/base_node.cpp)
 target_link_libraries(base_node ${PROJECT_NAME}_lib)
-ament_target_dependencies(base_node rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs trajectory_msgs diagnostic_msgs std_srvs rclcpp_action jetrover_interfaces)
+ament_target_dependencies(base_node
+  rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs trajectory_msgs
+  diagnostic_msgs std_srvs rclcpp_action jetrover_interfaces)
 
 install(TARGETS base_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
@@ -59,6 +62,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_wheel_twist_source ${PROJECT_NAME}_lib)
   ament_add_gtest(test_servo_stats test/test_servo_stats.cpp)
   target_link_libraries(test_servo_stats ${PROJECT_NAME}_lib)
+  ament_add_gtest(test_grasp_controller test/test_grasp_controller.cpp)
+  target_link_libraries(test_grasp_controller ${PROJECT_NAME}_lib)
   ament_add_gtest(test_grasp_state_machine test/test_grasp_state_machine.cpp)
   target_link_libraries(test_grasp_state_machine ${PROJECT_NAME}_lib)
   # the following line skips the linter which checks for copyrights
