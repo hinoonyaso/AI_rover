@@ -70,7 +70,7 @@
 - 해제: **명시적 Release 명령**(`arm/release` 서비스 또는 같은 Action의 해제 goal, 형태는 T6 설계에서 **미정**). HOLDING에서만 의미가 있고, Release가 끝나야 ID 10 소유권이 IDLE로 반환된다.
 - 상태 기계(`GraspStateMachine`, 순수 C++, `src/jetrover_base/include/jetrover_base/grasp_state_machine.hpp`): IDLE → CHECK(온도·위치 읽기) → CLOSING(작은 스텝, 접촉 대기) → CONTACT(접촉 확정 규칙) → SQUEEZE(프로파일 눈금) → **HOLDING**(`arm/grasp` 성공 후에도 유지, 소유권 유지) → RELEASING(Release 명령 또는 4절 R4의 안전 해제) → IDLE, 실패는 FAILED → IDLE. 시간·읽기값·명령을 입출력으로 받아 단위 시험한다.
 - 프로파일: `cube3cm` 하나(접촉 스텝 12, 지연 8, squeeze **+16**, 접촉 창, 타임아웃, 온도 한계). **+16은 3 cm 큐브 시험값이며 다른 물체의 기본값이 아니다.**
-- 변경: 신규 `grasp_state_machine.hpp/cpp`, `base_node.cpp`(Action 서버·타이머), `base.yaml`(프로파일 파라미터), 테스트 `test_grasp_state_machine.cpp`.
+- 변경: 신규 `grasp_state_machine.hpp/cpp` + 테스트 `test_grasp_state_machine.cpp`(**T5 완료**, 2026-10-14). `base_node.cpp`(Action 서버·타이머)와 `base.yaml`(프로파일 파라미터)은 **T6**.
 - 통과 기준: 3 cm 큐브 파지 **미정(측정 후; 초안 10/10, 관절 1 ±10° 흔들기 유지)**, 취소·타임아웃·응답 누락·고온에서 모두 R4 동작.
 
 ### R6. 배타 제어 (D5)
@@ -118,4 +118,5 @@
 
 ## 7. 결정된 질문과 남은 질문
 - 결정(2026-10-11, 외부 리뷰): ① 파지 중 팔 명령은 **HOLDING에서만 이동 허용**(R6 표). ② 접촉 파지는 **전용 Action**이고 기존 FJT 그리퍼는 유지, `GripperCommand`는 향후 호환성 시험(D4). ③ 실패 시 해제는 **상태·물체 높이에 따라 분기**(R4 표).
-- 남은 질문(T5/T6 설계에서 정함): "들어 올린 상태" 판정 방식(호출자 플래그 대 관절 자세), Release 인터페이스 형태, 고온에서 HOLDING 유지 가능 시간.
+- T5에서 정함(2026-10-14, 사용자 승인): ① "들어 올린 상태" = 호출자 플래그와 관절 자세 검증 **병행**, 하나라도 예이거나 모르거나 어긋나면 들어 올린 것(열지 않는 쪽), 둘 다 명시적으로 아니오일 때만 지면 근처. ② Release = HOLDING에서만 받는 별도 동작(ROS 노출은 T6에서 서비스 `arm/release`). ③ 파지 제한 시간 초안 8 s는 T3 실측(12.6~15.1 s)과 맞지 않아 임시 30 s 파라미터로 바꿈.
+- 남은 질문(T6/T7에서 측정으로 정함): 고온에서 HOLDING 유지 가능 시간, 조임 유지 허용 ±3(T3에서 24/25가 이내, 1회 4 펄스) 유지 여부, 파지 속도(닫기 12~15 s는 느림).
