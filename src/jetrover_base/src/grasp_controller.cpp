@@ -6,6 +6,36 @@
 namespace jetrover_base
 {
 
+const char * grasp_state_name(GraspState s)
+{
+  switch (s) {
+    case GraspState::Idle: return "Idle";
+    case GraspState::Check: return "Check";
+    case GraspState::Closing: return "Closing";
+    case GraspState::Squeeze: return "Squeeze";
+    case GraspState::Holding: return "Holding";
+    case GraspState::Releasing: return "Releasing";
+    case GraspState::Failed: return "Failed";
+  }
+  return "Unknown";
+}
+
+const char * grasp_fail_name(GraspFail f)
+{
+  switch (f) {
+    case GraspFail::None: return "";
+    case GraspFail::TempHigh: return "TempHigh";
+    case GraspFail::BadStart: return "BadStart";
+    case GraspFail::NoContact: return "NoContact";
+    case GraspFail::OutsideWindow: return "OutsideWindow";
+    case GraspFail::NoReading: return "NoReading";
+    case GraspFail::Timeout: return "Timeout";
+    case GraspFail::Cancelled: return "Cancelled";
+    case GraspFail::HoldNotStable: return "HoldNotStable";
+  }
+  return "Unknown";
+}
+
 GraspOutput GraspController::tick(double now, double temp_max_age_s)
 {
   GraspInput in;

@@ -18,6 +18,10 @@ namespace jetrover_base
 // (arm/command_timed) and the home ramp. 한글: 사람이 낸 명령인가, 자동(궤적/홈 이동)인가.
 enum class CommandSource { Manual, Automated };
 
+// 로그/피드백용 이름 / names for logs and feedback
+const char * grasp_state_name(GraspState s);
+const char * grasp_fail_name(GraspFail f);
+
 class GraspController
 {
 public:
@@ -26,7 +30,15 @@ public:
   explicit GraspController(const GraspProfile & p = GraspProfile())
   : sm_(p) {}
 
-  bool start(double now) {return sm_.start(now);}
+  bool start(double now)
+  {
+    // 시작 전에 받아 둔 위치·온도는 낡았을 수 있다 → 버리고 Check가 새 응답을 기다리게 한다(L1에서 82 ℃인데 5 s 전 40 ℃ 값으로
+    // 시작하던 결함). A reading/temperature taken before the start can be stale: drop them so CHECK waits for fresh replies.
+    have_position_ = false;
+    have_temp_ = false;
+    started_at_ = now;
+    return sm_.start(now);
+  }
   void cancel() {sm_.request_cancel();}
   bool release(double now) {return sm_.release(now);}
   bool reset() {return sm_.reset();}
@@ -50,6 +62,9 @@ public:
   // One state machine tick with the latest data. `temp_max_age_s`: an older temperature counts as missing.
   GraspOutput tick(double now, double temp_max_age_s = 5.0);
   const GraspOutput & last() const {return last_;}
+  int last_position() const {return have_position_ ? position_ : -1;}
+  double last_temp() const {return have_temp_ ? temp_ : -1.0;}
+  double elapsed(double now) const {return now - started_at_;}
   GraspState state() const {return sm_.state();}
   const GraspProfile & profile() const {return sm_.profile();}
 
@@ -70,6 +85,7 @@ private:
   double temp_{0.0};
   double temp_time_{0.0};
   bool have_temp_{false};
+  double started_at_{0.0};
 };
 
 }  // namespace jetrover_base

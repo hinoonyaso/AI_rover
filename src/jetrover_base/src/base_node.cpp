@@ -20,11 +20,16 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
+#include "jetrover_interfaces/action/grasp.hpp"
+#include "jetrover_interfaces/srv/release.hpp"
 
 #include "jetrover_base/command_guard.hpp"
 #include "jetrover_base/crash_guard.hpp"
+#include "jetrover_base/grasp_controller.hpp"
 #include "jetrover_base/link_watchdog.hpp"
 #include "jetrover_base/mecanum.hpp"
 #include "jetrover_base/servo_stats.hpp"
@@ -285,6 +290,7 @@ public:
             "arm/command", 1,
             [this](sensor_msgs::msg::JointState::ConstSharedPtr msg) {on_arm_command(*msg);});
           arm_tx_timer_ = create_wall_timer(150ms, [this]() {pump_arm_tx_queue();});
+          setup_grasp();
           if (!arm_trim_ids_.empty()) {
             arm_trim_timer_ = create_wall_timer(100ms, [this]() {arm_trim_tick();});
           }
@@ -567,7 +573,16 @@ private:
       if (servo_pos.success == 0) {
         arm_servo_ticks_[servo_pos.id] = servo_pos.pulse;
         arm_servo_stamp_[servo_pos.id] = now().seconds();
+        if (servo_pos.id == GraspController::kGripperId) {
+          grasp_.on_position(servo_pos.pulse, mono_s());
+        }
       }
+    }
+    BusServoTemp servo_temp;
+    if (decode_bus_servo_temp(packet, servo_temp) && servo_temp.success == 0 &&
+      servo_temp.id == GraspController::kGripperId)
+    {
+      grasp_.on_temp(static_cast<double>(servo_temp.temp_c), mono_s());
     }
   }
 
@@ -669,6 +684,11 @@ private:
   // back-to-back bus servo frames are dropped, and so this never blocks the cmd_vel watchdog.
   void set_arm_torque(bool enable)
   {
+    // 파지 중에는 토크 해제/재인가(hold 포함)가 물체를 떨어뜨리거나 조임을 푼다 / would drop the object or release the squeeze
+    if (const auto why = grasp_.deny_reason_global(); !why.empty()) {
+      RCLCPP_WARN(get_logger(), "arm torque command refused: %s", why.c_str());
+      return;
+    }
     // 한글: 토크를 걸 때는 서보가 "저장돼 있던 옛 목표값"으로 튀지 않도록, 먼저 현재 위치로 이동 명령(hold)을
     // 보내 목표를 덮어쓴 뒤 load(0x0C)를 건다. 해제(0x0B)는 그냥 보낸다. 0x0B/0x0C 의미는 rrc_protocol.hpp 참고.
     if (enable) {
@@ -704,6 +724,11 @@ private:
   // pose is whatever the (limp) arm sagged to, so keep the area around the arm clear.
   void arm_home_tick()
   {
+    if (const auto why = grasp_.deny_reason_global(); !why.empty()) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "arm home move paused: %s",
+          why.c_str());
+      return;
+    }
     if (arm_home_state_ == 0) {
       for (const auto id : arm_servo_ids_) {
         if (arm_servo_ticks_.find(static_cast<uint8_t>(id)) == arm_servo_ticks_.end()) {
@@ -744,7 +769,7 @@ private:
       sensor_msgs::msg::JointState home;
       home.name = arm_joint_names_;
       home.position = arm_home_pose_rad_;
-      on_arm_command(home, 1.0);
+      on_arm_command(home, 1.0, true);
       return;
     }
     const auto frame = build_bus_servo_set_position(arm_move_duration_s_, step);
@@ -759,6 +784,10 @@ private:
   // target and the remaining error is added to the command (up to max_retries times).
   void arm_trim_tick()
   {
+    // 파지 중(팔 이동 거부 상태)에는 보정 재명령도 보내지 않는다 / no trim retries while arm motion is denied
+    if (!grasp_.deny_reason({1}, CommandSource::Automated).empty()) {
+      return;
+    }
     if (arm_pending_.empty() || !serial_.is_open()) {
       return;
     }
@@ -813,6 +842,158 @@ private:
     }
   }
 
+  // ---- 접촉 파지 (prd/arm-control-path.md T6) / contact grasp -------------------------------------------------
+  using GraspAction = jetrover_interfaces::action::Grasp;
+  using GraspGoalHandle = rclcpp_action::ServerGoalHandle<GraspAction>;
+
+  void setup_grasp()
+  {
+    GraspProfile p;
+    p.name = "cube3cm";
+    p.step = static_cast<int>(declare_parameter<int64_t>("grasp_step", p.step));
+    p.dead_band = static_cast<int>(declare_parameter<int64_t>("grasp_dead_band", p.dead_band));
+    p.contact_lo = static_cast<int>(declare_parameter<int64_t>("grasp_contact_lo", p.contact_lo));
+    p.contact_hi = static_cast<int>(declare_parameter<int64_t>("grasp_contact_hi", p.contact_hi));
+    p.squeeze = static_cast<int>(declare_parameter<int64_t>("grasp_squeeze", p.squeeze));
+    p.hold_tol = static_cast<int>(declare_parameter<int64_t>("grasp_hold_tol", p.hold_tol));
+    p.timeout_s = declare_parameter<double>("grasp_timeout_s", p.timeout_s);
+    p.comm_loss_s = declare_parameter<double>("grasp_comm_loss_s", p.comm_loss_s);
+    p.temp_limit_c = declare_parameter<double>("grasp_temp_limit_c", p.temp_limit_c);
+    grasp_ = GraspController(p);
+    grasp_server_ = rclcpp_action::create_server<GraspAction>(
+      this, "arm/grasp",
+      [this](const rclcpp_action::GoalUUID &, std::shared_ptr<const GraspAction::Goal> goal) {
+        if (goal->profile != "cube3cm") {
+          RCLCPP_WARN(get_logger(),
+            "grasp refused: unknown profile '%s' (only cube3cm is validated)",
+            goal->profile.c_str());
+          return rclcpp_action::GoalResponse::REJECT;
+        }
+        if (!serial_.is_open() || !grasp_.start(mono_s())) {
+          RCLCPP_WARN(get_logger(), "grasp refused: serial closed or a grasp is already active");
+          return rclcpp_action::GoalResponse::REJECT;
+        }
+        return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+      },
+      [this](const std::shared_ptr<GraspGoalHandle>) {
+        grasp_.cancel();
+        return rclcpp_action::CancelResponse::ACCEPT;
+      },
+      [this](const std::shared_ptr<GraspGoalHandle> gh) {
+        grasp_goal_ = gh;
+        grasp_last_feedback_ = 0.0;
+      });
+    grasp_release_srv_ = create_service<jetrover_interfaces::srv::Release>(
+      "arm/release",
+      [this](const std::shared_ptr<jetrover_interfaces::srv::Release::Request>,
+      std::shared_ptr<jetrover_interfaces::srv::Release::Response> res) {
+        res->success = grasp_.release(mono_s());
+        res->message =
+        res->success ? "releasing" :
+        "not holding an object (release is accepted only while Holding)";
+      });
+    grasp_state_pub_ = create_publisher<std_msgs::msg::String>("arm/grasp_state", 10);
+    grasp_lifted_sub_ = create_subscription<std_msgs::msg::Bool>(
+      "arm/object_lifted", 10,
+      [this](std_msgs::msg::Bool::ConstSharedPtr m) {grasp_.set_caller_lifted(m->data ? 1 : 0);});
+    grasp_timer_ = create_wall_timer(50ms, [this]() {grasp_tick();});
+    RCLCPP_INFO(get_logger(),
+        "contact grasp ready: action arm/grasp, service arm/release, profile cube3cm");
+  }
+
+  void send_gripper_command(const GraspCommand & c)
+  {
+    // 상태 기계가 직접 내는 명령: 데드밴드 보정/피드백 보정을 거치지 않는다 / bypasses the dead-band + trim paths
+    const int64_t pulse = std::min<int64_t>(std::max<int64_t>(c.pulse, arm_pulse_min_),
+        arm_pulse_max_);
+    const auto frame = build_bus_servo_set_position(
+      c.ms / 1000.0,
+        std::vector<BusServoTarget>{{GraspController::kGripperId, static_cast<uint16_t>(pulse)}});
+    if (!serial_.write(frame.data(), frame.size())) {
+      RCLCPP_ERROR(get_logger(), "grasp: gripper command write failed: %s",
+          serial_.last_error().c_str());
+    }
+  }
+
+  void grasp_tick()
+  {
+    const double t = mono_s();
+    const GraspState before = grasp_.state();
+    if (before == GraspState::Idle) {
+      publish_grasp_state(before, t);
+      return;
+    }
+    // 파지 중에는 그리퍼(ID 10)를 직접 자주 읽는다(순차 읽기는 서보당 0.3 s) / during a grasp read ID 10 directly and often
+    if (before != GraspState::Failed && t - grasp_last_pos_req_ >= 0.04) {
+      request_arm_servo_position(GraspController::kGripperId);
+      grasp_last_pos_req_ = t;
+    }
+    if (before != GraspState::Failed && t - grasp_last_temp_req_ >= 1.0) {
+      const auto f = build_bus_servo_read_temp(GraspController::kGripperId);
+      serial_.write(f.data(), f.size());
+      grasp_last_temp_req_ = t;
+    }
+    const GraspOutput out = grasp_.tick(t);
+    if (out.command.valid) {
+      send_gripper_command(out.command);
+    }
+    if (grasp_goal_) {
+      if (out.state == GraspState::Failed) {
+        auto res = std::make_shared<GraspAction::Result>();
+        res->success = false;
+        res->reason = grasp_fail_name(out.fail);
+        res->contact_position = out.contact;
+        res->final_position = grasp_.last_position();
+        if (grasp_goal_->is_canceling()) {
+          grasp_goal_->canceled(res);
+        } else {
+          grasp_goal_->abort(res);
+        }
+        grasp_goal_.reset();
+        grasp_failed_at_ = t;
+      } else if (out.success_event) {
+        auto res = std::make_shared<GraspAction::Result>();
+        res->success = true;
+        res->contact_position = out.contact;
+        res->final_position = grasp_.last_position();
+        grasp_goal_->succeed(res);
+        grasp_goal_.reset();   // the gripper stays owned (Holding) until arm/release
+      } else if (t - grasp_last_feedback_ >= 0.2) {
+        auto fb = std::make_shared<GraspAction::Feedback>();
+        fb->state = grasp_state_name(out.state);
+        fb->gripper_position = grasp_.last_position();
+        fb->contact_position = out.contact;
+        fb->temperature_c = static_cast<float>(grasp_.last_temp());
+        fb->elapsed_s = static_cast<float>(grasp_.elapsed(t));
+        fb->note = out.note;
+        grasp_goal_->publish_feedback(fb);
+        grasp_last_feedback_ = t;
+      }
+    }
+    // FAILED는 보고 후 열기 동작이 끝날 때까지(약 1.7 s) 소유권을 유지하다가 리셋한다 / keep ownership while the opening finishes
+    if (grasp_.state() == GraspState::Failed && !grasp_goal_ && t - grasp_failed_at_ >= 1.7) {
+      grasp_.reset();
+    }
+    if (out.needs_user) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000,
+        "grasp: fault while the object may be in the air (%s) -- NOT opening; move to a safe place and call arm/release",
+        out.note.c_str());
+    }
+    publish_grasp_state(out.state, t);
+  }
+
+  void publish_grasp_state(GraspState s, double t)
+  {
+    if (s != grasp_last_state_ || t - grasp_last_state_pub_ >= 1.0) {
+      std_msgs::msg::String m;
+      m.data = grasp_state_name(s);
+      grasp_state_pub_->publish(m);
+      grasp_last_state_ = s;
+      grasp_last_state_pub_ = t;
+    }
+  }
+
   void pump_arm_tx_queue()
   {
     if (arm_tx_queue_.empty() || !serial_.is_open()) {
@@ -848,7 +1029,7 @@ private:
   // 한글: JointState(이름+라디안)를 버스 서보 이동 프레임으로 변환한다. 알 수 없는 관절, 위치 읽기 전 관절, 한 번에 arm_max_step_rad 넘게 움직이는 관절이 하나라도 있으면 전체를 거부(아무것도 안 보냄)한다.
   void on_arm_command(const sensor_msgs::msg::JointState & msg)
   {
-    on_arm_command(msg, arm_move_duration_s_);
+    on_arm_command(msg, arm_move_duration_s_, false);
   }
 
   // 한글: JointTrajectory의 첫 점만 쓴다(브리지가 점을 하나씩 보낸다). 이동 시간은 [0.1, 5] 초로 제한 --
@@ -871,10 +1052,10 @@ private:
     sensor_msgs::msg::JointState js;
     js.name = traj.joint_names;
     js.position = pt.positions;
-    on_arm_command(js, std::min(std::max(dur, 0.1), 5.0));
+    on_arm_command(js, std::min(std::max(dur, 0.1), 5.0), true);
   }
 
-  void on_arm_command(const sensor_msgs::msg::JointState & msg, double duration_s)
+  void on_arm_command(const sensor_msgs::msg::JointState & msg, double duration_s, bool automated)
   {
     if (!serial_.is_open() || msg.name.size() != msg.position.size() || msg.name.empty()) {
       RCLCPP_WARN(get_logger(), "arm/command ignored: serial closed or name/position mismatch");
@@ -933,6 +1114,21 @@ private:
       RCLCPP_INFO(
         get_logger(), "arm move: %s id=%u -> %u", msg.name[k].c_str(), targets[k].id,
         targets[k].pulse);
+    }
+    // 파지 소유권/상태별 제어권 판정(R6): 그리퍼 ID 10을 건드리는 명령은 통째로 거부한다.
+    // Grasp ownership (R6): a command that touches ID 10 is refused as a whole; arm joints follow the state table.
+    {
+      std::vector<uint8_t> ids;
+      for (const auto & t : targets) {
+        ids.push_back(t.id);
+      }
+      const auto why = grasp_.deny_reason(
+        ids, automated ? CommandSource::Automated : CommandSource::Manual);
+      if (!why.empty()) {
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "arm command refused: %s",
+            why.c_str());
+        return;
+      }
     }
     const auto frame = build_bus_servo_set_position(duration_s, targets);
     if (!serial_.write(frame.data(), frame.size())) {
@@ -1098,6 +1294,19 @@ private:
   double arm_rad_per_tick_{0.0};
   std::size_t arm_poll_index_{0};
   std::map<uint8_t, int16_t> arm_servo_ticks_;
+  GraspController grasp_;
+  rclcpp_action::Server<jetrover_interfaces::action::Grasp>::SharedPtr grasp_server_;
+  std::shared_ptr<rclcpp_action::ServerGoalHandle<jetrover_interfaces::action::Grasp>> grasp_goal_;
+  rclcpp::Service<jetrover_interfaces::srv::Release>::SharedPtr grasp_release_srv_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr grasp_state_pub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr grasp_lifted_sub_;
+  rclcpp::TimerBase::SharedPtr grasp_timer_;
+  double grasp_last_pos_req_{0.0};
+  double grasp_last_temp_req_{0.0};
+  double grasp_last_feedback_{0.0};
+  double grasp_failed_at_{0.0};
+  double grasp_last_state_pub_{0.0};
+  GraspState grasp_last_state_{GraspState::Idle};
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::TimerBase::SharedPtr arm_poll_timer_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr servo_stats_pub_;

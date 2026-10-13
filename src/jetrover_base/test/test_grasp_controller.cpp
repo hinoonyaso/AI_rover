@@ -149,3 +149,47 @@ TEST(GraspController, ATemperatureOlderThanTheLimitCountsAsMissing)
   const auto o = c.tick(10.2, 5.0);
   EXPECT_EQ(o.state, GraspState::Closing);
 }
+
+TEST(GraspController, NamesAreStableBecauseTheyGoIntoActionResultsAndTopics)
+{
+  EXPECT_STREQ(grasp_state_name(GraspState::Holding), "Holding");
+  EXPECT_STREQ(grasp_state_name(GraspState::Idle), "Idle");
+  EXPECT_STREQ(grasp_fail_name(GraspFail::OutsideWindow), "OutsideWindow");
+  EXPECT_STREQ(grasp_fail_name(GraspFail::None), "");
+}
+
+TEST(GraspController, LastReadingsAndElapsedForFeedback)
+{
+  GraspController c;
+  EXPECT_EQ(c.last_position(), -1);
+  EXPECT_LT(c.last_temp(), 0.0);
+  ASSERT_TRUE(c.start(10.0));
+  c.on_position(321, 10.2);
+  c.on_temp(47.0, 10.2);
+  EXPECT_EQ(c.last_position(), 321);
+  EXPECT_DOUBLE_EQ(c.last_temp(), 47.0);
+  EXPECT_NEAR(c.elapsed(12.5), 2.5, 1e-9);
+}
+
+TEST(GraspController, ReadingsTakenBeforeTheStartAreNotUsed)
+{
+  // Regression (found in the L1 run, 2026-10-14): a 40 C temperature received 3 s before the start let a grasp begin
+  // although the gripper was really at 82 C, and an old position became the "start" position.
+  GraspController c;
+  c.on_position(450, 5.0);          // old position, would be > open_start_max anyway
+  c.on_temp(40.0, 8.0);             // 2 s old at the start, inside the 5 s age limit
+  ASSERT_TRUE(c.start(10.0));
+  auto o = c.tick(10.1);
+  EXPECT_EQ(o.state, GraspState::Check) << "must wait for a fresh position and temperature";
+  EXPECT_FALSE(o.command.valid);
+  EXPECT_EQ(c.last_position(), -1);
+  c.on_position(200, 10.2);
+  o = c.tick(10.3);
+  EXPECT_EQ(o.state,
+    GraspState::Check) << "a position alone is not enough: the temperature is still unknown";
+  c.on_temp(82.0, 10.3);            // the real, hot value
+  o = c.tick(10.4);
+  EXPECT_EQ(o.state, GraspState::Failed);
+  EXPECT_EQ(o.fail, GraspFail::TempHigh);
+  EXPECT_FALSE(o.command.valid);
+}

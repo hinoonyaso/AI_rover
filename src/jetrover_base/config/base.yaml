@@ -82,6 +82,23 @@ base_node:
     # if reads degrade then, go back to 5-12 Hz (settable at runtime: ros2 param set /base_node arm_poll_hz 12.0).
     # 한글: 읽기 전용 측정에서 20 Hz가 IMU·루프에 영향이 없고 서보 응답률이 5 Hz와 같아 채택. 팔이 움직일 때는 T7에서 확인.
     arm_poll_hz: 20.0
+    # Contact grasp (action arm/grasp, service arm/release; prd/arm-control-path.md, T5/T6). Profile cube3cm ONLY -- these
+    # values come from one 3 cm cube (T3, 25 closings) and are NOT defaults for other objects. Only active when
+    # arm_command_enabled is true. All PROVISIONAL until the on-robot grasp test (T6 L2):
+    #   contact window [505, 545] (T3: 520..535 for the cube, fingers 438..486, a 45 deg tilted cube 492),
+    #   squeeze +16 (held a +-10 deg joint-1 swing on 2026-10-11), hold +-3 pulses for 2 s (T3: 24/25),
+    #   timeout 30 s (a stepwise closing takes 12-20 s), no fresh reading for 1.5 s = communication loss
+    #   (T1: servo silence up to 0.9 s at 20 Hz), 80 C = stop (the servo cuts out at 85 C).
+    # 한글: 접촉 파지 파라미터(3 cm 큐브 전용, 임시). 실기 파지 시험(T6 L2) 전에는 확정값이 아니다.
+    grasp_step: 12
+    grasp_dead_band: 8
+    grasp_contact_lo: 505
+    grasp_contact_hi: 545
+    grasp_squeeze: 16
+    grasp_hold_tol: 3
+    grasp_timeout_s: 30.0
+    grasp_comm_loss_s: 1.5
+    grasp_temp_limit_c: 80.0
 
     # --- Arm motion (2026-10-05, checklist 14): FIRST software-driven arm moves on this robot. ---
     # OFF by default. Enable only while someone is watching the arm and can cut power:
