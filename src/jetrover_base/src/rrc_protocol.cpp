@@ -103,6 +103,11 @@ std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id)
   return build_packet(kRrcFuncBusServo, {kRrcBusServoSubReadPosition, servo_id});
 }
 
+std::vector<uint8_t> build_bus_servo_read_temp(uint8_t servo_id)
+{
+  return build_packet(kRrcFuncBusServo, {kRrcBusServoSubReadTemp, servo_id});
+}
+
 std::vector<uint8_t> build_bus_servo_set_position(
   double duration_s, const std::vector<BusServoTarget> & targets)
 {
@@ -140,6 +145,19 @@ bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out)
   out.success = static_cast<int8_t>(packet.payload[2]);
   out.pulse = static_cast<int16_t>(
     static_cast<uint16_t>(packet.payload[3]) | (static_cast<uint16_t>(packet.payload[4]) << 8));
+  return true;
+}
+
+bool decode_bus_servo_temp(const RrcPacket & packet, BusServoTemp & out)
+{
+  if (packet.function != kRrcFuncBusServo || packet.payload.size() != 4 ||
+    packet.payload[1] != kRrcBusServoSubReadTemp)
+  {
+    return false;
+  }
+  out.id = packet.payload[0];
+  out.success = static_cast<int8_t>(packet.payload[2]);
+  out.temp_c = packet.payload[3];
   return true;
 }
 

@@ -25,6 +25,7 @@ constexpr uint8_t kRrcFuncExtWheel = 0x21;
 constexpr std::size_t kRrcExtWheelPayloadSize = 32;
 // 한글: 버스 서보 서브커맨드: 0x01 이동, 0x05 위치 읽기, 0x0B 토크 켜기, 0x0C 토크 끄기.
 constexpr uint8_t kRrcBusServoSubReadPosition = 0x05;
+constexpr uint8_t kRrcBusServoSubReadTemp = 0x09;   // 서보 온도(℃) 읽기 / read the servo temperature in deg C
 constexpr uint8_t kRrcBusServoSubSetPosition = 0x01;
 // 2026-10-05 실기 확인: 0x0B = 토크 해제(limp, 손으로 움직임), 0x0C = 토크 걸기(load). 공식 PDF 문서와 같고
 // board.cpp의 `enable ? 0x0B : 0x0C` 가정과는 반대다(이전 코드는 이름이 뒤집혀 있었다).
@@ -87,6 +88,11 @@ std::vector<uint8_t> build_diag_clear_estop();
 
 std::vector<uint8_t> build_bus_servo_read_position(uint8_t servo_id);
 
+// Request a bus servo's temperature: FUNC 0x05, DATA = 09, servo_id. Reply: id, 09, success, temp (u8, deg C).
+// Verified on the robot 2026-10-11 (tools/stm32_diagnostics/rrc_m4_io_test.py servo_temp: 31-74 C read back plausibly).
+// 한글: 온도 읽기 요청/응답. 실기 확인(2026-10-11).
+std::vector<uint8_t> build_bus_servo_read_temp(uint8_t servo_id);
+
 struct BusServoTarget
 {
   uint8_t id;
@@ -113,6 +119,16 @@ struct BusServoPosition
 
 // Decode a bus servo position report (FUNC 0x05, DATA = id, 05, success, pulse i16 LE).
 bool decode_bus_servo_position(const RrcPacket & packet, BusServoPosition & out);
+
+struct BusServoTemp
+{
+  uint8_t id{0};
+  int8_t success{-1};     // 0 = the servo answered
+  uint8_t temp_c{0};
+};
+
+// Decode a bus servo temperature report (FUNC 0x05, DATA = id, 09, success, temp u8).
+bool decode_bus_servo_temp(const RrcPacket & packet, BusServoTemp & out);
 
 // Measured wheel feedback (FUNC 0x21, 50 Hz, rrc_m4 only): rps[4] f32 LE then counter[4] i32 LE.
 // Index 0..3 = board ports 1..4, rps uses the SAME sign convention as MotorCommand (vendor: right

@@ -209,6 +209,37 @@ TEST(BusServo, ReadPositionRequestAndResponse)
   EXPECT_FALSE(decode_bus_servo_position(p, pos));
 }
 
+TEST(BusServo, ReadTemperatureRequestAndResponse)
+{
+  const auto f = build_bus_servo_read_temp(10);
+  EXPECT_EQ(f[2], kRrcFuncBusServo);
+  EXPECT_EQ(f[4], 0x09);
+  EXPECT_EQ(f[5], 10);
+
+  RrcPacket p{kRrcFuncBusServo, {10, 0x09, 0x00, 56}};
+  BusServoTemp t;
+  ASSERT_TRUE(decode_bus_servo_temp(p, t));
+  EXPECT_EQ(t.id, 10);
+  EXPECT_EQ(t.success, 0);
+  EXPECT_EQ(t.temp_c, 56);
+
+  // a failure report (servo silent) is still decoded, with success != 0, so the caller can tell it from a reading
+  RrcPacket fail{kRrcFuncBusServo, {10, 0x09, 0xFF, 0}};
+  ASSERT_TRUE(decode_bus_servo_temp(fail, t));
+  EXPECT_NE(t.success, 0);
+
+  // a position report, a wrong length and another function must not decode as a temperature
+  RrcPacket pos{kRrcFuncBusServo, {10, 0x05, 0x00, 0x10, 0x02}};
+  EXPECT_FALSE(decode_bus_servo_temp(pos, t));
+  RrcPacket shortp{kRrcFuncBusServo, {10, 0x09, 0x00}};
+  EXPECT_FALSE(decode_bus_servo_temp(shortp, t));
+  RrcPacket other{kRrcFuncImu, {10, 0x09, 0x00, 56}};
+  EXPECT_FALSE(decode_bus_servo_temp(other, t));
+  // and a temperature report is not a position report either
+  BusServoPosition bp;
+  EXPECT_FALSE(decode_bus_servo_position(p, bp));
+}
+
 TEST(BusServo, SetPositionDurationClampAndLayout)
 {
   const auto f = build_bus_servo_set_position(1.5, {{1, 500}, {10, 1000}});
