@@ -1,0 +1,65 @@
+[
+ {
+  "trial": 1,
+  "accepted": true,
+  "seconds": 23.1,
+  "success": false,
+  "reason": "NoContact",
+  "contact": -1,
+  "final": 679,
+  "temp_c": 40.0,
+  "idle_after_failure": true
+ },
+ {
+  "trial": 2,
+  "accepted": true,
+  "seconds": 19.9,
+  "success": true,
+  "reason": "",
+  "contact": 525,
+  "final": 526,
+  "temp_c": 45.0,
+  "hold_spread_pulses": 3.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 3,
+  "accepted": true,
+  "seconds": 19.3,
+  "success": true,
+  "reason": "",
+  "contact": 526,
+  "final": 527,
+  "temp_c": 47.0,
+  "hold_spread_pulses": 3.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 4,
+  "accepted": true,
+  "seconds": 20.7,
+  "success": true,
+  "reason": "",
+  "contact": 525,
+  "final": 526,
+  "temp_c": 50.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 5,
+  "accepted": true,
+  "seconds": 19.9,
+  "success": true,
+  "reason": "",
+  "contact": 526,
+  "final": 527,
+  "temp_c": 50.0,
+  "hold_spread_pulses": 3.0,
+  "release_ok": true,
+  "idle_after_release": true
+ }
+]
