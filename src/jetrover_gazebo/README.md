@@ -27,6 +27,7 @@ source install/setup.bash && tools/nav/ab_params/make_variants.sh   # nav2_param
 **실기와 토픽이 섞이지 않게 다른 도메인**을 쓴다(로봇은 `ROS_DOMAIN_ID=25`):
 ```bash
 export ROS_DOMAIN_ID=31   # 시뮬레이션 터미널마다
+export GZ_IP=127.0.0.1    # gz-transport loopback만 — 없으면 host에서 월드 로딩 중 멈춘 적 있음(troubleshooting/040)
 ```
 
 ## 2. 공식 데모로 host 확인 (선택)
@@ -39,6 +40,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true
 ```bash
 ros2 launch jetrover_gazebo sim.launch.py                 # 상자 있는 월드, 시작점 A (1.02, 0.37, 83°)
 ros2 launch jetrover_gazebo sim.launch.py world:=lap2_room.sdf    # 상자 없는 방
+ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2.sdf    # 스캔한 방(메쉬, 2026-10-14 자동 1차본 — 아래 표)
 ros2 run teleop_twist_keyboard teleop_twist_keyboard      # /cmd_vel(Twist). Shift+J/L = 옆이동
 ```
 확인(시험 계획 5번): `i` 전진, Shift+J 왼쪽/Shift+L 오른쪽 **옆이동 방향이 맞는지**(반대거나 돌면서 가면 xacro의 fdir1 부호 문제),
@@ -72,6 +74,7 @@ ros2 launch jetrover_gazebo sim.launch.py depth_obstacles:=true
 | `scripts/map_to_world.py` | 지도 → 월드 (`--box X Y SX SY SZ`로 장애물) |
 | `scripts/cmd_vel_to_stamped.py`, `depth_float_to_mm.py`, `arm_hold.py` | 보조 노드 |
 | `worlds/lap2_room.sdf`, `lap2_room_box.sdf` | 생성된 월드(상자: 중심 (1.21, 1.00), 0.28×0.25×0.10 m) |
+| `worlds/room_lap2.sdf`, `models/room_lap2/` | 스캔 방(`tools/scan`, 기록 `docs/benchmarks/sim/room_scan_20261014.md`). 메쉬는 Git LFS(host만) |
 
 ## 알려진 한계 / 확인 필요(L0까지만 검증, host 실행 전)
 - 마찰 방향(fdir1) 부호는 공식 데모 값 — 실제 옆이동 방향은 host에서 확인.

@@ -10,7 +10,7 @@ Usage:
 Slices the mesh at the LiDAR height band (--z, scan frame must be z-up with the floor at z=0),
 runs point-to-line ICP against the occupied map cells and prints T_map<-scan (x, y, yaw) and the
 residual median / 90th percentile. --apply writes the transformed mesh (rotation about z only).
-Pass: median residual <= 0.05 m (PRD target). Needs open3d (pip install open3d).
+Pass: median residual <= 0.05 m (PRD target). Needs open3d 0.19.0 in the host uv venv (tools/scan/README.md).
 """
 import argparse
 import math

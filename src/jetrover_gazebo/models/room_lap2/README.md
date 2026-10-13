@@ -1,5 +1,8 @@
 # room_lap2 — 스캔한 방 모델 (Phase 3, host Blender → Git LFS)
 
+현재 에셋(2026-10-14)은 **자동 1차본**: `tools/scan/room_assets.py` + `blender_ply_to_glb.py`(수작업 정리 없음, 정점 색은 Gazebo에서 안 보임,
+충돌 메쉬는 자동 감량 10.7k 삼각형). 기록 `docs/benchmarks/sim/room_scan_20261014.md`.
+
 ## Blender 내보내기 규칙 (이대로 맞추면 바로 Gazebo에 들어감)
 | 항목 | 규칙 |
 |---|---|
@@ -7,7 +10,7 @@
 | 축 | **Z 위, X/Y = 지도 축** (glTF/DAE 내보낼 때 "Y Up" 끄기 또는 Z-up 확인) |
 | 원점 | **지도(map) 원점**. `tools/scan/validate_room_alignment.py`로 구한 T_map←scan을 적용한 뒤 내보낸다 |
 | 바닥 | z = 0 (로봇 base_footprint 높이). 바닥면은 메쉬에서 빼도 됨(월드에 바닥 평면 있음) |
-| visual | `meshes/room_visual.dae`(또는 `.glb`로 바꾸면 model.sdf uri도 수정). 감량 목표 ≤ 300k 삼각형, 텍스처 ≤ 2048² |
+| visual | `meshes/room_visual.glb`(model.sdf uri). **glTF는 Z-up 그대로(`export_yup` 끔)** — Gazebo는 Y-up을 되돌리지 않는다(troubleshooting/040). 감량 목표 ≤ 300k 삼각형, 텍스처 ≤ 2048² |
 | collision | `meshes/room_collision.stl`: **단순 형상**(벽 = 상자, 책상 = 상판+다리 따로, 의자 = 상자). ≤ 5k 삼각형. 로봇이 들어갈 수 있는 틈(책상 아래 등)은 막지 않는다 |
 | 텍스처 | `materials/textures/` (DAE가 상대경로로 참조) |
 
