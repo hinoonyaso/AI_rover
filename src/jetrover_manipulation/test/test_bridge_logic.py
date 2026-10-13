@@ -10,7 +10,7 @@ import unittest
 # rclpy 등이 없는 환경에서도 로직만 시험하도록 필요한 모듈을 가짜로 채운다.
 for name in ('diagnostic_msgs', 'diagnostic_msgs.msg', 'rclpy', 'rclpy.action', 'rclpy.callback_groups',
              'rclpy.executors', 'rclpy.node',
-             'control_msgs', 'control_msgs.action', 'sensor_msgs', 'sensor_msgs.msg',
+             'control_msgs', 'control_msgs.action', 'sensor_msgs', 'sensor_msgs.msg', 'std_msgs', 'std_msgs.msg',
              'trajectory_msgs', 'trajectory_msgs.msg'):
     if name not in sys.modules:
         sys.modules[name] = types.ModuleType(name)
@@ -18,6 +18,7 @@ sys.modules['control_msgs.action'].FollowJointTrajectory = type(
     'F', (), {'Result': type('R', (), {'SUCCESSFUL': 0, 'INVALID_GOAL': -1, 'PATH_TOLERANCE_VIOLATED': -4,
                                        'GOAL_TOLERANCE_VIOLATED': -5})})
 sys.modules['diagnostic_msgs.msg'].DiagnosticArray = object
+sys.modules['std_msgs.msg'].String = object
 for n in ('ActionServer', 'CancelResponse', 'GoalResponse'):
     setattr(sys.modules['rclpy.action'], n, object)
 sys.modules['rclpy.callback_groups'].ReentrantCallbackGroup = object
@@ -197,6 +198,27 @@ class HoldPolicy(unittest.TestCase):
         b = self.make()
         b._finish(self.Gh(), -5, 'did not reach', JOINTS, hold=False)
         self.assertEqual(b.sent, [])
+
+
+class GraspGoalGuard(unittest.TestCase):
+    def test_older_base_node_without_the_topic_keeps_working(self):
+        self.assertEqual(tb.grasp_goal_error(None, 99.0, True), '')
+        self.assertEqual(tb.grasp_goal_error(None, 99.0, False), '')
+
+    def test_gripper_goals_only_in_idle(self):
+        self.assertEqual(tb.grasp_goal_error('Idle', 0.2, True), '')
+        for st in ('Check', 'Closing', 'Squeeze', 'Holding', 'Releasing', 'Failed'):
+            self.assertIn('owned by the grasp', tb.grasp_goal_error(st, 0.2, True), st)
+
+    def test_arm_goals_follow_the_r6_table(self):
+        for st in ('Idle', 'Holding'):
+            self.assertEqual(tb.grasp_goal_error(st, 0.2, False), '', st)    # MoveIt may carry the object
+        for st in ('Check', 'Closing', 'Squeeze', 'Releasing', 'Failed'):
+            self.assertIn('not allowed', tb.grasp_goal_error(st, 0.2, False), st)
+
+    def test_lost_contact_with_base_node_refuses_instead_of_guessing(self):
+        self.assertIn('stale', tb.grasp_goal_error('Idle', 5.0, False))
+        self.assertIn('stale', tb.grasp_goal_error('Holding', 5.0, True))
 
 
 if __name__ == '__main__':

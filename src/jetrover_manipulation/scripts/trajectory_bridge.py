@@ -23,6 +23,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
+from std_msgs.msg import String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 Result = FollowJointTrajectory.Result
@@ -103,6 +104,30 @@ def joint_age_error(joints, joint_servo, ages, now, limit_s, stats_timeout_s):
     return ''
 
 
+# 파지 상태별로 팔 관절 목표를 받아도 되는가(R6). HOLDING은 물체를 들고 옮겨야 하므로 허용.
+# Whether an arm trajectory may start per grasp state (R6). HOLDING must be allowed: the arm carries the object.
+ARM_DENIED_STATES = {'Check', 'Closing', 'Squeeze', 'Releasing', 'Failed'}
+
+
+def grasp_goal_error(state, age_s, is_gripper, stale_s=3.0):
+    """'' if a goal may start, else the reason. Pure (unit-tested). state: last arm/grasp_state text or None if
+    never received; age_s: seconds since it was received.
+    - never received -> allowed (an older base_node without the grasp feature must keep working);
+    - received but silent for > stale_s -> refused (lost contact with base_node: do not guess);
+    - gripper goals: only in Idle (while a grasp owns ID 10 -- even Holding -- only arm/release may open it);
+    - arm goals: refused in the denied states, allowed in Idle and Holding.
+    한글: 파지 중 소유권/제어권 판정의 브리지 쪽 첫 번째 겹(base_node가 두 번째 겹)."""
+    if state is None:
+        return ''
+    if age_s > stale_s:
+        return f'arm/grasp_state is stale ({age_s:.1f}s): not starting a trajectory'
+    if is_gripper:
+        return '' if state == 'Idle' else f'gripper is owned by the grasp ({state}); use arm/release'
+    if state in ARM_DENIED_STATES:
+        return f'arm motion is not allowed while the grasp is in state {state}'
+    return ''
+
+
 class BusyGate:
     """Atomic single-trajectory gate. acquire() is one locked test-and-set, so two goal requests arriving at the same
     moment can never both be accepted (the old plain bool was checked in the goal callback and set later in execute).
@@ -179,6 +204,8 @@ class TrajectoryBridge(Node):
         self.require_stats = bool(gp('require_servo_stats').value)
         self.gripper_set = {str(j) for j in gp('gripper_joints').value}
         self._ages = {}
+        self._grasp_state = None
+        self._grasp_state_time = 0.0
 
         self._lock = threading.Lock()
         self._state = {}      # joint -> position
@@ -187,6 +214,7 @@ class TrajectoryBridge(Node):
         cbg = ReentrantCallbackGroup()
         self.create_subscription(JointState, 'joint_states', self._on_state, 20, callback_group=cbg)
         self.create_subscription(DiagnosticArray, 'arm/servo_stats', self._on_stats, 10, callback_group=cbg)
+        self.create_subscription(String, 'arm/grasp_state', self._on_grasp_state, 10, callback_group=cbg)
         self.pub = self.create_publisher(JointTrajectory, str(gp('command_topic').value), 10)
 
         self._servers = []
@@ -207,6 +235,11 @@ class TrajectoryBridge(Node):
             for n, p in zip(msg.name, msg.position):
                 self._state[n] = p
             self._state_time = time.monotonic()
+
+    def _on_grasp_state(self, msg):
+        with self._lock:
+            self._grasp_state = str(msg.data)
+            self._grasp_state_time = time.monotonic()
 
     def _on_stats(self, msg):
         t = time.monotonic()
@@ -240,6 +273,12 @@ class TrajectoryBridge(Node):
         if not traj.points or set(traj.joint_names) != set(joints):
             self.get_logger().warn(
                 f'reject goal: joints {list(traj.joint_names)} != controller joints {joints}')
+            return GoalResponse.REJECT
+        with self._lock:
+            gstate, gtime = self._grasp_state, self._grasp_state_time
+        gerr = grasp_goal_error(gstate, time.monotonic() - gtime, set(joints) <= self.gripper_set)
+        if gerr:
+            self.get_logger().warn(f'reject goal: {gerr}')
             return GoalResponse.REJECT
         if not self._gate.acquire():
             self.get_logger().warn('reject goal: another trajectory is executing')
