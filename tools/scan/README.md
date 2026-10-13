@@ -13,7 +13,7 @@
 
 ## 2. 3D 복원 (host, RTAB-Map + Open3D)
 - 설치: `sudo apt install ros-jazzy-rtabmap-ros`, `pip install open3d`.
-- 로봇 odom은 open-loop라 믿지 않는다. RTAB-Map에 **초기값으로만** 주고 LiDAR ICP + 시각 특징 + 루프 클로저로 보정하게 한다(예시, 조정 필요):
+- 로봇 odom은 2026-10-11부터 엔코더+자이로 EKF다(E4/E5: 직진 1 m 오차 0.24 cm, 360° 회전 ±0.3°; 다만 4 m 사각형을 돌면 EKF는 원점 복귀 0.1~0.4 cm라고 믿는데 줄자로는 실제 3~5 cm·최대 4° 어긋남 — 메카넘 롤러 미끄러짐은 엔코더에 안 잡힌다). 방 한 바퀴(15~20 m, **추정**: 수십 cm까지 누적 가능)에서는 벽이 겹치므로 RTAB-Map에 **초기값으로** 주고 LiDAR ICP + 시각 특징 + 루프 클로저로 누적 오차를 보정하게 한다(예시, 조정 필요):
   ```bash
   ros2 launch rtabmap_launch rtabmap.launch.py use_sim_time:=true \
     rgb_topic:=/depth_cam/color/image_raw depth_topic:=/depth_cam/depth/image_raw \

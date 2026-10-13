@@ -31,7 +31,7 @@ EKF(robot_localization) ← sim: 컨트롤러 odom twist + IMU / 실기: wheel_t
 ## 디지털 트윈 확장 (2026-10-09 사용자 승인, Phase 2~4)
 Phase 1 = 위의 지도→벽 월드(완료, L0). 이후:
 - **Phase 2 — RGB-D 스캔(Jetson 녹화, host 처리)**: 스캔용 팔 자세(카메라 수평 근처)로 원본 color/depth/camera_info + /scan + /tf(_static)
-  + /joint_states + /odom을 bag으로 녹화(`tools/scan/`). Nav2 끈 상태, 0.05~0.08 m/s. 위치는 odom(open-loop)을 믿지 않고
+  + /joint_states + /odom을 bag으로 녹화(`tools/scan/`). Nav2 끈 상태, 0.05~0.08 m/s. 위치는 odom(엔코더+자이로 EKF지만 롤러 미끄러짐 누적 오차가 남음 — 4 m 왕복에서 실제 3~5 cm)을 초기값으로만 쓰고
   host에서 RTAB-Map(RGB-D/ICP 오도메트리 + 루프 클로저)으로 추정 → Open3D TSDF로 메쉬.
 - **Phase 3 — Blender(host, 사용자)**: 정리·텍스처·감량, visual/collision 분리. 결과는 git(LFS)으로 공유:
   `src/jetrover_gazebo/models/room_lap2/`(규칙은 그 README).
