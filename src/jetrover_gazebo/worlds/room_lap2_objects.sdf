@@ -52,7 +52,7 @@
     </model>
     <model name="object_1">
       <static>false</static>
-      <pose>0.9700 0.6200 0.0150 0 0 0</pose>
+      <pose>0.3700 1.0000 0.0150 0 0 0</pose>
       <link name="body">
         <inertial><mass>0.03</mass><inertia><ixx>4.500e-06</ixx><iyy>4.500e-06</iyy><izz>4.500e-06</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
         <collision name="c"><geometry><box><size>0.0300 0.0300 0.0300</size></box></geometry></collision>
@@ -63,7 +63,7 @@
     </model>
     <model name="object_2">
       <static>false</static>
-      <pose>1.0500 0.6200 0.0150 0 0 0</pose>
+      <pose>0.4500 1.0000 0.0150 0 0 0</pose>
       <link name="body">
         <inertial><mass>0.03</mass><inertia><ixx>4.500e-06</ixx><iyy>4.500e-06</iyy><izz>4.500e-06</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
         <collision name="c"><geometry><box><size>0.0300 0.0300 0.0300</size></box></geometry></collision>
@@ -74,7 +74,7 @@
     </model>
     <model name="object_3">
       <static>false</static>
-      <pose>1.1300 0.6200 0.0150 0 0 0</pose>
+      <pose>0.5300 1.0000 0.0150 0 0 0</pose>
       <link name="body">
         <inertial><mass>0.03</mass><inertia><ixx>4.500e-06</ixx><iyy>4.500e-06</iyy><izz>4.500e-06</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
         <collision name="c"><geometry><box><size>0.0300 0.0300 0.0300</size></box></geometry></collision>

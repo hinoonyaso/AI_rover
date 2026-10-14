@@ -26,7 +26,8 @@ export GZ_IP=127.0.0.1
 mkdir -p "$OUT"
 OUT=$(cd "$OUT" && pwd)
 
-ros2 launch jetrover_gazebo sim.launch.py world:="$WORLD" gui:=false > "$OUT/sim.log" 2>&1 &
+# SPAWN="x:=0.45 y:=0.75 yaw:=1.5708"로 스폰 위치 지정(기본: 시작점 A) / spawn pose override
+ros2 launch jetrover_gazebo sim.launch.py world:="$WORLD" gui:=false ${SPAWN:-} > "$OUT/sim.log" 2>&1 &
 LPID=$!
 sleep "$RUN_S"
 {
