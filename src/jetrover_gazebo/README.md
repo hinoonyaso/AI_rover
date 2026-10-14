@@ -84,5 +84,6 @@ ros2 launch jetrover_gazebo sim.launch.py depth_obstacles:=true
 ## 알려진 한계 / 확인 필요(L0까지만 검증, host 실행 전)
 - 마찰 방향(fdir1) 부호는 공식 데모 값 — 실제 옆이동 방향은 host에서 확인.
 - 시뮬레이션에는 모터 데드존·open-loop odom·서보 백래시가 없다(실기 문제 일부는 재현 안 됨).
-- 그리퍼 연동 관절(mimic)은 물리적으로 자유 — 주행 시험에는 영향 없음. **팔 시험에서는 못 집는다**: `r_joint`만 움직이고 손가락 5개 관절은
-  따라오지 않음(DART가 mimic 제약 미지원, 2026-10-14 확인 — `docs/benchmarks/sim/room_scan_20261014.md`).
+- 그리퍼 연동 관절(mimic): DART가 mimic 제약을 지원하지 않아 `r_joint`만 움직였다 → 손가락 5개 관절을 ros2_control에 상태 인터페이스로
+  등록해 gz_ros2_control이 따라 움직이게 함(2026-10-14). 큐브 집기 3/3(`tools/sim/README.md`). 실제 4절 링크를 배율 ±1로 근사한 것이라
+  집는 힘·미끄러짐은 실기와 다를 수 있다. 로그의 `does not support mimic constraints` 오류는 남지만 무해.

@@ -52,6 +52,15 @@
   남는 차이: 그 구간에서 실기는 값이 없고 시뮬레이션은 너머를 본다.
   (sim xacro의 "팔이 뒤쪽을 가린다" 주석은 메쉬가 없어 적용된 적이 없었다 — 고침.)
 
+## 7. 시뮬레이션 그리퍼가 큐브를 못 집음 (mimic)
+- 증상: `r_joint`만 명령대로 움직이고 손가락 관절 5개는 `/joint_states`에도 없음. 로그 `Attempting to create a mimic constraint for
+  joint [l_in_joint] but the chosen physics engine does not support mimic constraints`(DART).
+- 해결: sim xacro ros2_control에 l_joint, l_in/l_out, r_in/r_out을 상태 인터페이스만으로 등록 → gz_ros2_control이
+  `Joint 'l_joint' is mimicking joint 'r_joint' with multiplier -1` 식으로 따라 움직임(공식 gripper_mimic_joint_example 방식).
+  확인: 6개 관절이 배율대로 일치, 큐브 3개 집어 들어 올림. 위 DART 오류 문구는 계속 찍히지만 무해.
+- 실수 기록: 확인 명령에 `pgrep -f "...arm_hold.py"`를 ssh 명령줄에 그대로 넣어 그 셸 자신이 잡혀 죽음(exit 255) → 스크립트 파일로,
+  패턴을 나눠 씀(`"arm_""hold.py"`).
+
 ## 확인 못 한 것 / 남은 한계
 - 1번의 근본 원인(왜 discovery 전송이 막히는지).
 - Intel(Mesa) GUI에서 텍스처가 왜 회색인지(같은 실행의 시뮬레이션 카메라는 색이 나옴).

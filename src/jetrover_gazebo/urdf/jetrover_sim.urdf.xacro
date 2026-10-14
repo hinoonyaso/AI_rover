@@ -42,6 +42,21 @@
     <xacro:arm_if joint="joint4" init="${home[3]}"/>
     <xacro:arm_if joint="joint5" init="${home[4]}"/>
     <xacro:arm_if joint="r_joint" init="${home[5]}"/>
+    <!-- 그리퍼 연동 관절(URDF mimic): DART는 mimic 제약을 지원하지 않아 r_joint만 움직이고 손가락이 덜렁거렸다(2026-10-14).
+         상태 인터페이스만 두면 gz_ros2_control이 mimic(배율 ±1)대로 위치를 맞춘다(공식 gripper_mimic_joint_example 방식).
+         Gripper mimic joints: DART has no mimic constraint, so list them with state interfaces only and
+         gz_ros2_control drives them from r_joint (as in gz_ros2_control_demos gripper_mimic_joint_example). -->
+    <xacro:macro name="mimic_if" params="joint">
+      <joint name="${joint}">
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </xacro:macro>
+    <xacro:mimic_if joint="l_joint"/>
+    <xacro:mimic_if joint="l_in_joint"/>
+    <xacro:mimic_if joint="l_out_joint"/>
+    <xacro:mimic_if joint="r_in_joint"/>
+    <xacro:mimic_if joint="r_out_joint"/>
   </ros2_control>
 
   <gazebo>

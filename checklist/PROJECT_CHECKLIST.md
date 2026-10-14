@@ -307,7 +307,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 8.14.7 방 RGB-D 스캔 녹화(`tools/scan/record_room_scan.sh`, B 자세) → host 재구성/정합 → Gazebo `room_lap2.sdf` (2026-10-14: 371 s 녹화, 정합 잔차 중앙값 4.4 cm PASS, 헤드리스·GUI에서 로봇+방 확인 — `docs/benchmarks/sim/room_scan_20261014.md`. 자동 1차본: 충돌 메쉬 자동 감량)
   - [x] 텍스처 굽기(2026-10-14: 10만 삼각형 + 2048², 카메라·PRIME GUI에서 색 확인, RTF 0.94)
   - [x] 물체 월드 `room_lap2_objects.sdf`: Nav 상자 33×22×11 cm(A→B 경로) + 팔 시험 큐브 R/G/B(스폰 0.45, 0.75, 90°), 로봇 메쉬 경로·바닥 높이·LiDAR 자기 덮개 수정(2026-10-14)
-  - [ ] 시뮬레이션 그리퍼 mimic 관절(DART 미지원 → 손가락 5개 관절이 안 따라옴, 큐브 못 집음)
+  - [x] 시뮬레이션 그리퍼 mimic 관절: ros2_control 상태 인터페이스로 등록, 큐브 집기 3/3(`tools/sim/sim_pick_check.sh`, 2026-10-14)
   - [ ] 새 2D 지도(같은 bag으로 slam_toolbox) + 낮은 벽 섞기(가구 아래) — LiDAR-지도 거리 중앙값 ≤ 5 cm 목표
   - [ ] Blender 수작업 정리(단순 충돌 형상) — 사용자
 

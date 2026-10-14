@@ -38,3 +38,16 @@ tools/sim/run_scenarios.sh <dwb|mppi|mppi_nolr> all 3      # S1 3회, S2 왕복 
 ## 주의
 - 순간이동(`gz service .../set_pose`) 직후 AMCL에 `/initialpose`를 준다. EKF odom은 이어지므로 map→odom이 한 번 크게 바뀌는 건 정상.
 - `straight_trial.py`의 시간 초과는 벽시계 기준(여기선 90 s). host가 실시간보다 느리면(`gz` 창의 RTF < 0.8) `--timeout`을 늘린다.
+
+## 팔: 큐브 집기 시험 (`sim_pick_check.sh`, 2026-10-14)
+월드 `room_lap2_objects.sdf`(src/jetrover_gazebo/README.md 3절), 로봇은 팔 시험 자리 (0.45, 0.75, 90°)에 스폰.
+```bash
+tools/sim/sim_pick_check.sh                 # red green blue 각각 새 시뮬레이션에서: 열기 → 큐브 위 15/6 cm → 큐브 높이 → 닫기 → 들어 올림
+tools/sim/sim_pick_check.sh green           # 하나만
+python3 tools/sim/arm_ik.py /tmp/sim.urdf 0.25 0 0.12 0.06 0.025   # IK만(base_footprint 기준 목표, 그리퍼 아래 방향)
+```
+판정: 들어 올린 뒤 큐브 z > 0.06 m. 2026-10-14: 3/3 LIFTED(z 0.127~0.128 m), 닫을 때 r_joint 명령 0.30 → 상태 0.336~0.345
+(큐브에 막힘 = 접촉). 시뮬레이션 그리퍼: r_joint 클수록 열림(+1.2 ≈ 손가락 간격 6.4 cm, +0.35 ≈ 3 cm).
+주의: 실기 서보 데드밴드·백래시·접촉 판정 로직(GraspStateMachine)은 없다 — 관절 위치 명령만으로 집는 시험.
+S1(x 0.55 직진)은 상자 월드용 — `room_lap2_objects.sdf`에서는 큐브(0.37~0.53, 1.00)가 경로 옆에 있다.
+
