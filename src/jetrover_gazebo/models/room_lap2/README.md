@@ -1,7 +1,7 @@
 # room_lap2 — 스캔한 방 모델 (Phase 3, host Blender → Git LFS)
 
-현재 에셋(2026-10-14)은 **자동 1차본**: `tools/scan/room_assets.py` + `blender_ply_to_glb.py`(수작업 정리 없음, 정점 색은 Gazebo에서 안 보임,
-충돌 메쉬는 자동 감량 10.7k 삼각형). 기록 `docs/benchmarks/sim/room_scan_20261014.md`.
+현재 에셋(2026-10-14)은 **자동 1차본**: `tools/scan/room_assets.py` + `blender_ply_to_glb.py bake=2048`(수작업 정리 없음; visual 10만 삼각형 +
+정점 색을 구운 2048² 텍스처 내장 — 정점 색만으로는 Gazebo에서 회색; 충돌 메쉬는 자동 감량 10.7k 삼각형). 기록 `docs/benchmarks/sim/room_scan_20261014.md`.
 
 ## Blender 내보내기 규칙 (이대로 맞추면 바로 Gazebo에 들어감)
 | 항목 | 규칙 |

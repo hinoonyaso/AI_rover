@@ -28,6 +28,8 @@ source install/setup.bash && tools/nav/ab_params/make_variants.sh   # nav2_param
 ```bash
 export ROS_DOMAIN_ID=31   # 시뮬레이션 터미널마다
 export GZ_IP=127.0.0.1    # gz-transport loopback만 — 없으면 host에서 월드 로딩 중 멈춘 적 있음(troubleshooting/040)
+# 노트북 host(Intel 화면 + GTX 1050): GUI를 NVIDIA로 — 없으면 스캔 방 텍스처가 회색, RTF 0.52(troubleshooting/040)
+export __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia
 ```
 
 ## 2. 공식 데모로 host 확인 (선택)
@@ -40,7 +42,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true
 ```bash
 ros2 launch jetrover_gazebo sim.launch.py                 # 상자 있는 월드, 시작점 A (1.02, 0.37, 83°)
 ros2 launch jetrover_gazebo sim.launch.py world:=lap2_room.sdf    # 상자 없는 방
-ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2.sdf    # 스캔한 방(메쉬, 2026-10-14 자동 1차본 — 아래 표)
+ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2.sdf    # 스캔한 방(메쉬 + 구운 텍스처, 2026-10-14 자동 1차본 — 아래 표)
 ros2 run teleop_twist_keyboard teleop_twist_keyboard      # /cmd_vel(Twist). Shift+J/L = 옆이동
 ```
 확인(시험 계획 5번): `i` 전진, Shift+J 왼쪽/Shift+L 오른쪽 **옆이동 방향이 맞는지**(반대거나 돌면서 가면 xacro의 fdir1 부호 문제),

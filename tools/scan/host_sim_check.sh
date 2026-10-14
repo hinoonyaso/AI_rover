@@ -3,11 +3,14 @@
 #       실기(ROS_DOMAIN_ID=25)와 섞이지 않게 31 + localhost 전용.
 # (host) Headless Gazebo smoke test: spawn, sensor topics, controllers, one camera frame, then shut down.
 #
-# Usage: tools/scan/host_sim_check.sh <world.sdf> <out_dir> [run_s]
+# Usage: tools/scan/host_sim_check.sh <world.sdf> <out_dir> [run_s] [color]
+#   color: 팔을 스캔 자세 B로, RTF/카메라 FPS/GPU 메모리 + 90°씩 카메라 4장(sim_color_check.py)
+#          arm at scan pose B, RTF / camera FPS / GPU memory and 4 camera views (sim_color_check.py)
 set -e
 WORLD=${1:?world}
 OUT=${2:?out dir}
 RUN_S=${3:-40}
+MODE=${4:-basic}
 source /opt/ros/jazzy/setup.bash
 source "$HOME/jetrover_ws/install/setup.bash"
 set -u
@@ -76,6 +79,13 @@ for _ in range(10):
 p1 = od['p']
 print('drive: odom moved %.3f m (commanded 0.1 m/s x 3 s)' % np.hypot(p1[0] - p0[0], p1[1] - p0[1]))
 EOF
+if [ "$MODE" = color ]; then
+  # arm_hold가 0.5 s마다 홈 자세로 되돌리므로 멈춘다 / arm_hold re-sends home every 0.5 s: stop it
+  AH=$(pgrep -f "lib/jetrover_gazebo/arm_hold.py" || true)
+  [ -n "$AH" ] && kill $AH
+  timeout 90 python3 "$(dirname "$0")/sim_color_check.py" "$OUT" > "$OUT/color.txt" 2>&1 || true
+  cat "$OUT/color.txt"
+fi
 kill -INT -- -$LPID || true
 sleep 10
 # launch는 ruby 래퍼만 끄고 실제 `gz sim` 서버를 고아로 남긴다(2026-10-14, 7개 누적) — 그룹 전체를 확실히 끈다.

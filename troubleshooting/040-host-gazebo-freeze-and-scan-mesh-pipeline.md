@@ -1,7 +1,7 @@
-# 040 — host: Gazebo가 로딩 중 멈춤 / 스캔 메쉬가 Gazebo에 안 보임 / 처리 스크립트가 안 꺼짐 (2026-10-14)
+# 040 — host: Gazebo가 로딩 중 멈춤 / 스캔 메쉬가 Gazebo에 안 보임·회색 / 처리 스크립트가 안 꺼짐 (2026-10-14)
 
 - 상태: **해결**(host에서 재현·확인), 원인 하나(gz-transport 전송 막힘)는 왜 생겼는지 미확인
-- 관련: `tools/scan/host_rtabmap.sh`, `tsdf_from_rtabmap.py`, `room_assets.py`, `blender_ply_to_glb.py`, `host_sim_check.sh`,
+- 관련: `tools/scan/host_rtabmap.sh`, `tsdf_from_rtabmap.py`, `room_assets.py`, `blender_ply_to_glb.py`, `host_sim_check.sh`, `sim_color_check.py`,
   `src/jetrover_gazebo/models/room_lap2/`, 기록 `docs/benchmarks/sim/room_scan_20261014.md`
 
 ## 1. Gazebo가 월드 로딩 중 멈춤 (시뮬레이션 시간이 안 흐름)
@@ -27,6 +27,19 @@
 - Blender 기본 `export_yup=True`(glTF 규약 Y-up)로 내보내면 Gazebo가 되돌리지 않아 방이 눕는다: 시뮬레이션 스캔과 지도 벽 거리 중앙값 19.7 cm.
   → **Z-up 그대로**(`export_yup=False`) 내보내면 시뮬레이션 스캔 = 메쉬 직접 레이캐스트(Open3D) 중앙값 5 cm 이내.
 
+## 5. 색이 회색 → 텍스처로 굽기
+- 증상: RGB는 정상(PLY 정점 색 표준편차 0.26~0.28, glb에 `COLOR_0` 있음)인데 Gazebo GUI·시뮬레이션 카메라 모두 회색(채도 0.1).
+- 원인: 이 glb의 정점 색이 Gazebo Harmonic 메쉬 로딩·렌더링 경로에서 반영되지 않는다(머티리얼에 텍스처 없음 → 기본 재질).
+- 해결: `blender_ply_to_glb.py ... bake=2048` — UV를 만들고 Cycles로 DIFFUSE COLOR만(조명 제외) 2048² 알베도에 구워
+  `baseColorTexture`로 연결(glb에 PNG 내장). 거친 단계:
+  1. `uv.smart_project`: 노이즈 많은 스캔 메쉬가 삼각형마다 섬이 되어 텍스처 4.9 %만 채움(점 무늬) → `uv.lightmap_pack`.
+  2. lightmap_pack + 30만 삼각형: 칸이 약 4×4 px라 굽지 못한 칸·mipmap이 이웃(다른 물체) 색을 섞어 흰 벽에 검은 얼룩.
+     margin 1 → 16(EXTEND)으로 88.7 % 채웠지만 얼룩 남음. 검은 정점의 98.9 %는 실제 어두운 물체 위(데이터 문제 아님).
+  3. **visual 10만 삼각형 + 2048**: 얼룩 사라짐(4096도 눈으로 차이 없음, 640×360 카메라). LiDAR-지도 거리 중앙값 그대로(11.0 vs 10.9 cm).
+  xatlas(UV 전용 라이브러리)는 30만 삼각형에서 15분 넘게 끝나지 않아 중단.
+- GUI 주의: 노트북 host는 화면이 Intel(UHD 630)에 붙어 있어 GUI가 Mesa로 그리면 회색·RTF 0.52·카메라 7.8 fps.
+  **`__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia`**로 띄우면 색 정상, RTF 0.91, 카메라 13.9 fps.
+
 ## 확인 못 한 것 / 남은 한계
-- 정점 색이 Gazebo에서 렌더링되지 않는다(GUI에서 회색). 텍스처 굽기(Blender bake)가 필요 — 미실시.
 - 1번의 근본 원인(왜 discovery 전송이 막히는지).
+- Intel(Mesa) GUI에서 텍스처가 왜 회색인지(같은 실행의 시뮬레이션 카메라는 색이 나옴).

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # 한글: (host, uv venv) 지도 좌표로 맞춘 스캔 메쉬(room_in_map.ply)를 Gazebo 모델 에셋으로 바꾼다 — Blender 수작업 전의 자동 1차본.
-#       visual: 바닥 근처 삼각형 제거(월드 바닥 평면과 겹침 방지) + 감량(≤ 300k) → 정점 색 PLY(→ Blender로 glb).
+#       visual: 바닥 근처 삼각형 제거(월드 바닥 평면과 겹침 방지) + 감량(100k) → 정점 색 PLY(→ Blender로 glb).
 #       collision: 같은 메쉬를 크게 감량(≤ 5k) → stl. 수작업 단순 형상(벽=상자 등)보다 거칠고 구멍이 있을 수 있다.
 """Turn the aligned scan mesh into Gazebo assets (automatic first version, before any Blender clean-up).
 
-Usage: python3 tools/scan/room_assets.py room_in_map.ply <model_dir> [--floor-z 0.03] [--visual-tris 300000]
+Usage: python3 tools/scan/room_assets.py room_in_map.ply <model_dir> [--floor-z 0.03] [--visual-tris 100000]
        [--collision-tris 5000] [--max-z 2.0] [--crop-map maps/<map>.yaml]
 Writes <model_dir>/room_visual.ply (convert with blender_ply_to_glb.py into meshes/room_visual.glb) and
 meshes/room_collision.stl (map frame, metres, z-up).
@@ -32,7 +32,9 @@ def main():
     ap.add_argument('model_dir')
     ap.add_argument('--floor-z', type=float, default=0.03, help='drop triangles entirely below this (m)')
     ap.add_argument('--max-z', type=float, default=2.0, help='drop triangles entirely above this (m)')
-    ap.add_argument('--visual-tris', type=int, default=300000)
+    # 10만: 2048² 텍스처로 구울 때 칸이 충분히 커서 검은 얼룩이 없다(30만이면 얼룩, 2026-10-14). LiDAR-지도 거리는 같음.
+    # 100k: big enough texture cells for a clean 2048^2 bake (300k left speckles); LiDAR-to-map distance unchanged.
+    ap.add_argument('--visual-tris', type=int, default=100000)
     ap.add_argument('--collision-tris', type=int, default=5000)
     ap.add_argument('--crop-map', default=None,
                     help='map yaml: drop triangles outside the map image extent (+ --crop-margin)')

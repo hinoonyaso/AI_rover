@@ -49,13 +49,15 @@ ICP 핵심(`align2d.py`)은 단위시험됨(`test_align2d.py`: 합성 방, 실�
 cd ~/scans && source .venv/bin/activate
 python tools/room_assets.py out/room_in_map.ply out/model --crop-map ~/jetrover_ws/maps/lap2_20261005.yaml
 deactivate
-~/.local/bin/blender -b --python tools/blender_ply_to_glb.py -- out/model/room_visual.ply out/model/meshes/room_visual.glb
+~/.local/bin/blender -b --python tools/blender_ply_to_glb.py -- out/model/room_visual.ply out/model/meshes/room_visual.glb bake=2048
 cp out/model/meshes/* ~/jetrover_ws/src/jetrover_gazebo/models/room_lap2/meshes/
 cd ~/jetrover_ws && python3 src/jetrover_gazebo/scripts/map_to_world.py maps/lap2_20261005.yaml \
   src/jetrover_gazebo/worlds/room_lap2.sdf --room-model room_lap2 --no-walls && colcon build --packages-select jetrover_gazebo
 ~/scans/tools/host_sim_check.sh room_lap2.sdf ~/scans/final_check 50   # 헤드리스: 컨트롤러, 토픽 Hz, 스캔, 카메라 1장, 0.1 m/s 3 s 주행
+~/scans/tools/host_sim_check.sh room_lap2.sdf ~/scans/color_check 50 color   # + 팔 스캔 자세, RTF/카메라 FPS/GPU, 90°씩 카메라 4장
 ```
-주의: Open3D가 쓴 glb는 Gazebo가 못 읽고, Blender glTF는 Z-up 그대로 내보내야 한다(troubleshooting/040). 시뮬레이션은 `GZ_IP=127.0.0.1`.
+주의: Open3D가 쓴 glb는 Gazebo가 못 읽고, Blender glTF는 Z-up 그대로 내보내야 한다. 정점 색은 Gazebo에서 안 보여 `bake=2048`로
+텍스처를 굽는다(visual 10만 삼각형 — 30만이면 검은 얼룩). 모두 troubleshooting/040. 시뮬레이션은 `GZ_IP=127.0.0.1`.
 
 ## 5. Blender 정리 → Gazebo (host, 사용자, 미실시)
 `room_in_map.ply`를 정리해 `src/jetrover_gazebo/models/room_lap2/`의 규칙(README)대로 visual/collision 내보내기 → Git LFS로 커밋.
