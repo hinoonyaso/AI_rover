@@ -1,4 +1,4 @@
-# 040 — host: Gazebo가 로딩 중 멈춤 / 스캔 메쉬가 Gazebo에 안 보임·회색 / 처리 스크립트가 안 꺼짐 (2026-10-14)
+# 040 — host: Gazebo가 로딩 중 멈춤 / 스캔 메쉬가 Gazebo에 안 보임·회색 / 로봇 메쉬 경로 / 처리 스크립트가 안 꺼짐 (2026-10-14)
 
 - 상태: **해결**(host에서 재현·확인), 원인 하나(gz-transport 전송 막힘)는 왜 생겼는지 미확인
 - 관련: `tools/scan/host_rtabmap.sh`, `tsdf_from_rtabmap.py`, `room_assets.py`, `blender_ply_to_glb.py`, `host_sim_check.sh`, `sim_color_check.py`,
@@ -39,6 +39,18 @@
   xatlas(UV 전용 라이브러리)는 30만 삼각형에서 15분 넘게 끝나지 않아 중단.
 - GUI 주의: 노트북 host는 화면이 Intel(UHD 630)에 붙어 있어 GUI가 Mesa로 그리면 회색·RTF 0.52·카메라 7.8 fps.
   **`__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia`**로 띄우면 색 정상, RTF 0.91, 카메라 13.9 fps.
+
+## 6. 로봇이 안 보임 / 스캔 바닥이 4 cm 떠 있음 / 시뮬레이션 LiDAR가 자기 덮개를 봄 (2026-10-14 밤, 물체 추가 중)
+- 로봇 안 보임: 매 실행 로그에 `Unable to find file model://jetrover_description/meshes/...` 70개 — GZ_SIM_RESOURCE_PATH에
+  jetrover_gazebo/models만 있었다. 몸체 visual·충돌 메쉬가 전부 빠진 채(바퀴 구 충돌만) 돌고 있었다.
+  → sim.launch.py가 jetrover_description share의 상위 폴더도 추가. 오류 0개, GUI에 로봇 표시.
+- 스캔 바닥 z = 0.044 m: 높이 3 cm 큐브가 메쉬 바닥에 묻힌다. → room_assets.py가 바닥(위쪽 법선 정점 중앙값)을 z = 0으로 내리고,
+  visual은 바닥 유지(+3 mm, 바닥 평면과 깜빡임 방지), 충돌 메쉬에서는 바닥 제거(물리는 평평한 바닥 평면).
+- 메쉬가 들어오자 시뮬레이션 LiDAR가 뒤쪽 검은 덮개(back_shell_black, z 0.002~0.158 m가 LiDAR 높이 0.04 m를 가로지름)를
+  0.16~0.27 m(LiDAR 프레임 ±12~25°)로 잡았다. 실기는 그 구간 값이 없다(tol015 bag 243 스캔, 유효 0 %; 0.3 m 미만 빔 0개).
+  → 덮개 visual에 `visibility_flags 2`, LiDAR에 `visibility_mask 0xFFFFFFFD`: LiDAR만 덮개를 못 본다. 0.3 m 미만 빔 0개.
+  남는 차이: 그 구간에서 실기는 값이 없고 시뮬레이션은 너머를 본다.
+  (sim xacro의 "팔이 뒤쪽을 가린다" 주석은 메쉬가 없어 적용된 적이 없었다 — 고침.)
 
 ## 확인 못 한 것 / 남은 한계
 - 1번의 근본 원인(왜 discovery 전송이 막히는지).

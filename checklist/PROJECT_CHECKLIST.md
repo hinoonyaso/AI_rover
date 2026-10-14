@@ -306,6 +306,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 8.14.6 방 스캔용 팔 자세: 후보 A(손목만, 0.43 m/10.7°)·B(팔 세움, 0.52 m/5.9°) 실측 비교 → **B 채택**, 이동 순서 FK 확인·실기 왕복 확인(`docs/benchmarks/perception/scan_pose_20261010.md`, `tools/scan/README.md`). `arm_set_joint.py`: 첫 명령 유실(DDS 매칭 전) 수정, 실측 기준 0.25 rad 단계
 - [x] 8.14.7 방 RGB-D 스캔 녹화(`tools/scan/record_room_scan.sh`, B 자세) → host 재구성/정합 → Gazebo `room_lap2.sdf` (2026-10-14: 371 s 녹화, 정합 잔차 중앙값 4.4 cm PASS, 헤드리스·GUI에서 로봇+방 확인 — `docs/benchmarks/sim/room_scan_20261014.md`. 자동 1차본: 충돌 메쉬 자동 감량)
   - [x] 텍스처 굽기(2026-10-14: 10만 삼각형 + 2048², 카메라·PRIME GUI에서 색 확인, RTF 0.94)
+  - [x] 물체 월드 `room_lap2_objects.sdf`: 상자 33×22×11 cm + 3 cm 큐브 R/G/B, 로봇 메쉬 경로·바닥 높이·LiDAR 자기 덮개 수정(2026-10-14)
   - [ ] 새 2D 지도(같은 bag으로 slam_toolbox) + 낮은 벽 섞기(가구 아래) — LiDAR-지도 거리 중앙값 ≤ 5 cm 목표
   - [ ] Blender 수작업 정리(단순 충돌 형상) — 사용자
 

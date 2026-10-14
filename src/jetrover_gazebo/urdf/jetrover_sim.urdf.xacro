@@ -73,8 +73,15 @@
   <xacro:mecanum_friction link="wheel_left_back_link" fdir="1 1 0"/>
   <xacro:mecanum_friction link="wheel_right_back_link" fdir="1 -1 0"/>
 
-  <!-- RPLIDAR A1M8-like: 360 deg, ~10 Hz, 0.15-12 m. Frame = lidar_frame like the real driver; the arm geometry
-       occludes the rear by itself. / 실기와 같은 프레임, 팔이 뒤쪽을 실제처럼 가린다. -->
+  <!-- RPLIDAR A1M8-like: 360 deg, ~10 Hz, 0.15-12 m. Frame = lidar_frame like the real driver.
+       The rear black shell crosses the LiDAR plane: in sim it returned 0.16-0.27 m hits (lidar-frame +-12..25 deg)
+       while the real LiDAR has NO return there (0 % finite, tol015 bags, 2026-10-14). Visibility bit 0x2 hides the
+       shell from the LiDAR only (GUI/cameras still see it); the sim then sees past it - real is blind there.
+       한글: 실기와 같은 프레임. 뒤쪽 검은 덮개가 LiDAR 높이를 가로질러 시뮬레이션에서만 0.16~0.27 m로 잡혔다(실기는 그 구간 값 없음).
+       덮개를 LiDAR에서만 안 보이게(visibility 0x2) — 남는 차이: 시뮬레이션은 그 너머를 본다. -->
+  <gazebo reference="back_shell_black_link">
+    <visual><visibility_flags>2</visibility_flags></visual>
+  </gazebo>
   <gazebo reference="lidar_frame">
     <sensor name="lidar" type="gpu_lidar">
       <topic>scan</topic>
@@ -87,6 +94,7 @@
           <min_angle>-3.14159</min_angle><max_angle>3.14159</max_angle></horizontal></scan>
         <range><min>0.15</min><max>12.0</max><resolution>0.01</resolution></range>
         <noise><type>gaussian</type><mean>0.0</mean><stddev>0.01</stddev></noise>
+        <visibility_mask>4294967293</visibility_mask>
       </lidar>
     </sensor>
   </gazebo>

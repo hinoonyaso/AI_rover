@@ -66,4 +66,4 @@
 | 037 | [자체 펌웨어: 전원 완전 차단 후 IMU 값이 멈춤(소프트 리셋 누락)](037-rrc-m4-imu-frozen-after-cold-boot.md) | 해결 (QMI8658 소프트 리셋, 멈춘 값 감지, 냉간 부팅 확인) |
 | 038 | [자체 펌웨어: 배터리 값이 부팅 직후 첫 측정값으로 고정(ADC DMA 재시작 거부)](038-rrc-m4-battery-value-frozen.md) | 해결 (매번 Stop 후 Start, 실기 확인) |
 | 039 | [자체 펌웨어: 게임패드 HID 해석이 한 칸씩 밀려 중립인데 버튼이 눌린 것으로 보고(리포트 ID 누락)](039-rrc-m4-gamepad-hid-layout.md) | 해결 (실측 레이아웃, 호스트 시험), flash 후 확인 남음 |
-| 040 | [host: Gazebo 로딩 중 멈춤(GZ_IP), gz 서버 고아, Open3D 0.20 빈 TSDF, 스캔 glb 미표시/Y-up, 회색 → 텍스처 굽기, Intel GUI](040-host-gazebo-freeze-and-scan-mesh-pipeline.md) | 해결 (host 확인), 멈춤 근본 원인 미확인 |
+| 040 | [host: Gazebo 로딩 중 멈춤(GZ_IP), gz 서버 고아, Open3D 0.20 빈 TSDF, 스캔 glb 미표시/Y-up, 회색 → 텍스처 굽기, Intel GUI, 로봇 메쉬 경로·LiDAR 자기 덮개](040-host-gazebo-freeze-and-scan-mesh-pipeline.md) | 해결 (host 확인), 멈춤 근본 원인 미확인 |

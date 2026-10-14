@@ -94,8 +94,15 @@ def setup(context):
 
     # scanned-room models (models/room_lap2, Phase 3) / 스캔 방 모델 경로
     models = AppendEnvironmentVariable('GZ_SIM_RESOURCE_PATH', os.path.join(share, 'models'))
+    # 로봇 메쉬(model://jetrover_description/meshes/...)를 찾도록 그 패키지 share의 상위 폴더.
+    # 없으면 로봇 몸체가 안 그려지고 몸체 충돌 메쉬도 빠진다(2026-10-14 host 로그 70개).
+    # Parent of jetrover_description's share dir so model://jetrover_description/... resolves
+    # (the robot body was invisible and had no body collision).
+    robot_meshes = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH',
+        os.path.dirname(get_package_share_directory('jetrover_description')))
     return [
-        models, gz, rsp, spawn, bridge, optical_tf, ekf, relay, depth_conv, sparse,
+        models, robot_meshes, gz, rsp, spawn, bridge, optical_tf, ekf, relay, depth_conv, sparse,
         RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=[jsb])),
         RegisterEventHandler(OnProcessExit(target_action=jsb, on_exit=[mecanum, arm, arm_hold])),
     ]

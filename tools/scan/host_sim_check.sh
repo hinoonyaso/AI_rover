@@ -79,6 +79,10 @@ for _ in range(10):
 p1 = od['p']
 print('drive: odom moved %.3f m (commanded 0.1 m/s x 3 s)' % np.hypot(p1[0] - p0[0], p1[1] - p0[1]))
 EOF
+# 월드의 물체(--object) 자세: 바닥에 놓였는지 / poses of world objects (did they settle on the floor)
+for m in $(timeout 10 gz model --list 2>/dev/null | grep -o "object_[0-9]*"); do
+  echo "== $m $(timeout 10 gz model -m "$m" -p 2>/dev/null | grep -A1 -i "XYZ" | tail -1)"
+done >> "$OUT/check.txt"
 if [ "$MODE" = color ]; then
   # arm_hold가 0.5 s마다 홈 자세로 되돌리므로 멈춘다 / arm_hold re-sends home every 0.5 s: stop it
   AH=$(pgrep -f "lib/jetrover_gazebo/arm_hold.py" || true)
