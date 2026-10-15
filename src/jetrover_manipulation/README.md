@@ -7,6 +7,9 @@ MoveIt2 설정(5자유도 팔 `arm` = joint1~5, 그리퍼 `gripper` = r_joint). 
 - [x] 설정 파일 작성 + SRDF가 URDF 링크/조인트와 일치하는지 검증, 패키지 빌드
 - [x] MoveIt apt 설치(사용자, 2026-10-06)
 - [x] move_group 기동 + plan_only 계획 시험: 관절 목표 OK, 위치 목표 5곳 OK(실행 안 함). 발견: TRAC-IK는 5자유도에서 위치 목표가 전부 실패 -> KDL `position_only_ik: true`로 교체(kinematics.yaml 주석). 관절 한계는 ±1.70(실제 팔이 1.688에 놓일 수 있어 ±1.65면 계획 거부)
+- [x] IK 솔버는 **pick_ik**(2026-10-07에 KDL position_only에서 바꿈 — 위치는 정확히, 방향은 가중치로; 근거는 `config/kinematics.yaml` 주석).
+      **Jetson에 `ros-jazzy-pick-ik`가 없어서** 그동안 move_group 팔 IK가 없었다(관절 목표만 써서 T7엔 영향 없었음) → 2026-10-15 설치.
+      확인(`compute_ik`, 계획만): pregrasp 자세 FK 위치·방향 → 원래 관절값 재현(위치 0.3 mm), +3 cm 앞·5 cm 왼쪽 5 cm 아래도 성공(≤ 1.0 mm, 그리퍼 아래 방향 1.4°).
 - [x] 충돌 매트릭스: host Setup Assistant 생성본 126쌍 + 이전 목록의 그리퍼 연동부 19쌍 합침(2026-10-06). 생성본만 쓰면 그리퍼 링크 쌍(l_in-l_link 등)이 접촉으로 잡혀 시작 상태 충돌로 모든 계획이 실패했음. 재시험: 계획 4곳 OK, 몸통 뒤 껍데기와의 충돌은 검출됨
 - [x] host RViz MotionPlanning 연동 확인(계획만, 실행은 plan_only가 차단)
 - [x] 실행 브리지 구현(2026-10-06): `scripts/trajectory_bridge.py`(Python) + base_node `arm/command_timed`(C++, JointTrajectory 첫 점의
@@ -24,7 +27,7 @@ MoveIt2 설정(5자유도 팔 `arm` = joint1~5, 그리퍼 `gripper` = r_joint). 
 ## 설치 (사용자가 직접 sudo)
 ```bash
 sudo apt install -y ros-jazzy-moveit ros-jazzy-moveit-setup-assistant ros-jazzy-trac-ik-kinematics-plugin \
-  ros-jazzy-moveit-simple-controller-manager ros-jazzy-joint-state-publisher
+  ros-jazzy-moveit-simple-controller-manager ros-jazzy-joint-state-publisher ros-jazzy-pick-ik
 ```
 
 ## 실행
