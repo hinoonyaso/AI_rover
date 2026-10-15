@@ -39,6 +39,7 @@
       <static>true</static>
     </model>
     <include><uri>model://room_lap2</uri><pose>0 0 0 0 0 0</pose></include>
+    <include><uri>model://room_lap2_fill</uri><pose>0 0 0 0 0 0</pose></include>
     <model name="object_0">
       <static>false</static>
       <pose>1.2100 1.0000 0.0550 0 0 0</pose>

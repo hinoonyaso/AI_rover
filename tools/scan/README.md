@@ -55,6 +55,9 @@ cd ~/jetrover_ws && python3 src/jetrover_gazebo/scripts/map_to_world.py maps/lap
   src/jetrover_gazebo/worlds/room_lap2.sdf --room-model room_lap2 --no-walls && colcon build --packages-select jetrover_gazebo
 ~/scans/tools/host_sim_check.sh room_lap2.sdf ~/scans/final_check 50   # 헤드리스: 컨트롤러, 토픽 Hz, 스캔, 카메라 1장, 0.1 m/s 3 s 주행
 ~/scans/tools/host_sim_check.sh room_lap2.sdf ~/scans/color_check 50 color   # + 팔 스캔 자세, RTF/카메라 FPS/GPU, 90°씩 카메라 4장
+# 빈 곳 채움(합성, 2026-10-16): 텍스처 바닥 판 → models/room_lap2_fill (월드는 --room-model room_lap2 --room-model room_lap2_fill; 벽 채움 --walls는 기본 끔)
+python tools/room_fill.py out/model/room_visual.ply ~/jetrover_ws/maps/lap2_20261005.yaml out/fill
+~/.local/bin/blender -b --python tools/blender_textured_plane.py -- out/fill
 ```
 주의: Open3D가 쓴 glb는 Gazebo가 못 읽고, Blender glTF는 Z-up 그대로 내보내야 한다. 정점 색은 Gazebo에서 안 보여 `bake=2048`로
 텍스처를 굽는다(visual 10만 삼각형 — 30만이면 검은 얼룩). 모두 troubleshooting/040. 시뮬레이션은 `GZ_IP=127.0.0.1`.

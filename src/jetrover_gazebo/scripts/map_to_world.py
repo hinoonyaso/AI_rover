@@ -173,7 +173,9 @@ def main():
                     metavar=('X', 'Y', 'SX', 'SY', 'SZ'))
     # Phase 3 (prd/gazebo-sim.md): include a scanned room model (models/<name>, map frame)
     # 한글: 스캔한 방 모델 포함(지도 좌표). --no-walls면 지도 벽 상자를 빼고 스캔 모델만.
-    ap.add_argument('--room-model', default=None, help='include model://<name> (e.g. room_lap2)')
+    ap.add_argument('--room-model', action='append', default=[],
+                    help='include model://<name> (e.g. room_lap2); '
+                         'repeat for more (room_lap2_fill)')
     ap.add_argument('--no-walls', action='store_true', help='omit the walls extruded from the map')
     # 색·질량 있는 물체(큐브 등) / coloured objects with mass (0 = static)
     ap.add_argument('--object', type=float, nargs=9, action='append', default=[],
@@ -195,9 +197,8 @@ def main():
     head = WORLD_HEAD.format(src=os.path.basename(args.map_yaml), n=n_cells, r=len(rects),
                              h=args.height)
     walls = '' if args.no_walls else links
-    room = (f'    <include><uri>model://{args.room_model}</uri>'
-            '<pose>0 0 0 0 0 0</pose></include>\n'
-            if args.room_model else '')
+    room = ''.join(f'    <include><uri>model://{m}</uri>'
+                   '<pose>0 0 0 0 0 0</pose></include>\n' for m in args.room_model)
     objects = ''.join(object_model(f'object_{i}', *o)
                       for i, o in enumerate(args.object))
     sdf = head + walls + '    </model>\n' + room + boxes + objects + '  </world>\n</sdf>\n'

@@ -308,6 +308,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [x] 텍스처 굽기(2026-10-14: 10만 삼각형 + 2048², 카메라·PRIME GUI에서 색 확인, RTF 0.94)
   - [x] 물체 월드 `room_lap2_objects.sdf`: Nav 상자 33×22×11 cm(A→B 경로) + 팔 시험 큐브 R/G/B(스폰 0.45, 0.75, 90°), 로봇 메쉬 경로·바닥 높이·LiDAR 자기 덮개 수정(2026-10-14)
   - [x] 시뮬레이션 그리퍼 mimic 관절: ros2_control 상태 인터페이스로 등록, 큐브 집기 3/3(`tools/sim/sim_pick_check.sh`, 2026-10-14)
+  - [x] 빈 곳 채움(2026-10-16, 합성): 메쉬 구멍 메우기 + 텍스처 바닥 판(`room_lap2_fill`, LiDAR에는 안 보임 — LiDAR 지표 그대로). 벽 채움은 사용자 검토로 뺌
   - [ ] 새 2D 지도(같은 bag으로 slam_toolbox) + 낮은 벽 섞기(가구 아래) — LiDAR-지도 거리 중앙값 ≤ 5 cm 목표
   - [ ] Blender 수작업 정리(단순 충돌 형상) — 사용자
 

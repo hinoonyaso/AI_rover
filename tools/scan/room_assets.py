@@ -42,8 +42,12 @@ def main():
     ap.add_argument('--crop-map', default=None,
                     help='map yaml: drop triangles outside the map image extent (+ --crop-margin)')
     ap.add_argument('--crop-margin', type=float, default=0.10)
+    # 작은 구멍 메우기(2026-10-16): 이 크기(m) 이하 구멍을 기존 정점끼리 이어 막는다(새 정점 없음 → 정점 색 유지). 0이면 끔.
+    # Fill small holes up to this size (m) by joining existing vertices (no new vertices, colours kept); 0 = off.
+    ap.add_argument('--fill-holes', type=float, default=0.05)
     ap.add_argument('--faces', choices=('keep', 'flip', 'double'), default='keep',
-                    help='triangle winding for the visual mesh (Gazebo culls back faces; LiDAR/camera see only front faces)')
+                    help='triangle winding for the visual mesh (Gazebo culls back faces; '
+                         'LiDAR/camera see only front faces)')
     args = ap.parse_args()
 
     mesh = o3d.io.read_triangle_mesh(args.mesh)
@@ -58,7 +62,8 @@ def main():
     v, nz = np.asarray(mesh.vertices), np.asarray(mesh.vertex_normals)[:, 2]
     floor = float(np.median(v[(nz > 0.9) & (v[:, 2] > -0.1) & (v[:, 2] < 0.15), 2]))
     mesh.translate((0.0, 0.0, -floor))
-    mesh = drop_triangles(mesh, lambda tri: (tri[:, :, 2].max(1) >= -0.05) & (tri[:, :, 2].min(1) <= args.max_z))
+    mesh = drop_triangles(mesh, lambda tri: (tri[:, :, 2].max(1) >= -0.05)
+                          & (tri[:, :, 2].min(1) <= args.max_z))
     if args.crop_map:
         import yaml
         my = yaml.safe_load(open(args.crop_map))
@@ -72,6 +77,17 @@ def main():
     n1 = len(mesh.triangles)
 
     vis = mesh.simplify_quadric_decimation(min(args.visual_tris, n1)) if n1 > args.visual_tris else mesh
+    if args.fill_holes > 0:
+        n_before = len(vis.triangles)
+        src_v, src_c = np.asarray(vis.vertices).copy(), np.asarray(vis.vertex_colors).copy()
+        vis = o3d.t.geometry.TriangleMesh.from_legacy(vis).fill_holes(hole_size=args.fill_holes).to_legacy()
+        # fill_holes는 정점 순서를 바꾸고 색을 제대로 옮기지 않는다(검은 정점 8.6 → 55.6 %, 2026-10-16) — 같은 위치의 원래 색으로 다시 입힌다.
+        # fill_holes reorders vertices without carrying the colours (black 8.6 -> 55.6 %): recolour from the
+        # original vertex at the same position.
+        from scipy.spatial import cKDTree
+        _, idx = cKDTree(src_v).query(np.asarray(vis.vertices))
+        vis.vertex_colors = o3d.utility.Vector3dVector(src_c[idx])
+        print(f'filled holes <= {args.fill_holes} m: +{len(vis.triangles) - n_before} triangles (colours restored)')
     if args.faces != 'keep':
         t = np.asarray(vis.triangles)
         flipped = t[:, ::-1]

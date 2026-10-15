@@ -79,6 +79,7 @@ ros2 launch jetrover_gazebo sim.launch.py depth_obstacles:=true
 | `scripts/cmd_vel_to_stamped.py`, `depth_float_to_mm.py`, `arm_hold.py` | 보조 노드 |
 | `worlds/lap2_room.sdf`, `lap2_room_box.sdf` | 생성된 월드(상자: 중심 (1.21, 1.00), 0.28×0.25×0.10 m) |
 | `worlds/room_lap2.sdf`, `models/room_lap2/` | 스캔 방(`tools/scan`, 기록 `docs/benchmarks/sim/room_scan_20261014.md`). 메쉬는 Git LFS(host만) |
+| `models/room_lap2_fill/` | 스캔 방 바닥 흰 구멍 채움(합성, `tools/scan/room_fill.py`): 텍스처 바닥 판. visual만, LiDAR에는 안 보임(벽 채움은 기본 끔) |
 | `worlds/room_lap2_objects.sdf` | 스캔 방 + Nav 상자(1.21, 1.00) + 팔 시험 큐브 R/G/B(0.37/0.45/0.53, 1.00). 생성 명령은 기록 문서 |
 
 ## 알려진 한계 / 확인 필요(L0까지만 검증, host 실행 전)
