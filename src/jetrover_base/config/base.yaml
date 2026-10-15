@@ -82,21 +82,24 @@ base_node:
     # if reads degrade then, go back to 5-12 Hz (settable at runtime: ros2 param set /base_node arm_poll_hz 12.0).
     # 한글: 읽기 전용 측정에서 20 Hz가 IMU·루프에 영향이 없고 서보 응답률이 5 Hz와 같아 채택. 팔이 움직일 때는 T7에서 확인.
     arm_poll_hz: 20.0
-    # Contact grasp (action arm/grasp, service arm/release; prd/arm-control-path.md, T5/T6). Profile cube3cm ONLY -- these
-    # values come from one 3 cm cube (T3, 25 closings) and are NOT defaults for other objects. Only active when
-    # arm_command_enabled is true. All PROVISIONAL until the on-robot grasp test (T6 L2):
-    #   contact window [505, 545] (T3: 520..535 for the cube, fingers 438..486, a 45 deg tilted cube 492),
-    #   squeeze +16 (held a +-10 deg joint-1 swing on 2026-10-11), hold +-3 pulses for 2 s (T3: 24/25),
-    #   timeout 30 s (a stepwise closing takes 12-20 s), no fresh reading for 1.5 s = communication loss
-    #   (T1: servo silence up to 0.9 s at 20 Hz), 80 C = stop (the servo cuts out at 85 C).
-    # 한글: 접촉 파지 파라미터(3 cm 큐브 전용, 임시). 실기 파지 시험(T6 L2) 전에는 확정값이 아니다.
+    # Contact grasp (action arm/grasp, service arm/release; prd/arm-control-path.md, T5/T6). Profile cube3cm ONLY -- the
+    # values come from one 3 cm cube and are NOT defaults for other objects. Only active when arm_command_enabled is true.
+    # CONFIRMED 2026-10-15 from T3 (25 closings) + real grasps (T6 L2 ~44, docs/benchmarks/arm_grasp_*_2026101[45].md):
+    #   contact window [505, 545]: straight cube 520..535 in ~43 closings, ~25 deg tilt 520, 45 deg 492 and fingers
+    #   438..486 rejected; squeeze +16 (the cube stops it at contact +0..+5, held a +-10 deg joint-1 swing);
+    #   hold 2 s within +-4 (stable grasps moved up to 4; with 3, 1 of ~44 real grasps failed HoldNotStable);
+    #   timeout 20 s (with the fast approach: cube <= 10.0 s, empty close 12.7 s -- set 30 s if the approach is off,
+    #   the stepwise closing alone takes 19-21 s); 1.5 s without a fresh reading = communication loss (0 in ~45 real
+    #   grasps; T1 silence up to 0.9 s); 80 C = stop (user limit; the servo cuts out at 85 C).
+    # 한글: 접촉 파지 파라미터(3 cm 큐브 전용). 2026-10-15 실기 근거로 확정 — 창 유지, 조임 +16 유지, 유지 허용 3→4,
+    #       제한 시간 30→20 s(빠른 접근 전제; 접근을 끄면 30 s로), 통신 두절 1.5 s, 80 ℃.
     grasp_step: 12
     grasp_dead_band: 8
     grasp_contact_lo: 505
     grasp_contact_hi: 545
     grasp_squeeze: 16
-    grasp_hold_tol: 3
-    grasp_timeout_s: 30.0
+    grasp_hold_tol: 4
+    grasp_timeout_s: 20.0
     grasp_comm_loss_s: 1.5
     grasp_temp_limit_c: 80.0
     # 정밀 스텝 이동 시간/정착(T3에서 검증된 값 그대로) / fine-step move time and settle (T3-validated values)

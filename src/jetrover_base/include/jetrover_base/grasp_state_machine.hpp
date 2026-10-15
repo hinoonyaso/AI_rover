@@ -36,7 +36,7 @@ struct GraspProfile
   std::string name{"cube3cm"};
   int step{12};                 // pulses per closing step (6..16, T3)
   int dead_band{8};             // lag (command - reading) above this is a contact candidate (servo dead band 3-4)
-  int contact_lo{505};          // PROVISIONAL window from T3 (n=25): accepted contact positions for the cube
+  int contact_lo{505};          // window confirmed 2026-10-15 (straight cube 520..535 in ~43 closings)
   int contact_hi{545};
   int squeeze{16};              // pulses beyond the contact (3 cm cube only)
   int closed_end{693};          // the jaws touch each other (measured 2026-10-11)
@@ -54,8 +54,8 @@ struct GraspProfile
   int release_ms{1500};         // slow opening (as in the T3 tool)
   double settle_s{0.2};         // extra wait after a move before its reading counts
   double hold_s{2.0};           // observe the squeeze for this long ...
-  int hold_tol{3};              // ... the reading must stay within this many pulses (T3: 24/25 within, 1 moved 4)
-  double timeout_s{30.0};       // PROVISIONAL: T3 closings took 12.6-15.1 s, the PRD draft 8 s would always time out
+  int hold_tol{4};              // ... within this many pulses (stable grasps moved up to 4; 3 failed 1 of ~44 real)
+  double timeout_s{30.0};       // approach off (code default): stepwise closing 19-21 s; base.yaml uses 20 s with it on
   double comm_loss_s{1.5};      // no fresh reading for this long = communication loss (T1: silent gaps up to 0.9 s at 20 Hz)
   double check_timeout_s{2.0};  // CHECK waits this long for the first position and temperature
   double temp_limit_c{80.0};    // above this: refuse / stop (servo cuts out itself at 85 C)

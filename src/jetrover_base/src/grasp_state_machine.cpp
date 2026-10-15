@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <string>
 
 namespace jetrover_base
 {
@@ -301,8 +302,10 @@ GraspOutput GraspStateMachine::update(const GraspInput & in)
         fail(GraspFail::NoReading, Action::RelaxToContact, in.now,
             "no reading while holding the squeeze");
       } else if (obs_max_ - obs_min_ > p_.hold_tol) {
+        // 실제 흔들림을 남긴다(hold_tol 확정 근거로 다시 볼 수 있게) / keep the measured spread for later review
         fail(GraspFail::HoldNotStable, Action::RelaxToContact, in.now,
-            "the squeeze did not hold still");
+            "the squeeze did not hold still (spread " + std::to_string(obs_max_ - obs_min_) +
+            " > " + std::to_string(p_.hold_tol) + " pulses)");
       } else {
         state_ = GraspState::Holding;
         success_pending_ = true;

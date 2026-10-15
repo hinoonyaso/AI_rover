@@ -947,6 +947,10 @@ private:
     }
     if (grasp_goal_) {
       if (out.state == GraspState::Failed) {
+        // 실패 이유와 메모를 한 번 남긴다(예: HoldNotStable의 실제 흔들림) / log the reason and note once
+        RCLCPP_WARN(get_logger(), "grasp failed: %s (%s), contact %d, gripper %d",
+            grasp_fail_name(out.fail).c_str(), out.note.c_str(), out.contact,
+            grasp_.last_position());
         auto res = std::make_shared<GraspAction::Result>();
         res->success = false;
         res->reason = grasp_fail_name(out.fail);
