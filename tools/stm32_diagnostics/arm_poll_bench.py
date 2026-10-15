@@ -144,7 +144,7 @@ def run(args):
         t0 = time.monotonic()
         spin(args.window)
         dur = time.monotonic() - t0
-        spin(1.2)   # the stats topic is 1 Hz: make sure the last snapshot of the window has arrived
+        spin(1.2)   # stats every servo_stats_period_s (0.2 s, was 1 s): make sure the last snapshot has arrived
         last = {sid: dict(kv) for sid, kv in stats.items()}
         servos = window_stats(None, {sid: {'requests': kv['requests'], 'replies': kv['replies'], 'misses': kv['misses'],
                                            'failed_replies': kv['failed_replies'],

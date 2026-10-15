@@ -1,0 +1,286 @@
+{
+ "mode": "joint-goals",
+ "scale": 0.3,
+ "imu_messages": 2416,
+ "imu_gaps_over_0_5s": 0,
+ "imu_max_gap_s": 0.055,
+ "max_temp_c": 49.0,
+ "moves": [
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 0.6,
+   "max_err_rad": 0.0126,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0042,
+    "joint3": 0.0126,
+    "joint4": 0.0049,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 34.0,
+    "arm_servo_2": 32.0,
+    "arm_servo_3": 32.0,
+    "arm_servo_4": 32.0,
+    "arm_servo_5": 30.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 1: joint1 +0.20",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 2.0,
+   "max_err_rad": 0.0125,
+   "err": {
+    "joint1": 0.0052,
+    "joint2": 0.0083,
+    "joint3": 0.0125,
+    "joint4": 0.0077,
+    "joint5": 0.0083
+   },
+   "temps": {
+    "arm_servo_1": 35.0,
+    "arm_servo_2": 34.0,
+    "arm_servo_3": 32.0,
+    "arm_servo_4": 32.0,
+    "arm_servo_5": 30.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 2: joint1 -0.20",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 3.9,
+   "max_err_rad": 0.0083,
+   "err": {
+    "joint1": 0.0011,
+    "joint2": 0.0083,
+    "joint3": 0.0042,
+    "joint4": 0.0049,
+    "joint5": 0.0041
+   },
+   "temps": {
+    "arm_servo_1": 39.0,
+    "arm_servo_2": 34.0,
+    "arm_servo_3": 32.0,
+    "arm_servo_4": 33.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 3: joint2 +0.20",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 2.1,
+   "max_err_rad": 0.0136,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0136,
+    "joint3": 0.0042,
+    "joint4": 0.0091,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 39.0,
+    "arm_servo_2": 34.0,
+    "arm_servo_3": 36.0,
+    "arm_servo_4": 37.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 4: joint2 -0.20",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 3.8,
+   "max_err_rad": 0.0083,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0073,
+    "joint3": 0.0083,
+    "joint4": 0.0049,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 43.0,
+    "arm_servo_2": 35.0,
+    "arm_servo_3": 40.0,
+    "arm_servo_4": 39.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 5: joint4 -0.20",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 2.1,
+   "max_err_rad": 0.0167,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0167,
+    "joint3": 0.0126,
+    "joint4": 0.0059,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 44.0,
+    "arm_servo_2": 38.0,
+    "arm_servo_3": 40.0,
+    "arm_servo_4": 39.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 6: joint5 +0.30",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 2.3,
+   "max_err_rad": 0.0126,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0083,
+    "joint3": 0.0126,
+    "joint4": 0.0049,
+    "joint5": 0.0026
+   },
+   "temps": {
+    "arm_servo_1": 44.0,
+    "arm_servo_2": 38.0,
+    "arm_servo_3": 43.0,
+    "arm_servo_4": 41.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 7: joint5 -0.30",
+   "group": "arm",
+   "code": "CONTROL_FAILED",
+   "seconds": 1.1,
+   "max_err_rad": 0.4759,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0083,
+    "joint3": 0.021,
+    "joint4": 0.0007,
+    "joint5": 0.4759
+   },
+   "temps": {
+    "arm_servo_1": 45.0,
+    "arm_servo_2": 39.0,
+    "arm_servo_3": 44.0,
+    "arm_servo_4": 41.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": false
+  },
+  {
+   "move": "goal 8: joint3 -0.20",
+   "group": "arm",
+   "code": "CONTROL_FAILED",
+   "seconds": 0.7,
+   "max_err_rad": 0.1875,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0083,
+    "joint3": 0.1875,
+    "joint4": 0.0007,
+    "joint5": 0.1382
+   },
+   "temps": {
+    "arm_servo_1": 45.0,
+    "arm_servo_2": 39.0,
+    "arm_servo_3": 44.0,
+    "arm_servo_4": 42.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": false
+  },
+  {
+   "move": "goal 9: joint1 +0.30",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 2.9,
+   "max_err_rad": 0.0168,
+   "err": {
+    "joint1": 0.0016,
+    "joint2": 0.0083,
+    "joint3": 0.0168,
+    "joint4": 0.0007,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 43.0,
+    "arm_servo_2": 39.0,
+    "arm_servo_3": 47.0,
+    "arm_servo_4": 42.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "goal 10: joint2 +0.30",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 3.0,
+   "max_err_rad": 0.0126,
+   "err": {
+    "joint1": 0.0126,
+    "joint2": 0.0026,
+    "joint3": 0.0042,
+    "joint4": 0.0049,
+    "joint5": 0.0041
+   },
+   "temps": {
+    "arm_servo_1": 46.0,
+    "arm_servo_2": 39.0,
+    "arm_servo_3": 47.0,
+    "arm_servo_4": 41.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 3.0,
+   "max_err_rad": 0.0209,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0209,
+    "joint3": 0.0042,
+    "joint4": 0.0007,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 46.0,
+    "arm_servo_2": 39.0,
+    "arm_servo_3": 49.0,
+    "arm_servo_4": 43.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  }
+ ]
+}

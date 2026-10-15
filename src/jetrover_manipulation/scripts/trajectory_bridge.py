@@ -181,7 +181,7 @@ class TrajectoryBridge(Node):
         self.declare_parameter('stats_servo_ids', [1, 2, 3, 4, 5, 10])
         # > longest silent gap seen at 20 Hz (0.9 s); needs arm_poll_hz >= 12 (5 Hz had 2.4 s gaps)
         self.declare_parameter('joint_age_limit_s', 1.5)
-        self.declare_parameter('stats_timeout_s', 3.0)       # arm/servo_stats itself is 1 Hz
+        self.declare_parameter('stats_timeout_s', 3.0)       # arm/servo_stats is 5 Hz (servo_stats_period_s 0.2)
         self.declare_parameter('require_servo_stats', True)  # False only for dry runs without base_node
         self.declare_parameter('busy_max_hold_s', 120.0)
         self.declare_parameter('dry_run', False)           # True면 명령을 발행하지 않고 검사/로그만 / validate+log only

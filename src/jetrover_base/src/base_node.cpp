@@ -223,7 +223,15 @@ public:
         // settable at runtime (T1 poll-rate benchmark, prd/arm-control-path.md).
         servo_stats_pub_ =
           create_publisher<diagnostic_msgs::msg::DiagnosticArray>("arm/servo_stats", 10);
-        servo_stats_timer_ = create_wall_timer(1s, [this]() {publish_servo_stats();});
+        // 발행 주기: 브리지는 "보고 때 age_s + 보고 후 경과"로 관절 신선도를 본다 — 1 s 주기면 읽기 한 번 실패(age 0.55 s)만으로
+        // 다음 보고 직전 1.55 s가 되어 한계 1.5 s를 넘었다(T7 실기 2026-10-15, 매번 다른 서보·정확히 1.5 s). 0.2 s면 최대 +0.2 s.
+        // The bridge judges freshness as age_s + time since the report; at 1 s one failed read (age 0.55 s) reached 1.55 s
+        // before the next report and stopped trajectories. At 0.2 s the added staleness is at most 0.2 s.
+        const double stats_period_s = declare_parameter<double>("servo_stats_period_s", 0.2);
+        servo_stats_timer_ = create_wall_timer(
+          std::chrono::duration<double>(std::max(0.05, stats_period_s)), [this]() {
+            publish_servo_stats();
+                                                                                                         });
         // 벤치마크가 구간마다 통계를 0에서 다시 세도록 / lets the benchmark restart the counters per window
         servo_stats_reset_srv_ = create_service<std_srvs::srv::Trigger>(
           "arm/servo_stats_reset",
@@ -669,8 +677,8 @@ private:
     serial_.write(f.data(), f.size());
   }
 
-  // 1 Hz diagnostics: one status per servo with the measured request/reply numbers.
-  // 한글: 1 Hz 진단 — 서보마다 측정값(요청·응답·누락·지연·응답 간격·마지막 응답 이후 경과).
+  // Diagnostics every servo_stats_period_s (0.2 s): one status per servo with the measured request/reply numbers.
+  // 한글: 진단(기본 0.2 s) — 서보마다 측정값(요청·응답·누락·지연·응답 간격·마지막 응답 이후 경과).
   void publish_servo_stats()
   {
     diagnostic_msgs::msg::DiagnosticArray arr;
