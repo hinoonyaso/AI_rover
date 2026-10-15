@@ -1,0 +1,56 @@
+{
+ "checks": [
+  {
+   "check": "temp-refuse#1 result TempHigh",
+   "pass": true,
+   "detail": "status aborted, reason TempHigh, temp -1.0"
+  },
+  {
+   "check": "temp-refuse#1 gripper at its start position (\u00b115 pulses)",
+   "pass": true,
+   "detail": "start 342.0, end 342.0"
+  },
+  {
+   "check": "temp-refuse#1 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  },
+  {
+   "check": "temp-refuse#2 result TempHigh",
+   "pass": true,
+   "detail": "status aborted, reason TempHigh, temp -1.0"
+  },
+  {
+   "check": "temp-refuse#2 gripper at its start position (\u00b115 pulses)",
+   "pass": true,
+   "detail": "start 342.0, end 342.0"
+  },
+  {
+   "check": "temp-refuse#2 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  }
+ ],
+ "raw": [
+  {
+   "trial": 1,
+   "kind": "temp-refuse",
+   "start": 342.0,
+   "end": 342.0,
+   "status": "aborted",
+   "reason": "TempHigh",
+   "temp_seen": -1.0,
+   "idle": true
+  },
+  {
+   "trial": 2,
+   "kind": "temp-refuse",
+   "start": 342.0,
+   "end": 342.0,
+   "status": "aborted",
+   "reason": "TempHigh",
+   "temp_seen": -1.0,
+   "idle": true
+  }
+ ]
+}

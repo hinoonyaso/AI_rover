@@ -1,0 +1,15 @@
+{
+ "checks": [
+  {
+   "check": "cancel-squeeze#1 reached the phase",
+   "pass": false,
+   "detail": "last feedback {'state': 'Closing', 'pos': 615, 'contact': -1, 'temp': 46.0, 'elapsed': 22.192991256713867}"
+  },
+  {
+   "check": "cancel-squeeze#2 reached the phase",
+   "pass": false,
+   "detail": "last feedback {'state': 'Closing', 'pos': 683, 'contact': -1, 'temp': 44.0, 'elapsed': 23.11374855041504}"
+  }
+ ],
+ "raw": []
+}

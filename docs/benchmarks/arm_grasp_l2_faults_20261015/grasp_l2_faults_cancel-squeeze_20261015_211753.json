@@ -1,0 +1,60 @@
+{
+ "checks": [
+  {
+   "check": "cancel-squeeze#1 result Cancelled",
+   "pass": true,
+   "detail": "status canceled, reason Cancelled"
+  },
+  {
+   "check": "cancel-squeeze#1 relaxed to the contact, not opened (end > 100 pulses from start)",
+   "pass": true,
+   "detail": "contact 526, final reported 526, start reading 296.0, end reading -26.0"
+  },
+  {
+   "check": "cancel-squeeze#1 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  },
+  {
+   "check": "cancel-squeeze#2 reached the phase",
+   "pass": false,
+   "detail": "last feedback {'state': 'Check', 'pos': -1, 'contact': -1, 'temp': -1.0, 'elapsed': 0.013738082721829414}; grasp ended 0, reason "
+  }
+ ],
+ "raw": [
+  {
+   "trial": 1,
+   "phase": "cancel-squeeze",
+   "start": 296.0,
+   "at_cancel": {
+    "state": "Squeeze",
+    "pos": 526,
+    "contact": 526,
+    "temp": 40.0,
+    "elapsed": 17.093059539794922
+   },
+   "status": "canceled",
+   "reason": "Cancelled",
+   "contact": 526,
+   "final_reported": 526,
+   "end_reading": -26.0,
+   "idle": true
+  },
+  {
+   "trial": 2,
+   "phase": "cancel-squeeze",
+   "start": -26.0,
+   "at_timeout": {
+    "state": "Check",
+    "pos": -1,
+    "contact": -1,
+    "temp": -1.0,
+    "elapsed": 0.013738082721829414
+   },
+   "status": "0",
+   "reason": "",
+   "contact": 0,
+   "final_reported": 0
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+{
+ "checks": [
+  {
+   "check": "control: gripper command accepted while Idle",
+   "pass": true,
+   "detail": "reading 301.0 -> 319.0"
+  },
+  {
+   "check": "grasp succeeded (Holding)",
+   "pass": false,
+   "detail": "status aborted, reason NoContact"
+  }
+ ],
+ "raw": []
+}

@@ -1,0 +1,39 @@
+{
+ "checks": [
+  {
+   "check": "control: gripper command accepted while Idle",
+   "pass": true,
+   "detail": "reading 319.0 -> 342.0"
+  },
+  {
+   "check": "grasp succeeded (Holding)",
+   "pass": true,
+   "detail": "status succeeded, reason "
+  },
+  {
+   "check": "20 gripper commands while Holding did not move it (spread <= 4 pulses)",
+   "pass": true,
+   "detail": "reading -33.0 -> -33.0, spread 2.0"
+  },
+  {
+   "check": "still Holding after the commands",
+   "pass": true,
+   "detail": "state Holding"
+  },
+  {
+   "check": "release -> Idle",
+   "pass": true,
+   "detail": "release True, state Idle"
+  }
+ ],
+ "raw": [
+  {
+   "holding_start": -33.0,
+   "holding_end": -33.0,
+   "min": -34.0,
+   "max": -32.0,
+   "commands": 20,
+   "state_after": "Holding"
+  }
+ ]
+}

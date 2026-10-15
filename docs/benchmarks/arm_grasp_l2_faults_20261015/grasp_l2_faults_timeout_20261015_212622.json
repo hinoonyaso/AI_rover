@@ -1,0 +1,56 @@
+{
+ "checks": [
+  {
+   "check": "timeout#1 result Timeout",
+   "pass": true,
+   "detail": "status aborted, reason Timeout, temp 41.0"
+  },
+  {
+   "check": "timeout#1 gripper at its start position (\u00b115 pulses)",
+   "pass": true,
+   "detail": "start 342.0, end 342.0"
+  },
+  {
+   "check": "timeout#1 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  },
+  {
+   "check": "timeout#2 result Timeout",
+   "pass": true,
+   "detail": "status aborted, reason Timeout, temp 42.0"
+  },
+  {
+   "check": "timeout#2 gripper at its start position (\u00b115 pulses)",
+   "pass": true,
+   "detail": "start 342.0, end 342.0"
+  },
+  {
+   "check": "timeout#2 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  }
+ ],
+ "raw": [
+  {
+   "trial": 1,
+   "kind": "timeout",
+   "start": 342.0,
+   "end": 342.0,
+   "status": "aborted",
+   "reason": "Timeout",
+   "temp_seen": 41.0,
+   "idle": true
+  },
+  {
+   "trial": 2,
+   "kind": "timeout",
+   "start": 342.0,
+   "end": 342.0,
+   "status": "aborted",
+   "reason": "Timeout",
+   "temp_seen": 42.0,
+   "idle": true
+  }
+ ]
+}

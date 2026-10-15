@@ -1,0 +1,39 @@
+{
+ "checks": [
+  {
+   "check": "cancel-squeeze#1 result Cancelled",
+   "pass": true,
+   "detail": "status canceled, reason Cancelled"
+  },
+  {
+   "check": "cancel-squeeze#1 relaxed to the contact, not opened (end > 100 pulses from start)",
+   "pass": true,
+   "detail": "contact 534, final reported 534, start reading 301.0, end reading -34.0"
+  },
+  {
+   "check": "cancel-squeeze#1 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  }
+ ],
+ "raw": [
+  {
+   "trial": 1,
+   "phase": "cancel-squeeze",
+   "start": 301.0,
+   "at_cancel": {
+    "state": "Squeeze",
+    "pos": 534,
+    "contact": 534,
+    "temp": 42.0,
+    "elapsed": 18.198551177978516
+   },
+   "status": "canceled",
+   "reason": "Cancelled",
+   "contact": 534,
+   "final_reported": 534,
+   "end_reading": -34.0,
+   "idle": true
+  }
+ ]
+}

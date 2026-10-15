@@ -1,0 +1,105 @@
+{
+ "checks": [
+  {
+   "check": "cancel-closing#1 result Cancelled",
+   "pass": true,
+   "detail": "status canceled, reason Cancelled"
+  },
+  {
+   "check": "cancel-closing#1 gripper back at start (\u00b115 pulses)",
+   "pass": true,
+   "detail": "start 301.0, end 300.0 (reading units)"
+  },
+  {
+   "check": "cancel-closing#1 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  },
+  {
+   "check": "cancel-closing#2 result Cancelled",
+   "pass": true,
+   "detail": "status canceled, reason Cancelled"
+  },
+  {
+   "check": "cancel-closing#2 gripper back at start (\u00b115 pulses)",
+   "pass": true,
+   "detail": "start 300.0, end 295.0 (reading units)"
+  },
+  {
+   "check": "cancel-closing#2 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  },
+  {
+   "check": "cancel-closing#3 result Cancelled",
+   "pass": true,
+   "detail": "status canceled, reason Cancelled"
+  },
+  {
+   "check": "cancel-closing#3 gripper back at start (\u00b115 pulses)",
+   "pass": true,
+   "detail": "start 296.0, end 296.0 (reading units)"
+  },
+  {
+   "check": "cancel-closing#3 back to Idle",
+   "pass": true,
+   "detail": "state Idle"
+  }
+ ],
+ "raw": [
+  {
+   "trial": 1,
+   "phase": "cancel-closing",
+   "start": 301.0,
+   "at_cancel": {
+    "state": "Closing",
+    "pos": 285,
+    "contact": -1,
+    "temp": 36.0,
+    "elapsed": 4.063567161560059
+   },
+   "status": "canceled",
+   "reason": "Cancelled",
+   "contact": -1,
+   "final_reported": 287,
+   "end_reading": 300.0,
+   "idle": true
+  },
+  {
+   "trial": 2,
+   "phase": "cancel-closing",
+   "start": 300.0,
+   "at_cancel": {
+    "state": "Closing",
+    "pos": 270,
+    "contact": -1,
+    "temp": 36.0,
+    "elapsed": 4.113874912261963
+   },
+   "status": "canceled",
+   "reason": "Cancelled",
+   "contact": -1,
+   "final_reported": 271,
+   "end_reading": 295.0,
+   "idle": true
+  },
+  {
+   "trial": 3,
+   "phase": "cancel-closing",
+   "start": 296.0,
+   "at_cancel": {
+    "state": "Closing",
+    "pos": 287,
+    "contact": -1,
+    "temp": 54.0,
+    "elapsed": 4.113823890686035
+   },
+   "status": "canceled",
+   "reason": "Cancelled",
+   "contact": -1,
+   "final_reported": 287,
+   "end_reading": 296.0,
+   "idle": true
+  }
+ ]
+}
