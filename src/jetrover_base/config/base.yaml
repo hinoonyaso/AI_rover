@@ -82,6 +82,10 @@ base_node:
     # if reads degrade then, go back to 5-12 Hz (settable at runtime: ros2 param set /base_node arm_poll_hz 12.0).
     # 한글: 읽기 전용 측정에서 20 Hz가 IMU·루프에 영향이 없고 서보 응답률이 5 Hz와 같아 채택. 팔이 움직일 때는 T7에서 확인.
     arm_poll_hz: 20.0
+    # 관절 온도 감시(T7): 1 s마다 서보 하나씩 온도 읽기(서보당 6 s), arm/servo_stats의 temp_c. 75 ℃부터 경고(명령은 안 막음).
+    # Joint temperature watch: one servo per second (each every 6 s), temp_c in arm/servo_stats; warn from 75 C.
+    arm_temp_poll_s: 1.0
+    arm_temp_warn_c: 75.0
     # Contact grasp (action arm/grasp, service arm/release; prd/arm-control-path.md, T5/T6). Profile cube3cm ONLY -- the
     # values come from one 3 cm cube and are NOT defaults for other objects. Only active when arm_command_enabled is true.
     # CONFIRMED 2026-10-15 from T3 (25 closings) + real grasps (T6 L2 ~44, docs/benchmarks/arm_grasp_*_2026101[45].md):
