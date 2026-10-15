@@ -1,0 +1,205 @@
+{
+ "mode": "sequence",
+ "scale": 0.3,
+ "imu_messages": 5001,
+ "imu_gaps_over_0_5s": 0,
+ "imu_max_gap_s": 0.045,
+ "max_temp_c": 78.0,
+ "moves": [
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 0.3,
+   "max_err_rad": 0.0125,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0125,
+    "joint3": 0.0042,
+    "joint4": 0.0119,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 62.0,
+    "arm_servo_2": 75.0,
+    "arm_servo_3": 73.0,
+    "arm_servo_4": 44.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 33.0
+   },
+   "pass": true
+  },
+  {
+   "move": "open gripper",
+   "group": "gripper",
+   "code": "SUCCESS",
+   "seconds": 0.2,
+   "max_err_rad": 0.0046,
+   "err": {
+    "r_joint": 0.0046
+   },
+   "temps": {
+    "arm_servo_1": 62.0,
+    "arm_servo_2": 74.0,
+    "arm_servo_3": 73.0,
+    "arm_servo_4": 44.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 33.0
+   },
+   "pass": true
+  },
+  {
+   "move": "pregrasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.8,
+   "max_err_rad": 0.0215,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0215,
+    "joint3": 0.0176,
+    "joint4": 0.0029,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 57.0,
+    "arm_servo_2": 68.0,
+    "arm_servo_3": 75.0,
+    "arm_servo_4": 48.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 33.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.3,
+   "max_err_rad": 0.0397,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0397,
+    "joint3": 0.014,
+    "joint4": 0.005,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 48.0,
+    "arm_servo_2": 75.0,
+    "arm_servo_3": 76.0,
+    "arm_servo_4": 50.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp",
+   "pass": true,
+   "detail": "reason '', contact 526"
+  },
+  {
+   "move": "lift (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 6.0,
+   "max_err_rad": 0.0134,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0131,
+    "joint3": 0.0134,
+    "joint4": 0.0029,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 46.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 74.0,
+    "arm_servo_4": 50.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 45.0
+   },
+   "pass": true
+  },
+  {
+   "move": "still holding after the lift",
+   "pass": true,
+   "detail": "grasp state Holding"
+  },
+  {
+   "move": "place (grasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.3,
+   "max_err_rad": 0.0134,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0104,
+    "joint3": 0.0098,
+    "joint4": 0.0134,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 45.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 74.0,
+    "arm_servo_4": 50.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 50.0
+   },
+   "pass": true
+  },
+  {
+   "move": "release",
+   "pass": true,
+   "detail": "arm/release"
+  },
+  {
+   "move": "retreat (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 6.0,
+   "max_err_rad": 0.012,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.012,
+    "joint3": 0.0008,
+    "joint4": 0.0029,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 45.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 73.0,
+    "arm_servo_4": 54.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 49.0
+   },
+   "pass": true
+  },
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.8,
+   "max_err_rad": 0.0126,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0042,
+    "joint3": 0.0126,
+    "joint4": 0.0035,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 46.0,
+    "arm_servo_2": 78.0,
+    "arm_servo_3": 71.0,
+    "arm_servo_4": 52.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 41.0
+   },
+   "pass": true
+  }
+ ]
+}

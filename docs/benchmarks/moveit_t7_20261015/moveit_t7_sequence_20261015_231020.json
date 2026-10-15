@@ -1,0 +1,126 @@
+{
+ "mode": "sequence",
+ "scale": 0.3,
+ "imu_messages": 3095,
+ "imu_gaps_over_0_5s": 0,
+ "imu_max_gap_s": 0.04,
+ "max_temp_c": 77.0,
+ "moves": [
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 0.6,
+   "max_err_rad": 0.0168,
+   "err": {
+    "joint1": 0.0167,
+    "joint2": 0.0125,
+    "joint3": 0.0168,
+    "joint4": 0.0049,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 51.0,
+    "arm_servo_2": 61.0,
+    "arm_servo_3": 77.0,
+    "arm_servo_4": 50.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "open gripper",
+   "group": "gripper",
+   "code": "SUCCESS",
+   "seconds": 0.8,
+   "max_err_rad": 0.0038,
+   "err": {
+    "r_joint": 0.0038
+   },
+   "temps": {
+    "arm_servo_1": 51.0,
+    "arm_servo_2": 61.0,
+    "arm_servo_3": 77.0,
+    "arm_servo_4": 50.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "pregrasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.8,
+   "max_err_rad": 0.0257,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0257,
+    "joint3": 0.0092,
+    "joint4": 0.0029,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 54.0,
+    "arm_servo_2": 59.0,
+    "arm_servo_3": 76.0,
+    "arm_servo_4": 51.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.3,
+   "max_err_rad": 0.0056,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0022,
+    "joint3": 0.0056,
+    "joint4": 0.0034,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 62.0,
+    "arm_servo_2": 69.0,
+    "arm_servo_3": 77.0,
+    "arm_servo_4": 46.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp",
+   "pass": false,
+   "detail": "reason 'NoContact', contact -1"
+  },
+  {
+   "move": "pregrasp_floor (retreat)",
+   "group": "arm",
+   "code": "CONTROL_FAILED",
+   "seconds": 0.2,
+   "max_err_rad": 0.5744,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.5744,
+    "joint3": 0.0872,
+    "joint4": 0.5014,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 59.0,
+    "arm_servo_2": 73.0,
+    "arm_servo_3": 77.0,
+    "arm_servo_4": 49.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 38.0
+   },
+   "pass": false
+  }
+ ]
+}

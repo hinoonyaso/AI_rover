@@ -210,6 +210,11 @@ def sequence(rig, ns):
         res = rf.result().result if rf.done() else None
         if not rig.note('grasp', res is not None and res.success,
                         f'reason {res.reason if res else None!r}, contact {res.contact_position if res else None}'):
+            # 실패 후 약 1.7 s는 Failed(그리퍼 다시 여는 중)라 브리지가 팔 목표를 거부한다 — Idle까지 기다린 뒤 물러난다
+            # after a failure the grasp stays Failed ~1.7 s (reopening) and the bridge refuses arm goals: wait for Idle
+            t0 = time.monotonic()
+            while rig.grasp_state['name'] != 'Idle' and time.monotonic() - t0 < 10.0:
+                rig.spin(0.1)
             rig.go('pregrasp_floor (retreat)', 'arm', ns['pregrasp_floor'])
             return False
         rig.lifted.publish(Bool(data=True))

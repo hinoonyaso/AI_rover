@@ -1,0 +1,56 @@
+{
+ "mode": "named",
+ "scale": 0.3,
+ "imu_messages": 1730,
+ "imu_gaps_over_0_5s": 0,
+ "imu_max_gap_s": 0.04,
+ "max_temp_c": 69.0,
+ "moves": [
+  {
+   "move": "cycle 1: pregrasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.9,
+   "max_err_rad": 0.0176,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0048,
+    "joint3": 0.0176,
+    "joint4": 0.0029,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 69.0,
+    "arm_servo_2": 60.0,
+    "arm_servo_3": 74.0,
+    "arm_servo_4": 47.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  },
+  {
+   "move": "cycle 1: home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.9,
+   "max_err_rad": 0.0168,
+   "err": {
+    "joint1": 0.0168,
+    "joint2": 0.0125,
+    "joint3": 0.0041,
+    "joint4": 0.0035,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 66.0,
+    "arm_servo_2": 64.0,
+    "arm_servo_3": 69.0,
+    "arm_servo_4": 50.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 32.0
+   },
+   "pass": true
+  }
+ ]
+}
