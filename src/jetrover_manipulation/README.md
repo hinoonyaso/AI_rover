@@ -22,7 +22,7 @@ MoveIt2 설정(5자유도 팔 `arm` = joint1~5, 그리퍼 `gripper` = r_joint). 
       (실기 서보 오프셋 미반영). 시험 도구 `tools/manipulation/moveit_t7.py`(joint-goals / named / gripper / sequence; 정착 오차 ≤ 0.05 rad,
       `arm/servo_stats` 온도 80 ℃ 중단, IMU 공백). **L1**(가짜 RRC pty + base_node + move_group real + 브리지): 23/23 —
       관절 목표 오차 ≤ 0.021 rad, home↔pregrasp 13 s(scale 0.3), 그리퍼 열기·닫기, 집기 시퀀스 11/11(파지 접촉 523, 들기 후 Holding 유지).
-- [ ] T7 실기(L2): joint-goals 10 → named → gripper 10 → sequence (큐브는 바닥 표시: 로봇 중심 앞 0.25 m)
+- [x] T7 실기(L2, 2026-10-15): 관절 목표 12/12, 이름 자세 10왕복, 그리퍼 10/10, 집기 시퀀스 4/5(큐브는 베이스 모터에서 정면 24 cm, 그리퍼 바로 아래). 시험 사이엔 `rest_upright`(관절 모두 0)로 식힌다 — `docs/benchmarks/moveit_t7_20261015.md`
 
 ## 설치 (사용자가 직접 sudo)
 ```bash

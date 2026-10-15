@@ -1,0 +1,595 @@
+{
+ "mode": "sequence",
+ "scale": 0.3,
+ "imu_messages": 14974,
+ "imu_gaps_over_0_5s": 0,
+ "imu_max_gap_s": 0.06,
+ "max_temp_c": 79.0,
+ "moves": [
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 0.4,
+   "max_err_rad": 0.0168,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0168,
+    "joint3": 0.0084,
+    "joint4": 0.0049,
+    "joint5": 0.0083
+   },
+   "temps": {
+    "arm_servo_1": 39.0,
+    "arm_servo_2": 75.0,
+    "arm_servo_3": 73.0,
+    "arm_servo_4": 36.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 33.0
+   },
+   "pass": true
+  },
+  {
+   "move": "open gripper",
+   "group": "gripper",
+   "code": "SUCCESS",
+   "seconds": 1.1,
+   "max_err_rad": 0.0087,
+   "err": {
+    "r_joint": 0.0087
+   },
+   "temps": {
+    "arm_servo_1": 39.0,
+    "arm_servo_2": 75.0,
+    "arm_servo_3": 73.0,
+    "arm_servo_4": 36.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 33.0
+   },
+   "pass": true
+  },
+  {
+   "move": "pregrasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 13.1,
+   "max_err_rad": 0.0089,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0089,
+    "joint3": 0.005,
+    "joint4": 0.0013,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 44.0,
+    "arm_servo_2": 71.0,
+    "arm_servo_3": 73.0,
+    "arm_servo_4": 44.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 33.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.4,
+   "max_err_rad": 0.0188,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0188,
+    "joint3": 0.0028,
+    "joint4": 0.0008,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 56.0,
+    "arm_servo_2": 75.0,
+    "arm_servo_3": 73.0,
+    "arm_servo_4": 49.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 33.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp",
+   "pass": true,
+   "detail": "reason '', contact 525"
+  },
+  {
+   "move": "lift (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 6.1,
+   "max_err_rad": 0.0055,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0048,
+    "joint3": 0.005,
+    "joint4": 0.0055,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 48.0,
+    "arm_servo_2": 76.0,
+    "arm_servo_3": 70.0,
+    "arm_servo_4": 46.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 46.0
+   },
+   "pass": true
+  },
+  {
+   "move": "still holding after the lift",
+   "pass": true,
+   "detail": "grasp state Holding"
+  },
+  {
+   "move": "place (grasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.3,
+   "max_err_rad": 0.0062,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0062,
+    "joint3": 0.0056,
+    "joint4": 0.0008,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 50.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 70.0,
+    "arm_servo_4": 47.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 51.0
+   },
+   "pass": true
+  },
+  {
+   "move": "release",
+   "pass": true,
+   "detail": "arm/release"
+  },
+  {
+   "move": "retreat (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 6.4,
+   "max_err_rad": 0.0078,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0078,
+    "joint3": 0.0034,
+    "joint4": 0.0013,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 52.0,
+    "arm_servo_2": 76.0,
+    "arm_servo_3": 69.0,
+    "arm_servo_4": 49.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 49.0
+   },
+   "pass": true
+  },
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.9,
+   "max_err_rad": 0.0091,
+   "err": {
+    "joint1": 0.0084,
+    "joint2": 0.0042,
+    "joint3": 0.0084,
+    "joint4": 0.0091,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 49.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 63.0,
+    "arm_servo_4": 47.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 41.0
+   },
+   "pass": true
+  },
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 0.4,
+   "max_err_rad": 0.0091,
+   "err": {
+    "joint1": 0.0084,
+    "joint2": 0.0083,
+    "joint3": 0.0084,
+    "joint4": 0.0091,
+    "joint5": 0.0041
+   },
+   "temps": {
+    "arm_servo_1": 49.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 63.0,
+    "arm_servo_4": 47.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 41.0
+   },
+   "pass": true
+  },
+  {
+   "move": "open gripper",
+   "group": "gripper",
+   "code": "SUCCESS",
+   "seconds": 0.3,
+   "max_err_rad": 0.0038,
+   "err": {
+    "r_joint": 0.0038
+   },
+   "temps": {
+    "arm_servo_1": 49.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 62.0,
+    "arm_servo_4": 46.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 41.0
+   },
+   "pass": true
+  },
+  {
+   "move": "pregrasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.9,
+   "max_err_rad": 0.0089,
+   "err": {
+    "joint1": 0.0084,
+    "joint2": 0.0089,
+    "joint3": 0.0034,
+    "joint4": 0.0013,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 47.0,
+    "arm_servo_2": 70.0,
+    "arm_servo_3": 64.0,
+    "arm_servo_4": 51.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 39.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.4,
+   "max_err_rad": 0.0265,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0104,
+    "joint3": 0.0265,
+    "joint4": 0.005,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 51.0,
+    "arm_servo_2": 76.0,
+    "arm_servo_3": 70.0,
+    "arm_servo_4": 45.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 36.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp",
+   "pass": true,
+   "detail": "reason '', contact 520"
+  },
+  {
+   "move": "lift (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 6.3,
+   "max_err_rad": 0.0134,
+   "err": {
+    "joint1": 0.0126,
+    "joint2": 0.0078,
+    "joint3": 0.0134,
+    "joint4": 0.0029,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 54.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 70.0,
+    "arm_servo_4": 47.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 48.0
+   },
+   "pass": true
+  },
+  {
+   "move": "still holding after the lift",
+   "pass": true,
+   "detail": "grasp state Holding"
+  },
+  {
+   "move": "place (grasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.4,
+   "max_err_rad": 0.014,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0104,
+    "joint3": 0.014,
+    "joint4": 0.0092,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 52.0,
+    "arm_servo_2": 78.0,
+    "arm_servo_3": 69.0,
+    "arm_servo_4": 48.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 53.0
+   },
+   "pass": true
+  },
+  {
+   "move": "release",
+   "pass": true,
+   "detail": "arm/release"
+  },
+  {
+   "move": "retreat (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 6.0,
+   "max_err_rad": 0.0118,
+   "err": {
+    "joint1": 0.0084,
+    "joint2": 0.0036,
+    "joint3": 0.0118,
+    "joint4": 0.0097,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 55.0,
+    "arm_servo_2": 78.0,
+    "arm_servo_3": 69.0,
+    "arm_servo_4": 51.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 49.0
+   },
+   "pass": true
+  },
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 13.5,
+   "max_err_rad": 0.0084,
+   "err": {
+    "joint1": 0.0084,
+    "joint2": 0.0042,
+    "joint3": 0.0041,
+    "joint4": 0.0007,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 53.0,
+    "arm_servo_2": 78.0,
+    "arm_servo_3": 62.0,
+    "arm_servo_4": 49.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 44.0
+   },
+   "pass": true
+  },
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 0.3,
+   "max_err_rad": 0.0084,
+   "err": {
+    "joint1": 0.0084,
+    "joint2": 0.0042,
+    "joint3": 0.0041,
+    "joint4": 0.0035,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 53.0,
+    "arm_servo_2": 78.0,
+    "arm_servo_3": 62.0,
+    "arm_servo_4": 49.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 42.0
+   },
+   "pass": true
+  },
+  {
+   "move": "open gripper",
+   "group": "gripper",
+   "code": "SUCCESS",
+   "seconds": 0.4,
+   "max_err_rad": 0.0087,
+   "err": {
+    "r_joint": 0.0087
+   },
+   "temps": {
+    "arm_servo_1": 51.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 62.0,
+    "arm_servo_4": 49.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 42.0
+   },
+   "pass": true
+  },
+  {
+   "move": "pregrasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.9,
+   "max_err_rad": 0.0126,
+   "err": {
+    "joint1": 0.0126,
+    "joint2": 0.0089,
+    "joint3": 0.0008,
+    "joint4": 0.0071,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 48.0,
+    "arm_servo_2": 70.0,
+    "arm_servo_3": 65.0,
+    "arm_servo_4": 52.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 40.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp_floor",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.4,
+   "max_err_rad": 0.0229,
+   "err": {
+    "joint1": 0.0126,
+    "joint2": 0.0229,
+    "joint3": 0.014,
+    "joint4": 0.0076,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 59.0,
+    "arm_servo_2": 77.0,
+    "arm_servo_3": 71.0,
+    "arm_servo_4": 55.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 36.0
+   },
+   "pass": true
+  },
+  {
+   "move": "grasp",
+   "pass": true,
+   "detail": "reason '', contact 520"
+  },
+  {
+   "move": "lift (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.9,
+   "max_err_rad": 0.0176,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0006,
+    "joint3": 0.0176,
+    "joint4": 0.0013,
+    "joint5": 0.0042
+   },
+   "temps": {
+    "arm_servo_1": 59.0,
+    "arm_servo_2": 78.0,
+    "arm_servo_3": 70.0,
+    "arm_servo_4": 52.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 48.0
+   },
+   "pass": true
+  },
+  {
+   "move": "still holding after the lift",
+   "pass": true,
+   "detail": "grasp state Holding"
+  },
+  {
+   "move": "place (grasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 5.4,
+   "max_err_rad": 0.0126,
+   "err": {
+    "joint1": 0.0126,
+    "joint2": 0.0104,
+    "joint3": 0.0098,
+    "joint4": 0.0008,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 56.0,
+    "arm_servo_2": 79.0,
+    "arm_servo_3": 70.0,
+    "arm_servo_4": 52.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 53.0
+   },
+   "pass": true
+  },
+  {
+   "move": "release",
+   "pass": true,
+   "detail": "arm/release"
+  },
+  {
+   "move": "retreat (pregrasp_floor)",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 6.0,
+   "max_err_rad": 0.0176,
+   "err": {
+    "joint1": 0.0042,
+    "joint2": 0.0036,
+    "joint3": 0.0176,
+    "joint4": 0.0013,
+    "joint5": 0.0084
+   },
+   "temps": {
+    "arm_servo_1": 56.0,
+    "arm_servo_2": 78.0,
+    "arm_servo_3": 69.0,
+    "arm_servo_4": 54.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 52.0
+   },
+   "pass": true
+  },
+  {
+   "move": "home",
+   "group": "arm",
+   "code": "SUCCESS",
+   "seconds": 12.9,
+   "max_err_rad": 0.0083,
+   "err": {
+    "joint1": 0.0,
+    "joint2": 0.0083,
+    "joint3": 0.0,
+    "joint4": 0.0007,
+    "joint5": 0.0
+   },
+   "temps": {
+    "arm_servo_1": 56.0,
+    "arm_servo_2": 79.0,
+    "arm_servo_3": 65.0,
+    "arm_servo_4": 52.0,
+    "arm_servo_5": 31.0,
+    "arm_servo_10": 43.0
+   },
+   "pass": true
+  }
+ ]
+}
