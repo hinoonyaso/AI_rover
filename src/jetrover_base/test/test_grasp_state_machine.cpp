@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <random>
+#include <string>
 #include <vector>
 
 #include "jetrover_base/grasp_state_machine.hpp"
@@ -349,11 +350,13 @@ TEST(Grasp, SqueezeThatDoesNotHoldStillFailsAndRelaxes)
   ASSERT_TRUE(s.run_to(GraspState::Squeeze));
   int k = 0;
   while (s.last.state == GraspState::Squeeze && k < 200) {
-    s.wobble = (k++ % 20 < 10) ? 0 : 6;                   // 6-pulse swings > hold_tol 3
+    s.wobble = (k++ % 20 < 10) ? 0 : 6;                   // 6-pulse swings > hold_tol 4
     s.tick();
   }
   ASSERT_EQ(s.last.state, GraspState::Failed);
   EXPECT_EQ(s.last.fail, GraspFail::HoldNotStable);
+  // 실제 흔들림을 메모에 남긴다 / the measured spread is in the note
+  EXPECT_NE(s.last.note.find("spread 6 > 4"), std::string::npos) << s.last.note;
 }
 
 TEST(Grasp, SmallJitterInsideTheHoldToleranceIsAccepted)
