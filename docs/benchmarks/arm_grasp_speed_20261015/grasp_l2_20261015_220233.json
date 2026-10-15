@@ -1,0 +1,120 @@
+[
+ {
+  "trial": 1,
+  "accepted": true,
+  "seconds": 10.0,
+  "success": true,
+  "reason": "",
+  "contact": 532,
+  "final": 534,
+  "temp_c": 39.0,
+  "hold_spread_pulses": 3.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 2,
+  "accepted": true,
+  "seconds": 9.2,
+  "success": true,
+  "reason": "",
+  "contact": 535,
+  "final": 535,
+  "temp_c": 43.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 3,
+  "accepted": true,
+  "seconds": 7.8,
+  "success": true,
+  "reason": "",
+  "contact": 523,
+  "final": 524,
+  "temp_c": 45.0,
+  "hold_spread_pulses": 1.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 4,
+  "accepted": true,
+  "seconds": 9.3,
+  "success": true,
+  "reason": "",
+  "contact": 526,
+  "final": 527,
+  "temp_c": 46.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 5,
+  "accepted": true,
+  "seconds": 8.3,
+  "success": false,
+  "reason": "HoldNotStable",
+  "contact": 530,
+  "final": 533,
+  "temp_c": 46.0,
+  "idle_after_failure": true
+ },
+ {
+  "trial": 6,
+  "accepted": true,
+  "seconds": 0.1,
+  "success": false,
+  "reason": "BadStart",
+  "contact": -1,
+  "final": 532,
+  "temp_c": 46.0,
+  "idle_after_failure": true
+ },
+ {
+  "trial": 7,
+  "accepted": true,
+  "seconds": 0.1,
+  "success": false,
+  "reason": "BadStart",
+  "contact": -1,
+  "final": 532,
+  "temp_c": 46.0,
+  "idle_after_failure": true
+ },
+ {
+  "trial": 8,
+  "accepted": true,
+  "seconds": 0.1,
+  "success": false,
+  "reason": "BadStart",
+  "contact": -1,
+  "final": 532,
+  "temp_c": 46.0,
+  "idle_after_failure": true
+ },
+ {
+  "trial": 9,
+  "accepted": true,
+  "seconds": 0.1,
+  "success": false,
+  "reason": "BadStart",
+  "contact": -1,
+  "final": 532,
+  "temp_c": 46.0,
+  "idle_after_failure": true
+ },
+ {
+  "trial": 10,
+  "accepted": true,
+  "seconds": 0.0,
+  "success": false,
+  "reason": "BadStart",
+  "contact": -1,
+  "final": 532,
+  "temp_c": 46.0,
+  "idle_after_failure": true
+ }
+]

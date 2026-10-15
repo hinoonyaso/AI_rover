@@ -31,6 +31,13 @@ struct Sim
   double temp{40.0};
   bool has_temp{true};
   int wobble{0};                    // added to the reading (simulates a squeeze that does not hold still)
+  // 점진 이동: 명령 시간 동안 일정 속도로 움직이고 물체(block)에서 멈춘다(빠른 접근의 멈춤 감시 시험용).
+  // Gradual motion: move at constant speed over the command time and stop at `block` (fast-approach stall tests).
+  bool gradual{false};
+  int move_from{200};
+  int move_to{200};
+  double move_t0{0.0};
+  double move_s{0.0};
   ArmContext arm;
   std::mt19937 rng;
   std::vector<GraspCommand> cmds;
@@ -47,12 +54,28 @@ struct Sim
       final_pos = stop;
     }
     done_at = t + c.ms / 1000.0;
+    if (gradual) {
+      // 막혀도 속도는 원래 목표 기준(물체에서 멈춤) / speed set by the commanded target, stops at the block
+      move_from = pos;
+      move_to = std::min(c.pulse, 693);
+      move_t0 = t;
+      move_s = std::max(c.ms / 1000.0, 0.05);
+    }
   }
 
   GraspOutput tick(double dt = 0.05)
   {
     t += dt;
-    if (t >= done_at) {
+    if (gradual) {
+      const double f = std::min(1.0, (t - move_t0) / move_s);
+      int p = move_from + static_cast<int>((move_to - move_from) * f);
+      if (block >= 0 && move_to > move_from) {
+        p = std::min(p, block);
+      }
+      if (std::abs(final_pos - move_from) > 3 || f >= 1.0) {
+        pos = std::abs(p - final_pos) <= 3 && f >= 1.0 ? final_pos : p;
+      }
+    } else if (t >= done_at) {
       pos = final_pos;
     }
     GraspInput in;
@@ -99,6 +122,16 @@ struct Sim
 };
 
 GraspProfile profile() {return GraspProfile();}
+
+// base.yaml의 빠른 접근 설정 / the fast-approach settings of base.yaml
+GraspProfile approach_profile()
+{
+  GraspProfile p;
+  p.approach_margin = 40;
+  p.approach_ms = 800;
+  p.stall_s = 0.3;
+  return p;
+}
 
 }  // namespace
 
@@ -500,4 +533,104 @@ TEST(Grasp, CancelInIdleIsIgnored)
   s.sm.request_cancel();
   ASSERT_TRUE(s.sm.start(s.t));
   EXPECT_TRUE(s.run_to(GraspState::Holding));
+}
+
+// ------------------------------------------------------------------------------------ fast approach (2026-10-15)
+TEST(GraspApproach, ApproachThenFineStepsReachesHoldingFaster)
+{
+  Sim slow(profile(), 525);
+  slow.gradual = true;
+  ASSERT_TRUE(slow.sm.start(slow.t));
+  const double t0 = slow.t;
+  ASSERT_TRUE(slow.run_to(GraspState::Holding));
+  const double t_slow = slow.t - t0;
+
+  Sim s(approach_profile(), 525);
+  s.gradual = true;
+  ASSERT_TRUE(s.sm.start(s.t));
+  const double t1 = s.t;
+  ASSERT_TRUE(s.run_to(GraspState::Holding));
+  const double t_fast = s.t - t1;
+  // 첫 명령 = 465까지 한 번에 0.8 s / first command = one 0.8 s move to 505 - 40
+  ASSERT_FALSE(s.cmds.empty());
+  EXPECT_EQ(s.cmds.front().pulse, 465);
+  EXPECT_EQ(s.cmds.front().ms, 800);
+  EXPECT_NEAR(s.last.contact, 525, 4);
+  EXPECT_NEAR(s.last.contact, slow.last.contact, 4);          // same contact as the fine-step-only closing
+  EXPECT_LT(t_fast, t_slow * 0.6) << "fast " << t_fast << " s, slow " << t_slow << " s";
+}
+
+TEST(GraspApproach, BlockedDuringTheApproachFailsEarlyAndReopens)
+{
+  for (int block : {260, 330, 400, 450}) {                     // an object larger than the 3 cm cube
+    Sim s(approach_profile(), block);
+    s.gradual = true;
+    ASSERT_TRUE(s.sm.start(s.t));
+    const double t0 = s.t;
+    ASSERT_TRUE(s.run_to(GraspState::Failed)) << block;
+    EXPECT_EQ(s.last.fail, GraspFail::OutsideWindow) << block;
+    // 막힌 지점에 닿은 뒤 stall_s(+읽기 한두 개) 안에 감지 — 이동 끝을 기다리지 않는다(막힌 서보가 세게 누름)
+    // detected within stall_s (+ a reading or two) after reaching the block, not at the end of the move
+    const double reach = 0.05 + (block - 200) / (465.0 - 200.0) * 0.8;
+    EXPECT_LE(s.t - t0, reach + 0.3 + 0.1) << block;
+    ASSERT_TRUE(s.cmds.back().valid) << block;
+    EXPECT_EQ(s.cmds.back().pulse, 200) << block;              // reopened to the start
+    EXPECT_EQ(s.cmds.size(), 2u) << block;                     // approach + reopen, no fine steps, no squeeze
+  }
+}
+
+TEST(GraspApproach, EmptyCloseWithApproachStillEndsInNoContact)
+{
+  Sim s(approach_profile(), -1);
+  s.gradual = true;
+  ASSERT_TRUE(s.sm.start(s.t));
+  ASSERT_TRUE(s.run_to(GraspState::Failed));
+  EXPECT_EQ(s.last.fail, GraspFail::NoContact);
+  EXPECT_LE(s.max_pulse(), 693 - 6);
+  EXPECT_EQ(s.cmds.back().pulse, 200);
+}
+
+TEST(GraspApproach, CancelDuringTheApproachReopens)
+{
+  Sim s(approach_profile(), 525);
+  s.gradual = true;
+  ASSERT_TRUE(s.sm.start(s.t));
+  ASSERT_TRUE(s.run_until([&](const GraspOutput &) {return s.cmds.size() == 1u && s.pos > 300;}));
+  s.sm.request_cancel();
+  ASSERT_TRUE(s.run_to(GraspState::Failed));
+  EXPECT_EQ(s.last.fail, GraspFail::Cancelled);
+  EXPECT_EQ(s.cmds.back().pulse, 200);
+}
+
+TEST(GraspApproach, ApproachIsSkippedWhenItWouldNotGainAStep)
+{
+  GraspProfile p = approach_profile();
+  p.approach_margin = 300;                                     // 505 - 300 = 205: not beyond start + step
+  Sim s(p, 525);
+  s.gradual = true;
+  ASSERT_TRUE(s.sm.start(s.t));
+  ASSERT_TRUE(s.run_to(GraspState::Holding));
+  EXPECT_EQ(s.cmds.front().pulse, 200 + p.step);               // fine steps from the start
+}
+
+TEST(GraspApproach, RandomReadingDropsDoNotFakeAStallOrAContact)
+{
+  int holding = 0;
+  for (unsigned seed = 1; seed <= 60; ++seed) {
+    Sim s(approach_profile(), 525, seed);
+    s.gradual = true;
+    s.drop = 0.3;
+    ASSERT_TRUE(s.sm.start(s.t));
+    ASSERT_TRUE(s.run_until([](const GraspOutput & o) {
+        return o.state == GraspState::Holding || o.state == GraspState::Failed;
+      })) << seed;
+    if (s.last.state == GraspState::Failed) {
+      // 누락으로 실패할 수는 있어도 가짜 막힘(OutsideWindow)은 안 된다 / a drop may fail it, never a fake block
+      EXPECT_NE(s.last.fail, GraspFail::OutsideWindow) << seed;
+    } else {
+      EXPECT_NEAR(s.last.contact, 525, 4) << seed;
+      ++holding;
+    }
+  }
+  EXPECT_GE(holding, 50);
 }

@@ -47,6 +47,7 @@ bool GraspStateMachine::start(double now)
   cur_ = target_ = confirm_first_ = 0;
   steps_ = 0;
   contact_ = -1;
+  approach_target_ = -1;
   squeeze_target_ = -1;
   cancel_ = false;
   success_pending_ = false;
@@ -217,7 +218,46 @@ GraspOutput GraspStateMachine::update(const GraspInput & in)
       state_ = GraspState::Closing;
       sub_ = Sub::Issue;
       note_ = "closing";
-      issue_step(in.now, out);
+      const int approach_to = p_.contact_lo - p_.approach_margin;
+      if (p_.approach_margin >= 0 && approach_to > open_start_ + p_.step) {
+        // 빠른 접근: 한 번에 이동하고 진행을 지켜본다 / fast approach: one move, progress watched
+        approach_target_ = approach_to;
+        target_ = approach_to;
+        out.command = GraspCommand{true, approach_to, p_.approach_ms};
+        t_cmd_ = in.now;
+        prog_pos_ = open_start_;
+        prog_t_ = in.now;
+        // 스텝으로 센다: fail()은 steps_ > 0일 때만 시작 위치로 다시 연다(막힌 서보가 계속 누르지 않게)
+        // count it as a step: fail() reopens only when steps_ > 0 (a stalled servo must not keep squeezing)
+        ++steps_;
+        sub_ = Sub::Approach;
+        note_ = "approaching";
+      } else {
+        issue_step(in.now, out);
+      }
+    }
+  } else if (state_ == GraspState::Closing && sub_ == Sub::Approach) {
+    // 막힘 = stall_s 동안 2펄스 미만 진행인데 목표에 못 미침 → 이 프로파일보다 큰 물체로 보고 실패·열기.
+    // Blocked = under 2 pulses of progress for stall_s while short of the target: larger object than the
+    // profile expects -> fail and open (a stalled servo squeezes hard, so do not wait for the move to end).
+    if (fresh_after(in, t_cmd_)) {
+      if (in.position >= prog_pos_ + 2) {
+        prog_pos_ = in.position;
+        prog_t_ = in.reading_time;
+      }
+      const bool short_of_target = approach_target_ - in.position > p_.dead_band;
+      const bool done = in.reading_time >= t_cmd_ + p_.approach_ms / 1000.0 + p_.settle_s;
+      if (short_of_target &&
+        (done || (in.now - t_cmd_ >= p_.stall_s && in.now - prog_t_ >= p_.stall_s)))
+      {
+        contact_ = in.position;
+        fail(GraspFail::OutsideWindow, Action::OpenToStart, in.now,
+            "blocked during the fast approach (object larger than the profile?)");
+      } else if (done) {
+        cur_ = in.position;
+        note_ = "closing";
+        issue_step(in.now, out);
+      }
     }
   } else if (state_ == GraspState::Closing) {
     const double eval_after = t_cmd_ + p_.step_ms / 1000.0 + p_.settle_s;

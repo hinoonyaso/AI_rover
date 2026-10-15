@@ -5,10 +5,11 @@
 """L2 test of the contact grasp on the real robot. THE GRIPPER CLOSES (and joint 1 swings with --swing).
 
 Usage: python3 tools/stm32_diagnostics/grasp_l2_run.py --trials 5 [--first-delay 30] [--gap 20] [--dwell-s 8] [--swing]
+The gripper is opened slowly before a trial if a failure left it closed (the only gripper command it sends itself).
 Per trial: wait for the cube (the first trial waits --first-delay s, later ones --gap s after the previous release),
 send the arm/grasp goal, wait for the result, watch the gripper while HOLDING for --dwell-s s (a person may tug the
 cube gently), optionally swing joint 1, call arm/release, wait for Idle. Prints one line per trial and a summary;
-raw data goes to Log/grasp_l2_<time>.json. Never sends a gripper position command itself.
+raw data goes to Log/grasp_l2_<time>.json.
 """
 import argparse
 import json
@@ -65,9 +66,23 @@ def main():
     if state['name'] != 'Idle':
         sys.exit(f'grasp state is {state["name"]}, expected Idle')
 
+    def open_if_closed():
+        # 실패 후 정책상 그리퍼가 접촉 위치에 남을 수 있다(RelaxToContact) — 다음 회차 전에 연다(시작 ≤ 450 펄스).
+        # After some failures the jaws stay at the contact: open slowly before the next trial (start must be open).
+        for _ in range(12):
+            r = js.get('r_joint')
+            if r is None or r >= 250 * RPT:          # reading 250 = pulse 250 open enough
+                return
+            m = JointState()
+            m.name = ['r_joint']
+            m.position = [r + min(0.25, 300 * RPT - r)]
+            cmd_pub.publish(m)
+            spin(2.0)
+
     rows = []
     for k in range(1, args.trials + 1):
         wait_s = args.first_delay if k == 1 else args.gap
+        open_if_closed()
         print(f'trial {k}/{args.trials}: put the cube between the open jaws; closing starts in {wait_s:g} s', flush=True)
         spin(wait_s)
         g = Grasp.Goal()

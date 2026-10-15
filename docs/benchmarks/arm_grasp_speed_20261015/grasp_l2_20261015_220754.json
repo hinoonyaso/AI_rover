@@ -1,0 +1,24 @@
+[
+ {
+  "trial": 1,
+  "accepted": true,
+  "seconds": 12.7,
+  "success": false,
+  "reason": "NoContact",
+  "contact": -1,
+  "final": 676,
+  "temp_c": 45.0,
+  "idle_after_failure": true
+ },
+ {
+  "trial": 2,
+  "accepted": true,
+  "seconds": 12.7,
+  "success": false,
+  "reason": "NoContact",
+  "contact": -1,
+  "final": 681,
+  "temp_c": 46.0,
+  "idle_after_failure": true
+ }
+]

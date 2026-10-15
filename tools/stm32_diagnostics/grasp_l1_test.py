@@ -33,6 +33,9 @@ class FakeRrc(threading.Thread):
         self.pos = {1: 500, 2: 650, 3: 100, 4: 150, 5: 500, 10: 200}
         self.target = dict(self.pos)
         self.done_at = {i: 0.0 for i in self.pos}
+        # 점진 이동(2026-10-15): 명령 시간 동안 일정 속도로 움직이고 block에서 멈춘다(빠른 접근의 멈춤 감시를 실제처럼).
+        # Gradual motion: constant speed over the command time, stopping at `block` (realistic for the approach watch).
+        self.move = {i: (self.pos[i], 0.0, 0.0, self.pos[i]) for i in self.pos}   # (from, t0, duration, commanded)
         self.block = 523            # gripper stops here when closing (None = nothing in the jaws)
         self.temp = 40
         self.silent = False         # no replies at all
@@ -46,6 +49,11 @@ class FakeRrc(threading.Thread):
         now = time.monotonic()
         if now >= self.done_at[sid]:
             self.pos[sid] = self.target[sid]
+        else:
+            src, t0, dur, cmd = self.move[sid]
+            p = src + (cmd - src) * min(1.0, (now - t0) / max(dur, 1e-3))
+            stop = self.target[sid]
+            self.pos[sid] = int(min(p, stop) if cmd >= src else max(p, stop))
         return self.pos[sid]
 
     def handle(self, f, d):
@@ -77,6 +85,7 @@ class FakeRrc(threading.Thread):
                 if abs(stop - cur) > 3:
                     self.target[sid] = stop
                     self.done_at[sid] = time.monotonic() + ms / 1000.0
+                    self.move[sid] = (cur, time.monotonic(), ms / 1000.0, pulse)
         elif sub in (0x0B, 0x0C):
             self.torque_cmds.append((time.monotonic() - self.t0, sub, d[1]))
 
@@ -110,7 +119,9 @@ def main():
     node_proc = subprocess.Popen(
         [os.path.expanduser('~/jetrover_ws/install/jetrover_base/lib/jetrover_base/base_node'), '--ros-args',
          '-p', f'port:={fake.path}', '-p', 'arm_command_enabled:=true', '-p', 'arm_move_home_on_start:=false',
-         '-p', 'cmd_vel_timeout:=1000.0', '-p', 'stm32_timeout:=1000.0'],
+         '-p', 'cmd_vel_timeout:=1000.0', '-p', 'stm32_timeout:=1000.0']
+        # GRASP_L1_EXTRA="grasp_approach_margin:=40 ..." 로 파라미터 추가 / extra base_node parameters
+        + sum((['-p', e] for e in os.environ.get('GRASP_L1_EXTRA', '').split()), []),
         stdout=subprocess.DEVNULL, stderr=open(os.environ.get('GRASP_L1_LOG', os.devnull), 'w'))
 
     rclpy.init()
@@ -189,8 +200,11 @@ def main():
         gripper_cmd(0.08)
         spin(1.0)
         check('control: a small gripper command reaches the servo in Idle', len(fake.gripper_cmds) > before)
-        gripper_cmd(-0.08)
+        # 이동(2 s)이 끝난 뒤 되돌린다 — 점진 모델에서 중간 위치 기준으로 되돌리면 시작 위치가 6펄스 어긋났다
+        # undo only after the 2 s move ends: with gradual motion an undo from mid-move shifted the start by 6 pulses
         spin(1.5)
+        gripper_cmd(-0.08)
+        spin(2.5)
 
         # ---- unknown profile is refused
         gh = send_goal('banana')

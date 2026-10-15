@@ -99,6 +99,17 @@ base_node:
     grasp_timeout_s: 30.0
     grasp_comm_loss_s: 1.5
     grasp_temp_limit_c: 80.0
+    # 정밀 스텝 이동 시간/정착(T3에서 검증된 값 그대로) / fine-step move time and settle (T3-validated values)
+    grasp_step_ms: 250
+    grasp_settle_s: 0.2
+    # 빠른 접근(2026-10-15): contact_lo - 40 = 465까지 0.8 s에 한 번 이동, 0.3 s 동안 2펄스 미만 진행이면 막힌 것(큰 물체)으로
+    # 보고 실패·열기. 실기 큐브 10/11 성공, 닫기 중앙값 7.8 s(이전 19~21 s), 접촉 520~535(docs/benchmarks/arm_grasp_speed_20261015.md).
+    # 큰 물체 막힘은 실기 미확인(L0/L1만). -1이면 끔(예전처럼 12펄스 스텝만).
+    # Fast approach: one 0.8 s move to contact_lo - 40, a stall (< 2 pulses in 0.3 s) fails and reopens.
+    # Real robot: cube 10/11, median 7.8 s (was 19-21 s); the large-object stall is L0/L1 only. -1 = off.
+    grasp_approach_margin: 40
+    grasp_approach_ms: 800
+    grasp_stall_s: 0.3
 
     # --- Arm motion (2026-10-05, checklist 14): FIRST software-driven arm moves on this robot. ---
     # OFF by default. Enable only while someone is watching the arm and can cut power:

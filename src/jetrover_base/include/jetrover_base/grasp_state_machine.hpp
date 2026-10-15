@@ -43,6 +43,13 @@ struct GraspProfile
   int closed_margin{6};         // never command closer than closed_end - margin
   int open_start_max{450};      // refuse to start from a nearly closed gripper
   int step_ms{250};
+  // 빠른 접근(2026-10-15): 접촉 창 아래 contact_lo - approach_margin까지 한 번에 이동한 뒤 정밀 스텝. 음수면 끔(기존 동작).
+  // 이 프로파일의 물체는 그 전에 닿지 않는다는 가정 — 막히면(멈춤) 바로 실패하고 연다. base.yaml에서 켠다.
+  // Fast approach: one move to contact_lo - approach_margin, then the fine steps. Negative = off (old behaviour).
+  // Assumes the profile's object is not touched before that point; a stall there fails and opens at once.
+  int approach_margin{-1};
+  int approach_ms{800};         // duration of the approach move
+  double stall_s{0.3};          // during the approach: < 2 pulses of progress for this long = blocked
   int squeeze_ms{400};
   int release_ms{1500};         // slow opening (as in the T3 tool)
   double settle_s{0.2};         // extra wait after a move before its reading counts
@@ -115,7 +122,7 @@ public:
   static ArmMotion arm_motion_for(GraspState s, bool fault_in_air);
 
 private:
-  enum class Sub { Issue, WaitEval, Confirm };
+  enum class Sub { Issue, Approach, WaitEval, Confirm };
   enum class Action { OpenToStart, RelaxToContact };
 
   GraspOutput make_output() const;
@@ -144,6 +151,9 @@ private:
   int cur_{0};
   int target_{0};
   int confirm_first_{0};
+  int approach_target_{-1};           // fast approach target (pulse), -1 = no approach in this grasp
+  int prog_pos_{0};                   // approach progress watch: best position so far ...
+  double prog_t_{0.0};                // ... and when it last advanced by >= 2 pulses
   int steps_{0};
   int contact_{-1};
   int squeeze_target_{-1};

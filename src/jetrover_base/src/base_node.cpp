@@ -859,6 +859,14 @@ private:
     p.timeout_s = declare_parameter<double>("grasp_timeout_s", p.timeout_s);
     p.comm_loss_s = declare_parameter<double>("grasp_comm_loss_s", p.comm_loss_s);
     p.temp_limit_c = declare_parameter<double>("grasp_temp_limit_c", p.temp_limit_c);
+    p.step_ms = static_cast<int>(declare_parameter<int64_t>("grasp_step_ms", p.step_ms));
+    p.settle_s = declare_parameter<double>("grasp_settle_s", p.settle_s);
+    // 빠른 접근(음수면 끔) / fast approach (negative = off)
+    p.approach_margin = static_cast<int>(
+      declare_parameter<int64_t>("grasp_approach_margin", p.approach_margin));
+    p.approach_ms = static_cast<int>(declare_parameter<int64_t>("grasp_approach_ms",
+        p.approach_ms));
+    p.stall_s = declare_parameter<double>("grasp_stall_s", p.stall_s);
     grasp_ = GraspController(p);
     grasp_server_ = rclcpp_action::create_server<GraspAction>(
       this, "arm/grasp",

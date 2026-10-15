@@ -1,0 +1,80 @@
+[
+ {
+  "trial": 1,
+  "accepted": true,
+  "seconds": 7.8,
+  "success": true,
+  "reason": "",
+  "contact": 523,
+  "final": 525,
+  "temp_c": 44.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 2,
+  "accepted": true,
+  "seconds": 8.8,
+  "success": true,
+  "reason": "",
+  "contact": 523,
+  "final": 523,
+  "temp_c": 45.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 3,
+  "accepted": true,
+  "seconds": 7.7,
+  "success": true,
+  "reason": "",
+  "contact": 525,
+  "final": 526,
+  "temp_c": 47.0,
+  "hold_spread_pulses": 1.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 4,
+  "accepted": true,
+  "seconds": 7.8,
+  "success": true,
+  "reason": "",
+  "contact": 521,
+  "final": 523,
+  "temp_c": 47.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 5,
+  "accepted": true,
+  "seconds": 7.8,
+  "success": true,
+  "reason": "",
+  "contact": 521,
+  "final": 526,
+  "temp_c": 47.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ },
+ {
+  "trial": 6,
+  "accepted": true,
+  "seconds": 7.8,
+  "success": true,
+  "reason": "",
+  "contact": 520,
+  "final": 523,
+  "temp_c": 48.0,
+  "hold_spread_pulses": 2.0,
+  "release_ok": true,
+  "idle_after_release": true
+ }
+]
