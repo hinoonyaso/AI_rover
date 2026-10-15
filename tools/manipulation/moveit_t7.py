@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # 한글: T7 MoveIt 실기 통합 시험 — MoveGroup 액션으로 관절 목표·이름 자세·그리퍼·집기 시퀀스를 실행하고 기준을 잰다. 팔이 움직인다.
 #       전제: base_node(arm_command_enabled:=true) + move_group mode:=real + execution.launch dry_run:=false.
-#       기준(prd/arm-control-path.md R9): 관절 목표 연속 성공(정착 오차 ≤ 0.05 rad), 이름 자세 왕복, 그리퍼 열기·닫기, 서보 < 80 ℃,
+#       기준(prd/arm-control-path.md R9): 관절 목표 연속 성공(정착 오차 ≤ 0.05 rad), 이름 자세 왕복, 그리퍼 열기·닫기, 서보 온도는 기록만,
 #       IMU 끊김 0. 시퀀스: home → 열기 → pregrasp_floor → grasp_floor → arm/grasp → 들기 → 내려놓기 → arm/release → home.
 """T7: MoveIt on the real arm via the MoveGroup action. THE ARM MOVES.
 
@@ -12,7 +12,7 @@ Usage:
   python3 tools/manipulation/moveit_t7.py gripper     [--count 10]       # gripper_open <-> gripper_closed
   python3 tools/manipulation/moveit_t7.py sequence    [--count 1] [--first-delay 20]
 Every move: MoveIt result, then the settled /joint_states error vs the target (pass <= --tol, 0.05 rad).
-Watches arm/servo_stats temperatures (stop at --temp-stop 80 C) and /imu/data_raw gaps (> 0.5 s counts).
+Records arm/servo_stats temperatures (warns from 75 C; stops only with --temp-stop) and /imu/data_raw gaps (> 0.5 s).
 Prints one line per move and a summary; raw JSON in Log/moveit_t7_<mode>_<time>.json. Exit 1 on a failure.
 """
 import argparse
@@ -96,7 +96,14 @@ class Rig:
         return fut.done()
 
     def hot(self):
-        return max(self.temps.values(), default=-1.0) >= self.args.temp_stop
+        # 온도로 멈추지 않는다(2026-10-15 사용자 결정: 조건 때문에 시험이 계속 막힘). --temp-stop을 주면 그때만 멈춘다.
+        # 경고만 출력 — 서보는 85 ℃에서 스스로 토크를 끊으므로(팔이 처질 수 있음) 기록은 남긴다.
+        # No temperature stop by default (user decision); --temp-stop re-enables it. Warn from 75 C: the servo itself
+        # cuts its torque at 85 C, which can drop the arm.
+        hottest = max(self.temps.values(), default=-1.0)
+        if hottest >= 75.0:
+            print(f'  WARNING servo temperature {hottest:.0f} C (servo cuts out at 85 C): {self.temps}', flush=True)
+        return self.args.temp_stop is not None and hottest >= self.args.temp_stop
 
     def go(self, label, group, target):
         """Plan + execute a joint goal, then measure the settled error. Returns True on pass."""
@@ -233,7 +240,7 @@ def main():
     ap.add_argument('--scale', type=float, default=0.3, help='MoveIt velocity/acceleration scaling')
     ap.add_argument('--tol', type=float, default=0.05, help='settled joint error pass limit (rad)')
     ap.add_argument('--settle', type=float, default=1.5, help='wait after a move before measuring (s)')
-    ap.add_argument('--temp-stop', type=float, default=80.0)
+    ap.add_argument('--temp-stop', type=float, default=None, help='stop at this servo temperature (default: no stop)')
     ap.add_argument('--first-delay', type=float, default=20.0)
     ap.add_argument('--stop-on-fail', action='store_true')
     args = ap.parse_args()
