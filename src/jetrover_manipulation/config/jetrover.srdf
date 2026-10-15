@@ -18,16 +18,40 @@
     <joint name="r_joint"/>
   </group>
 
-  <!-- 한글: 주행용 홈 자세(base.yaml arm_home_pose_rad, 2026-10-06 확정)와 같은 값 -->
+  <!-- 한글: 주행용 홈 자세 = base.yaml arm_home_pose_rad(현재 값; joint4 1.6043 → 1.45로 갱신, 2026-10-15) -->
+  <!-- Driving home pose = base.yaml arm_home_pose_rad (joint4 updated 1.6043 -> 1.45 on 2026-10-15) -->
   <group_state name="home" group="arm">
     <joint name="joint1" value="0.0042"/>
     <joint name="joint2" value="-0.6618"/>
     <joint name="joint3" value="1.6629"/>
-    <joint name="joint4" value="1.6043"/>
+    <joint name="joint4" value="1.45"/>
     <joint name="joint5" value="0.0168"/>
+  </group_state>
+  <!-- 한글: 바닥 큐브 집기(T7, 2026-10-15): 큐브 중심이 base_footprint 앞 0.25 m(바닥). tools/sim/arm_ik.py로 URDF에서 계산,
+       그리퍼 아래 방향(기울기 ≤ 1.4°). pregrasp = 끝단 높이 0.15 m(들기도 같은 자세), grasp = 0.025 m(손가락 패드가 큐브 높이).
+       실기 서보 오프셋은 반영 안 됨 — 실기에서 확인 후 조정. 시뮬레이션에서 같은 값으로 3/3 집음(tools/sim/sim_pick_check.sh).
+       Floor cube 0.25 m ahead of base_footprint: poses from URDF IK (gripper down). pregrasp/lift = end effector 0.15 m,
+       grasp = 0.025 m. Real servo offsets are NOT included: check on the robot. -->
+  <group_state name="pregrasp_floor" group="arm">
+    <joint name="joint1" value="0.0"/>
+    <joint name="joint2" value="0.833"/>
+    <joint name="joint3" value="0.971"/>
+    <joint name="joint4" value="1.314"/>
+    <joint name="joint5" value="0.0"/>
+  </group_state>
+  <group_state name="grasp_floor" group="arm">
+    <joint name="joint1" value="0.0"/>
+    <joint name="joint2" value="1.418"/>
+    <joint name="joint3" value="0.895"/>
+    <joint name="joint4" value="0.816"/>
+    <joint name="joint5" value="0.0"/>
   </group_state>
   <group_state name="gripper_closed" group="gripper">
     <joint name="r_joint" value="-0.0209"/>
+  </group_state>
+  <!-- 한글: 열림 = 펄스 200(= +1.257 rad, r_joint는 클수록 열림) / open = pulse 200 (larger r_joint = more open) -->
+  <group_state name="gripper_open" group="gripper">
+    <joint name="r_joint" value="1.257"/>
   </group_state>
 
   <!-- 한글: RViz의 끌어서 옮기는 마커용 end effector. 그룹 hand는 gripper_link 하나뿐인 "링크 그룹"이고(Panda의 hand 그룹과 같은 방식),

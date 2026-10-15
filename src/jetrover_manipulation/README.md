@@ -14,6 +14,12 @@ MoveIt2 설정(5자유도 팔 `arm` = joint1~5, 그리퍼 `gripper` = r_joint). 
       브리지 안전장치: 시작 자세 불일치/오래된 joint_states/관절 한계/스텝 0.2 rad 초과 시 전송 전 거부, 추종 지연 0.4 rad 초과·취소 시 현재 자세 유지.
 - [x] **실기 실행 시험 통과(2026-10-06, 배터리 9.97 V, 사용자가 전원 스위치 옆, 속도 스케일 0.3)**: RViz 경로가 아니라 MoveGroup 액션(스크립트)으로 joint1 +0.10 -> -0.10, joint2 +0.15 -> -0.15 왕복. MoveIt 결과 SUCCESS 4/4, 실제 이동량 0.084/-0.096/0.142/-0.142 rad(서보 해상도 ~0.004~0.017 rad 오차), 브리지 거부/지연 중단 0건, base_node 가드 거부 0건.
 - [ ] 더 큰 이동/위치 목표(RViz) 시험, 그리퍼 컨트롤러 시험, 충전 후(>10.5 V) 반복
+- [x] T7 준비(2026-10-15): SRDF `home`을 base.yaml 값으로(joint4 1.6043→1.45), 바닥 큐브 자세 `pregrasp_floor`(끝단 0.15 m)·
+      `grasp_floor`(0.025 m)·`gripper_open`(펄스 200) 추가 — 큐브 중심이 base_footprint 앞 0.25 m, `tools/sim/arm_ik.py`로 URDF에서 계산
+      (실기 서보 오프셋 미반영). 시험 도구 `tools/manipulation/moveit_t7.py`(joint-goals / named / gripper / sequence; 정착 오차 ≤ 0.05 rad,
+      `arm/servo_stats` 온도 80 ℃ 중단, IMU 공백). **L1**(가짜 RRC pty + base_node + move_group real + 브리지): 23/23 —
+      관절 목표 오차 ≤ 0.021 rad, home↔pregrasp 13 s(scale 0.3), 그리퍼 열기·닫기, 집기 시퀀스 11/11(파지 접촉 523, 들기 후 Holding 유지).
+- [ ] T7 실기(L2): joint-goals 10 → named → gripper 10 → sequence (큐브는 바닥 표시: 로봇 중심 앞 0.25 m)
 
 ## 설치 (사용자가 직접 sudo)
 ```bash
