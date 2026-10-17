@@ -42,8 +42,13 @@ def setup(context):
     gui = LaunchConfiguration('gui').perform(context) == 'true'
     controllers = os.path.join(share, 'config', 'sim_controllers.yaml')
     xacro_file = os.path.join(share, 'urdf', 'jetrover_sim.urdf.xacro')
+    # 그리퍼 effort 2 N·m: 설명 기본값 1000이면 손가락이 사실상 무한한 힘으로 조여
+    # 큐브가 튕겨 나갔다(2026-10-18). 실기 서보 토크와 같은 크기로 추정(측정 안 함).
+    # Gripper effort 2 N·m: the description's 1000 squeezed with practically unlimited force
+    # and shot the cube out of the gripper. Assumed similar to the real servo torque (unmeasured).
     robot_description = ParameterValue(
-        Command(['xacro ', xacro_file, ' sim_mode:=true controllers_file:=', controllers]),
+        Command(['xacro ', xacro_file, ' sim_mode:=true gripper_effort:=2 controllers_file:=',
+                 controllers]),
         value_type=str)
     sim_time = {'use_sim_time': True}
 

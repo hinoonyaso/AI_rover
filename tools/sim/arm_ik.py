@@ -53,7 +53,9 @@ def fk(chain, q):
     return t
 
 
-def solve(chain, target, q0, lim=2.09):
+# 관절 탐색 범위 ±1.65: base_node 펄스 제한 ±1.676·MoveIt 한계 ±1.70 안쪽. 처음 ±2.09였을 때 joint2 1.84 해가 나와
+# MoveIt이 1.70에서 멈춰 큐브까지 못 내려갔다(Gazebo, 2026-10-17). Search inside the real limits (was +-2.09: joint2 1.84).
+def solve(chain, target, q0, lim=1.65):
     # 위치 오차 + link5 z축이 아래(−z) + 그리퍼 y축이 몸 y축 / position, approach down, opening along base y
     def cost(q):
         t = fk(chain, q)

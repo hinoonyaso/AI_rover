@@ -396,11 +396,16 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [ ] T7 MoveIt 실기 통합: 관절 목표 10회 연속 성공(≤ 0.05 rad), 그리퍼 10/10, 시리얼/IMU 오류 0, 서보 온도 < 80 ℃
 
 ## 15. Grasp (1차: Segmentation + Depth + Geometry + Rule-based)
-- [ ] Object centroid, orientation estimate
-- [ ] pre-grasp / grasp / retreat pose
+- [~] **카메라로 찾아 집기, Gazebo(2026-10-17~18)**: Gazebo MoveIt 연동(`arm_mode:=moveit`, moveit_t7 14/14) → 색 큐브 검출
+  `cube_detector.py`(오차 xy 0.2~0.4 cm, 단위시험 5개) → `pick_detected.py`(look_floor → IK → MoveIt → 닫기 → 들기 → 바닥 재확인).
+  **3자리 3/3 × 2회**(로봇 기준 (0.27, 0.12)·(0.18, 0.05)·(0.18, −0.11), 들어 올린 큐브 z 0.227). 고침: 손끝 높이(목표 링크가 손끝보다
+  3.5 cm 위 → `--grasp-z` 0.045), 시뮬레이션 그리퍼 effort 1000 → 2(큐브가 튕겨 나감), 거짓 "PICKED"(troubleshooting/043).
+  `docs/benchmarks/sim/pick_detected_20261018.md`. **실기 남음**: 실제 큐브 HSV 확인, `--gripper real`, 사용자 입회
+- [~] Object centroid, orientation estimate: 색 큐브 중심(윗면 점)만, 방향 추정 없음(그리퍼 yaw는 큐브 방향과 무관하게 방사 방향)
+- [~] pre-grasp / grasp / retreat pose: 위 0.15 m → `--grasp-z` → 위 0.15 m(시뮬레이션)
 - [ ] top grasp, side grasp
 - [ ] collision check
-- [ ] grasp success verification
+- [~] grasp success verification: 들어 올린 뒤 바닥을 다시 봐서 큐브가 남아 있으면 실패(시뮬레이션에서 실패 2/2·성공 6/6 판정 일치)
 - [ ] (고도화) AnyGrasp / GraspNet 계열 비교 — 우선순위 낮음
 
 ## 16. MoveIt Servo / Visual Servoing

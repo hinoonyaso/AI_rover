@@ -69,3 +69,4 @@
 | 040 | [host: Gazebo 로딩 중 멈춤(GZ_IP), gz 서버 고아, Open3D 0.20 빈 TSDF, 스캔 glb 미표시/Y-up, 회색 → 텍스처 굽기, Intel GUI, 로봇 메쉬 경로·LiDAR 자기 덮개](040-host-gazebo-freeze-and-scan-mesh-pipeline.md) | 해결 (host 확인), 멈춤 근본 원인 미확인 |
 | 041 | [팔 서보 위치 읽기가 범위 밖(펄스 −16)인데 /joint_states에 그대로 나감](041-arm-servo-out-of-range-reading.md) | 방어 추가(범위 밖 버림), 원인 미확인 |
 | 042 | [팔 서보가 가만히 있어도 뜨거워짐: 명령과 실제 위치가 몇 펄스 어긋난 채 헌팅](042-arm-servo-heat-hunting.md) | 해결 (보정 뒤 relax, 실기 확인) |
+| 043 | [Gazebo 카메라 검출 집기: 큐브를 못 들었는데 "PICKED"(손끝 높이·그리퍼 effort 1000·성공 판정 없음)](043-sim-detected-pick-false-success.md) | 해결 (시뮬레이션 6/6), 실기 미시험 |

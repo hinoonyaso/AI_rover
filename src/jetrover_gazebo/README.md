@@ -49,8 +49,14 @@ ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2_objects.sdf x:=0.45 y
 ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2_objects.sdf arm_mode:=moveit x:=0.45 y:=0.75 yaw:=1.5708
 ros2 launch jetrover_manipulation move_group.launch.py mode:=real use_sim_time:=true   # 다른 터미널
 python3 tools/manipulation/moveit_t7.py joint-goals --count 3                           # 실기와 같은 시험 도구
+# 카메라로 찾아 집기(2026-10-18): 색 큐브 검출 → IK → MoveIt → 닫기 → 들기 → 바닥 다시 보기(남아 있으면 FAIL)
+ros2 run jetrover_perception cube_detector.py --ros-args -p use_sim_time:=true          # cubes/red|green|blue
+python3 tools/manipulation/pick_detected.py red --gripper sim                            # 3자리 3/3, docs/benchmarks/sim/pick_detected_20261018.md
 ros2 run teleop_twist_keyboard teleop_twist_keyboard      # /cmd_vel(Twist). Shift+J/L = 옆이동
 ```
+그리퍼 effort: `sim.launch.py`가 xacro에 `gripper_effort:=2`(N·m)를 넘긴다. 공식 URDF 값 1000이면 손가락이 사실상
+무한한 힘으로 조여 큐브가 튕겨 나갔다(troubleshooting/043). 실기 URDF는 1000 그대로다(실기에서는 쓰지 않는 값).
+
 확인(시험 계획 5번): `i` 전진, Shift+J 왼쪽/Shift+L 오른쪽 **옆이동 방향이 맞는지**(반대거나 돌면서 가면 xacro의 fdir1 부호 문제),
 `ros2 topic hz /scan /imu/data_raw /depth_cam/depth/image_raw /odom`, RViz에서 TF/스캔.
 

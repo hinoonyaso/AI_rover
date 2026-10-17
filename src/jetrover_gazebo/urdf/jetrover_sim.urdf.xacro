@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <!-- JetRover for Gazebo Harmonic (prd/gazebo-sim.md). Process with:
-       xacro jetrover_sim.urdf.xacro sim_mode:=true controllers_file:=<abs path to sim_controllers.yaml>
+       xacro jetrover_sim.urdf.xacro sim_mode:=true controllers_file:=<abs path to sim_controllers.yaml> gripper_effort:=2
+     (gripper_effort: sim.launch.py passes 2 N·m; the description default 1000 shot the cube out of the gripper.
+      한글: sim.launch.py가 2를 넘긴다 — 1000이면 큐브가 튕겨 나갔다. 여기서 선언하면 포함 파일 기본값이 이겨서 명령줄로.)
      Adds ros2_control (gz_ros2_control: 4 wheels velocity, arm/gripper position held at the home pose), the official
      demo's mecanum emulation (sphere wheels + anisotropic friction along the roller diagonal), LiDAR, RGB-D camera, IMU.
      The real-robot description (jetrover_description, sim_mode false) is unchanged.

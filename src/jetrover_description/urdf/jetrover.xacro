@@ -6,6 +6,11 @@
          sphere collisions there; false (default) keeps the real-robot description unchanged (fixed wheels, mesh collisions).
          한글: Gazebo에서만 true. 바퀴를 회전 관절+구 충돌로. 기본 false는 실기 설명 그대로. -->
     <xacro:arg name="sim_mode" default="false"/>
+    <!-- 그리퍼 관절 effort 한계(N·m). 실기는 쓰지 않는 공식 URDF 값 1000 그대로. Gazebo는 2로 낮춘다(jetrover_sim):
+         1000이면 손가락이 사실상 무한한 힘으로 조여 큐브가 튕겨 나갔다(2026-10-18).
+         Gripper joint effort limit; 1000 (official value, unused on the robot). Gazebo sets 2: with 1000 the
+         fingers squeezed with practically unlimited force and shot the cube out. -->
+    <xacro:arg name="gripper_effort" default="1000"/>
     <xacro:property name="sim_mode" value="$(arg sim_mode)"/>
 
     <xacro:include filename="$(find jetrover_description)/urdf/materials.xacro"/>
