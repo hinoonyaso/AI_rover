@@ -21,6 +21,7 @@ struct ServoStatsSnapshot
   uint64_t failed_replies{0};    // frames the STM32 sent to say the servo did not answer (success != 0)
   uint64_t misses{0};            // requests that never got any frame (lost, or older than a newer matched reply)
   uint64_t unmatched_replies{0}; // reply frames with no outstanding request (late after a miss, or foreign)
+  uint64_t invalid_replies{0};   // "successful" frames whose position is outside the valid pulse range (troubleshooting/041)
   double last_reply_t{-1.0};     // time of the last reply frame (same clock as the inputs), -1 if none
   double mean_latency_s{0.0};
   double max_latency_s{0.0};
@@ -39,6 +40,10 @@ public:
   // (so it is not a lost frame) but is not a successful reading and does not refresh last_reply_t.
   // 한글: ok=false는 STM32가 "서보 무응답"을 알려 준 프레임 — 프레임 유실(misses)과 구분한다.
   void record_reply(uint8_t id, double t, bool ok = true);
+  // A success frame whose position is impossible (outside the valid pulse range, e.g. -16 on 2026-10-15): it ends the
+  // request like a failure frame but is counted separately and does not refresh last_reply_t, so the reading ages.
+  // 한글: 범위 밖 위치(예: −16)의 "성공" 응답 — 요청은 끝내되 읽기로 치지 않고 따로 센다(age_s가 계속 늘어남).
+  void record_invalid(uint8_t id, double t);
   // `now` expires outstanding requests older than the miss timeout before counting.
   ServoStatsSnapshot snapshot(uint8_t id, double now);
   std::vector<uint8_t> ids() const;

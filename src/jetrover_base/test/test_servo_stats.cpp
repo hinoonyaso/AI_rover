@@ -104,3 +104,21 @@ TEST(ServoStats, UnrequestedReplyIsCountedSeparately)
   EXPECT_EQ(snap.replies, 0u);
   EXPECT_EQ(snap.unmatched_replies, 1u);
 }
+
+// troubleshooting/041: an impossible position (-16) must not count as a reading or refresh the age.
+// 한글: 불가능한 위치(−16)는 읽기로 치지 않고 age를 갱신하지 않는다.
+TEST(ServoStats, InvalidPositionEndsTheRequestButIsNotAReading)
+{
+  ServoStats s(0.5);
+  s.record_request(3, 0.0);
+  s.record_reply(3, 0.004, true);
+  s.record_request(3, 0.3);
+  s.record_invalid(3, 0.304);
+  const auto snap = s.snapshot(3, 0.4);
+  EXPECT_EQ(snap.requests, 2u);
+  EXPECT_EQ(snap.replies, 1u);
+  EXPECT_EQ(snap.invalid_replies, 1u);
+  EXPECT_EQ(snap.failed_replies, 0u);
+  EXPECT_EQ(snap.misses, 0u);
+  EXPECT_NEAR(snap.last_reply_t, 0.004, 1e-9);   // age keeps growing from the last valid reading
+}

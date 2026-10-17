@@ -54,6 +54,20 @@ void ServoStats::record_reply(uint8_t id, double t, bool ok)
   e.s.last_reply_t = t;
 }
 
+void ServoStats::record_invalid(uint8_t id, double t)
+{
+  auto & e = entries_[id];
+  e.s.id = id;
+  expire(e, t);
+  if (e.outstanding.empty()) {
+    e.s.unmatched_replies++;
+    return;
+  }
+  e.s.misses += e.outstanding.size() - 1;
+  e.outstanding.clear();
+  e.s.invalid_replies++;
+}
+
 ServoStatsSnapshot ServoStats::snapshot(uint8_t id, double now)
 {
   auto & e = entries_[id];

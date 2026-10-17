@@ -88,6 +88,10 @@ base_node:
     # arm/servo_stats 발행 주기. 브리지 관절 신선도(한계 1.5 s)에 이 주기가 더해지므로 짧게(1 s였을 때 T7 실기에서 궤적 중단).
     # arm/servo_stats period: it adds to the bridge's joint freshness (limit 1.5 s); 1 s stopped T7 trajectories.
     servo_stats_period_s: 0.2
+    # 유효 위치 범위: 밖이면 잘못 읽힌 값으로 버리고 servo_stats invalid_replies로 센다(troubleshooting/041, 펄스 −16 관찰).
+    # Valid position range: replies outside are dropped and counted as invalid_replies (troubleshooting/041).
+    arm_reading_min: 0
+    arm_reading_max: 1000
     arm_temp_warn_c: 75.0
     # Contact grasp (action arm/grasp, service arm/release; prd/arm-control-path.md, T5/T6). Profile cube3cm ONLY -- the
     # values come from one 3 cm cube and are NOT defaults for other objects. Only active when arm_command_enabled is true.

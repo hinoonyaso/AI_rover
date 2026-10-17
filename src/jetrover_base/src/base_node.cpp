@@ -248,6 +248,9 @@ public:
         // position polling). Monitoring + warning only; 0 disables.
         const double temp_poll_s = declare_parameter<double>("arm_temp_poll_s", 1.0);
         arm_temp_warn_c_ = declare_parameter<double>("arm_temp_warn_c", 75.0);
+        // 유효 위치 범위(서보 0~1000 펄스). 밖이면 잘못 읽힌 값으로 보고 버린다 / valid reading range (servo 0..1000)
+        arm_reading_min_ = declare_parameter<int64_t>("arm_reading_min", 0);
+        arm_reading_max_ = declare_parameter<int64_t>("arm_reading_max", 1000);
         if (temp_poll_s > 0.0) {
           arm_temp_timer_ = create_wall_timer(
             std::chrono::duration<double>(temp_poll_s), [this]() {poll_next_arm_temp();});
@@ -587,8 +590,20 @@ private:
 
     BusServoPosition servo_pos;
     if (decode_bus_servo_position(packet, servo_pos)) {
-      arm_stats_.record_reply(servo_pos.id, mono_s(), servo_pos.success == 0);
-      if (servo_pos.success == 0) {
+      // 범위 밖 위치는 버린다(troubleshooting/041: joint3이 펄스 −16으로 10 s 넘게 읽힘) — 관절 값·파지 입력에 쓰지 않는다.
+      // Drop impossible positions (troubleshooting/041: joint3 read as pulse -16 for >10 s); never use them.
+      const bool invalid = servo_pos.success == 0 &&
+        (servo_pos.pulse<arm_reading_min_ || servo_pos.pulse> arm_reading_max_);
+      if (invalid) {
+        arm_stats_.record_invalid(servo_pos.id, mono_s());
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
+            "servo %u position %d outside [%ld, %ld]: dropped (troubleshooting/041)", servo_pos.id,
+            servo_pos.pulse, static_cast<long>(arm_reading_min_),
+            static_cast<long>(arm_reading_max_));
+      } else {
+        arm_stats_.record_reply(servo_pos.id, mono_s(), servo_pos.success == 0);
+      }
+      if (servo_pos.success == 0 && !invalid) {
         arm_servo_ticks_[servo_pos.id] = servo_pos.pulse;
         arm_servo_stamp_[servo_pos.id] = now().seconds();
         if (servo_pos.id == GraspController::kGripperId) {
@@ -704,6 +719,7 @@ private:
       kv("failed_replies", static_cast<double>(s.failed_replies));
       kv("misses", static_cast<double>(s.misses));
       kv("unmatched_replies", static_cast<double>(s.unmatched_replies));
+      kv("invalid_replies", static_cast<double>(s.invalid_replies));
       kv("age_s", s.last_reply_t < 0.0 ? -1.0 : t - s.last_reply_t);
       kv("mean_latency_s", s.mean_latency_s);
       kv("max_latency_s", s.max_latency_s);
@@ -1367,6 +1383,8 @@ private:
   rclcpp::TimerBase::SharedPtr arm_temp_timer_;
   std::size_t arm_temp_index_{0};
   double arm_temp_warn_c_{75.0};
+  int64_t arm_reading_min_{0};
+  int64_t arm_reading_max_{1000};
   std::map<uint8_t, double> arm_servo_temp_c_;
   std::map<uint8_t, double> arm_servo_temp_t_;     // mono_s() of the reply
   rclcpp::TimerBase::SharedPtr servo_stats_timer_;
