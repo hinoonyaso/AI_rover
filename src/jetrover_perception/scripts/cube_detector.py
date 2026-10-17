@@ -12,6 +12,8 @@ in target_frame, the observed surface point) and cubes/debug (rgb8 with the blob
 The same topics exist on the robot and in Gazebo. The pure helpers (colour_masks,
 largest_blob, blob_depth_m, pixel_to_point) are unit-tested without ROS.
 """
+import math
+
 import numpy as np
 
 # HSV(OpenCV: H 0..179) 범위 — Gazebo 큐브는 순색이라 넉넉히 맞는다. 실기 큐브는 확인 후 조정.
@@ -66,6 +68,13 @@ def pixel_to_point(u, v, z, k):
     return ((u - cx) * z / fx, (v - cy) * z / fy, z)
 
 
+def correct_pitch(y, z, pitch):
+    """Rotate an optical-frame point (y down, z forward) so a camera pitched `pitch` rad further down
+    than modelled maps into the model's optical frame. 한글: 모델보다 더 숙인 카메라의 점을 모델 좌표로."""
+    c, s = math.cos(pitch), math.sin(pitch)
+    return y * c + z * s, -y * s + z * c
+
+
 def main():
     import cv2
     import rclpy
@@ -93,11 +102,21 @@ def main():
             self.tf = Buffer()
             # 리스너를 별도 스레드로: 콜백 안에서 TF를 기다리는 동안 갱신이 멈추면
             # "미래 시각"으로 거부됐다(Gazebo, 2026-10-17)
+            # node=None으로 리스너 전용 노드를 만든다: 이 노드(self)를 넘기면 뒤의 rclpy.spin()이
+            # 노드를 메인 executor로 가져가 TF가 영상 콜백과 한 스레드에서 처리되고, 실기 30 Hz
+            # 영상에 밀려 TF가 3~7 s 늦었다(2026-10-18, 시뮬레이션은 영상이 느려 드러나지 않음).
             # Own thread: waiting for TF inside the callback otherwise blocks the updates
-            # it is waiting for.
-            self.tf_listener = TransformListener(self.tf, self, spin_thread=True)
+            # it is waiting for. node=None gives the listener its own node: with self, the
+            # later rclpy.spin() took the node back into the main executor and the TF fell
+            # 3-7 s behind the 30 Hz camera on the robot.
+            self.tf_listener = TransformListener(self.tf, None, spin_thread=True)
             self.tf_timeout = float(self.declare_parameter('tf_timeout_s', 0.3).value)
             self.max_tf_lag = float(self.declare_parameter('max_tf_lag_s', 3.0).value)
+            # 카메라가 URDF 모델보다 아래로 더 숙인 각도(deg). 실기 바닥 평면 측정 7개 자세에서 +4.9°
+            # (오차 rms 1°, docs/benchmarks/arm_floor_calib_20261018.md). 시뮬레이션은 0.
+            # Extra downward pitch of the real camera vs the URDF (floor-plane fit, 7 poses). 0 in sim.
+            self.pitch_off = math.radians(
+                float(self.declare_parameter('pitch_offset_deg', 0.0).value))
             self.latest_tf_uses = 0
             self.pubs = {c: self.create_publisher(PointStamped, f'cubes/{c}', 10)
                          for c in self.colours}
@@ -168,6 +187,7 @@ def main():
                 if z is None:
                     continue
                 x, y, z = pixel_to_point(u, v, z, self.k)
+                y, z = correct_pitch(y, z, self.pitch_off)
                 p = PointStamped()
                 p.header = m.header
                 p.point.x, p.point.y, p.point.z = x, y, z

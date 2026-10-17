@@ -8,7 +8,7 @@
 Needs move_group (mode:=real) and jetrover_perception cube_detector.py running.
 Usage: python3 tools/manipulation/pick_detected.py red|green|blue [--gripper sim|real] [--place]
 Steps: look_floor -> median of cubes/<colour> (base_footprint) -> IK (tools/sim/arm_ik.py, gripper
-down) above the cube (0.15 m) and at --grasp-z -> MoveIt moves -> close -> lift -> look_floor again:
+down) the fingertips 0.12 m above the floor, then at --tip-z -> MoveIt moves -> close -> lift -> look_floor again:
 still seen on the floor = FAIL. --place puts it back down and opens. Exit 1 on a failure.
 """
 import argparse
@@ -27,6 +27,9 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..', 'sim'))
 import moveit_t7 as T  # noqa: E402
 from arm_ik import load_chain, solve  # noqa: E402
+
+
+TOOL_M = 0.036      # fingertip beyond end_effector_link along the tool axis (finger mesh FK, 2026-10-17)
 
 
 def urdf_path():
@@ -48,11 +51,25 @@ def main():
     # end_effector_link는 손끝이 아니다: 손끝은 그보다 약 3.5 cm 아래(URDF 손가락 메쉬 FK, 2026-10-17).
     # 0.025로 두면 손끝이 바닥 1 cm 아래로 계획돼 Gazebo에서 바닥에 막혀 큐브를 놓쳤다 → 0.045(손끝 바닥 위 약 1 cm).
     # end_effector_link is ~3.5 cm above the fingertips; 0.025 planned the tips 1 cm into the floor.
-    ap.add_argument('--grasp-z', type=float, default=0.045,
-                    help='end_effector_link height at the grasp (m); fingertips are ~0.035 lower')
+    # 실기는 모델보다 팔·카메라가 약 3.4 cm 높다(바닥 평면 측정 + 손끝 줄자 측정 10~11 cm vs 모델 6.5 cm):
+    # 모델에서 바닥은 z = -0.034. 모든 IK 높이에 더한다. 시뮬레이션은 0.
+    # The real arm/camera sits ~3.4 cm higher than the model (floor-plane fit; tip measured 10-11 cm vs 6.5 cm
+    # modelled): the floor is at model z = -0.034. Added to every IK height. 0 in simulation.
+    ap.add_argument('--floor-z', type=float, default=None,
+                    help='model z of the floor (m); default 0 for --gripper sim, -0.034 for real')
+    ap.add_argument('--max-tilt', type=float, default=15.0, help='max gripper tilt from vertical (deg)')
+    ap.add_argument('--max-ik-err-mm', type=float, default=5.0)
+    # IK 목표는 손끝이다(end_effector_link보다 TOOL_M 앞). 링크 점을 목표로 하면 그리퍼가 기울 때 손끝이
+    # tool*sin(기울기)만큼 앞으로 밀려 허공을 집는다(실기 38°에서 2.2 cm, 2026-10-18).
+    # The IK target is the fingertip (TOOL_M past end_effector_link): targeting the link point puts a tilted
+    # gripper's tip tool*sin(tilt) too far ahead (2.2 cm at 38 deg on the real robot).
+    ap.add_argument('--tip-z', type=float, default=0.010,
+                    help='fingertip height above the floor at the grasp (m)')
     ap.add_argument('--place', action='store_true')
     ap.add_argument('--scale', type=float, default=0.3)
     args = ap.parse_args()
+    if args.floor_z is None:
+        args.floor_z = 0.0 if args.gripper == 'sim' else -0.034
 
     rig = T.Rig(types.SimpleNamespace(scale=args.scale, tol=0.05, settle=1.5, temp_stop=None))
     ns = T.named_states()
@@ -84,11 +101,12 @@ def main():
     chain = load_chain(urdf_path())
     q = np.array([ns['home'][j] for j in T.ARM])     # IK 시작값 = 홈 자세 / IK seed: the home pose
     poses = {}
-    for key, zz in (('above', 0.15), ('grasp', args.grasp_z)):
-        q, err, tilt = solve(chain, np.array([x, y, zz]), q)
-        # 위에서 잡으려면 그리퍼가 거의 아래를 봐야 한다 — 15° 넘게 기울면 닿지 않는 자리로 본다(약 0.30 m 너머).
+    for key, zz in (('above', 0.12), ('grasp', args.tip_z)):
+        q, err, tilt = solve(chain, np.array([x, y, args.floor_z + zz]), q, tool=TOOL_M)
+        # 위에서 잡으려면 그리퍼가 거의 아래를 봐야 한다 — 기본 15° 넘게 기울면 닿지 않는 자리로 본다(약 0.28 m 너머).
         # From above the gripper must point nearly down: > 15 deg tilt = out of reach (beyond ~0.30 m).
-        step(err < 0.005 and tilt < 15.0, f'IK {key} (err {err * 1000:.1f} mm, tilt {tilt:.1f} deg)')
+        step(err < args.max_ik_err_mm / 1000 and tilt < args.max_tilt,
+             f'IK {key} (err {err * 1000:.1f} mm, tilt {tilt:.1f} deg)')
         poses[key] = dict(zip(T.ARM, q.tolist()))
         print(f'  IK {key} z {zz}: {np.round(q, 3).tolist()}', flush=True)
 

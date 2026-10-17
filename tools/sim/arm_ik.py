@@ -55,12 +55,20 @@ def fk(chain, q):
 
 # 관절 탐색 범위 ±1.65: base_node 펄스 제한 ±1.676·MoveIt 한계 ±1.70 안쪽. 처음 ±2.09였을 때 joint2 1.84 해가 나와
 # MoveIt이 1.70에서 멈춰 큐브까지 못 내려갔다(Gazebo, 2026-10-17). Search inside the real limits (was +-2.09: joint2 1.84).
-def solve(chain, target, q0, lim=1.65):
+def solve(chain, target, q0, lim=1.65, tool=0.0):
+    # tool: 목표점을 end_effector_link에서 도구 축(z)으로 tool m 앞(손끝)에 둔다. 그리퍼가 기울면 손끝이
+    # 링크 점 바로 아래가 아니라 tool*sin(기울기)만큼 앞으로 밀리므로, 기울어서 집을 때는 손끝을 목표로 해야 한다
+    # (실기 38°에서 2.2 cm 허공을 집었다, 2026-10-18).
+    # tool: put the target point `tool` m along the tool axis past end_effector_link (the fingertip). A tilted
+    # gripper moves the tip tool*sin(tilt) off the point below the link (2.2 cm at 38 deg on the real robot).
+    def point(t):
+        return t[:3, 3] + tool * t[:3, 2]
+
     # 위치 오차 + link5 z축이 아래(−z) + 그리퍼 y축이 몸 y축 / position, approach down, opening along base y
     def cost(q):
         t = fk(chain, q)
         yaw_axis = np.array([-np.sin(np.arctan2(target[1], target[0])), np.cos(np.arctan2(target[1], target[0]))])
-        return (100 * np.sum((t[:3, 3] - target) ** 2) + 0.05 * (1 + t[2, 2]) ** 2
+        return (100 * np.sum((point(t) - target) ** 2) + 0.05 * (1 + t[2, 2]) ** 2
                 + 0.05 * (1 - abs(t[:2, 1] @ yaw_axis)) ** 2)
     best = None
     for k in range(20):
@@ -69,7 +77,7 @@ def solve(chain, target, q0, lim=1.65):
         if best is None or r.fun < best.fun:
             best = r
     t = fk(chain, best.x)
-    return best.x, np.linalg.norm(t[:3, 3] - target), np.degrees(np.arccos(np.clip(-t[2, 2], -1, 1)))
+    return best.x, np.linalg.norm(point(t) - target), np.degrees(np.arccos(np.clip(-t[2, 2], -1, 1)))
 
 
 def main():

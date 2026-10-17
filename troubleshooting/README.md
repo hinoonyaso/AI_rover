@@ -70,3 +70,4 @@
 | 041 | [팔 서보 위치 읽기가 범위 밖(펄스 −16)인데 /joint_states에 그대로 나감](041-arm-servo-out-of-range-reading.md) | 방어 추가(범위 밖 버림), 원인 미확인 |
 | 042 | [팔 서보가 가만히 있어도 뜨거워짐: 명령과 실제 위치가 몇 펄스 어긋난 채 헌팅](042-arm-servo-heat-hunting.md) | 해결 (보정 뒤 relax, 실기 확인) |
 | 043 | [Gazebo 카메라 검출 집기: 큐브를 못 들었는데 "PICKED"(손끝 높이·그리퍼 effort 1000·성공 판정 없음)](043-sim-detected-pick-false-success.md) | 해결 (시뮬레이션 6/6), 실기 미시험 |
+| 044 | [실기 카메라 검출 집기: 팔·카메라가 모델보다 3.4 cm 높고 4.9° 더 숙임, 손끝 IK 목표, 바닥에 걸려 멈춘 닫힘이 큐브로 판정](044-real-detected-pick-offsets.md) | 부분 해결 (보정 적용), 집기 미성공 |

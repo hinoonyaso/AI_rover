@@ -7,7 +7,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts'))
 from cube_detector import (  # noqa: E402, I100
-    blob_depth_m, colour_masks, largest_blob, pixel_to_point)
+    blob_depth_m, colour_masks, correct_pitch, largest_blob, pixel_to_point)
 
 K = [362.5, 0.0, 318.5, 0.0, 362.5, 177.4, 0.0, 0.0, 1.0]   # the robot camera's colour intrinsics
 
@@ -51,3 +51,10 @@ def test_blob_depth_ignores_zero_and_far_pixels():
 def test_back_projection():
     x, y, z = pixel_to_point(318.5 + 36.25, 177.4, 0.5, K)   # 36.25 px right of centre at 0.5 m
     assert abs(x - 0.05) < 1e-9 and abs(y) < 1e-9 and z == 0.5
+
+
+def test_pitch_correction():
+    import math
+    y, z = correct_pitch(0.0, 1.0, math.radians(5.0))      # the camera axis itself tilts 5 deg down
+    assert abs(y - math.sin(math.radians(5.0))) < 1e-12 and abs(z - math.cos(math.radians(5.0))) < 1e-12
+    assert correct_pitch(0.2, 0.7, 0.0) == (0.2, 0.7)
