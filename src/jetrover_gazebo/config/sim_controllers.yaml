@@ -10,6 +10,14 @@ controller_manager:
       type: mecanum_drive_controller/MecanumDriveController
     arm_position_controller:
       type: forward_command_controller/ForwardCommandController
+    # MoveIt용(arm_mode:=moveit, 2026-10-17): 실기 브리지와 같은 이름의 FollowJointTrajectory 컨트롤러 — moveit_controllers.yaml을
+    # 그대로 쓴다. arm_position_controller와 같은 관절을 쓰므로 둘 중 하나만 띄운다(sim.launch.py가 고름).
+    # For MoveIt: same names as the real bridge's FollowJointTrajectory servers, so moveit_controllers.yaml is reused.
+    # They claim the same joints as arm_position_controller: sim.launch.py starts one set or the other.
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
 
 mecanum_drive_controller:
   ros__parameters:
@@ -32,3 +40,21 @@ arm_position_controller:
     use_sim_time: true
     joints: [joint1, joint2, joint3, joint4, joint5, r_joint]
     interface_name: position
+
+arm_controller:
+  ros__parameters:
+    use_sim_time: true
+    joints: [joint1, joint2, joint3, joint4, joint5]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+    allow_partial_joints_goal: false
+
+# 그리퍼: 물체에 막히면 목표 위치에 못 가므로 목표 허용 오차를 검사하지 않는다(0 = 검사 안 함, JTC 기본).
+# Gripper: it stops on the object, so the goal position tolerance is not checked (0 = unchecked, JTC default).
+gripper_controller:
+  ros__parameters:
+    use_sim_time: true
+    joints: [r_joint]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+

@@ -45,6 +45,10 @@ ros2 launch jetrover_gazebo sim.launch.py world:=lap2_room.sdf    # 상자 없�
 ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2.sdf    # 스캔한 방(메쉬 + 구운 텍스처, 2026-10-14 자동 1차본 — 아래 표)
 ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2_objects.sdf   # + Nav 상자 33×22×11 cm(A→B 경로), 팔 시험 큐브 R/G/B
 ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2_objects.sdf x:=0.45 y:=0.75 yaw:=1.5708   # 팔 시험 자리(큐브 0.25 m 앞)
+# MoveIt으로 팔 움직이기(2026-10-17): 실기 브리지와 같은 이름의 궤적 컨트롤러(arm_controller, gripper_controller)를 띄운다
+ros2 launch jetrover_gazebo sim.launch.py world:=room_lap2_objects.sdf arm_mode:=moveit x:=0.45 y:=0.75 yaw:=1.5708
+ros2 launch jetrover_manipulation move_group.launch.py mode:=real use_sim_time:=true   # 다른 터미널
+python3 tools/manipulation/moveit_t7.py joint-goals --count 3                           # 실기와 같은 시험 도구
 ros2 run teleop_twist_keyboard teleop_twist_keyboard      # /cmd_vel(Twist). Shift+J/L = 옆이동
 ```
 확인(시험 계획 5번): `i` 전진, Shift+J 왼쪽/Shift+L 오른쪽 **옆이동 방향이 맞는지**(반대거나 돌면서 가면 xacro의 fdir1 부호 문제),

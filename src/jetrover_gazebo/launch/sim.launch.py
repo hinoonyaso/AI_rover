@@ -65,8 +65,13 @@ def setup(context):
     def spawner(name):
         return Node(package='controller_manager', executable='spawner', arguments=[name],
                     output='screen')
-    jsb, mecanum, arm = (spawner('joint_state_broadcaster'), spawner('mecanum_drive_controller'),
-                         spawner('arm_position_controller'))
+    # 팔 컨트롤러: forward(기본, 기존 시험 도구·arm_hold) 또는 moveit(실기 브리지와 같은 이름의 궤적 컨트롤러)
+    # Arm controllers: forward (default: existing tools + arm_hold) or moveit
+    # (trajectory controllers named like the real bridge's action servers)
+    moveit_mode = LaunchConfiguration('arm_mode').perform(context) == 'moveit'
+    jsb, mecanum = spawner('joint_state_broadcaster'), spawner('mecanum_drive_controller')
+    arm_spawners = ([spawner('arm_controller'), spawner('gripper_controller')] if moveit_mode
+                    else [spawner('arm_position_controller')])
 
     # camera optical frame (the real driver publishes this chain; Gazebo labels images with it)
     # 한글: 실기는 카메라 드라이버가 내는 optical 프레임 TF. 시뮬에서는 정적 TF로.
@@ -104,7 +109,9 @@ def setup(context):
     return [
         models, robot_meshes, gz, rsp, spawn, bridge, optical_tf, ekf, relay, depth_conv, sparse,
         RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=[jsb])),
-        RegisterEventHandler(OnProcessExit(target_action=jsb, on_exit=[mecanum, arm, arm_hold])),
+        RegisterEventHandler(OnProcessExit(
+            target_action=jsb,
+            on_exit=[mecanum] + arm_spawners + ([] if moveit_mode else [arm_hold]))),
     ]
 
 
@@ -116,6 +123,9 @@ def generate_launch_description():
         DeclareLaunchArgument('y', default_value='0.37'),
         DeclareLaunchArgument('yaw', default_value='1.45', description='rad, map frame'),
         DeclareLaunchArgument('gui', default_value='true'),
+        DeclareLaunchArgument('arm_mode', default_value='forward',
+                              description='forward (arm_position_controller + arm_hold) | moveit '
+                                          '(arm_controller + gripper_controller for move_group)'),
         DeclareLaunchArgument('depth_obstacles', default_value='false',
                               description='run sparse_point_cloud '
                                           '(needs config/depth_background_ref_sim.npy)'),

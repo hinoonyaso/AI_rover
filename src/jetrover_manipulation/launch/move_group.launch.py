@@ -19,6 +19,8 @@ def _load_yaml(path):
 
 def _setup(context, *args, **kwargs):
     mode = LaunchConfiguration('mode').perform(context)
+    # Gazebo(arm_mode:=moveit)와 쓸 때 true — 시뮬레이션 시계 / true with Gazebo (sim clock)
+    sim_time = LaunchConfiguration('use_sim_time').perform(context) == 'true'
     use_rviz = LaunchConfiguration('rviz').perform(context) == 'true'
     if mode not in ('plan_only', 'real'):
         raise RuntimeError(f"mode must be 'plan_only' or 'real', got {mode!r}")
@@ -61,7 +63,7 @@ def _setup(context, *args, **kwargs):
     nodes = [Node(
         package='moveit_ros_move_group', executable='move_group', output='screen',
         parameters=common + [joint_limits, ompl, controllers, execution, scene_monitor,
-                             {'use_sim_time': False}],
+                             {'use_sim_time': sim_time}],
     )]
 
     # 한글: base_node가 이미 /joint_states를 내고 있으면 가짜를 켜면 두 발행자가 섞여 상태가 흔들린다(2026-10-06 겪음).
@@ -91,6 +93,8 @@ def generate_launch_description():
                               description="plan_only | real (see file header)"),
         DeclareLaunchArgument('fake_joint_states', default_value='false',
                               description='plan_only without a robot: publish fake home /joint_states + TF'),
+        DeclareLaunchArgument('use_sim_time', default_value='false',
+                              description='true with Gazebo (sim.launch.py arm_mode:=moveit, mode:=real)'),
         DeclareLaunchArgument('rviz', default_value='false',
                               description='Start RViz here (usually run on the host instead)'),
         OpaqueFunction(function=_setup),
