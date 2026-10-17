@@ -118,3 +118,14 @@ TEST(FeedbackTrim, GivesUpWhenFarOffAndClamps)
   EXPECT_EQ(feedback_trim(500, 450, 502, 2, 15, 2, 100, 900).action, TrimAction::GiveUp);
   EXPECT_EQ(feedback_trim(899, 894, 899, 2, 15, 2, 100, 900).cmd, 900);
 }
+
+// 2026-10-17: servo 1 heated while resting 3 pulses short of its command; relaxing to the reading cooled it.
+// 한글: 명령보다 3펄스 모자란 채 쉬던 servo 1이 뜨거워졌고, 목표를 실제 위치로 바꾸자 식었다.
+TEST(ServoConvert, RelaxCommandsTheReadingWhenSlightlyOff)
+{
+  EXPECT_EQ(relax_command(502, 499, 8), 499);   // the observed case
+  EXPECT_EQ(relax_command(498, 501, 8), 501);   // either direction
+  EXPECT_EQ(relax_command(500, 500, 8), -1);    // already equal: nothing to send
+  EXPECT_EQ(relax_command(520, 500, 8), -1);    // too far off: blocked, leave it to the trim's GiveUp warning
+  EXPECT_EQ(relax_command(508, 500, 8), 500);   // edge of the window
+}

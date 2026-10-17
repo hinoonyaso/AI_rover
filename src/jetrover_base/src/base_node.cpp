@@ -281,6 +281,9 @@ public:
         arm_trim_threshold_ = declare_parameter<int64_t>("arm_feedback_trim_threshold", 2);
         arm_trim_max_error_ = declare_parameter<int64_t>("arm_feedback_trim_max_error", 15);
         arm_trim_max_retries_ = declare_parameter<int64_t>("arm_feedback_trim_max_retries", 3);
+        // 보정 뒤 남은 차이가 이 펄스 이하면 목표를 실제 위치로(발열 방지, 2026-10-17). 0이면 끔.
+        // After the trim, relax to the reading when the leftover is at most this many pulses (heat); 0 = off.
+        arm_relax_max_error_ = declare_parameter<int64_t>("arm_relax_max_error", 8);
         arm_home_pose_rad_ = declare_parameter<std::vector<double>>(
           "arm_home_pose_rad", {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
         if (arm_home_pose_rad_.size() != arm_joint_names_.size()) {
@@ -894,6 +897,19 @@ private:
         RCLCPP_WARN(
           get_logger(), "arm trim: id=%u target %ld read %d, too far off -- not trimming", id,
           static_cast<long>(p.target), arm_servo_ticks_[id]);
+      } else if (arm_relax_max_error_ > 0) {
+        // 보정이 끝났는데 마지막 명령과 실제 위치가 조금 어긋나 있으면 목표를 실제 위치로 — 서보가 계속 힘써 뜨거워지는 것을 막는다.
+        // Trim ended with the servo slightly off its last command: command the reading so it stops driving (heat).
+        const int64_t rc = relax_command(p.cmd, reading, arm_relax_max_error_);
+        if (rc >= 0) {
+          const auto frame = build_bus_servo_set_position(
+            0.2, std::vector<BusServoTarget>{{id, static_cast<uint16_t>(rc)}});
+          serial_.write(frame.data(), frame.size());
+          RCLCPP_INFO(
+            get_logger(), "arm relax: id=%u last cmd %ld read %ld -> cmd %ld (target %ld)", id,
+            static_cast<long>(p.cmd), static_cast<long>(reading), static_cast<long>(rc),
+            static_cast<long>(p.target));
+        }
       }
       it = arm_pending_.erase(it);
       break;  // one map change per tick keeps the iterator logic trivial (map is tiny)
@@ -1412,6 +1428,7 @@ private:
   std::map<uint8_t, double> arm_servo_stamp_;
   std::vector<int64_t> arm_trim_ids_;
   int64_t arm_trim_threshold_{2};
+  int64_t arm_relax_max_error_{8};
   int64_t arm_trim_max_error_{15};
   int64_t arm_trim_max_retries_{3};
   rclcpp::TimerBase::SharedPtr arm_trim_timer_;

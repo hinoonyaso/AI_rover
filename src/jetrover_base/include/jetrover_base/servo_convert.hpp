@@ -51,4 +51,13 @@ TrimResult feedback_trim(
   int64_t target, int64_t reading, int64_t last_cmd, int64_t threshold, int64_t max_error,
   int64_t boost, int64_t lo, int64_t hi);
 
+// Relax after the trim ends: a servo resting a few pulses short of its last command keeps driving (hunting at the edge
+// of its dead band) and heats up -- servo 1 went 43 -> 67 C in 3 min at the rest pose, and 69 -> 43 C in 1.5 min after
+// its target was set to its own reading (2026-10-17). Returns the reading as the new command when the leftover
+// |last_cmd - reading| is in [1, max_error]; -1 when nothing should be sent (already equal, or too far off = blocked).
+// 한글: 보정이 끝난 뒤 마지막 명령과 실제 위치가 몇 펄스 어긋난 채 남으면 서보가 계속 힘을 써서(헌팅) 뜨거워진다
+// (2026-10-17 servo 1: 3분에 43→67 ℃, 목표를 실제 위치로 다시 명령하자 1.5분에 69→43 ℃). 남은 차이가 1..max_error면
+// 실제 위치를 새 명령으로 돌려준다. 같거나 너무 멀면(막힘) -1.
+int64_t relax_command(int64_t last_cmd, int64_t reading, int64_t max_error);
+
 }  // namespace jetrover_base

@@ -51,4 +51,10 @@ TrimResult feedback_trim(
     std::min<int64_t>(std::max<int64_t>(last_cmd + err + (err > 0 ? boost : -boost), lo), hi)};
 }
 
+int64_t relax_command(int64_t last_cmd, int64_t reading, int64_t max_error)
+{
+  const int64_t d = last_cmd > reading ? last_cmd - reading : reading - last_cmd;
+  return (d >= 1 && d <= max_error) ? reading : -1;
+}
+
 }  // namespace jetrover_base

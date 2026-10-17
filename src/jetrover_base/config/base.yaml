@@ -149,6 +149,11 @@ base_node:
     arm_feedback_trim_threshold: 2
     arm_feedback_trim_max_error: 15
     arm_feedback_trim_max_retries: 3
+    # 보정이 끝난 뒤 마지막 명령과 실제 위치가 1~8 펄스 어긋나 있으면 목표를 실제 위치로 다시 명령(relax).
+    # 어긋난 채 두면 서보가 계속 힘을 써서 뜨거워졌다(2026-10-17 servo 1: 3분에 43→67 ℃, relax 후 1.5분에 69→43 ℃). 0이면 끔.
+    # After the trim, re-command the reading when the servo rests 1..8 pulses off its last command (it kept driving
+    # and heated: servo 1 43 -> 67 C in 3 min, 69 -> 43 C in 1.5 min after relaxing). 0 = off.
+    arm_relax_max_error: 8
     # Home pose = "driving pose" (2026-10-05, checklist 8.12 / 14, found on hardware by moving
     # joint2-5 while watching the camera + measuring /scan coverage + depth/image_raw):
     #  - near_bottom (closest point seen) ~145mm -- the robot's OWN wheel is in frame, so there is
