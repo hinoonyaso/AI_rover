@@ -55,6 +55,16 @@ def test_back_projection():
 
 def test_pitch_correction():
     import math
-    y, z = correct_pitch(0.0, 1.0, math.radians(5.0))      # the camera axis itself tilts 5 deg down
-    assert abs(y - math.sin(math.radians(5.0))) < 1e-12 and abs(z - math.cos(math.radians(5.0))) < 1e-12
+    p = math.radians(5.0)
+    y, z = correct_pitch(0.0, 1.0, p)      # the camera axis itself tilts 5 deg down
+    assert abs(y - math.sin(p)) < 1e-12 and abs(z - math.cos(p)) < 1e-12
     assert correct_pitch(0.2, 0.7, 0.0) == (0.2, 0.7)
+
+
+def test_magenta_red_in_daylight_is_red():
+    # 2026-10-18 실기 큐브 색(H 167, S ~110, V ~200, OpenCV HSV) / the real cube in morning light
+    import cv2
+    img = np.full((60, 60, 3), 200, np.uint8)
+    hsv = np.full((20, 20, 3), (167, 110, 200), np.uint8)
+    img[20:40, 20:40] = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
+    assert largest_blob(colour_masks(img)['red'], 60) is not None

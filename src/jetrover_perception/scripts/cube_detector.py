@@ -19,7 +19,11 @@ import numpy as np
 # HSV(OpenCV: H 0..179) 범위 — Gazebo 큐브는 순색이라 넉넉히 맞는다. 실기 큐브는 확인 후 조정.
 # HSV ranges (OpenCV H is 0..179). Red wraps around 0, hence two ranges.
 DEFAULT_RANGES = {
-    'red': [((0, 120, 70), (10, 255, 255)), ((170, 120, 70), (179, 255, 255))],
+    # 위쪽 빨강은 155~179·채도 80부터: 실기 빨간 큐브가 아침 햇빛에서 H 중앙값 167·S 133(p5 96)으로 찍혀
+    # 170·120 기준에 11 %만 통과, 검출 0~1건(2026-10-18). 0~10 쪽은 나무 바닥(주황)과 가까워 그대로.
+    # Upper red widened to H 155-179, S >= 80: the real cube read H 167 / S 133 in morning
+    # light and only 11 % passed 170/120. The 0-10 side stays strict (wooden floor ~ orange).
+    'red': [((0, 120, 70), (10, 255, 255)), ((155, 80, 70), (179, 255, 255))],
     'green': [((40, 100, 50), (85, 255, 255))],
     'blue': [((100, 120, 50), (130, 255, 255))],
 }
@@ -69,8 +73,9 @@ def pixel_to_point(u, v, z, k):
 
 
 def correct_pitch(y, z, pitch):
-    """Rotate an optical-frame point (y down, z forward) so a camera pitched `pitch` rad further down
-    than modelled maps into the model's optical frame. 한글: 모델보다 더 숙인 카메라의 점을 모델 좌표로."""
+    """Rotate an optical-frame point (y down, z forward) so a camera pitched `pitch` rad
+    further down than modelled maps into the model's optical frame.
+    한글: 모델보다 더 숙인 카메라의 점을 모델 좌표로."""
     c, s = math.cos(pitch), math.sin(pitch)
     return y * c + z * s, -y * s + z * c
 
@@ -114,7 +119,8 @@ def main():
             self.max_tf_lag = float(self.declare_parameter('max_tf_lag_s', 3.0).value)
             # 카메라가 URDF 모델보다 아래로 더 숙인 각도(deg). 실기 바닥 평면 측정 7개 자세에서 +4.9°
             # (오차 rms 1°, docs/benchmarks/arm_floor_calib_20261018.md). 시뮬레이션은 0.
-            # Extra downward pitch of the real camera vs the URDF (floor-plane fit, 7 poses). 0 in sim.
+            # Extra downward pitch of the real camera vs the URDF (floor-plane fit, 7 poses).
+            # 0 in sim.
             self.pitch_off = math.radians(
                 float(self.declare_parameter('pitch_offset_deg', 0.0).value))
             self.latest_tf_uses = 0

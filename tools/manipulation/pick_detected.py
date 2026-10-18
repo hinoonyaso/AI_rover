@@ -63,13 +63,28 @@ def main():
     # tool*sin(기울기)만큼 앞으로 밀려 허공을 집는다(실기 38°에서 2.2 cm, 2026-10-18).
     # The IK target is the fingertip (TOOL_M past end_effector_link): targeting the link point puts a tilted
     # gripper's tip tool*sin(tilt) too far ahead (2.2 cm at 38 deg on the real robot).
-    ap.add_argument('--tip-z', type=float, default=0.010,
-                    help='fingertip height above the floor at the grasp (m)')
+    ap.add_argument('--tip-z', type=float, default=None,
+                    help='fingertip height above --floor-z at the grasp (m); default 0.010 sim, 0.034 real')
+    # 실기 교시 보정(게임패드 조그, 2026-10-18, 4자리): 잘 잡힌 손끝 높이는 모델 z 0.000±0.003
+    # (→ tip-z 0.034), 카메라 검출은 실제 잡히는 그리퍼 중심보다 앞 1.8 cm·오른쪽 2.6 cm에 있다고 본다
+    # (이동 보정만 써서 rms 3.7 → 1.9 cm; 회전·비율은 4점으로 과적합). docs/benchmarks/arm_teach_20261018.md
+    # Real-robot teaching (gamepad jog, 4 spots): good grasps had the tip at model z 0.000 +- 0.003 and the
+    # camera put the cube 1.8 cm ahead / 2.6 cm right of the gripper centre that grasped it (translation only).
+    ap.add_argument('--offset', type=float, nargs=2, default=None, metavar=('DX', 'DY'),
+                    help='added to the detected cube xy (m); default 0 0 sim, -0.035 +0.026 real')
     ap.add_argument('--place', action='store_true')
     ap.add_argument('--scale', type=float, default=0.3)
     args = ap.parse_args()
+    sim = args.gripper == 'sim'
     if args.floor_z is None:
-        args.floor_z = 0.0 if args.gripper == 'sim' else -0.034
+        args.floor_z = 0.0 if sim else -0.034
+    if args.tip_z is None:
+        args.tip_z = 0.010 if sim else 0.034
+    if args.offset is None:
+        # 앞뒤 −1.8 cm(교시 평균)로는 자동 집기에서 손가락이 큐브보다 1~2.5 cm 앞으로 나갔다(사용자 관찰
+        # 2회, 2026-10-18) → −3.5 cm. 교시 x는 패드 폭 때문에 흩어져(0~4 cm) 평균이 덜 잡혔다.
+        # -1.8 cm (taught mean) left the fingers 1-2.5 cm past the cube in two automatic picks -> -3.5 cm.
+        args.offset = [0.0, 0.0] if sim else [-0.035, 0.026]
 
     rig = T.Rig(types.SimpleNamespace(scale=args.scale, tol=0.05, settle=1.5, temp_stop=None))
     ns = T.named_states()
@@ -97,6 +112,9 @@ def main():
     x, y, z = np.median(np.array(pts), axis=0)
     print(f'  {args.colour} cube at ({x:.3f}, {y:.3f}) m in base_footprint, top z {z:.3f} '
           f'({len(pts)} detections)', flush=True)
+    if any(args.offset):
+        x, y = x + args.offset[0], y + args.offset[1]
+        print(f'  grasp target after offset {args.offset}: ({x:.3f}, {y:.3f})', flush=True)
 
     chain = load_chain(urdf_path())
     q = np.array([ns['home'][j] for j in T.ARM])     # IK 시작값 = 홈 자세 / IK seed: the home pose
@@ -146,7 +164,11 @@ def main():
     t0 = time.monotonic()
     while time.monotonic() - t0 < 5.0:
         rig.spin(0.1)
-    left = [p for p in pts if p[2] < 0.06]
+    # 몸체 앞끝(0.15 m) 근처 검출은 그리퍼에 든 큐브다: 실기 look_floor에서 든 큐브가 (0.137, −0.058)
+    # 바닥 높이로 잡혀 성공을 실패로 판정했다(2026-10-18, 너무 가까워 깊이가 바닥 쪽으로 섞임 추정).
+    # Detections near the body front are the cube in the gripper (seen at (0.137, -0.058) at floor
+    # height on the robot: too close for depth, presumably mixed with the floor behind it).
+    left = [p for p in pts if p[2] < 0.06 and p[0] > 0.18]
     where = np.round(np.median(np.array(left), axis=0)[:2], 3).tolist() if left else None
     step(len(left) < 2, f'lift check: cube still on the floor at {where} ({len(left)}/{len(pts)})')
     print(f'PICKED {args.colour} (not on the floor in 5 s; {len(pts)} detections in total)', flush=True)

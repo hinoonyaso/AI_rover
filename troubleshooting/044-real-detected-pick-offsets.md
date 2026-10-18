@@ -1,7 +1,7 @@
 # 044. 실기 카메라 검출 집기: 모델과 실제의 높이·각도 차이, 손끝 목표, 바닥 걸림
 
 - 날짜: 2026-10-18
-- 상태: **부분 해결** — 보정 3개 적용, 집기 자체는 아직 성공하지 못함. 수치는 `docs/benchmarks/arm_floor_calib_20261018.md`
+- 상태: **해결(2026-10-18 오후)** — 모델 보정만으로는 실패했고, 게임패드 교시 보정으로 자동 집기 3/3 성공(`troubleshooting/045`, `docs/benchmarks/arm_teach_20261018.md`). 아래는 오전 기록. 수치는 `docs/benchmarks/arm_floor_calib_20261018.md`
 
 ## 증상
 1. 검출기가 실기에서 모든 결과를 버렸다(`latest TF is 3~7 s older than the image`).
