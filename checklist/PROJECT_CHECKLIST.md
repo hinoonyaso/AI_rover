@@ -315,7 +315,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 ### 8.15 Gazebo 회피 주행 정밀도 (PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision-test-plan.md`, 2026-10-18 착수)
 목표: 메카넘 옆이동으로 상자를 망설임 없이 짧게 돌아가고, 정밀 접근으로 목표 5 cm 이내 도착. 상자 = `room_lap2_objects.sdf`의 33×22×11 cm(`object_0`).
 - [ ] 1. 시뮬레이션 준비 (L0 + L5-sim)
-  - [ ] 1.1 시뮬레이션 깊이 기준 영상 촬영(`depth_background_ref_sim.npy`) → `depth_obstacles:=true`에서 상자가 local costmap에 찍히는지 확인
+  - [x] 1.1 시뮬레이션 깊이 기준 영상 촬영(`depth_background_ref_sim.npy`, 2026-10-18: `room_lap2_objects`의 A (1.02, 0.37, 83°)에서 상자를 바닥 아래로 치우고 30프레임, 깊이 0.31~0.77 m 바닥만) → 상자 앞 0.37 m에서 점 2,472개 중 2,071개가 상자 안·local costmap 상자 칸 35/35 장애물(`tools/sim/check_depth_obstacles.py`). 남은 것: 0.76 m 너머 바닥 오탐 5 %(다른 자리 바닥 굴곡 추정), **스캔 월드에서 자동 위치 추정 오인식 37 cm·35°**(troubleshooting/046) → 실행기는 정답으로 초기화
   - [ ] 1.2 정답 기록: gz 로봇·상자 자세를 회차마다 저장(시간 동기)
   - [ ] 1.3 지표 모듈: 정답 위치·방향 오차, footprint–상자 최소 간격, 우회 폭, 망설임(vy 부호 반전/초·정지 시간), 몸 방향 이탈, `/plan` 좌우 뒤집힘 + 단위시험(합성 궤적)
   - [ ] 1.4 반복 실행기: S1/S2/S4 × n회(로봇·상자 순간이동, AMCL 초기화, 판정 불가 사유 기록) + 요약 표

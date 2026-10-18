@@ -70,7 +70,10 @@ python3 tools/nav/straight_trial.py SIM_mppi --goal 1.0 1.45       # 실기 F2�
 컨트롤러 비교 시나리오(S1 직진, S2 상자 왕복, S3 F2-4 정체 지점 × dwb/mppi/mppi_nolr)는 `tools/sim/README.md`.
 
 ## 5. depth 장애물(선택)
-sparse_point_cloud는 "기준 depth와 비교" 방식이라 시뮬레이션용 기준이 필요하다:
+sparse_point_cloud는 "기준 depth와 비교" 방식이라 시뮬레이션용 기준이 필요하다.
+**현재 기준(2026-10-18)**: `config/depth_background_ref_sim.npy` — `room_lap2_objects.sdf`, 로봇 A (1.02, 0.37, 83°), 홈 자세,
+Nav 상자(`object_0`)를 z −3으로 치운 뒤 30프레임 중앙값. 확인: 상자 앞 0.37 m에서 점의 84 %가 상자 안, local costmap 상자 칸 35/35
+(`tools/sim/check_depth_obstacles.py`). 상자 높이 11 cm는 LiDAR에 안 보여서 이 경로로만 회피한다. 원래 절차(상자 없는 월드):
 ```bash
 ros2 launch jetrover_gazebo sim.launch.py world:=lap2_room.sdf     # 상자 없음, 로봇 앞 비어 있게
 python3 tools/perception/capture_depth_reference.py --out src/jetrover_gazebo/config/depth_background_ref_sim.npy
