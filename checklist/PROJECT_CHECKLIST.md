@@ -312,6 +312,29 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [ ] 새 2D 지도(같은 bag으로 slam_toolbox) + 낮은 벽 섞기(가구 아래) — LiDAR-지도 거리 중앙값 ≤ 5 cm 목표
   - [ ] Blender 수작업 정리(단순 충돌 형상) — 사용자
 
+### 8.15 Gazebo 회피 주행 정밀도 (PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision-test-plan.md`, 2026-10-18 착수)
+목표: 메카넘 옆이동으로 상자를 망설임 없이 짧게 돌아가고, 정밀 접근으로 목표 5 cm 이내 도착. 상자 = `room_lap2_objects.sdf`의 33×22×11 cm(`object_0`).
+- [ ] 1. 시뮬레이션 준비 (L0 + L5-sim)
+  - [ ] 1.1 시뮬레이션 깊이 기준 영상 촬영(`depth_background_ref_sim.npy`) → `depth_obstacles:=true`에서 상자가 local costmap에 찍히는지 확인
+  - [ ] 1.2 정답 기록: gz 로봇·상자 자세를 회차마다 저장(시간 동기)
+  - [ ] 1.3 지표 모듈: 정답 위치·방향 오차, footprint–상자 최소 간격, 우회 폭, 망설임(vy 부호 반전/초·정지 시간), 몸 방향 이탈, `/plan` 좌우 뒤집힘 + 단위시험(합성 궤적)
+  - [ ] 1.4 반복 실행기: S1/S2/S4 × n회(로봇·상자 순간이동, AMCL 초기화, 판정 불가 사유 기록) + 요약 표
+- [ ] 2. baseline 재현 (L5-sim)
+  - [ ] 2.1 DWB(현재 기본) S1/S2/S4 각 10회
+  - [ ] 2.2 MPPI(`nav2_params_mppi.yaml`) S1/S2/S4 각 10회
+  - [ ] 2.3 실기 B(2026-10-11)와 비교표. 재현 안 되면 시뮬레이션 차이 조사를 먼저 sub-task로 추가
+- [ ] 3. 회피 개선 — 가설별 단일 변수, S2·S4 각 10회 (L5-sim)
+  - [ ] 3.1 H1 깊이 장애물 소실(카메라 시야 밖에서 지워짐 → 경로 뒤집힘): 깊이 레이어 유지·지우기 설정
+  - [ ] 3.2 H2 전역 경로 좌우 뒤집힘: 재계획 주기·경로 비용
+  - [ ] 3.3 H3 메카넘 옆이동 회피: RotationShim 임계·Twirling·옆 속도 한계(몸 방향 유지)
+  - [ ] 3.4 H4 MPPI 망설임: temperature·샘플·비용 가중치(MPPI가 후보로 남을 때만)
+- [ ] 4. 정밀 접근 노드 (L0 + L5-sim)
+  - [ ] 4.1 설계·구현: Nav2 성공 후 ≤ 15 cm에서 저속(≤ 0.05 m/s) 전방향 P 제어, 2 cm·2° 도달, 시간 제한, collision monitor 경유 + 단위시험
+  - [ ] 4.2 시뮬레이션 10회: 정답 기준 위치 오차 ≤ 5 cm, AMCL 오차 함께 기록
+  - [ ] 4.3 반복 실행기에 연결(Nav2 → 정밀 접근)
+- [ ] 5. 최종 시뮬레이션 검증: S2·S4 각 10회 성공 ≥ 9/10, 오차 ≤ 5 cm, 간격 ≥ 5 cm, 뒤집힘 0, ≤ 25 s, 몸 방향 이탈 ≤ 20°, S1 회귀 없음
+- [ ] 6. 실기 검증(L4): 실기 B 5회 성공 ≥ 4/5, 충돌 0
+
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해
 - [ ] 기본 NavigateToPose BT
