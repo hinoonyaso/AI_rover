@@ -72,6 +72,45 @@ def pixel_to_point(u, v, z, k):
     return ((u - cx) * z / fx, (v - cy) * z / fy, z)
 
 
+def blob_points(depth_mm, blob, k, max_depth_m, max_points=600):
+    """3D points (optical frame, N x 3) of the blob's valid depth pixels, subsampled to max_points.
+    한글: 영역 안 유효 depth 픽셀의 3D 점(광학 좌표). 점이 많으면 일정 간격으로 줄인다."""
+    vs, us = np.nonzero(blob & (depth_mm > 0) & (depth_mm < max_depth_m * 1000.0))
+    if us.size == 0:
+        return np.zeros((0, 3))
+    if us.size > max_points:
+        keep = np.linspace(0, us.size - 1, max_points).astype(int)
+        us, vs = us[keep], vs[keep]
+    z = depth_mm[vs, us].astype(float) / 1000.0
+    return np.stack([(us - k[2]) * z / k[0], (vs - k[5]) * z / k[4], z], axis=1)
+
+
+def top_face(points, band_m=0.006):
+    """Points within band_m of the highest surface (95th percentile of z, robust to outliers).
+    한글: 가장 높은 면(윗면)에서 6 mm 안쪽의 점만(깊이 잡음 약 2 mm). 옆면이 섞이면 각도가 틀어진다."""
+    if len(points) == 0:
+        return points
+    return points[points[:, 2] >= np.percentile(points[:, 2], 95) - band_m]
+
+
+def square_yaw(xy, min_points=30):
+    """Yaw (rad, in [-pi/4, pi/4)) of the square edges seen as 2D points: the rotation whose
+    axis-aligned bounding box has the least area. A square repeats every 90 deg, so this is
+    the smallest turn that aligns the edges with the x axis. None if too few points.
+    한글: 2D 점들을 감싸는 최소 면적 사각형의 각도. 정사각형은 90°마다 같아 −45°~45°만 의미가 있다."""
+    xy = np.asarray(xy, float)
+    if len(xy) < min_points:
+        return None
+    best_a, best_area = 0.0, None
+    for a in np.radians(np.arange(-45.0, 45.0, 0.5)):
+        c, s = math.cos(a), math.sin(a)
+        r = xy @ np.array([[c, -s], [s, c]])       # rotate the points by +a (x' = x c + y s)
+        area = float(np.ptp(r[:, 0]) * np.ptp(r[:, 1]))
+        if best_area is None or area < best_area - 1e-12:
+            best_a, best_area = a, area
+    return best_a
+
+
 def correct_pitch(y, z, pitch):
     """Rotate an optical-frame point (y down, z forward) so a camera pitched `pitch` rad
     further down than modelled maps into the model's optical frame.
@@ -86,6 +125,8 @@ def main():
     import tf2_geometry_msgs  # noqa: F401  (registers PointStamped with tf2)
     from cv_bridge import CvBridge
     from geometry_msgs.msg import PointStamped
+    from std_msgs.msg import Float64
+    from scipy.spatial.transform import Rotation
     from rclpy.duration import Duration
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
@@ -126,6 +167,10 @@ def main():
             self.latest_tf_uses = 0
             self.pubs = {c: self.create_publisher(PointStamped, f'cubes/{c}', 10)
                          for c in self.colours}
+            # 큐브가 돌아간 각도(rad, target_frame의 x축 기준, −45°~45°): 손목을 큐브 면에 맞추는 데 쓴다
+            # Cube yaw (rad, vs the target frame's x axis, -45..45 deg) to align the wrist.
+            self.yaw_pubs = {c: self.create_publisher(Float64, f'cubes/{c}_yaw', 10)
+                             for c in self.colours}
             self.debug = self.create_publisher(Image, 'cubes/debug', 2)
             self.create_subscription(CameraInfo, 'depth_cam/color/camera_info',
                                      lambda m: setattr(self, 'k', list(m.k)),
@@ -137,22 +182,22 @@ def main():
             self.get_logger().info(
                 f'cube detector: {self.colours} -> cubes/<colour> in {self.target}')
 
-        def to_target(self, p, t_img):
-            """Point into target_frame at the image time, else with the latest TF if lag <= max."""
+        def get_tf(self, frame, stamp, t_img):
+            """TransformStamped target <- frame at the image time, else latest TF (lag <= max)."""
             # 영상 시각의 TF가 없으면(시뮬레이션에서 TF가 영상보다 약 1.8 s 늦게 오기도 함, 2026-10-17)
             # 가장 최근 TF를 쓴다 —
             # 관찰 자세에 멈춰 있을 때 인식하므로 오차가 작다. max_tf_lag_s보다 오래된 TF는 쓰지 않는다.
             # Fall back to the latest TF (the arm is still at the viewing pose) unless it is
             # older than max_tf_lag_s.
             try:
-                return self.tf.transform(p, self.target, timeout=Duration(seconds=self.tf_timeout))
+                return self.tf.lookup_transform(self.target, frame, Time.from_msg(stamp),
+                                                timeout=Duration(seconds=self.tf_timeout))
             except Exception as e:   # noqa: BLE001  (tf2 raises several exception types)
                 first_error = e
             try:
-                tr = self.tf.lookup_transform(self.target, p.header.frame_id, Time())
+                tr = self.tf.lookup_transform(self.target, frame, Time())
             except Exception as e:   # noqa: BLE001
-                self.get_logger().warn(f'TF {p.header.frame_id} -> {self.target}: '
-                                       f'{first_error}; {e}',
+                self.get_logger().warn(f'TF {frame} -> {self.target}: {first_error}; {e}',
                                        throttle_duration_sec=5.0)
                 return None
             lag = t_img - (tr.header.stamp.sec + tr.header.stamp.nanosec * 1e-9)
@@ -164,7 +209,18 @@ def main():
             if self.latest_tf_uses % 100 == 1:
                 self.get_logger().info(f'using the latest TF ({lag:.2f} s older than the image); '
                                        f'{self.latest_tf_uses} times so far')
-            return tf2_geometry_msgs.do_transform_point(p, tr)
+            return tr
+
+        def cube_yaw(self, points_opt, tr):
+            """Yaw of the cube's top face in target_frame, or None. 한글: 윗면 점으로 큐브 각도."""
+            if len(points_opt) < 30:
+                return None
+            y, z = correct_pitch(points_opt[:, 1], points_opt[:, 2], self.pitch_off)
+            pts = np.stack([points_opt[:, 0], y, z], axis=1)
+            q, t = tr.transform.rotation, tr.transform.translation
+            rot = Rotation.from_quat([q.x, q.y, q.z, q.w]).as_matrix()
+            world = pts @ rot.T + np.array([t.x, t.y, t.z])
+            return square_yaw(top_face(world)[:, :2])
 
         def on_depth(self, m):
             self.depth = m
@@ -194,15 +250,21 @@ def main():
                     continue
                 x, y, z = pixel_to_point(u, v, z, self.k)
                 y, z = correct_pitch(y, z, self.pitch_off)
+                tr = self.get_tf(m.header.frame_id, m.header.stamp, t_c)
+                if tr is None:
+                    continue
                 p = PointStamped()
                 p.header = m.header
                 p.point.x, p.point.y, p.point.z = x, y, z
-                q = self.to_target(p, t_c)
-                if q is None:
-                    continue
+                q = tf2_geometry_msgs.do_transform_point(p, tr)
                 self.pubs[c].publish(q)
+                yaw = self.cube_yaw(blob_points(depth, bm, self.k, self.max_depth), tr)
+                if yaw is not None:
+                    self.yaw_pubs[c].publish(Float64(data=float(yaw)))
                 cv2.circle(dbg, (int(u), int(v)), 6, (255, 255, 255), 2)
-                cv2.putText(dbg, f'{c} {q.point.x:.3f},{q.point.y:.3f}', (int(u) + 8, int(v)),
+                yaw_txt = '' if yaw is None else f' {math.degrees(yaw):+.0f}d'
+                label = f'{c} {q.point.x:.3f},{q.point.y:.3f}{yaw_txt}'
+                cv2.putText(dbg, label, (int(u) + 8, int(v)),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
             out = self.bridge.cv2_to_imgmsg(dbg, 'rgb8')
             out.header = m.header

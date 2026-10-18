@@ -21,12 +21,13 @@ import types
 
 import numpy as np
 from geometry_msgs.msg import PointStamped
+from std_msgs.msg import Float64
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..', 'sim'))
 import moveit_t7 as T  # noqa: E402
-from arm_ik import load_chain, solve  # noqa: E402
+from arm_ik import grip_axis_for_cube, grip_axis_yaw, load_chain, solve  # noqa: E402
 
 
 TOOL_M = 0.036      # fingertip beyond end_effector_link along the tool axis (finger mesh FK, 2026-10-17)
@@ -72,6 +73,12 @@ def main():
     # camera put the cube 1.8 cm ahead / 2.6 cm right of the gripper centre that grasped it (translation only).
     ap.add_argument('--offset', type=float, nargs=2, default=None, metavar=('DX', 'DY'),
                     help='added to the detected cube xy (m); default 0 0 sim, -0.035 +0.026 real')
+    ap.add_argument('--min-x', type=float, default=None,
+                    help='refuse grasp targets closer than this to the body front (m); default 0 sim, 0.21 real')
+    ap.add_argument('--max-wrist', type=float, default=0.45,
+                    help='max |joint5| (rad): beyond ~0.5 the finger hits the camera mount (MoveIt collision)')
+    ap.add_argument('--no-yaw', action='store_true',
+                    help='ignore the cube yaw (wrist stays perpendicular to the bearing, the old behaviour)')
     ap.add_argument('--place', action='store_true')
     ap.add_argument('--scale', type=float, default=0.3)
     args = ap.parse_args()
@@ -80,6 +87,10 @@ def main():
         args.floor_z = 0.0 if sim else -0.034
     if args.tip_z is None:
         args.tip_z = 0.010 if sim else 0.034
+    if args.min_x is None:
+        # 몸체 앞끝(0.15 m)에서 손가락이 몸체와 부딪히지 않는 최소 거리. 교시한 실기 자리는 모두 0.23 m 이상
+        # (Gazebo 0.18 m에서 손목을 42° 돌리자 MoveIt이 거부). Fingers hit the body closer than this.
+        args.min_x = 0.0 if sim else 0.21
     if args.offset is None:
         # 앞뒤 −1.8 cm(교시 평균)로는 자동 집기에서 손가락이 큐브보다 1~2.5 cm 앞으로 나갔다(사용자 관찰
         # 2회, 2026-10-18) → −3.5 cm. 교시 x는 패드 폭 때문에 흩어져(0~4 cm) 평균이 덜 잡혔다.
@@ -90,9 +101,10 @@ def main():
     ns = T.named_states()
     if not rig.move.wait_for_server(timeout_sec=15):
         sys.exit('move_action not available')
-    pts = []
+    pts, yaws = [], []
     rig.n.create_subscription(PointStamped, f'cubes/{args.colour}',
                               lambda m: pts.append((m.point.x, m.point.y, m.point.z)), 10)
+    rig.n.create_subscription(Float64, f'cubes/{args.colour}_yaw', lambda m: yaws.append(m.data), 10)
     rig.spin(2.0)
 
     def step(ok, what):
@@ -105,6 +117,7 @@ def main():
 
     step(rig.go('look_floor', 'arm', ns['look_floor']), 'look_floor')
     pts.clear()
+    yaws.clear()
     t0 = time.monotonic()
     while len(pts) < args.samples and time.monotonic() - t0 < 10.0:
         rig.spin(0.1)
@@ -112,21 +125,70 @@ def main():
     x, y, z = np.median(np.array(pts), axis=0)
     print(f'  {args.colour} cube at ({x:.3f}, {y:.3f}) m in base_footprint, top z {z:.3f} '
           f'({len(pts)} detections)', flush=True)
+    # 큐브 방향: 90°마다 같은 모양이라 4배각의 원형 평균을 쓴다(−44°와 +44°는 가까운 값) / circular mean of 4*yaw
+    cube_yaw = None
+    if not args.no_yaw and len(yaws) >= 3:
+        cube_yaw = float(np.angle(np.mean(np.exp(4j * np.array(yaws)))) / 4)
+        print(f'  cube yaw {np.degrees(cube_yaw):+.1f} deg from {len(yaws)} samples '
+              f'(spread {np.degrees(np.std(yaws)):.1f} deg)', flush=True)
+    elif not args.no_yaw:
+        print(f'  cube yaw not available ({len(yaws)} samples): wrist stays perpendicular to the bearing',
+              flush=True)
     if any(args.offset):
-        x, y = x + args.offset[0], y + args.offset[1]
-        print(f'  grasp target after offset {args.offset}: ({x:.3f}, {y:.3f})', flush=True)
+        extra_dx = 0.0
+        if not sim:
+            # 임시(관찰 1회): 왼쪽 먼 자리(검출 y > 0.07)에서 −3.5 cm 보정으로 손가락이 약 1 cm 앞을 잡았다
+            # (사용자, 2026-10-18, 큐브 −26.5°, 검출 (0.265, +0.096)). y 0.07→0.09에서 0 → −1 cm로 올린다.
+            # TEMPORARY (one observation): at the far-left spot the -3.5 cm offset grasped ~1 cm too far forward.
+            extra_dx = -0.010 * float(np.clip((y - 0.07) / 0.02, 0.0, 1.0))
+        x, y = x + args.offset[0] + extra_dx, y + args.offset[1]
+        print(f'  grasp target after offset {args.offset} (+ left-side dx {extra_dx * 100:+.1f} cm): '
+              f'({x:.3f}, {y:.3f})', flush=True)
 
+    step(x >= args.min_x, f'cube too close to the body: grasp target x {x:.3f} m < {args.min_x} m (move it back)')
     chain = load_chain(urdf_path())
-    q = np.array([ns['home'][j] for j in T.ARM])     # IK 시작값 = 홈 자세 / IK seed: the home pose
     poses = {}
-    for key, zz in (('above', 0.12), ('grasp', args.tip_z)):
-        q, err, tilt = solve(chain, np.array([x, y, args.floor_z + zz]), q, tool=TOOL_M)
-        # 위에서 잡으려면 그리퍼가 거의 아래를 봐야 한다 — 기본 15° 넘게 기울면 닿지 않는 자리로 본다(약 0.28 m 너머).
-        # From above the gripper must point nearly down: > 15 deg tilt = out of reach (beyond ~0.30 m).
-        step(err < args.max_ik_err_mm / 1000 and tilt < args.max_tilt,
-             f'IK {key} (err {err * 1000:.1f} mm, tilt {tilt:.1f} deg)')
-        poses[key] = dict(zip(T.ARM, q.tolist()))
-        print(f'  IK {key} z {zz}: {np.round(q, 3).tolist()}', flush=True)
+    # 손목을 돌릴수록 손가락이 카메라 장착부에 닿는다(Gazebo MoveIt: |joint5| 0.55 이상에서 거부, 2026-10-18).
+    # 큐브 면에 완전히 맞춘 방향에서 시작해 |joint5| <= --max-wrist가 될 때까지 기본 방향 쪽으로 줄인다.
+    # 남는 어긋남이 있어도 3 cm 큐브는 손가락 간격 안에 들어가고 닫히면서 면에 맞춰진다(19°에서 폭 3.8 cm < 5 cm).
+    # Turning the wrist further makes a finger hit the camera mount (MoveIt rejects beyond |j5| ~0.55): start from
+    # the full alignment and shrink the turn towards the default axis until |joint5| <= --max-wrist. The leftover
+    # misalignment is fine for a 3 cm cube (3.8 cm wide at 19 deg < 5 cm opening) and the pads square it up.
+    default_axis = float(np.arctan2(y, x) + np.pi / 2)
+    desired = None if cube_yaw is None else grip_axis_for_cube(np.array([x, y]), cube_yaw)
+    delta = 0.0 if desired is None else float((desired - default_axis + np.pi / 2) % np.pi - np.pi / 2)
+    fractions = (1.0, 0.75, 0.5, 0.25, 0.0) if desired is not None else (None,)
+    for frac in fractions:
+        axis = None if frac is None else default_axis + frac * delta
+        q = np.array([ns['home'][j] for j in T.ARM])     # IK 시작값 = 홈 자세 / IK seed: the home pose
+        trial, ok = {}, True
+        for key, zz in (('above', 0.12), ('grasp', args.tip_z)):
+            q, err, tilt = solve(chain, np.array([x, y, args.floor_z + zz]), q, tool=TOOL_M, grip_axis=axis)
+            # 위에서 잡으려면 그리퍼가 거의 아래를 봐야 한다 — 기본 15° 넘게 기울면 닿지 않는 자리로 본다(약 0.28 m 너머).
+            # From above the gripper must point nearly down: > 15 deg tilt = out of reach (beyond ~0.30 m).
+            if not (err < args.max_ik_err_mm / 1000 and tilt < args.max_tilt):
+                step(frac == fractions[-1], f'IK {key} (err {err * 1000:.1f} mm, tilt {tilt:.1f} deg)')
+                ok = False
+                break
+            if axis is not None:
+                axis_err = (np.degrees(grip_axis_yaw(chain, q) - axis) + 90) % 180 - 90
+                if abs(axis_err) >= 10.0:
+                    step(frac == fractions[-1], f'IK {key} wrist alignment error {axis_err:.1f} deg')
+                    ok = False
+                    break
+            if abs(q[4]) > args.max_wrist and frac != fractions[-1]:
+                ok = False
+                break
+            trial[key] = dict(zip(T.ARM, q.tolist()))
+        if ok:
+            poses = trial
+            if desired is not None:
+                print(f'  wrist: {frac:.0%} of the turn to the cube faces '
+                      f'(left over {abs(np.degrees((1 - frac) * delta)):.0f} deg), joint5 {q[4]:+.2f}', flush=True)
+            for key in ('above', 'grasp'):
+                print(f'  IK {key}: {np.round([poses[key][j] for j in T.ARM], 3).tolist()}', flush=True)
+            break
+    step(bool(poses), 'IK: no wrist angle within --max-wrist reaches the cube')
 
     step(rig.go('open gripper', 'gripper', ns['gripper_open']), 'open')
     step(rig.go('above cube', 'arm', poses['above']), 'above')

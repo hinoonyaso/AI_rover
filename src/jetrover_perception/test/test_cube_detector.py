@@ -1,5 +1,6 @@
 # 한글: cube_detector.py의 순수 함수 시험(ROS 없이) — 합성 영상에 색 사각형을 그리고 위치·depth·역투영을 확인한다.
 # Unit tests for the pure helpers of cube_detector.py on synthetic images (no ROS).
+import math
 import os
 import sys
 
@@ -7,7 +8,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts'))
 from cube_detector import (  # noqa: E402, I100
-    blob_depth_m, colour_masks, correct_pitch, largest_blob, pixel_to_point)
+    blob_depth_m, blob_points, colour_masks, correct_pitch, largest_blob, pixel_to_point,
+    square_yaw, top_face)
 
 K = [362.5, 0.0, 318.5, 0.0, 362.5, 177.4, 0.0, 0.0, 1.0]   # the robot camera's colour intrinsics
 
@@ -68,3 +70,46 @@ def test_magenta_red_in_daylight_is_red():
     hsv = np.full((20, 20, 3), (167, 110, 200), np.uint8)
     img[20:40, 20:40] = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
     assert largest_blob(colour_masks(img)['red'], 60) is not None
+
+
+def square_points(yaw_deg, n=400, side=0.03, noise=0.001, seed=0):
+    """Dense points on a square's top face rotated by yaw_deg, with depth-like noise."""
+    rng = np.random.default_rng(seed)
+    p = rng.uniform(-side / 2, side / 2, (n, 2))
+    a = math.radians(yaw_deg)
+    rot = np.array([[math.cos(a), -math.sin(a)], [math.sin(a), math.cos(a)]])
+    return p @ rot.T + rng.normal(0, noise, (n, 2)) + np.array([0.27, -0.05])
+
+
+def test_square_yaw_recovers_rotation():
+    import math
+    for deg in (0, 10, 20, 30, 40, -15, -30, -40):
+        got = math.degrees(square_yaw(square_points(deg)))
+        assert abs(got - deg) < 4.0, (deg, got)
+
+
+def test_square_yaw_is_periodic_every_90_degrees():
+    import math
+    got = math.degrees(square_yaw(square_points(70)))     # 70 deg = -20 deg for a square
+    assert abs(got - (-20.0)) < 4.0, got
+
+
+def test_square_yaw_none_with_few_points():
+    assert square_yaw(square_points(10, n=10)) is None
+
+
+def test_top_face_drops_side_points():
+    top = np.column_stack([np.zeros(200), np.zeros(200), np.full(200, 0.030)])
+    side = np.column_stack([np.zeros(80), np.zeros(80), np.linspace(0.0, 0.025, 80)])
+    kept = top_face(np.vstack([top, side]))       # band 6 mm: side points below 0.024 are dropped
+    assert 200 <= len(kept) <= 205 and kept[:, 2].min() > 0.0238
+
+
+def test_blob_points_geometry():
+    depth = np.zeros((360, 640), np.uint16)
+    depth[100:110, 200:210] = 400
+    blob = np.zeros((360, 640), bool)
+    blob[100:110, 200:210] = True
+    pts = blob_points(depth, blob, K, 1.2)
+    assert pts.shape == (100, 3) and np.allclose(pts[:, 2], 0.4)
+    assert abs(pts[:, 0].mean() - (204.5 - 318.5) * 0.4 / 362.5) < 1e-9

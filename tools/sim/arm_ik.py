@@ -55,7 +55,25 @@ def fk(chain, q):
 
 # 관절 탐색 범위 ±1.65: base_node 펄스 제한 ±1.676·MoveIt 한계 ±1.70 안쪽. 처음 ±2.09였을 때 joint2 1.84 해가 나와
 # MoveIt이 1.70에서 멈춰 큐브까지 못 내려갔다(Gazebo, 2026-10-17). Search inside the real limits (was +-2.09: joint2 1.84).
-def solve(chain, target, q0, lim=1.65, tool=0.0):
+def grip_axis_for_cube(xy, cube_yaw):
+    """Gripper opening-axis angle (rad, base frame, mod pi) that closes on a pair of cube faces,
+    the one needing the smallest wrist turn from the default (perpendicular to the bearing).
+    A cube repeats every 90 deg, so the candidates are cube_yaw and cube_yaw + 90 deg (mod 180).
+    한글: 손가락이 닫히는 축을 큐브 면에 수직으로: 기본(방사 방향에 수직)에서 손목을 가장 적게 돌리는 쪽."""
+    default = np.arctan2(xy[1], xy[0]) + np.pi / 2
+
+    def turn(a):       # smallest signed difference between two axes (mod pi), in (-pi/2, pi/2]
+        return (a - default + np.pi / 2) % np.pi - np.pi / 2
+    return min((cube_yaw, cube_yaw + np.pi / 2), key=lambda a: abs(turn(a)))
+
+
+def grip_axis_yaw(chain, q):
+    """Actual gripper opening-axis angle (rad, base frame, mod pi). 한글: 실제 손가락 닫힘 축의 각도."""
+    t = fk(chain, q)
+    return float(np.arctan2(t[1, 1], t[0, 1]) % np.pi)
+
+
+def solve(chain, target, q0, lim=1.65, tool=0.0, grip_axis=None):
     # tool: 목표점을 end_effector_link에서 도구 축(z)으로 tool m 앞(손끝)에 둔다. 그리퍼가 기울면 손끝이
     # 링크 점 바로 아래가 아니라 tool*sin(기울기)만큼 앞으로 밀리므로, 기울어서 집을 때는 손끝을 목표로 해야 한다
     # (실기 38°에서 2.2 cm 허공을 집었다, 2026-10-18).
@@ -65,11 +83,23 @@ def solve(chain, target, q0, lim=1.65, tool=0.0):
         return t[:3, 3] + tool * t[:3, 2]
 
     # 위치 오차 + link5 z축이 아래(−z) + 그리퍼 y축이 몸 y축 / position, approach down, opening along base y
+    # grip_axis(rad, 기저 좌표): 주면 손가락 닫힘 축을 그 각도에 맞춘다(sin² 항, 가중치 5 — 10° 어긋남이
+    # 위치 오차 4 cm만큼 비싸다). 안 주면 예전처럼 방사 방향에 수직(약한 항).
+    # grip_axis: if given, align the finger closing axis to that angle (sin^2 term, weight 5); else the old weak
+    # term towards the perpendicular of the bearing.
     def cost(q):
         t = fk(chain, q)
-        yaw_axis = np.array([-np.sin(np.arctan2(target[1], target[0])), np.cos(np.arctan2(target[1], target[0]))])
-        return (100 * np.sum((point(t) - target) ** 2) + 0.05 * (1 + t[2, 2]) ** 2
-                + 0.05 * (1 - abs(t[:2, 1] @ yaw_axis)) ** 2)
+        if grip_axis is None:
+            yaw_axis = np.array([-np.sin(np.arctan2(target[1], target[0])), np.cos(np.arctan2(target[1], target[0]))])
+            yaw_cost = 0.05 * (1 - abs(t[:2, 1] @ yaw_axis)) ** 2
+        else:
+            yaw_cost = 5.0 * (t[0, 1] * np.sin(grip_axis) - t[1, 1] * np.cos(grip_axis)) ** 2
+        # 손목을 돌릴 때는 기울기도 제대로 막는다: 약한 항(0.05)이면 정렬 항에 밀려 그리퍼가 앞으로 기울어
+        # 손끝이 큐브를 쳤다(Gazebo 0° 큐브 실패, 2026-10-18). 10° 기울기 ≈ 위치 오차 1.2 cm.
+        # With the wrist turned the tilt must be held too: the weak term let the alignment term tilt the
+        # gripper forward and the tip hit the cube (Gazebo 0 deg failure). 10 deg tilt ~ 1.2 cm position error.
+        tilt_cost = 0.05 * (1 + t[2, 2]) ** 2 if grip_axis is None else 1.0 * (1 + t[2, 2])
+        return 100 * np.sum((point(t) - target) ** 2) + tilt_cost + yaw_cost
     best = None
     for k in range(20):
         start = q0 if k == 0 else np.random.default_rng(k).uniform(-1.5, 1.5, 5)

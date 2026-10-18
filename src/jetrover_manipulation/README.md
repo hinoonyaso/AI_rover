@@ -68,6 +68,8 @@ MoveIt 컨트롤러: arm_controller(default), gripper_controller(default: false 
 - 필요: base_node(`arm_command_enabled`), 카메라, `cube_detector.py -p pitch_offset_deg:=4.9`, `move_group mode:=real`, `execution.launch.py dry_run:=false`.
 - `python3 tools/manipulation/pick_detected.py red --gripper real`: 실기 기본 보정 `--offset −0.035 +0.026`, `--tip-z 0.034`, `--floor-z −0.034`.
   집은 뒤에는 큐브를 손으로 받치고 `ros2 service call /arm/release jetrover_interfaces/srv/Release "{}"`를 호출한다.
+- 큐브 방향(2026-10-18): 검출기가 `cubes/<색>_yaw`를 내고 집기가 손목을 큐브 면에 맞춘다(|joint5| ≤ 0.45 rad, `--max-wrist`; 넘으면 손가락이 카메라 장착부에 닿는다).
+  몸체 앞끝에 너무 가까운 큐브(목표 x < 0.21 m)는 거부한다(`--min-x`). `--no-yaw`로 끌 수 있다. `docs/benchmarks/arm_cube_yaw_20261018.md`.
 - 보정을 다시 구할 때: `ros2 run joy joy_node --ros-args -p autorepeat_rate:=50.0` + `tools/manipulation/gamepad_jog.py`로
   큐브를 잡는 자세를 교시(Y)하고, 놓은 뒤 look_floor에서 검출(X)한다. 조작법은 스크립트 도움말에 있다. 수치는 `docs/benchmarks/arm_teach_20261018.md`.
 
