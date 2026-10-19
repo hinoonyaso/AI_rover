@@ -96,7 +96,7 @@ ros2 launch jetrover_gazebo sim.launch.py depth_obstacles:=true
 | `worlds/room_lap2_objects.sdf` | 스캔 방 + Nav 상자(1.21, 1.00) + 팔 시험 큐브 R/G/B(0.37/0.45/0.53, 1.00). 생성 명령은 기록 문서 |
 
 ## 알려진 한계 / 확인 필요(L0까지만 검증, host 실행 전)
-- 마찰 방향(fdir1) 부호는 공식 데모 값 — 실제 옆이동 방향은 host에서 확인.
+- 마찰 방향(fdir1): 기준 프레임을 `base_footprint`로 해야 한다(2026-10-19, troubleshooting/047). `tools/sim/plant_response.py`로 전진·옆이동·대각·회전 비율 1.00 확인.
 - 시뮬레이션에는 모터 데드존·open-loop odom·서보 백래시가 없다(실기 문제 일부는 재현 안 됨).
 - 그리퍼 연동 관절(mimic): DART가 mimic 제약을 지원하지 않아 `r_joint`만 움직였다 → 손가락 5개 관절을 ros2_control에 상태 인터페이스로
   등록해 gz_ros2_control이 따라 움직이게 함(2026-10-14). 큐브 집기 3/3(`tools/sim/README.md`). 실제 4절 링크를 배율 ±1로 근사한 것이라

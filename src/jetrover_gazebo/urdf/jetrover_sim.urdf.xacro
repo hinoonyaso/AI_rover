@@ -67,9 +67,14 @@
     </plugin>
   </gazebo>
 
-  <!-- Mecanum emulation exactly as gz_ros2_control_demos test_mecanum_drive: friction only along the roller
-       diagonal (fdir1, in base_link), none across it (mu2 = 0). X pattern seen from above; verify by strafing on host.
-       한글: 공식 데모와 같은 방식. 롤러 대각 방향으로만 마찰. 위에서 X자 배치 — host에서 옆이동 방향으로 확인. -->
+  <!-- Mecanum emulation as gz_ros2_control_demos test_mecanum_drive: friction only along the roller diagonal (fdir1),
+       none across it (mu2 = 0). X pattern seen from above.
+       fdir1 is expressed in base_footprint, NOT base_link (2026-10-19, troubleshooting/047): base_link is lumped into
+       base_footprint by the fixed joint, so DART found no body node ("Failed to get body node for [wheel_*_collision], not
+       setting friction direction frame") and the roller direction rotated with the spinning wheel: strafing went the wrong
+       way and diagonals turned the robot. Measured with tools/sim/plant_response.py after the fix: strafe, diagonal and
+       rotation ratios 1.00 with no cross components.
+       한글: 공식 데모와 같은 방식. fdir1 기준 프레임은 base_link가 아니라 base_footprint다(base_link는 fixed joint로 합쳐져 없음). -->
   <xacro:macro name="mecanum_friction" params="link fdir">
     <gazebo reference="${link}">
       <collision>
@@ -78,7 +83,7 @@
             <ode>
               <mu>1.0</mu>
               <mu2>0.0</mu2>
-              <fdir1 gz:expressed_in="base_link">${fdir}</fdir1>
+              <fdir1 gz:expressed_in="base_footprint">${fdir}</fdir1>
             </ode>
           </friction>
         </surface>

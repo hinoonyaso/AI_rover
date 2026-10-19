@@ -99,6 +99,18 @@ def setup(context):
                   name='sparse_point_cloud', namespace='depth_cam', output='screen',
                   condition=IfCondition(LaunchConfiguration('depth_obstacles')),
                   parameters=[{'home_pose_rad': home_pose_joints1_5(),
+                               # 스캔한 방 바닥은 요철이 5~6 cm라 기준 depth(평평)와 60 mm 넘게 어긋난 오탐이 빈 방 24곳 중 20곳에서
+                               # 평균 265점 나왔다. 100 mm로 101점, 140 mm로 42점(tools/sim/depth_fp_survey.py, 2026-10-19).
+                               # 상자(높이 11 cm) 검출은 check_depth_obstacles.py로 확인. SIM_DEPTH_MARGIN_MM로 바꿀 수 있다. 실기는 60.
+                               # The scanned room floor has 5-6 cm bumps: 60 mm gave 265 false points/msg in the empty room (20 of 24 poses),
+                               # 100 mm gives 101, 140 mm 42. Real robot (flat floor) stays at 60 mm.
+                               'background_margin_mm': int(os.environ.get('SIM_DEPTH_MARGIN_MM', '100')),
+                               # 카메라에 보이는 면 뒤로 장애물을 연장하는 깊이: 실기 0.15 m는 상자 두께(0.22 m)보다 7 cm 짧아
+                               # 코스트맵의 상자가 먼 쪽 7 cm 낮게 잡혀 로봇이 먼 모서리를 계획보다 7 cm 가깝게 지났다
+                               # (S4 최소 중심-상자 거리 16.4 cm < 코스트맵 내접 반경 22 cm, 2026-10-19). 시뮬레이션은 0.25 m.
+                               # Extrusion behind the seen face: the real 0.15 m is 7 cm shorter than the box (0.22 m), so the far
+                               # 7 cm was missing in the costmap and the robot cut the far corner. Sim 0.25 m; real robot unchanged.
+                               'extrude_depth_m': float(os.environ.get('SIM_DEPTH_EXTRUDE_M', '0.25')),
                                'background_depth_path': os.path.join(
                                    share, 'config', 'depth_background_ref_sim.npy')}, sim_time])
 

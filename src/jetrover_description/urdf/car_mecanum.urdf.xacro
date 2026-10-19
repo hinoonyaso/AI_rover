@@ -66,11 +66,11 @@
     </visual>
     <collision>
       <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+        xyz="0 ${-0.0066 if sim_mode else 0} 0"
+        rpy="${1.5707963 if sim_mode else 0} 0 0" />
       <geometry>
         <xacro:if value="${sim_mode}">
-          <sphere radius="0.0485"/>  <!-- Gazebo mecanum emulation (anisotropic friction) / 시뮬 메카넘용 구 -->
+          <cylinder radius="0.0487" length="0.0488"/>  <!-- Gazebo mecanum emulation (anisotropic friction): cylinder = real wheel collision size (r 0.0487, width 0.0488, y offset as the mesh) instead of a sphere (outer edge 0.161 m vs the real 0.130 m: the simulated robot was 6 cm wider than the real one, 2026-10-19) / 시뮬 메카넘용 원통: 실기 바퀴와 같은 크기(구는 바깥 16.1 cm라 실기 13.0 cm보다 6 cm 넓었다) -->
         </xacro:if>
         <xacro:unless value="${sim_mode}">
           <mesh
@@ -120,11 +120,11 @@
     </visual>
     <collision>
       <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+        xyz="0 ${-0.0066 if sim_mode else 0} 0"
+        rpy="${1.5707963 if sim_mode else 0} 0 0" />
       <geometry>
         <xacro:if value="${sim_mode}">
-          <sphere radius="0.0485"/>  <!-- Gazebo mecanum emulation (anisotropic friction) / 시뮬 메카넘용 구 -->
+          <cylinder radius="0.0487" length="0.0488"/>  <!-- Gazebo mecanum emulation (anisotropic friction): cylinder = real wheel collision size (r 0.0487, width 0.0488, y offset as the mesh) instead of a sphere (outer edge 0.161 m vs the real 0.130 m: the simulated robot was 6 cm wider than the real one, 2026-10-19) / 시뮬 메카넘용 원통: 실기 바퀴와 같은 크기(구는 바깥 16.1 cm라 실기 13.0 cm보다 6 cm 넓었다) -->
         </xacro:if>
         <xacro:unless value="${sim_mode}">
           <mesh
@@ -174,11 +174,11 @@
     </visual>
     <collision>
       <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+        xyz="0 ${0.0066 if sim_mode else 0} 0"
+        rpy="${1.5707963 if sim_mode else 0} 0 0" />
       <geometry>
         <xacro:if value="${sim_mode}">
-          <sphere radius="0.0485"/>  <!-- Gazebo mecanum emulation (anisotropic friction) / 시뮬 메카넘용 구 -->
+          <cylinder radius="0.0487" length="0.0488"/>  <!-- Gazebo mecanum emulation (anisotropic friction): cylinder = real wheel collision size (r 0.0487, width 0.0488, y offset as the mesh) instead of a sphere (outer edge 0.161 m vs the real 0.130 m: the simulated robot was 6 cm wider than the real one, 2026-10-19) / 시뮬 메카넘용 원통: 실기 바퀴와 같은 크기(구는 바깥 16.1 cm라 실기 13.0 cm보다 6 cm 넓었다) -->
         </xacro:if>
         <xacro:unless value="${sim_mode}">
           <mesh
@@ -228,11 +228,11 @@
     </visual>
     <collision>
       <origin
-        xyz="0 0 0"
-        rpy="0 0 0" />
+        xyz="0 ${0.0066 if sim_mode else 0} 0"
+        rpy="${1.5707963 if sim_mode else 0} 0 0" />
       <geometry>
         <xacro:if value="${sim_mode}">
-          <sphere radius="0.0485"/>  <!-- Gazebo mecanum emulation (anisotropic friction) / 시뮬 메카넘용 구 -->
+          <cylinder radius="0.0487" length="0.0488"/>  <!-- Gazebo mecanum emulation (anisotropic friction): cylinder = real wheel collision size (r 0.0487, width 0.0488, y offset as the mesh) instead of a sphere (outer edge 0.161 m vs the real 0.130 m: the simulated robot was 6 cm wider than the real one, 2026-10-19) / 시뮬 메카넘용 원통: 실기 바퀴와 같은 크기(구는 바깥 16.1 cm라 실기 13.0 cm보다 6 cm 넓었다) -->
         </xacro:if>
         <xacro:unless value="${sim_mode}">
           <mesh
