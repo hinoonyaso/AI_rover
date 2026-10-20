@@ -115,6 +115,12 @@
 | 컨트롤러 기본값 | **DWB 유지**(MPPI 전환 안 함) | 10-11 | A/B 15회씩: 직선 MPPI 우세, 정면 상자·대각 회전 DWB 우세(`dwb_vs_mppi_20261011.md`). 다음 단일 실험은 goal 허용 오차 0.15 대 0.10 |
 | `arm_poll_hz` (base_node) | 5.0 → **20.0** (코드 기본값·`base.yaml`, 실행 중 변경 가능) | 10-11 | T1 폴링 벤치마크(`docs/benchmarks/arm_poll_bench_20261011.md`): 읽기 전용에서 IMU·루프 불변, 프레임 유실 0, 서보 응답률이 5 Hz와 같음. 팔이 움직일 때는 T7에서 확인, 문제면 5~12 Hz |
 | goal 허용 오차 (**기본값 적용 10-11**, 되돌리기 `tools/nav/ab_params/nav2_params_tol015.yaml`) | `general_goal_checker.xy_goal_tolerance` 0.15 → **0.10**, `FollowPath.xy_goal_tolerance` 0.12 → **0.08** | 10-11 | 자체 펌웨어에서 모터 데드존 소멸(0.02 m/s 추종). D·C 각 5회: 위치 오차 약 3.5 cm 개선, 10 cm 안 9/10(0.15는 2/10), 정체·진동 없음. 외부 리뷰의 조건부 승인(줄자 독립 확인 3~5회·시험 순서 효과 확인은 남음) |
+| (**sim 시험용 변형만, 실기 불변**) `inflation_radius` | 0.25 → **0.30** (global/local) | 2026-10-20 | 0.25는 내접 반경(0.13+여유)과 거의 같아 비용 구배가 없었음. 0.33~0.40은 S2 간격 10~17 cm지만 S4 멈춤 증가 → 0.30 채택. 변형 `nav2_params_sim_avoid.yaml` | troubleshooting/050, `docs/benchmarks/sim/avoidance_precision_20261020.md` |
+| (sim 변형) `footprint_padding` | **+0.05** (여유 8~16 cm는 시도 후 폐기) | 2026-10-20 | 7·8 cm도 S4 간격 4~5 cm로 같고 통로만 좁아짐 | 위와 같음 |
+| (sim 변형) `depth_cloud.clearing` | true → **false** (global/local) | 2026-10-20 | 레이캐스트가 상자 옆을 지날 때 상자 칸을 지움(코스트맵 스냅샷 확인) | troubleshooting/050 |
+| (sim 변형) `BaseObstacle.scale` | 0.1 → **0.05** | 2026-10-20 | S4에서 이동 후보가 상자 쪽 비용으로 회전 후보보다 불리해 제자리 회전에 갇힘 | troubleshooting/051 |
+| (sim 변형) `Twirling.scale` | 10 → **30** | 2026-10-20 | 위와 함께 S4 12/12, 최종 20/20. 폐기한 것: Oscillation 평가자 제거(9/12), 팽창 0.33+Twirling 30(AB 3/6) | troubleshooting/051 |
+| (sim 전용 launch) depth `min_obstacle_height` | −0.1 → **0.09**, `background_margin_mm` 100, `extrude_depth_m` 0.25 | 2026-10-19 | 바닥 요철·램프 오검출(빈 방 20/24), 상자 두께보다 짧은 압출 | troubleshooting/050 |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

@@ -64,6 +64,8 @@ def main():
     ap.add_argument('--leg', default='BA')
     ap.add_argument('--at', type=float, nargs='+', default=[15.0])
     ap.add_argument('--out', default=os.path.join(T.JSON_DIR, 'snap'))
+    ap.add_argument('--near-box', type=float, default=None,
+                    help='instead of --at: snapshot when the robot centre first gets within this distance (m) of the box edge')
     args = ap.parse_args()
     rclpy.init()
     node, gt = T.Runner(), T.GroundTruth()
@@ -86,7 +88,19 @@ def main():
         handle_f = node.client.send_goal_async(goal)
         rclpy.spin_until_future_complete(node, handle_f)
         t0 = node.now()
-        for at in sorted(args.at):
+        def box_dist(g):
+            c, sn = math.cos(-g[6]), math.sin(-g[6])
+            dx, dy = g[1] - g[4], g[2] - g[5]
+            px, py = c * dx - sn * dy, sn * dx + c * dy
+            return math.hypot(max(abs(px) - T.BOX_SIZE[0] / 2, 0.0), max(abs(py) - T.BOX_SIZE[1] / 2, 0.0))
+        times = sorted(args.at)
+        if args.near_box is not None:
+            while node.now() - t0 < 60.0 and (gt.latest is None or box_dist(gt.latest) > args.near_box
+                                              or node.now() - t0 < 3.0):
+                node.spin(0.05)
+            times = [node.now() - t0]
+            print(f'  robot within {args.near_box} m of the box at t={times[0]:.1f} s', flush=True)
+        for at in times:
             while node.now() - t0 < at:
                 node.spin(0.1)
             g = gt.latest
@@ -122,6 +136,18 @@ def main():
                 cv2.putText(img, kind, (6, n - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 return img
             img = np.hstack([panel('global'), panel('local')])
+            for kind in ('global', 'local'):
+                if kind in cost:
+                    m = cost[kind]
+                    tf = map_to_frame(node, m.header.frame_id)
+                    gx, gy = g[1], g[2]
+                    if tf is not None:
+                        c_, s_, tx, ty = tf
+                        gx, gy = c_ * g[1] - s_ * g[2] + tx, s_ * g[1] + c_ * g[2] + ty
+                    ix, iy = int((gx - m.info.origin.position.x) / m.info.resolution), int((gy - m.info.origin.position.y) / m.info.resolution)
+                    v = m.data[iy * m.info.width + ix] if 0 <= ix < m.info.width and 0 <= iy < m.info.height else None
+                    print(f'  {kind} costmap value at the robot centre cell: {v} (>= 99 means the centre is inside the inscribed zone); '
+                          f'distance centre-box edge {box_dist(g):.3f} m', flush=True)
             for kind in ('global', 'local'):
                 if kind in cost:
                     d = np.array(cost[kind].data)

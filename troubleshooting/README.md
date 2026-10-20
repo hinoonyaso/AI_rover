@@ -74,3 +74,7 @@
 | 045 | [실기 집기 2일차: 아침 햇빛에서 빨간 큐브 미검출(H 167), 게임패드 조그 도구 결함 9개, 든 큐브를 바닥 큐브로 오판](045-real-pick-daylight-red-and-jog.md) | 해결 (실기 확인) |
 | 046 | [Gazebo 스캔 월드에서 자동 위치 추정이 37 cm·35° 틀림](046-sim-scan-world-auto-localize-wrong.md) | 미해결(우회: 정답으로 초기화) |
 | 047 | [Gazebo 메카넘이 옆이동을 못 함: 롤러 마찰 방향(fdir1)의 기준 프레임 base_link가 합쳐져 없음](047-sim-mecanum-friction-frame.md) | 해결 (옆이동·대각·회전 비율 1.00) |
+| 048 | [Gazebo 시험에서 Nav2 목표가 1초 안에 취소: 설정의 use_sim_time: false 고정](048-sim-nav2-wall-time.md) | 해결 (sim일 때 launch가 다시 씀) |
+| 049 | [시험 회차 2부터 정지·떨림: 순간이동 뒤 odom 프레임 local costmap의 유령 장애물](049-sim-teleport-ghost-obstacles.md) | 해결 (회차마다 costmap 비움) |
+| 050 | [깊이 장애물 오검출·상자 일부만 찍힘·옆을 지나면 지워짐·팽창 반경 < 내접 반경](050-sim-depth-obstacle-box-visibility.md) | 해결 (sim 전용) |
+| 051 | [상자 정면(S4)에서 DWB가 제자리 회전에 갇혀 정지](051-dwb-rotation-local-minimum-s4.md) | 해결 (sim 변형, 실기 미검증) |

@@ -54,7 +54,7 @@ CUBES = ('object_1', 'object_2', 'object_3')
 # 여유 1 cm가 든 값이라 그걸로 재면 접촉이 없는데도 간격이 음수로 나왔다(상자 이동 0.0 cm, 2026-10-19).
 # The metric footprint is the real body (tape-measured 0.36 x 0.26, = the simulated collision shape). Nav2's 0.38 x 0.28 carries
 # a 1 cm margin and reported negative gaps with no contact (box moved 0.0 cm).
-FOOTPRINT_HALF = (0.18, 0.13)
+FOOTPRINT_HALF = (0.166, 0.13)    # URDF collision extents: rear shell 0.166, front 0.15, wheels +-0.13 (conservative, symmetric)
 # 시뮬레이션 방에 맞춘 좌표(2026-10-19). 실기 F2 좌표는 A (1.02, 0.37) / B (1.00, 1.45) / 상자 (1.21, 1.00)이지만, 스캔한 방 메쉬는
 # y >= 1.50에 벽 밑 경사면(높이 9~26 cm)이 있어 B가 로컬 코스트맵에서 내접 영역이 되고 컨트롤러가 B 앞에서 멈춘다
 # (tools/sim/costmap_probe.py). 북쪽 끝을 20 cm 내리고 상자도 같이 내렸다(상자와 경로선의 상대 배치는 그대로).

@@ -312,28 +312,15 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [ ] 새 2D 지도(같은 bag으로 slam_toolbox) + 낮은 벽 섞기(가구 아래) — LiDAR-지도 거리 중앙값 ≤ 5 cm 목표
   - [ ] Blender 수작업 정리(단순 충돌 형상) — 사용자
 
-### 8.15 Gazebo 회피 주행 정밀도 (PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision-test-plan.md`, 2026-10-18 착수)
+### 8.15 Gazebo 회피 주행 정밀도 (PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision-test-plan.md`, 2026-10-18 착수, 결과 `docs/benchmarks/sim/avoidance_precision_20261020.md`)
 목표: 메카넘 옆이동으로 상자를 망설임 없이 짧게 돌아가고, 정밀 접근으로 목표 5 cm 이내 도착. 상자 = `room_lap2_objects.sdf`의 33×22×11 cm(`object_0`).
-- [ ] 1. 시뮬레이션 준비 (L0 + L5-sim)
-  - [x] 1.1 시뮬레이션 깊이 기준 영상 촬영(`depth_background_ref_sim.npy`, 2026-10-18: `room_lap2_objects`의 A (1.02, 0.37, 83°)에서 상자를 바닥 아래로 치우고 30프레임, 깊이 0.31~0.77 m 바닥만) → 상자 앞 0.37 m에서 점 2,472개 중 2,071개가 상자 안·local costmap 상자 칸 35/35 장애물(`tools/sim/check_depth_obstacles.py`). 남은 것: 0.76 m 너머 바닥 오탐 5 %(다른 자리 바닥 굴곡 추정), **스캔 월드에서 자동 위치 추정 오인식 37 cm·35°**(troubleshooting/046) → 실행기는 정답으로 초기화
-  - [ ] 1.2 정답 기록: gz 로봇·상자 자세를 회차마다 저장(시간 동기)
-  - [ ] 1.3 지표 모듈: 정답 위치·방향 오차, footprint–상자 최소 간격, 우회 폭, 망설임(vy 부호 반전/초·정지 시간), 몸 방향 이탈, `/plan` 좌우 뒤집힘 + 단위시험(합성 궤적)
-  - [ ] 1.4 반복 실행기: S1/S2/S4 × n회(로봇·상자 순간이동, AMCL 초기화, 판정 불가 사유 기록) + 요약 표
-- [ ] 2. baseline 재현 (L5-sim)
-  - [ ] 2.1 DWB(현재 기본) S1/S2/S4 각 10회
-  - [ ] 2.2 MPPI(`nav2_params_mppi.yaml`) S1/S2/S4 각 10회
-  - [ ] 2.3 실기 B(2026-10-11)와 비교표. 재현 안 되면 시뮬레이션 차이 조사를 먼저 sub-task로 추가
-- [ ] 3. 회피 개선 — 가설별 단일 변수, S2·S4 각 10회 (L5-sim)
-  - [ ] 3.1 H1 깊이 장애물 소실(카메라 시야 밖에서 지워짐 → 경로 뒤집힘): 깊이 레이어 유지·지우기 설정
-  - [ ] 3.2 H2 전역 경로 좌우 뒤집힘: 재계획 주기·경로 비용
-  - [ ] 3.3 H3 메카넘 옆이동 회피: RotationShim 임계·Twirling·옆 속도 한계(몸 방향 유지)
-  - [ ] 3.4 H4 MPPI 망설임: temperature·샘플·비용 가중치(MPPI가 후보로 남을 때만)
-- [ ] 4. 정밀 접근 노드 (L0 + L5-sim)
-  - [ ] 4.1 설계·구현: Nav2 성공 후 ≤ 15 cm에서 저속(≤ 0.05 m/s) 전방향 P 제어, 2 cm·2° 도달, 시간 제한, collision monitor 경유 + 단위시험
-  - [ ] 4.2 시뮬레이션 10회: 정답 기준 위치 오차 ≤ 5 cm, AMCL 오차 함께 기록
-  - [ ] 4.3 반복 실행기에 연결(Nav2 → 정밀 접근)
-- [ ] 5. 최종 시뮬레이션 검증: S2·S4 각 10회 성공 ≥ 9/10, 오차 ≤ 5 cm, 간격 ≥ 5 cm, 뒤집힘 0, ≤ 25 s, 몸 방향 이탈 ≤ 20°, S1 회귀 없음
-- [ ] 6. 실기 검증(L4): 실기 B 5회 성공 ≥ 4/5, 충돌 0
+- [x] 1. 시뮬레이션 준비 (L0 + L5-sim) — 깊이 기준 영상, 정답 기록(`avoid_trials.py` GroundTruth), 지표 `avoid_metrics.py` + 단위시험 10개, 반복 실행기 `avoid_trials.py`/`sim_avoid_run.sh`/`run_variants.sh`
+- [~] 2. baseline 재현 — 계획한 "DWB·MPPI × S1/S2/S4 각 10회" 표는 만들지 않았다. 대신 sim 자체의 결함(048~051, 047)을 먼저 고치며 변형별 4~6회 시험으로 진행. MPPI는 시험 안 함, 실기 B와의 비교표 없음(미완)
+- [x] 3. 회피 개선 (sim, 변형별 4~6회) — 채택: 팽창 0.30, depth 지우기 끔, BaseObstacle 0.05, Twirling 30(sim 변형 `nav2_params_sim_avoid.yaml`). 폐기한 가설과 수치는 벤치마크 문서 4절. H2(경로 뒤집힘)는 최종 40회 0, H4(MPPI)는 미시험
+- [x] 4. 정밀 접근 노드 — `precise_approach.py`(단위시험 8개), sim 도착 오차 1.7~1.9 cm(정답 기준), `avoid_trials.py --approach`로 연결
+- [~] 5. 최종 시뮬레이션 검증 (2026-10-20, S2·S4 각 왕복 10회씩 20회, S1 10회): 성공 50/50, 도착 오차 ≤ 1.9 cm, 경로 뒤집힘 0, 상자 밀림 0. **간격 평균 S2 6.2 / S4 5.3 cm이지만 시행별 최소 3.5 / 2.6 cm(5 cm 미만 4/20, 8/20, 접촉 0)**, S4 25 s 초과 5/20, 몸 방향 20° 초과 3/20 → 평균 기준 달성, 시행별 엄격 기준 미달
+- [ ] 6. 실기 검증(L4, 사용자 입회): 실기 B 5회 성공 ≥ 4/5, 충돌 0. sim 변형 설정은 실기에 적용하지 않았다
+- [ ] 7. (후속) 좁은 통로(폭 0.45 m 등)에서 팽창·여유가 통과를 막는지 sim 시험, S4 시간·몸 방향 이탈 꼬리 줄이기, sim 속도(RTF 0.45) 병목 측정
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해

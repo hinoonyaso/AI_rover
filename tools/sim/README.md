@@ -51,3 +51,18 @@ python3 tools/sim/arm_ik.py /tmp/sim.urdf 0.25 0 0.12 0.06 0.025   # IK만(base_
 주의: 실기 서보 데드밴드·백래시·접촉 판정 로직(GraspStateMachine)은 없다 — 관절 위치 명령만으로 집는 시험.
 S1(x 0.55 직진)은 상자 월드용 — `room_lap2_objects.sdf`에서는 큐브(0.37~0.53, 1.00)가 경로 옆에 있다.
 
+## 회피 주행 정밀도 시험 (2026-10-20, 체크리스트 8.15, 결과 `docs/benchmarks/sim/avoidance_precision_20261020.md`)
+host에서 Gazebo(`depth_obstacles:=true`) + Nav2(`auto_localize:=false`) + 정답 위치 노드 + 정밀 접근 노드를 `sim_avoid_run.sh`가 한 번에 띄우고 시험한다.
+```bash
+# 한 시나리오 (S1|S2|S4|all), 왕복 n회
+TAG=t SCEN=S4 REPEATS=10 APPROACH=1 CTRL=dwb PARAMS=tools/nav/ab_params/nav2_params_sim_avoid.yaml bash tools/sim/sim_avoid_run.sh
+# 변형 여러 개를 연속으로 (변형 a = tools/nav/ab_params/nav2_params_a.yaml)
+VARIANTS="a b" SCENS="S4 S2" REPEATS=6 bash tools/sim/run_variants.sh > /tmp/log 2>&1
+python3 tools/sim/avoid_trials.py summary --tag t
+```
+- 환경: `RUNCMD`(시험 대신 다른 명령, 예 진단 도구), `GTLOC=0`(AMCL 사용), `GUI=true`, `LOGDIR`.
+- 결과: `Log/sim_avoid_trials*.csv`, 시행별 `Log/sim_avoid/*.json`. 성공 = Nav2 성공 + 최소 간격 > 0 + 상자 이동 < 2 cm.
+- 지표 정의 `avoid_metrics.py`(단위시험 `python3 -m pytest tools/sim/test_avoid_metrics.py`), 시나리오 좌표는 `avoid_trials.py`의 `SCENARIOS`(위 S2/S4와 다름: A (1.02, 0.30) ↔ B (1.00, 1.25), 상자 (1.21, 0.78) / (1.00, 0.78)).
+- 진단: `costmap_snapshot.py`(코스트맵 그림, `--at` 초 / `--near-box` m), `dwb_eval_probe.py`(DWB 평가자 점수), `corridor_width.py`, `costmap_probe.py`, `depth_fp_survey.py`, `check_depth_obstacles.py`, `plant_response.py`.
+- 주의: 순간이동 뒤 costmap을 비운다(troubleshooting/049). host 시험 스크립트·로그를 `/tmp`에 두면 재부팅에 사라진다.
+
