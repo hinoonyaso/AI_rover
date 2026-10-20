@@ -121,6 +121,11 @@
 | (sim 변형) `BaseObstacle.scale` | 0.1 → **0.05** | 2026-10-20 | S4에서 이동 후보가 상자 쪽 비용으로 회전 후보보다 불리해 제자리 회전에 갇힘 | troubleshooting/051 |
 | (sim 변형) `Twirling.scale` | 10 → **30** | 2026-10-20 | 위와 함께 S4 12/12, 최종 20/20. 폐기한 것: Oscillation 평가자 제거(9/12), 팽창 0.33+Twirling 30(AB 3/6) | troubleshooting/051 |
 | (sim 전용 launch) depth `min_obstacle_height` | −0.1 → **0.09**, `background_margin_mm` 100, `extrude_depth_m` 0.25 | 2026-10-19 | 바닥 요철·램프 오검출(빈 방 20/24), 상자 두께보다 짧은 압출 | troubleshooting/050 |
+| (sim 변형, 2차) DWB 장애물 평가자 | BaseObstacle(scale 0.05) → **ObstacleFootprint(scale 0.05 → 0.02)** | 2026-10-21 | 간격 미달 12회 전부 몸 뒤 모서리가 복귀 구간에서 스침(중심 한 점 검사의 한계). 0.02는 B 출발 직후 느린 옆이동 완화 | troubleshooting/052 |
+| (sim 변형, 2차) controller_server `failure_tolerance` | 0(기본) → **1.0** | 2026-10-21 | 한 주기 "No valid trajectories"로 FollowPath 중단 → BT 5 s 대기 반복 | troubleshooting/052 |
+| (sim 변형, 2차) local costmap `resolution` / local `footprint_padding` | 0.05 → **0.025** / 0.05 → **0.03** (global 0.05 유지) | 2026-10-21 | 격자 오차로 상자 칸이 커 보여 무효 판정. 여유 0.08은 4/12(폐기), 0.02는 간격 미달 7/12(폐기) | troubleshooting/052 |
+| (sim 변형, 2차) collision_monitor `FootprintSlow` | 몸 + 약 10 cm `[[0.28, 0.22],...]` → **몸 + 약 5 cm `[[0.23, 0.18],...]`** | 2026-10-21 | 감속 영역이 계획 간격을 덮어 상자 옆에서 내내 50% 속도(B 출발 7~14 s). 실기 적용 전 안전 검토 필요 | troubleshooting/052 |
+| (sim 변형, 2차, 시도 후 폐기) DWB `sim_time` 1.5 → 1.0, Twirling 30 → 20·15 | — | 2026-10-21 | 각각 B 출발 지연(최대 37.8 s), 멈춤 재발(10/12·11/12) | `docs/benchmarks/sim/avoidance_precision_20261020.md` 4절 |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

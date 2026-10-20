@@ -1,31 +1,36 @@
-# Gazebo 회피 주행 정밀도 — 결과와 최종 설정 (2026-10-20)
+# Gazebo 회피 주행 정밀도 — 결과와 최종 설정 (2026-10-20 1차, 2026-10-21 2차·최종)
 
 PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision-test-plan.md`, 체크리스트 8.15.
 시험은 host PC의 Gazebo Harmonic(headless, 실시간 대비 약 0.45배)에서 했고, 판정은 gz 모델의 **정답 자세**(로봇·상자)다.
-실기 설정은 바꾸지 않았다. 최종 설정은 시험용 변형 `tools/nav/ab_params/nav2_params_sim_avoid.yaml`이다.
+실기 설정은 바꾸지 않았다. 최종 설정은 시험용 변형 `tools/nav/ab_params/nav2_params_sim_avoid.yaml`이다(2차 설정, 파일 머리 2줄에 기본값 대비 변경 목록).
 
-## 1. 최종 결과 (`Log/sim_avoid/final_*.json`, 정밀 접근 포함, 정답 위치로 Nav2 초기화)
-설정: DWB + RotationShim, 팽창 반경 0.30, footprint 여유 +5 cm, BaseObstacle 0.05, Twirling 30, depth 레이어 지우기 끔, goal 허용 0.20 + 정밀 접근 노드.
-S2·S4는 왕복(A→B, B→A) 각 10회 = 20회, S1은 10회.
+## 1. 최종 결과 — 2차 (2026-10-21, `Log/sim_avoid/final2_*.json`, 정밀 접근 포함, 정답 위치로 Nav2 초기화)
+설정: DWB + RotationShim, **ObstacleFootprint**(몸 다각형 검사, scale 0.02), 팽창 반경 0.30, footprint 여유 global +5 / local +3 cm,
+**local 코스트맵 해상도 2.5 cm**, Twirling 30, depth 레이어 지우기 끔, **controller `failure_tolerance` 1.0 s**,
+**collision_monitor 감속 영역 몸 + 5 cm**, goal 허용 0.20 + 정밀 접근 노드. S2·S4는 왕복(A→B, B→A) 각 10회 = 20회, S1은 10회.
 
 | 항목 (목표) | S2 | S4 | S1 |
 |---|---|---|---|
 | 성공 (≥ 9/10) | 20/20 | 20/20 | 10/10 |
-| 도착 위치 오차, 최대 (≤ 5 cm) | 1.9 cm | 1.9 cm | 1.9 cm |
-| 상자 최소 간격, 평균 / 최소 (≥ 5 cm) | 6.2 / **3.5** cm | 5.3 / **2.6** cm | 35.8 cm(상자 멀리) |
-| 간격 5 cm 미만인 시행 | 4/20 | 8/20 | 0 |
-| 시간 (≤ 25 s), 평균 → 25 s 초과 횟수 | 14 s → 0 | 약 23 s → **5/20**(최대 33 s) | 10.5 s → 0 |
-| 몸 방향 이탈 (≤ 20°) | 최대 9° | 최대 46°, 20° 초과 **3/20** | 0° |
-| 전역 경로 뒤집힘 (0) / 상자 밀림 | 0 / 0 | 0 / 0 | 0 / 0 |
+| 도착 위치 오차, 최대 (≤ 5 cm) | 1.9 cm | 1.9 cm | 1.8 cm |
+| 상자 최소 간격, 최소 / 평균 (≥ 5 cm) | 5.7 / 6.6 cm | **4.9** / 5.8 cm | 36.5 cm(상자 멀리) |
+| 간격 5 cm 미만인 시행 | 0/20 | 1/20 (4.9 cm) | 0 |
+| 시간, 평균 / 최대 (≤ 25 s) | 12.2 / 13.4 s | 18.2 / 21.3 s | 10.5 / 10.5 s |
+| 몸 방향 이탈, 최대 (≤ 20°) | 8° | 9° | 0° |
+| 전역 경로 뒤집힘 (0) / 상자 1 m 안 정지 / 상자 밀림 | 0 / 0 s / 0 | 0 / 0 s / 0 | 0 / 0 s / 0 |
 
-판정: 성공률·도착 정확도·뒤집힘·접촉 없음은 **달성**. 상자 간격은 **평균은 달성**했지만 시행마다 보면 2.6~3.5 cm까지 내려가는 경우가 있고(접촉은 0회),
-S4는 시간과 몸 방향 이탈이 일부 시행에서 목표를 넘는다. 즉 "평균 기준 달성, 시행별 엄격 기준 미달"이다. 실기 검증(체크리스트 8.15 6번)은 하지 않았다.
+판정: 모든 기준을 함께 만족한 시행이 S2 20/20, S4 19/20(1회가 간격 4.9 cm), S1 10/10 → 계획서 기준 "≥ 9/10" **달성**.
+간격을 매 시행 최소로 엄격하게 보면 S4 1회가 0.1 cm 모자랐다(간격 계산의 몸 크기 가정 오차와 같은 크기). 실기 검증(8.15 6번)은 하지 않았다.
+
+### 1차 결과 (2026-10-20, `final_*`, BaseObstacle 설정) — 2차로 대체
+성공 50/50, 오차 ≤ 1.9 cm였지만 간격 5 cm 미만이 S2 4/20·S4 8/20(최소 2.6 cm), S4 25 s 초과 5/20, 몸 방향 20° 초과 3/20였다. 평균만 목표를 넘었다.
 
 ## 2. 사용한 시나리오 (지도 좌표 = Gazebo 월드)
 - S1: (0.55, 0.40, 90°) → (0.55, 1.20), 상자 (1.21, 0.78)(경로에서 멀리).
 - S2: A (1.02, 0.30, 83°) ↔ B (1.00, 1.25, −97°), 상자 중심 (1.21, 0.78) — 상자 왼쪽 모서리가 경로선 근처.
-- S4: A ↔ B, 상자 중심 (1.00, 0.78) — 경로선 한가운데.
-- 계획서의 B (1.00, 1.45)는 스캔 방에서 도달 불가라 북쪽 끝을 20 cm 낮췄다. 로봇 footprint 반폭은 (0.166, 0.13)으로 간격을 계산한다.
+- S4: A ↔ B, 상자 중심 (1.00, 0.78) — 경로선 한가운데. B 출발 시 몸이 상자에서 18 cm.
+- 계획서의 B (1.00, 1.45)는 스캔 방에서 도달 불가라 북쪽 끝을 20 cm 낮췄다(상자–B 거리는 계획과 같음). 출발 자세는 경로 방향과 양쪽 모두 8° 어긋난다.
+- 간격은 몸 반폭 (0.166, 0.13) 직사각형과 상자 직사각형 사이 최단 거리(정답 자세).
 
 ## 3. 무엇을 고쳐서 여기까지 왔나 (순서대로, 원인 → 조치 → 효과)
 | # | 원인 | 조치 | 효과 | 기록 |
@@ -38,35 +43,42 @@ S4는 시간과 몸 방향 이탈이 일부 시행에서 목표를 넘는다. �
 | 6 | 상자 두께보다 짧은 깊이 압출(0.15 m)·정면만 보이는 상자 | 압출 0.25 m(sim만) | 상자가 코스트맵에서 온전히 보임 | 050 |
 | 7 | depth 레이어 레이캐스트가 상자 쪽을 지움 | depth 레이어 `clearing: false` | 상자 유지 | 050 |
 | 8 | 팽창 반경 0.25 < 내접 반경 → 간격이 비용으로 안 나옴 | 0.30 + 완만한 구배 | S2 간격 2.8 → 5~6 cm | 050 |
-| 9 | S4에서 DWB가 제자리 회전(±0.12 rad/s)에 갇힘 | BaseObstacle 0.1→0.05, Twirling 10→30 | S4 12/12(멈춤 0) | 051 |
+| 9 | S4에서 DWB가 제자리 회전(±0.12 rad/s)에 갇힘 | (1차) BaseObstacle 0.1→0.05, Twirling 10→30 | S4 12/12(멈춤 0) | 051 |
 | 10 | 도착이 12~19 cm 못 미침(Smac 허용 오차로 목표=경로 끝) | 정밀 접근 노드 | 오차 1.7~1.9 cm | — |
+| 11 | (2차) 간격 미달 12회 전부 **몸 뒤쪽 모서리**가 상자를 지나 복귀할 때 스침, 몸이 경로보다 8° 틀어진 채 | BaseObstacle(중심 한 점) → ObstacleFootprint(몸 다각형) | 간격 최소 2.6 → 5 cm대 | 052 |
+| 12 | (2차) ObstacleFootprint가 한 주기 "No valid trajectories"를 내면 FollowPath 중단 → BT 5 s 대기 | `failure_tolerance` 1.0 s, local 해상도 2.5 cm, local 여유 3 cm | 정지 12 s → 0 s | 052 |
+| 13 | (2차) collision_monitor 감속 영역(몸 + 10 cm)이 계획 간격(6~10 cm)을 덮어 상자 옆에서 내내 절반 속도(B 출발 7~14 s) | 감속 영역 몸 + 5 cm(목표 간격과 같음), 정지 영역(몸 + 2 cm) 그대로 | S4 평균 23 → 18 s | 052 |
 
-## 4. 시도했지만 채택하지 않은 것 (수치는 4~6회 시험)
+## 4. 시도했지만 채택하지 않은 것 (수치는 S4 기준 4~6회 왕복 = 8~12회)
 | 변형 | 결과 | 판정 |
 |---|---|---|
 | footprint 여유만 5→8 cm (팽창 0.25) | 간격 개선 없음 | 폐기 |
-| ObstacleFootprint 평가자 + 여유 | S4에서 정지 | 폐기 |
 | 여유 12·16 cm (팽창 0.25) | 내접 반경 > 팽창 반경이라 구배가 사라져 오히려 우회 폭 감소 | 폐기 |
-| 팽창 0.33~0.40 | S2 간격 10~17 cm지만 S4 멈춤 증가(9/12), 0.40은 정지·timeout | 폐기(좁은 방) |
-| Oscillation 평가자 제거 | S4 9/12 | 폐기 |
-| 팽창 0.30 + 여유 7·8 cm | S4 간격 4.0~5.3 cm로 5 cm 설정과 같음 | 폐기(통로만 좁아짐) |
-| 팽창 0.33 + Twirling 30 | S4AB 3/6, 간격 음수 2회 | 폐기 |
-
-간격은 코스트맵 칸(5 cm)과 몸 뒤쪽 모서리가 우회 복귀 구간에서 상자 모서리를 스치는 기하에 묶여 있어, 비용 파라미터를 키우는 방식으로는 평균 5~6 cm에서 더 오르지 않았다.
+| 팽창 0.33~0.40 (BaseObstacle) | S2 간격 10~17 cm지만 S4 멈춤 증가(9/12), 0.40은 정지·timeout | 폐기(좁은 방) |
+| Oscillation 평가자 제거 | 9/12 | 폐기 |
+| 팽창 0.30 + 여유 7·8 cm (BaseObstacle) | 간격 4.0~5.3 cm로 5 cm 설정과 같음 | 폐기 |
+| 팽창 0.33 + Twirling 30 | AB 3/6, 간격 음수 2회 | 폐기 |
+| ObstacleFootprint + local 여유 8 cm | 4/12 (정지·timeout) | 폐기 |
+| ObstacleFootprint + `failure_tolerance` 없이 | 간격 OK, 상자 옆 5 s 정지 반복(평균 6~13 s), 시간 30~37 s | 폐기 |
+| DWB `sim_time` 1.5 → 1.0 | B 출발이 더 느려짐(최대 37.8 s) | 폐기 |
+| local 여유 3 → 2 cm | 간격 5 cm 미만 7/12 | 폐기 |
+| Twirling 30 → 20·15 (ObstacleFootprint) | 10/12·11/12, 멈춤 재발 | 폐기 |
 
 ## 5. 재현
 ```bash
 # host, 저장소 루트. 변형 파일 = tools/nav/ab_params/nav2_params_<이름>.yaml
 VARIANTS="sim_avoid" SCENS="S4 S2 S1" REPEATS=10 bash tools/sim/run_variants.sh > /tmp/log 2>&1
 # 또는 한 시나리오: TAG=t SCEN=S4 REPEATS=10 APPROACH=1 CTRL=dwb PARAMS=tools/nav/ab_params/nav2_params_sim_avoid.yaml bash tools/sim/sim_avoid_run.sh
-python3 tools/sim/avoid_trials.py summary --tag final_S4
+python3 tools/sim/avoid_trials.py summary --tag final2_S4
 ```
-원자료: `Log/sim_avoid/*.json`(시행별 정답 궤적·명령·/plan·지표), `Log/sim_avoid_trials*.csv`.
+원자료: `Log/sim_avoid/*.json`(시행별 정답 궤적·명령·/plan·collision_monitor 상태·지표), `Log/sim_avoid_trials*.csv`.
 진단 도구: `costmap_snapshot.py`(코스트맵 그림), `dwb_eval_probe.py`(DWB 평가자 점수), `corridor_width.py`, `costmap_probe.py`.
+Nav2 로그(`/tmp/av_nav.log`)에서 `No valid trajectories`·`Running wait`를 보면 컨트롤러 실패와 BT 대기를 바로 알 수 있다.
 
 ## 6. 한계와 다음 일
-- **실기 미검증**: 팽창·Twirling·BaseObstacle·depth 지우기 끔은 실기에 적용하지 않았다. 실기 B 5회(체크리스트 8.15 6번)는 사용자가 로봇 옆에 있을 때 한다.
+- **실기 미검증**: 이 변형(ObstacleFootprint, 해상도, failure_tolerance, 감속 영역, 팽창, depth 지우기 끔)은 실기에 적용하지 않았다. 실기 B 5회(체크리스트 8.15 6번)는 사용자가 로봇 옆에 있을 때 한다.
+  특히 감속 영역 축소와 depth 지우기 끔은 실기 안전·잔상 영향을 따로 확인해야 한다.
 - sim은 정답 자세로 위치를 초기화한다. 실기 도착 정확도는 AMCL(3~8 cm)이 한계다.
 - 좁은 통로(폭 0.45 m 등)에서 팽창·여유가 통과를 막는지 시험하지 않았다.
-- S4 시간·몸 방향 이탈이 일부 시행에서 목표를 넘는다(시작 직후 회전과 재계획이 겹치는 경우).
+- local 해상도 2.5 cm는 local 코스트맵 칸 수를 4배로 늘린다. Jetson에서의 컨트롤러 주기(10 Hz)는 확인하지 않았다.
 - sim 속도(RTF 0.45) 병목은 측정하지 않았다(렌더링/물리 추정).

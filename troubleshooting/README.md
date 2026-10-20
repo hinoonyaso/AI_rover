@@ -78,3 +78,4 @@
 | 049 | [시험 회차 2부터 정지·떨림: 순간이동 뒤 odom 프레임 local costmap의 유령 장애물](049-sim-teleport-ghost-obstacles.md) | 해결 (회차마다 costmap 비움) |
 | 050 | [깊이 장애물 오검출·상자 일부만 찍힘·옆을 지나면 지워짐·팽창 반경 < 내접 반경](050-sim-depth-obstacle-box-visibility.md) | 해결 (sim 전용) |
 | 051 | [상자 정면(S4)에서 DWB가 제자리 회전에 갇혀 정지](051-dwb-rotation-local-minimum-s4.md) | 해결 (sim 변형, 실기 미검증) |
+| 052 | [상자 간격 3 cm 안팎(몸 뒤 모서리), ObstacleFootprint 5 s 정지, collision_monitor 감속이 계획 간격을 덮음](052-sim-avoid-corner-clearance-and-slowdown.md) | 해결 (sim 변형, 실기 미검증) |

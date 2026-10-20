@@ -1,5 +1,5 @@
-# sim 회피 주행 시험용 최종 변형 (2026-10-20, docs/benchmarks/sim/avoidance_precision_20261020.md). 실기 설정이 아니다 — 실기에는 검증 전까지 적용하지 않는다.
-# base = nav2_params.yaml 의 DWB. 변경(이전→새): inflation_radius 0.25→0.30 (global/local), footprint_padding +0.05 (global/local), BaseObstacle.scale 0.1→0.05, Twirling.scale 10→30, depth_cloud clearing true→false (global/local), xy_goal_tolerance 0.20/0.18 (정밀 접근 노드가 마무리).
+# sim 회피 주행 시험용 최종 변형 (2026-10-21, docs/benchmarks/sim/avoidance_precision_20261020.md 2차). 실기 설정이 아니다 — 실기에는 검증 전까지 적용하지 않는다.
+# base = nav2_params.yaml 의 DWB. 변경(이전→새): inflation_radius 0.25→0.30 (global/local), footprint_padding global +0.05 / local +0.03, local resolution 0.05→0.025, BaseObstacle→ObstacleFootprint(scale 0.02), Twirling.scale 10→30, depth_cloud clearing true→false (global/local), controller failure_tolerance 0→1.0, collision_monitor FootprintSlow body+10cm→body+5cm, xy_goal_tolerance 0.20/0.18 (정밀 접근 노드가 마무리).
 # Nav2 stack params (checklist 8번, prd/slam-nav2.md).
 # 8.2=costmap, 8.3=planner_server, 8.4=controller_server(DWB), 8.5=bt_navigator,
 # 8.6=behavior_server. velocity_smoother는 jetrover_base의 기존 속도 제한(max_linear 0.2 m/s,
@@ -99,6 +99,7 @@ controller_server:
   ros__parameters:
     use_sim_time: false
     controller_frequency: 10.0
+    failure_tolerance: 1.0  # 0.0(기본) -> 1.0 (2026-10-21, sim 변형): 한 주기의 "No valid trajectories"로 FollowPath가 중단되고 BT가 5 s 대기하던 것 방지 / ride through one-cycle invalid sets
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.001
     min_theta_velocity_threshold: 0.001
@@ -211,9 +212,9 @@ controller_server:
       # PathAlign forward point onto the path more cheaply than vy -> heading drifted to ~30 deg and RotationShim took over
       # again (zig-zag). Twirling penalizes |w| so a holonomic base keeps its heading and corrects sideways with vy; final
       # heading is done by the shim (rotate_to_goal_heading). 한글: 주행 중 회전에 벌점 → 몸 방향 유지, 옆 보정은 vy로.
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist", "Twirling"]
+      critics: ["RotateToGoal", "Oscillation", "ObstacleFootprint", "GoalAlign", "PathAlign", "PathDist", "GoalDist", "Twirling"]
       Twirling.scale: 30.0  # 0.4 rad/s -> 4.0, vs PathAlign ~1-4 cells x 0.8
-      BaseObstacle.scale: 0.05  # 0.02 -> 0.1: 장애물 근처를 아슬아슬하게 지나가 상자를 침
+      ObstacleFootprint.scale: 0.02  # 0.02 -> 0.1: 장애물 근처를 아슬아슬하게 지나가 상자를 침
       PathAlign.scale: 32.0
       GoalAlign.scale: 4.0  # 24 -> 4 (2026-10-06): 회전을 덜 선호해서 메카넘 평행이동 위주로 비킨다
       PathAlign.forward_point_distance: 0.1
@@ -306,7 +307,7 @@ collision_monitor:
       type: "polygon"
       action_type: "slowdown"
       slowdown_ratio: 0.5
-      points: "[[0.28, 0.22], [0.28, -0.22], [-0.28, -0.22], [-0.28, 0.22]]"  # 2026-10-09: body + ~10 cm (was [[0.26, 0.28],...]) / 실측 몸 + 약 10 cm
+      points: "[[0.23, 0.18], [0.23, -0.18], [-0.23, -0.18], [-0.23, 0.18]]"  # sim 변형 2026-10-21: body + ~5 cm(목표 간격). was [[0.28, 0.22],...] body + ~10 cm (was [[0.26, 0.28],...]) / 실측 몸 + 약 10 cm
       min_points: 6
       visualize: true  # 2026-10-07: RViz에서 정지/감속 영역 확인용 / show polygons in RViz
       enabled: true
@@ -381,12 +382,12 @@ local_costmap:
       rolling_window: true
       width: 3
       height: 3
-      resolution: 0.05
+      resolution: 0.025
       # 2026-10-09: tape-measured body 0.36 (front-back) x 0.26 m (left-right) (Hiwonder spec ~0.36 x 0.27) + 1 cm each side.
       # Previous 0.36 x 0.50 (2026-10-06, never measured) made the planner detour ~40 cm around a box that overlapped by ~5 cm.
       # 한글: 줄자 실측 36 x 26 cm + 사방 1 cm. 이전 0.36 x 0.50(미실측)은 폭이 거의 2배라 과도하게 우회했다.
       footprint: "[[0.19, 0.14], [0.19, -0.14], [-0.19, -0.14], [-0.19, 0.14]]"
-      footprint_padding: 0.05
+      footprint_padding: 0.03
       always_send_full_costmap: true
       # 2026-10-07 (troubleshooting/031): scan and depth split into TWO obstacle layers. With one
       # layer, LiDAR clearing erased depth-only boxes (so 2026-10-06 turned scan clearing off), but
