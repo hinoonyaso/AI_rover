@@ -80,3 +80,4 @@
 | 051 | [상자 정면(S4)에서 DWB가 제자리 회전에 갇혀 정지](051-dwb-rotation-local-minimum-s4.md) | 해결 (sim 변형, 실기 미검증) |
 | 052 | [상자 간격 3 cm 안팎(몸 뒤 모서리), ObstacleFootprint 5 s 정지, collision_monitor 감속이 계획 간격을 덮음](052-sim-avoid-corner-clearance-and-slowdown.md) | 해결 (sim 변형, 실기 미검증) |
 | 053 | [동적 장애물 sim 준비: 바닥 아래로 숨긴 모델이 LiDAR에 남음, 지나간 장애물 흔적이 코스트맵에 남음(depth는 장애물 점만 보냄), timeout으로 끊긴 시험의 잔여 프로세스](053-sim-dynamic-obstacles-setup.md) | 해결 (시야 끝 너머 3칸 남음) |
+| 054 | [동적 장애물 반응형: 사람 모델이 로봇 쪽으로 걸어 들어간 시험 결함, 2D 지우기가 낮은 상자를 지움(VoxelLayer), 새 장애물 앞 87° 회전, BT 대기 두 번](054-sim-dynamic-obstacle-reactive.md) | 해결 (sim 변형, 실기 미검증) |

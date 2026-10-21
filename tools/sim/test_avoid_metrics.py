@@ -166,7 +166,7 @@ def test_dynamic_box_contact_and_parked():
     bx = np.where(t < 3.0, 9.0, 1.0)                  # box appears on the line at y 0.85 at t 3 (robot drives through it)
     obs = [{'kind': 'box', 'x': bx, 'y': np.full_like(t, 0.85), 'yaw': np.zeros_like(t)}]
     out = M.dynamic_summary(gt, obs, (1.0, 0.3, math.pi / 2), (1.0, 1.4, math.pi / 2))
-    assert out['dyn_contact'] and out['dyn_min_gap_m'] < 0
+    assert out['dyn_contact'] and out['dyn_min_gap_m'] < 0 and out['dyn_contact_moving']
     none = M.dynamic_summary(gt, [{'kind': 'box', 'x': np.full_like(t, 9.0), 'y': t * 0, 'yaw': t * 0}],
                              (1.0, 0.3, math.pi / 2), (1.0, 1.4, math.pi / 2))
     assert math.isnan(none['dyn_min_gap_m']) and not none['dyn_contact'] and math.isnan(none['dyn_resume_delay_s'])

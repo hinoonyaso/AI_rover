@@ -239,6 +239,8 @@ def dynamic_summary(gt, obstacles, start, goal, footprint_half=(0.166, 0.13), le
             if 0.0 < ahead < remaining + footprint_half[0] and abs(lat) < half_w + reach:
                 blocking[i] = True
     in_room = np.isfinite(gaps)
+    # 접촉 중 로봇이 움직였나(로봇 탓) / was the robot moving during contact (robot's fault vs obstacle walking into it)
+    contact_moving = bool(np.any(in_room & (gaps <= 0.0) & (speed >= 0.02)))
     stopped = (speed < STOP_SPEED) & (t - t[0] > 1.0) & (np.hypot(rx - goal[0], ry - goal[1]) > 0.15)
     near = in_room & (gaps < DYN_NEAR_M)
     first_stop = np.nonzero(stopped & near)[0]
@@ -256,6 +258,7 @@ def dynamic_summary(gt, obstacles, start, goal, footprint_half=(0.166, 0.13), le
     return {
         'dyn_min_gap_m': float(gaps[in_room].min()) if in_room.any() else float('nan'),
         'dyn_contact': bool(in_room.any() and gaps[in_room].min() <= 0.0),
+        'dyn_contact_moving': contact_moving,
         'dyn_stop_gap_m': float(gaps[first_stop[0]]) if len(first_stop) else float('nan'),
         'dyn_wait_s': float(np.sum(dt[stopped])),
         'dyn_resume_delay_s': float(max(delays)) if delays else float('nan'),

@@ -129,6 +129,11 @@
 | (sim 변형, 최종) `depth_cloud.clearing` | false → **true** (실기와 같음) | 2026-10-21 | 몸 다각형 검사 뒤에는 켜도 S2 20/20·S4 18/20·S1 10/10, 간격 최소 5.0 cm. 끄면 움직이는 물체 잔상 | troubleshooting/050 |
 | (인식, 기본값 불변) `sparse_point_cloud.publish_clearing` / `clearing_stride_factor` | 새 파라미터, 기본 **false** / 2 (sim launch만 true, `SIM_DEPTH_CLEARING`) | 2026-10-22 | 장애물 점만 보내서 지나간 장애물 흔적을 지울 광선이 없었음. 빈 바닥 점을 `depth/points_clear`로 | troubleshooting/053 |
 | (sim 변형 `nav2_params_dyn_clr.yaml`) depth 레이어 관측원 `depth_clear` | 추가(marking false, clearing true, min_obstacle_height −0.2) | 2026-10-22 | 흔적 D1 80→3칸, D3 154→0칸. 남은 3칸은 카메라 바닥 시야 끝 너머 | troubleshooting/053 |
+| (sim 변형 `nav2_params_sim_dyn.yaml`) BT | `navigate_to_pose_no_backup.xml` → **`navigate_to_pose_wait_obstacle.xml`**(PathLongerOnApproach: 1.1배/5 s 시도 → **1.2배/3 s**) | 2026-10-22 | 갑자기 나타난 장애물 앞에서 멈추고 기다림. 1.1/5 s는 두 번 대기(9~14 s)·재출발 2.1 s | troubleshooting/054 |
+| (sim 변형) collision_monitor `TallStop` | 추가: stop, `sources_names: [scan]`, 몸 + 12 cm → **앞 16 / 옆·뒤 12 cm** | 2026-10-22 | 사람에게 5~7 cm까지 붙음(D5). LiDAR에 안 보이는 낮은 상자 회피엔 영향 없음. 대가: 벽 근처 12~16 cm 안 진입 불가 | troubleshooting/054 |
+| (sim 변형, 시도 후 폐기) collision_monitor `approach` 1.0 s | — | 2026-10-22 | 사람 간격 개선 없음(5.7~7.1 cm) | 벤치마크 3절 H2 |
+| (sim 변형) depth 레이어 plugin | ObstacleLayer → **VoxelLayer**(origin_z 0, z_resolution 0.05, z_voxels 10) | 2026-10-22 | 2D 지우기 광선이 낮은 상자를 지워 S4 간격 6.0→3.9 cm. 3D로 회복(5.3~5.7) | troubleshooting/054 |
+| (sim 변형) RotationShim `angular_dist_threshold` | 1.4 → **1.65** | 2026-10-22 | 갑자기 나타난 상자 15 cm 앞에서 다시 출발할 때 87° 제자리 회전 → 간격 3.9 cm. S2/S4 회귀 없음 | troubleshooting/054 |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

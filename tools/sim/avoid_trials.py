@@ -77,7 +77,8 @@ FIELDS = ['tag', 'scenario', 'leg', 'n', 'stamp', 'success', 'status', 'nav_stat
           'min_clearance_m', 'box_moved_m', 'detour_width_m', 'vy_flips_near', 'vy_flips_per_s_near',
           'stopped_s_near', 'near_time_s', 'heading_dev_deg_near', 'heading_dev_deg_all', 'plan_flips',
           'plan_sides', 'n_plans', 'amcl_init_err_m', 'amcl_end_err_m',
-          'dyn_min_gap_m', 'dyn_contact', 'dyn_stop_gap_m', 'dyn_wait_s', 'dyn_resume_delay_s', 'dyn_blocked_s']
+          'dyn_min_gap_m', 'dyn_contact', 'dyn_contact_moving', 'dyn_stop_gap_m', 'dyn_wait_s', 'dyn_resume_delay_s',
+          'dyn_blocked_s']
 
 
 def quat_yaw(q):
@@ -386,6 +387,7 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
               f'err {out["pos_err_m"] * 100:4.1f} cm  dyn gap {out["dyn_min_gap_m"] * 100:5.1f} cm  '
               f'stop gap {out["dyn_stop_gap_m"] * 100:5.1f} cm  wait {out["dyn_wait_s"]:4.1f} s  '
               f'resume {out["dyn_resume_delay_s"]:4.1f} s  blocked {out["dyn_blocked_s"]:4.1f} s  '
+              f'{"CONTACT(robot moving) " if out["dyn_contact_moving"] else ("contact(robot still) " if out["dyn_contact"] else "")}'
               f'hdg {out["heading_dev_deg_all"]:4.0f} deg'
               + (f'  [nav {nav_status} {out["nav_time_s"]:.1f} s, approach {approach_status} {approach_time:.1f} s]'
                  if approach else ''),

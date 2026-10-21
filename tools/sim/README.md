@@ -66,3 +66,11 @@ python3 tools/sim/avoid_trials.py summary --tag t
 - 진단: `costmap_snapshot.py`(코스트맵 그림, `--at` 초 / `--near-box` m), `dwb_eval_probe.py`(DWB 평가자 점수), `corridor_width.py`, `costmap_probe.py`, `depth_fp_survey.py`, `check_depth_obstacles.py`, `plant_response.py`.
 - 주의: 순간이동 뒤 costmap을 비운다(troubleshooting/049). host 시험 스크립트·로그를 `/tmp`에 두면 재부팅에 사라진다.
 
+## 동적 장애물 시험 (2026-10-22, 체크리스트 8.16, 결과 `docs/benchmarks/sim/dynamic_obstacles_20261022.md`)
+- 모델: `room_lap2_objects.sdf`의 `person_0`(다리 r 6 cm 두 개 + 몸통), `dyn_box`(33×22×11 cm). 중력 끔, 평소 방 밖 (8, 8). 바닥 아래로 숨기면 LiDAR에 남는다.
+- 구동: `dyn_obstacles.py`(D1~D6 정의, `ObstacleDriver`가 `set_pose`를 sim 시간 20 Hz로 호출). 래퍼가 `set_pose` 브리지를 띄운다.
+- 실행: `TAG=t SCEN=dyn REPEATS=10 APPROACH=1 PARAMS=tools/nav/ab_params/nav2_params_sim_dyn.yaml bash tools/sim/sim_avoid_run.sh` (`SCEN=D1..D6` 하나씩도 됨, `all`은 예전처럼 S1/S2/S4).
+- 지표(`avoid_metrics.dynamic_summary`): 장애물 최소 간격·접촉(`dyn_contact_moving` = 로봇이 움직이던 중), 처음 멈춘 순간 간격, 대기, 재출발 지연, 통로 막힘 시간.
+- 확인 도구: `check_dyn_obstacles.py`(속도·LiDAR/깊이 감지·흔적 지움). 깊이 점은 광학 프레임이라 3D 변환 필요.
+- 래퍼는 바깥 `timeout`/Ctrl-C에도 정리하고(trap), 이전 실행이 남아 있으면 시작하지 않는다(troubleshooting/053).
+

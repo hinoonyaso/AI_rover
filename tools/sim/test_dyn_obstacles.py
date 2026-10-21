@@ -48,9 +48,19 @@ def test_progress_and_triggers():
 
 def test_scenarios_cross_the_robot_line():
     sc = D.scenarios()
-    assert set(sc) == {'D1', 'D2', 'D3', 'D4'}
+    assert set(sc) == {'D1', 'D2', 'D3', 'D4', 'D5', 'D6'}
     for name in ('D1', 'D3'):
         m = sc[name]['motions'][0]
         xs = [p[0] for p in m.path]
         assert min(xs) < 1.0 < max(xs), name           # crosses x = 1.0 (the A-B line)
     assert sc['D1']['motions'][0] is not D.scenarios()['D1']['motions'][0]   # fresh objects each call
+
+
+def test_pause_at_waypoint():
+    m = D.Motion('person_0', [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)], 0.5, pause_at=1, pause_s=4.0)
+    m.started_at = 0.0
+    assert D.motion_pose(m, 1.0) == (0.5, 0.0)
+    assert D.motion_pose(m, 2.0) == (1.0, 0.0)          # arrives at the waypoint
+    assert D.motion_pose(m, 5.5) == (1.0, 0.0)          # still standing (2 + 4 = 6 s)
+    x, _ = D.motion_pose(m, 7.0)
+    assert abs(x - 1.5) < 1e-9                          # walking again

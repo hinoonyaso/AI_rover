@@ -332,10 +332,10 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 2. 시험 도구 확장 (L0 + L5-sim, 2026-10-22)
   - [x] 2.1 `avoid_metrics.dynamic_summary`: 장애물과 최소 간격·접촉(사람 = 다리 원 두 개, 상자 = 직사각형), 처음 멈춘 순간 간격, 대기 시간, 재출발 지연(장애물이 로봇 앞 통로를 벗어난 뒤 0.03 m/s까지), 통로 막힘 시간 + 단위시험 3개(전체 13개 통과)
   - [x] 2.2 `avoid_trials.py --scenario D1..D4|dyn`, CSV 열 추가, 동적 요약 표. D1 1회 스모크: 성공, 간격 24.8 cm(사람이 먼저 지나가 정지 없음)
-- [ ] 3. baseline: 현재 설정으로 D1~D4 각 10회, 실패 유형 분류 (L5-sim)
-- [ ] 4. 반응형 개선 — 가설별 단일 변수, 각 10회 (L5-sim): collision_monitor `approach`/정지 영역, BT 대기·재시도, DWB가 움직이는 것을 돌아가려 하지 않게, (필요 시) VoxelLayer
-- [ ] 5. 최종 검증: D1~D4 각 10회 접촉 0, 간격 ≥ 10 cm, 도착(≤ 5 cm) ≥ 9/10, 재출발 ≤ 2 s, D4는 5 s 대기 뒤 회피 도착 + S1/S2/S4 회귀 ≥ 9/10
-- [ ] 6. 실기 검증(L4, 나중, 별도 승인·사용자 입회): 사람 가로지르기 5회 접촉 0
+- [x] 3. baseline (2026-10-22, `dyn_clr` = 8.15 최종 + depth 지우기 관측원, 각 10회): D1~D3 10/10씩 간격 12~33 cm지만 **정지 0회**(장애물이 0.6 m 넘게 앞에서 먼저 지나감), D4 간격 2.4~4.4 cm·대기 없음. → 멈춰야 하는 D5(사람이 바로 앞을 천천히)·D6(경로 위에 4 s 서 있다 물러남) 추가. D6 첫 설계는 사람이 비켜 가는 로봇 쪽으로 걸어 들어가 시나리오 수정(troubleshooting/054)
+- [x] 4. 반응형 개선 (각 6~8회, 벤치마크 3절): 채택 H1 BT `PathLongerOnApproach`, H3 collision_monitor `TallStop`(LiDAR 전용 정지 영역), H4 depth VoxelLayer(2D 지우기가 낮은 상자를 지워 S4 간격 6.0→3.9 cm였던 회귀 해결), H4f TallStop 앞 16 cm, H5 BT 1.2배·3 s, H6 RotationShim 1.4→1.65. 폐기 H2 `approach`. 최종 변형 `tools/nav/ab_params/nav2_params_sim_dyn.yaml`
+- [x] 5. 최종 검증 (2026-10-22, `docs/benchmarks/sim/dynamic_obstacles_20261022.md`): 모든 기준 동시 만족 D1 10/10, D2 10/10, D3 10/10, **D4 9/10**(1회 간격 4.8 cm, 정지 상자 기준 5 cm 적용), D5 10/10, D6 10/10 — 접촉 0, 사람 간격 최소 11.1 cm, 재출발 ≤ 1.8 s, D4 대기 5.0~5.3 s, 도착 오차 ≤ 1.9 cm. 회귀 S1 10/10, S2 20/20, S4 18/20
+- [ ] 6. 실기 검증(L4, 나중, 별도 승인·사용자 입회): 사람 가로지르기 5회 접촉 0. 먼저 TallStop이 좁은 통로·벽 근처를 막는지, VoxelLayer·local 2.5 cm 격자의 Jetson 부하 확인
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해

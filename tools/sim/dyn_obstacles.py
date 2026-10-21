@@ -2,7 +2,7 @@
 # 한글: Gazebo 동적 장애물(사람, 낮은 상자)을 정해진 경로·속도로 움직이는 구동기와 시나리오 D1~D4 (체크리스트 8.16, host).
 #       움직임 계산은 순수 함수(단위시험 test_dyn_obstacles.py), 실제 이동은 ros_gz_bridge로 연결한 /world/<w>/set_pose 서비스.
 #       모델은 room_lap2_objects.sdf의 person_0, dyn_box(중력 끔, 평소 방 밖 (8, 8)에 세워 둠).
-"""Kinematic driver for the dynamic-obstacle test models and the D1-D4 scenarios (checklist 8.16, host).
+"""Kinematic driver for the dynamic-obstacle test models and the D1-D6 scenarios (checklist 8.16, host).
 
 Models (room_lap2_objects.sdf): person_0 (two legs r 6 cm that cross the LiDAR plane + torso) and dyn_box (33 x 22 x 11 cm,
 below the LiDAR, seen only by the depth camera). Both have gravity off and are parked outside the room at (8, 8).
@@ -39,6 +39,8 @@ class Motion:
     after_s: float = None           # trigger: seconds after the goal was sent / 목표 보낸 뒤 초
     robot_progress_m: float = None  # trigger: robot advanced this far along start->goal / 로봇 진행 거리
     park_at_end: bool = True        # park outside the room when the path ends / 끝나면 방 밖으로
+    pause_at: int = None            # waypoint index to stand still at / 멈춰 설 경유점 번호
+    pause_s: float = 0.0            # seconds standing there / 서 있는 시간
     started_at: float = field(default=None, repr=False)
 
 
@@ -65,7 +67,13 @@ def motion_pose(m, t):
         return None
     if m.speed <= 0.0:
         return m.path[0]
-    p, done = point_along(m.path, m.speed * (t - m.started_at))
+    d = m.speed * (t - m.started_at)
+    if m.pause_at is not None and m.pause_s > 0.0:
+        # 경유점 pause_at에서 pause_s초 서 있다가 계속 / stand at waypoint pause_at for pause_s, then go on
+        d_pause = path_length(m.path[:m.pause_at + 1])
+        if d > d_pause:
+            d = max(d_pause, d - m.speed * m.pause_s)
+    p, done = point_along(m.path, d)
     if done and m.park_at_end:
         return None
     return p
@@ -85,7 +93,7 @@ def triggered(m, t_since_goal, robot_progress):
 
 
 def scenarios():
-    """D1-D4 (prd/sim-dynamic-avoidance-test-plan.md). Fresh Motion objects each call (they keep trigger state).
+    """D1-D6 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22). Fresh Motion objects each call.
 
     Robot A (1.02, 0.30, 83 deg) -> B (1.00, 1.25). Crossing line y 1.00: the obstacle reaches the robot path while the
     robot centre is about 0.55-0.65 m before it (the scan room is too short for the planned 0.6-0.8 m everywhere).
@@ -102,6 +110,16 @@ def scenarios():
         'D3': {'legs': leg, 'motions': [Motion('dyn_box', [(1.55, 0.95), (0.25, 0.95)], 0.3, after_s=0.0)]},
         # D4 로봇이 5 cm 나아가면 앞 경로에 상자가 나타나 그대로 있음 / a box appears on the path and stays
         'D4': {'legs': leg, 'motions': [Motion('dyn_box', [(1.00, 0.85)], 0.0, robot_progress_m=0.05, park_at_end=False)]},
+        # D5 (2026-10-22 추가) 사람이 로봇 바로 앞을 0.3 m/s로 천천히 가로지름: 로봇이 5 cm 나아가면 출발, 로봇 중심에서 약 0.4 m 앞을 지남.
+        #    D1~D3은 장애물이 0.6 m 넘게 앞에서 먼저 지나가 '멈추고 기다리기'가 시험되지 않았다(baseline).
+        # person crosses slowly right in front (~0.4 m from the robot centre); D1-D3 never made the robot stop
+        'D5': {'legs': leg, 'motions': [Motion('person_0', [(1.55, 0.95), (0.25, 0.95)], 0.3, yaw_deg=180.0,
+                                               robot_progress_m=0.05)]},
+        # D6 (2026-10-22 추가) 사람이 경로 위로 들어와 4 s 서 있다가 왔던 쪽(오른쪽)으로 물러남. 처음엔 왼쪽으로 나가게 했는데, 로봇이 왼쪽으로
+        #    돌아가는 중이라 위치만 옮기는 사람 모델이 거의 멈춘 로봇 쪽으로 걸어 들어갔다(시나리오 결함, 6/6 '접촉').
+        # person stands on the path 4 s, then steps back to the right (leaving to the left walked it into the detouring robot)
+        'D6': {'legs': leg, 'motions': [Motion('person_0', [(1.55, 0.95), (1.00, 0.95), (1.55, 0.95)], 0.4, yaw_deg=180.0,
+                                               robot_progress_m=0.05, pause_at=1, pause_s=4.0)]},
     }
 
 

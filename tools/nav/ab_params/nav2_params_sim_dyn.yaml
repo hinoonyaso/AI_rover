@@ -1,0 +1,505 @@
+# sim 동적 장애물 대응 최종 변형 (2026-10-22, 체크리스트 8.16, docs/benchmarks/sim/dynamic_obstacles_20261022.md). 실기 설정이 아니다.
+# = nav2_params_sim_avoid.yaml(8.15 최종) + depth 레이어 VoxelLayer(3D 지우기) + 지우기 전용 관측원 depth_clear(sparse_point_cloud publish_clearing) +
+#   BT navigate_to_pose_wait_obstacle.xml(PathLongerOnApproach 1.2배, 3 s 대기) + collision_monitor TallStop(LiDAR 전용, 몸 + 앞 16 / 옆·뒤 12 cm) +
+#   RotationShim angular_dist_threshold 1.4 -> 1.65. 아래 두 줄은 이전(8.15) 변형의 머리말이다.
+# sim 회피 주행 시험용 최종 변형 (2026-10-21, docs/benchmarks/sim/avoidance_precision_20261020.md 2차 + depth 지우기 다시 켬). 실기 설정이 아니다 — 실기에는 검증 전까지 적용하지 않는다.
+# base = nav2_params.yaml 의 DWB. 변경(이전→새): inflation_radius 0.25→0.30 (global/local), footprint_padding global +0.05 / local +0.03, local resolution 0.05→0.025, BaseObstacle→ObstacleFootprint(scale 0.02), Twirling.scale 10→30, depth_cloud clearing은 실기와 같이 true 유지(1차에서 껐다가 2차 뒤 다시 켬), controller failure_tolerance 0→1.0, collision_monitor FootprintSlow body+10cm→body+5cm, xy_goal_tolerance 0.20/0.18 (정밀 접근 노드가 마무리).
+# Nav2 stack params (checklist 8번, prd/slam-nav2.md).
+# 8.2=costmap, 8.3=planner_server, 8.4=controller_server(DWB), 8.5=bt_navigator,
+# 8.6=behavior_server. velocity_smoother는 jetrover_base의 기존 속도 제한(max_linear 0.2 m/s,
+# max_angular 1.0 rad/s, base.yaml)과 똑같이 맞춰서 Nav2가 그 이상으로 못 내게 막는다(안전,
+# prd/slam-nav2-test-plan.md 안전 메모).
+#
+# footprint: 바퀴 중심 x=±0.0975, y=±0.1121(jetrover_base/config/base.yaml wheelbase/track_width와
+# 일치), 바퀴 반경 0.0485(wheel_diameter 0.097/2) -> 바퀴 끝까지 x=±0.146, y=±0.161. 약간 여유를
+# 둬서 x=±0.16, y=±0.18 사각형으로 잡는다. 로봇팔은 주행 중 안 움직이는 걸 전제로 2D footprint에는
+# 안 넣는다(계획: 주행 중엔 팔을 접어두는 convention, 아직 강제 안 함 — prd/jetinspect-m-pipelines.md 16절).
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: false
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_footprint
+      resolution: 0.05
+      # 2026-10-09: tape-measured body 0.36 (front-back) x 0.26 m (left-right) (Hiwonder spec ~0.36 x 0.27) + 1 cm each side.
+      # Previous 0.36 x 0.50 (2026-10-06, never measured) made the planner detour ~40 cm around a box that overlapped by ~5 cm.
+      # 한글: 줄자 실측 36 x 26 cm + 사방 1 cm. 이전 0.36 x 0.50(미실측)은 폭이 거의 2배라 과도하게 우회했다.
+      footprint: "[[0.19, 0.14], [0.19, -0.14], [-0.19, -0.14], [-0.19, 0.14]]"
+      footprint_padding: 0.05
+      track_unknown_space: true
+      always_send_full_costmap: true
+      # 2026-10-09 (box avoidance): scan and depth split into separate layers here too (same as local, 2026-10-07).
+      # With one layer the LiDAR rays passing over the low box erased its depth marks, so the global plan went straight
+      # through the box (seen on the costmap/plan plot) and both DWB and MPPI got stuck in front of it.
+      # 한글: global도 LiDAR/depth 레이어 분리. LiDAR가 depth 상자를 지워 전역 경로가 상자를 관통했다.
+      plugins: ["static_layer", "obstacle_layer", "depth_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
+          clearing: true  # map frame: old LiDAR marks must clear after AMCL corrections; cannot touch depth_layer / depth 레이어는 못 지움
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 12.0
+          obstacle_max_range: 12.0
+      depth_layer:
+        # sim 변형 2026-10-22 (8.16 H4): ObstacleLayer -> VoxelLayer. 2D 지우기는 높이를 몰라 바닥 점까지 가는 광선이 낮은 상자 위를 지나며
+        # 상자 칸을 지웠다(depth_clear 추가 후 S4 간격 6.0 -> 3.9 cm). 3D로 지우면 상자 위 광선은 상자 칸(높이 0~0.11 m)을 건드리지 않는다.
+        # Height-aware clearing: rays to the floor beyond a low box pass above it and no longer erase it.
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: true
+        publish_voxel_map: false
+        origin_z: 0.0
+        z_resolution: 0.05
+        z_voxels: 10
+        max_obstacle_height: 2.0
+        mark_threshold: 0
+        unknown_threshold: 15
+        # depth_cloud added to the GLOBAL costmap too (2026-10-05, 회피 시험): the LiDAR does not see
+        # low obstacles in front of the robot (a box was invisible in /scan), so with depth only in
+        # the local costmap the global planner kept planning straight through it and DWB (which
+        # only follows the global path) just stopped in front of it. Short range (3 m) like local.
+        # 한글: depth를 local에만 넣으면 전역 경로가 장애물을 통과하게 계획돼 DWB가 앞에서 멈춘다.
+        observation_sources: depth_cloud depth_clear
+        # depth_clear (sim 변형 2026-10-22, 8.16, troubleshooting/053): 빈 바닥 점으로 지우기만 한다(표시 안 함). depth_cloud는 장애물 점만
+        # 있어서 장애물이 떠난 뒤 지울 광선이 없었다. 바닥 점을 받아야 하므로 min_obstacle_height -0.2(launch의 -0.1→0.09 치환을 피함).
+        # Clearing-only source of free-floor points from sparse_point_cloud (publish_clearing): depth_cloud alone left marks behind.
+        depth_clear:
+          topic: /depth_cam/depth/points_clear
+          max_obstacle_height: 2.0
+          min_obstacle_height: -0.2
+          clearing: true
+          marking: false
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          obstacle_max_range: 3.0
+        depth_cloud:
+          topic: /depth_cam/depth/points_sparse
+          max_obstacle_height: 2.0
+          min_obstacle_height: -0.1
+          clearing: true
+          marking: true
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          obstacle_max_range: 3.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 10.0  # 3 -> 5 (2026-10-06) -> 10 (2026-10-09): cost now falls off quickly so detours stay close (box trial M3 detoured 41 cm where ~10 cm was enough) / 장애물 근처 비용을 빨리 줄여 우회 폭 축소
+        # 0.3 -> 0.2 (2026-10-05): footprint(~0.16-0.18m) + 0.3m inflation made the planner
+        # refuse "Start occupied" when the robot was simply near (not blocked by) an obstacle
+        # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
+        # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
+        # inscribed_radius. 0.2 clears that minimum with a little margin.
+        inflation_radius: 0.30  # 0.40 -> 0.25 (2026-10-09): with the measured footprint (inscribed 0.14) the 0.40 cost band pushed the box detour to ~40 cm (needed ~15). 0.25 -> 0.40 (2026-10-06): 상자를 여유 0으로 스치는 경로를 밀어내려고 완만한 비용 구간을 넓힘(통로를 막지는 않음): footprint 0.36x0.50(내접 0.18)에 맞춤. 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄
+
+# 8.3: SmacPlanner2D -- 순수 격자 A*라 회전반경 제약이 없다. Mecanum(holonomic)엔 적합, Ackermann류
+# 전용 파라미터(minimum_turning_radius 등)는 Hybrid 변형 얘기라 여기선 불필요.
+planner_server:
+  ros__parameters:
+    use_sim_time: false
+    expected_planner_frequency: 20.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_smac_planner::SmacPlanner2D"
+      tolerance: 0.25
+      downsample_costmap: false
+      allow_unknown: true
+      max_iterations: 1000000
+      max_planning_time: 5.0
+      cost_travel_multiplier: 2.0  # 2 -> 4 (2026-10-06) -> 2 (2026-10-09): 4 pushed the path far from any cost (41 cm detour for a 5 cm overlap) / 우회가 과도해서 원래 값으로
+
+# 8.4: DWB -- vy(옆이동) 샘플을 0이 아니게 열어둬야 mecanum의 홀로노믹 이동을 실제로 쓴다
+# (안 그러면 차동구동처럼 제자리회전+전진만 하게 됨). 속도 상한은 jetrover_base/config/base.yaml의
+# max_linear(0.2)/max_angular(1.0)과 동일하게 맞춤.
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 10.0
+    failure_tolerance: 1.0  # 0.0(기본) -> 1.0 (2026-10-21, sim 변형): 한 주기의 "No valid trajectories"로 FollowPath가 중단되고 BT가 5 s 대기하던 것 방지 / ride through one-cycle invalid sets
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      # 0.3 m/10 s -> 0.15 m/20 s (2026-10-06): 좁은 방에서 상자를 우회할 때 천천히 곡선으로 움직여 10 s에 0.3 m를 못 채워
+      # "Failed to make progress"로 중단됨. / Slow curved detours failed the 0.3 m/10 s check and aborted.
+      required_movement_radius: 0.15
+      movement_time_allowance: 20.0
+    general_goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      # 0.1 -> 0.2 (2026-10-05): 모든 시험에서 목표 0.15 m 앞에서 "Failed to make progress"로 멈췄다. 목표 근처에서
+      # DWB가 모터 데드존(펌웨어 PWM ±250) 아래의 아주 느린 속도를 내서 바퀴가 안 도는 것으로 추정. 정밀 정렬은 이후 AprilTag 단계.
+      # 0.15 -> 0.10 (2026-10-11, docs/benchmarks/navigation/goal_tolerance_20261011.md): the 2026-10-05 dead-zone assumption no
+      # longer holds with the own firmware (wheels follow 0.02 m/s at ratio 1.00). D/C x5: stop position error -3.5 cm
+      # (D 10.7 -> 7.1, C 12.7 -> 9.5 cm, scan-match estimate), within 10 cm 9/10 (0.15: 2/10), no stall/oscillation, +0.8 s.
+      # Roll back: tools/nav/ab_params/nav2_params_tol015.yaml (0.15 / DWB 0.12).
+      # 한글: 자체 펌웨어에서 모터 데드존이 사라져 0.10 가능. 정지 위치가 약 3.5 cm 가까워짐. 되돌리기: nav2_params_tol015.yaml.
+      xy_goal_tolerance: 0.20  # was 0.15 (0.1은 80초+recovery 7회 막힘 — 옛 펌웨어 데드존 때문이었음, 2026-10-05)
+      yaw_goal_tolerance: 0.4  # 0.25는 미세조정이 오래 걸림, 0.5는 우회 후 20도 틀어진 채 끝남 -> 절충 (2026-10-05)
+      stateful: true
+    FollowPath:
+      # 2026-10-07 (troubleshooting/031): RotationShim in front of DWB. The robot often started 15-20 deg off the
+      # path heading (goal yaw tolerance 0.4 rad) and DWB, being holonomic with a low GoalAlign weight, followed the
+      # path with vy instead of turning -> visible crab/diagonal driving, and the front-only depth camera then does
+      # not look where the robot goes. The shim first rotates in place to the path heading when the error exceeds
+      # angular_dist_threshold, then hands over to DWB (same FollowPath.* DWB parameters below).
+      # 한글: DWB 앞에 RotationShim. 경로 방향과 15도 넘게 틀어지면 먼저 제자리 회전(5도 이내까지) 후 DWB에 넘긴다.
+      # 몸이 비스듬한 채 옆이동으로 따라가던 대각선/게걸음 주행과, 정면 전용 depth 카메라가 진행 방향을 못 보는 문제 대책.
+      plugin: "nav2_rotation_shim_controller::RotationShimController"
+      primary_controller: "dwb_core::DWBLocalPlanner"
+      # 0.26/0.09 -> 0.6/0.2 (2026-10-09, box avoidance trial 2): with 5 deg to reach, the shim kept the controller for
+      # ~95% of the time near the box (DWB evaluated 7 times in 30 s): the detour path heading kept moving and its
+      # +-0.11 rad/s commands are below the wheel dead zone, so it never got inside 5 deg. Now only big misalignment
+      # (start of a goal) is the shim's job; smaller ones DWB handles with vy + Twirling. 한글: 큰 방향 차이만 shim이.
+      # 0.6 -> 1.05 + rotate_to_heading_once false + forward_sampling 0.6 (2026-10-09, user requirement): rotate the body
+      # only for real direction changes (corners, start of a goal), not for obstacle detours (30-45 deg local bends, done
+      # diagonally with vy while facing forward). Looking 0.6 m ahead averages out the small bends next to an obstacle.
+      # 한글: 진짜 방향 전환(60도 이상, 코너/출발)에서만 몸을 돌리고, 회피 중 작은 꺾임은 정면 유지 대각 이동으로.
+      angular_dist_threshold: 1.65  # sim 변형 2026-10-22 (8.16 H6): 1.4 -> 1.65(약 95도). 상자 바로 앞에서 다시 출발하면 경로가 거의 직각이라 몸을 87도 돌리며 모서리가 상자에 붙었다(D4) / was 1.4         # 60 -> ~80 deg (2026-10-09, trial M6): near the goal with a 25 cm side offset the direction to the goal exceeded 60 deg and the shim spun the robot; offsets like that are for diagonal driving / 이보다 크면 먼저 회전
+      angular_disengage_threshold: 0.2    # ~11 deg: stop rotating, hand to DWB / 이 안이면 DWB로
+      forward_sampling_distance: 0.6      # 0.3 -> 0.6: heading of the route, not of the local detour / 경로 전체 방향
+      rotate_to_heading_angular_vel: 0.4  # = max_vel_theta
+      max_angular_accel: 1.0              # = acc_lim_theta
+      simulate_ahead_time: 1.0            # collision check while rotating / 회전 중 충돌 검사
+      rotate_to_goal_heading: true        # final yaw also by the shim (DWB chose sub-dead-zone wz there)
+      # false -> true (2026-10-09, box avoidance trial 1): around an obstacle the replanned (1 Hz) detour path keeps
+      # changing heading, so the shim kept rotating +-0.4 rad/s back and forth and the camera lost the box -> 60 s
+      # timeout. Now it only rotates when the goal changes (isGoalChanged); detours are done by DWB with vy while
+      # Twirling holds the heading (camera keeps facing forward). 한글: 목표가 바뀔 때만 회전. 회피 중 경로가 바뀔 때마다
+      # 제자리 회전을 반복하던 문제. 회피는 DWB가 몸 방향 유지한 채 옆이동으로.
+      rotate_to_heading_once: false  # true -> false (2026-10-09): needed for corners; 60 deg / 0.6 m keep detours from triggering it
+      use_path_orientations: false        # SmacPlanner2D path orientations are not meaningful
+      debug_trajectory_details: true
+      # 2026-10-07 (Nav2 lateral wobble, troubleshooting/031): the default StandardTrajectoryGenerator
+      # passes sim_time (1.5 s) as the acceleration time to the velocity iterator, so with acc_lim_y 0.5
+      # every cycle samples the WHOLE vy range [-0.2, 0.2] regardless of the current vy -> DWB can flip
+      # from +vy to -vy between 10 Hz cycles (the smoother then lags behind). LimitedAccelGenerator uses
+      # 1/controller_frequency (0.1 s) instead, so the samples stay within current +-0.05 m/s.
+      # 한글: 기본 생성기는 가속 시간을 sim_time(1.5초)으로 잡아 매 주기 vy 전 범위(-0.2~0.2)를 후보로 뽑는다
+      # → 주기마다 좌/우가 뒤집힐 수 있음(게걸음/흔들림의 유력 원인). 제어 주기(0.1초) 기준으로 제한한다.
+      trajectory_generator_name: "dwb_plugins::LimitedAccelGenerator"
+      sim_period: 0.1  # = 1/controller_frequency; 없으면 경고 후 추정 / explicit, otherwise it warns and guesses
+      # 2026-10-05 troubleshooting/022: 후진 중 로봇 뒤쪽(LiDAR는 팔에 가려 160도 사각, depth_cloud는
+      # 전방 전용)이 통째로 센서 사각지대라서, recovery의 BackUp이나 DWB의 일반 후진 경로 선택 중에
+      # 사용자가 눈앞에서 물체를 미는 걸 목격함. 후방 센서가 생기기 전까지 후진을 완전히 차단한다
+      # (원래 값 -0.2).
+      min_vel_x: 0.0
+      min_vel_y: -0.2
+      max_vel_x: 0.12  # 0.2 -> 0.12 (2026-10-05): 감지거리 0.5m라 0.2m/s로는 옆으로 비킬 시간이 부족해 상자를 침
+      max_vel_y: 0.2
+      max_vel_theta: 0.4  # 1.0 -> 0.4 (2026-10-06): 회전을 섞으면 모서리가 크게 휩쓸려 안전망/DWB가 막아서 멈췄다. 메카넘이라 평행이동 위주로 비킨다
+      # Dead-zone guard (2026-10-07, troubleshooting/031). DWB rejects a sample only when |v_xy| < min_speed_xy
+      # AND |w| < min_speed_theta (kinematic_parameters.hpp isValidSpeed), so the 2026-10-06 min_speed_xy 0.05
+      # alone (min_speed_theta 0) never did anything. Measured on the floor: near a goal DWB chose vx 0.006 m/s
+      # (equal score to 0.025: both move < 1 costmap cell in sim_time), wheels did not turn, open-loop odom
+      # "moved" anyway, AMCL pulled it back -> 60 s timeout 15-20 cm short; at the A end it chose wz 0.02 and
+      # never left. Now a sample must translate >= 0.04 m/s or rotate >= 0.2 rad/s (~0.04 m/s at the wheels).
+      # 한글: 데드존 아래 속도 방지. 이동<0.04 이면서 회전<0.2인 궤적은 버린다. 목표 근처에서 0.006 m/s를 골라 바퀴가 안 돌고
+      # open-loop odom만 움직여 시간 초과되던 문제, A 끝에서 wz 0.02만 내고 출발 못 하던 문제.
+      min_speed_xy: 0.04
+      max_speed_xy: 0.15
+      min_speed_theta: 0.1  # 0.0 -> 0.1 (2026-10-07): makes min_speed_xy effective. Not 0.2: LimitedAccel can only reach acc_lim_theta*0.1 s = 0.1 rad/s from rest, 0.2 left NO in-place rotation sample (all turns aborted) / 0.2는 정지 상태에서 회전 후보가 없어 회전이 전부 실패
+      # 2026-10-05 회피 시험: 가속 한계가 커서 회피가 "요란"했다 -> 낮춤 (1.0/1.0/2.0 -> 0.5/0.5/1.0)
+      acc_lim_x: 0.5
+      acc_lim_y: 0.5
+      # 1.0 -> 3.0 (2026-10-09, troubleshooting/031): with LimitedAccel the vtheta window is current +-acc*0.1 s.
+      # RotationShim hands over while still turning at ~0.36 rad/s, so with 1.0 DWB could not pick w < 0.26 and kept
+      # turning while driving -> overshoot to +-30 deg, shim took over again -> zig-zag. 3.0 lets DWB choose w = 0 at
+      # the hand-over; velocity_smoother still limits the real angular accel to 1.0. 한글: shim이 회전 중에 넘겨도 DWB가
+      # 바로 회전 0을 고를 수 있게 샘플 창만 넓힘(실제 가속은 smoother가 1.0으로 제한). 지그재그 대책.
+      acc_lim_theta: 3.0
+      decel_lim_x: -0.5
+      decel_lim_y: -0.5
+      decel_lim_theta: -3.0  # see acc_lim_theta / acc_lim_theta 참고
+      vx_samples: 10
+      vy_samples: 11  # 10 -> 11 (2026-10-07): odd count -> symmetric grid around the current vy (step 0.01 with LimitedAccel) / 홀수로 현재 vy 기준 대칭
+      vtheta_samples: 20
+      sim_time: 1.5
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      transform_tolerance: 0.2
+      trans_stopped_velocity: 0.1
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+      # Twirling added 2026-10-09 (troubleshooting/031): DWB rotated up to 0.4 rad/s while driving because turning moves the
+      # PathAlign forward point onto the path more cheaply than vy -> heading drifted to ~30 deg and RotationShim took over
+      # again (zig-zag). Twirling penalizes |w| so a holonomic base keeps its heading and corrects sideways with vy; final
+      # heading is done by the shim (rotate_to_goal_heading). 한글: 주행 중 회전에 벌점 → 몸 방향 유지, 옆 보정은 vy로.
+      critics: ["RotateToGoal", "Oscillation", "ObstacleFootprint", "GoalAlign", "PathAlign", "PathDist", "GoalDist", "Twirling"]
+      Twirling.scale: 30.0  # 0.4 rad/s -> 4.0, vs PathAlign ~1-4 cells x 0.8
+      ObstacleFootprint.scale: 0.02  # 0.02 -> 0.1: 장애물 근처를 아슬아슬하게 지나가 상자를 침
+      PathAlign.scale: 32.0
+      GoalAlign.scale: 4.0  # 24 -> 4 (2026-10-06): 회전을 덜 선호해서 메카넘 평행이동 위주로 비킨다
+      PathAlign.forward_point_distance: 0.1
+      GoalAlign.forward_point_distance: 0.1
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 8.0  # 32 -> 8 (2026-10-06)
+      # 2026-10-07 (troubleshooting/031): RotateToGoal reads ITS OWN FollowPath.xy_goal_tolerance (default 0.25)
+      # and forbids translation inside it, while general_goal_checker needs 0.15 -> the robot parked 0.15-0.25 m
+      # short of every goal and failed with "Failed to make progress" (likely also 028's "always stops 0.15 m short").
+      # Keep it a bit below the goal checker's 0.15. 한글: DWB 자체 허용오차(기본 0.25)가 goal checker(0.15)보다 커서
+      # 목표 0.15~0.25 m 앞에서 이동을 멈추고 실패했다. goal checker보다 약간 작게 맞춘다.
+      # 0.12 -> 0.08 (2026-10-11): keep it below the goal checker's 0.10 (same rule as above).
+      xy_goal_tolerance: 0.18  # was 0.12
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
+
+# 8.5: 기본 BT XML(패키지 기본값) 사용 -- 커스텀 BT는 Mission 단계(개발순서 7단계)에서.
+# odom_topic은 jetrover_base의 EKF 출력(odometry/filtered -> odom으로 remap됨, base.launch.py)과
+# 일치시킨다.
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: map
+    robot_base_frame: base_footprint
+    odom_topic: /odom
+    transform_tolerance: 0.2
+    # 2026-10-05 troubleshooting/022: nav2_bt_navigator's default BT XMLs eagerly connect to a
+    # "backup" action server at load time, so removing the BackUp plugin below (behavior_server)
+    # without also removing <BackUp/> from the tree breaks bt_navigator startup. These are the
+    # stock default trees with only that one node deleted.
+    default_nav_to_pose_bt_xml: "/home/sang/jetrover_ws/install/jetrover_navigation/share/jetrover_navigation/config/behavior_trees/navigate_to_pose_wait_obstacle.xml"
+    default_nav_through_poses_bt_xml: "/home/sang/jetrover_ws/install/jetrover_navigation/share/jetrover_navigation/config/behavior_trees/navigate_through_poses_no_backup.xml"
+
+# 8.6: Recovery. global_frame을 odom으로 쓰는 게 Nav2 기본 관례(로컬 복구 동작이라).
+behavior_server:
+  ros__parameters:
+    use_sim_time: false
+    local_costmap_topic: local_costmap/costmap_raw
+    global_costmap_topic: global_costmap/costmap_raw
+    local_footprint_topic: local_costmap/published_footprint
+    global_footprint_topic: global_costmap/published_footprint
+    cycle_frequency: 10.0
+    # 2026-10-05 troubleshooting/022: "backup" recovery(nav2_behaviors::BackUp)는 DWB의 min_vel_x와
+    # 무관하게 behavior_server가 직접 후진 cmd_vel을 내보낸다. 로봇 뒤쪽은 LiDAR(팔에 가려 160도 사각)와
+    # depth_cloud(전방 전용) 둘 다 안 보는 완전 사각지대라서, recovery 발동 시 눈앞의 물체를 그대로
+    # 밀고 지나가는 걸 실기로 확인함 -- 후방 센서가 생기기 전까지 제거한다 (원래: ["spin", "backup", "wait"]).
+    behavior_plugins: ["spin", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+    global_frame: odom
+    robot_base_frame: base_footprint
+    transform_tolerance: 0.2
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 1.0
+    min_rotational_vel: 0.4
+    rotational_acc_lim: 2.0
+
+# nav2_bringup의 navigation_launch.py가 collision_monitor도 기본으로 띄운다(설정 안 하면 lifecycle
+# 부팅 자체가 실패함 -- 처음에 빠뜨렸던 것). controller_server/behavior_server 출력(cmd_vel)은
+# launch에서 cmd_vel_nav로 remap되고, velocity_smoother -> collision_monitor를 거쳐 최종 cmd_vel로
+# 나간다(base_node가 구독하는 바로 그 토픽). nav2_bringup 공식 예시(params/nav2_params.yaml)를
+# 그대로 따름, base_frame/odom_frame/scan topic만 우리 값으로 확인.
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_out_topic: "cmd_vel"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.2
+    source_timeout: 1.0
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+    # 2026-10-06: "approach"는 상자 옆을 따라 전진하며 비키는 정상 동작까지 0으로 만들어서(몸 옆 폭 안에 점이 있다는 이유)
+    # 로봇이 멈췄다. 정지 영역(몸 안에 점이 들어올 때만)과 감속 영역(몸보다 약 8cm 큼, 속도 50%)으로 분리한다.
+    # 한글: 평소 비킴은 DWB/플래너가 맡고, 안전망은 닿기 직전(정지) / 가까울 때 속도만 줄임(감속)으로 최소화한다.
+    polygons: ["FootprintStop", "FootprintSlow", "TallStop"]
+    FootprintStop:
+      type: "polygon"
+      action_type: "stop"
+      points: "[[0.20, 0.15], [0.20, -0.15], [-0.20, -0.15], [-0.20, 0.15]]"  # 2026-10-09: measured body 0.36 x 0.26 + ~2 cm (was [[0.17, 0.195],...]) / 실측 몸 + 약 2 cm
+      min_points: 6
+      visualize: true  # 2026-10-07: RViz에서 정지/감속 영역 확인용 / show polygons in RViz
+      enabled: true
+    FootprintSlow:
+      type: "polygon"
+      action_type: "slowdown"
+      slowdown_ratio: 0.5
+      points: "[[0.23, 0.18], [0.23, -0.18], [-0.23, -0.18], [-0.23, 0.18]]"  # sim 변형 2026-10-21: body + ~5 cm(목표 간격). was [[0.28, 0.22],...] body + ~10 cm (was [[0.26, 0.28],...]) / 실측 몸 + 약 10 cm
+      min_points: 6
+      visualize: true  # 2026-10-07: RViz에서 정지/감속 영역 확인용 / show polygons in RViz
+      enabled: true
+    # TallStop (sim 변형 2026-10-22, 8.16 H3): LiDAR에만 반응하는 정지 영역, 몸 + 약 12 cm. LiDAR 높이(약 15 cm 이상)에 걸리는 키 큰 장애물
+    # (사람 다리)엔 10 cm 넘게 떨어져 멈추고 기다린다. 낮은 상자는 LiDAR에 안 보여 이 영역과 무관(기존 depth 회피 그대로).
+    # 대가: 벽·가구에도 12 cm 안으로 못 들어간다(좁은 통로 시험 필요).
+    # Stop zone (body + ~12 cm) that only listens to the LiDAR: keep > 10 cm from tall obstacles such as legs and wait there.
+    TallStop:
+      type: "polygon"
+      action_type: "stop"
+      points: "[[0.33, 0.25], [0.33, -0.25], [-0.29, -0.25], [-0.29, 0.25]]"  # H4f: 앞쪽만 몸 + 약 16 cm / front body + ~16 cm
+      sources_names: ["scan"]
+      min_points: 6
+      visualize: false
+      enabled: true
+    # depth_cloud added 2026-10-05 (회피 시험): 상자는 LiDAR(/scan)에 안 보여서 이 안전망이 작동한 적이 없었다.
+    # 한글: depth 포인트클라우드를 안전망에도 연결. 낮은 물체(상자 높이 약 0.1m)를 잡으려고 min_height는 작게.
+    observation_sources: ["scan", "depth_cloud"]
+    scan:
+      type: "scan"
+      topic: "scan"
+      min_height: 0.15
+      max_height: 2.0
+      enabled: true
+    depth_cloud:
+      type: "pointcloud"
+      topic: "/depth_cam/depth/points_sparse"
+      min_height: 0.02
+      max_height: 1.0
+      enabled: true
+
+# nav2_bringup의 navigation_launch.py가 docking_server도 lifecycle 노드 목록에 하드코딩돼 있어서
+# (끄는 launch arg 없음) 설정이 없으면 configure 자체가 실패한다. 충전 도킹은 이번 단계 범위가
+# 아니라서(Battery/Safety는 개발순서 8단계, prd/jetinspect-m-pipelines.md 17절) **실제로는 안 쓰는
+# 플레이스홀더**로 nav2_bringup 공식 예시 그대로 채워서 lifecycle만 통과시킨다. 도킹 기능 자체를
+# 쓰려면 이 섹션을 실제 충전 스테이션에 맞게 다시 캘리브레이션해야 한다.
+docking_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 50.0
+    initial_perception_timeout: 5.0
+    wait_charge_timeout: 5.0
+    dock_approach_timeout: 30.0
+    undock_linear_tolerance: 0.05
+    undock_angular_tolerance: 0.1
+    max_retries: 3
+    base_frame: "base_link"
+    fixed_frame: "odom"
+    dock_backwards: false
+    dock_prestaging_tolerance: 0.5
+    dock_plugins: ["simple_charging_dock"]
+    simple_charging_dock:
+      plugin: "opennav_docking::SimpleChargingDock"
+      docking_threshold: 0.05
+      staging_x_offset: -0.7
+      use_external_detection_pose: true
+      use_battery_status: false
+      use_stall_detection: false
+      external_detection_timeout: 1.0
+      external_detection_translation_x: -0.18
+
+# jetrover_base/config/base.yaml의 속도 제한과 동일 -- Nav2가 그 이상 속도를 못 내게 한다.
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: false
+    smoothing_frequency: 20.0
+    scale_velocities: false
+    feedback: "OPEN_LOOP"
+    max_velocity: [0.12, 0.2, 0.4]
+    min_velocity: [-0.2, -0.2, -0.4]
+    max_accel: [0.5, 0.5, 1.0]  # 1.0/1.0/2.0 -> 0.5/0.5/1.0 (회피를 부드럽게)
+    max_decel: [-0.5, -0.5, -1.0]
+    odom_topic: "odom"
+    odom_duration: 0.1
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: false
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: odom
+      robot_base_frame: base_footprint
+      rolling_window: true
+      width: 3
+      height: 3
+      resolution: 0.025
+      # 2026-10-09: tape-measured body 0.36 (front-back) x 0.26 m (left-right) (Hiwonder spec ~0.36 x 0.27) + 1 cm each side.
+      # Previous 0.36 x 0.50 (2026-10-06, never measured) made the planner detour ~40 cm around a box that overlapped by ~5 cm.
+      # 한글: 줄자 실측 36 x 26 cm + 사방 1 cm. 이전 0.36 x 0.50(미실측)은 폭이 거의 2배라 과도하게 우회했다.
+      footprint: "[[0.19, 0.14], [0.19, -0.14], [-0.19, -0.14], [-0.19, 0.14]]"
+      footprint_padding: 0.03
+      always_send_full_costmap: true
+      # 2026-10-07 (troubleshooting/031): scan and depth split into TWO obstacle layers. With one
+      # layer, LiDAR clearing erased depth-only boxes (so 2026-10-06 turned scan clearing off), but
+      # then LiDAR marks were never cleared at all: after a few minutes the 3x3 m window was mostly
+      # stale lethal/inscribed cells (people walking by, rotation) and DWB rejected every forward
+      # trajectory (vx=0, wz=0.02). Each ObstacleLayer has its own grid and only clears its own
+      # marks, so LiDAR can clear LiDAR marks without touching the depth layer's box.
+      # 한글: LiDAR/depth를 별도 레이어로 분리. 한 레이어에서 LiDAR 지우기를 끄니 LiDAR 점이 영원히 쌓여
+      # 3x3 m 창이 거의 다 막혔다(DWB가 전진 궤적을 전부 거부). 레이어마다 자기 점만 지우므로 LiDAR가 depth 상자를 못 지운다.
+      plugins: ["obstacle_layer", "depth_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          min_obstacle_height: 0.0
+          clearing: true  # false -> true (2026-10-07): own layer now, cannot erase depth marks / 이제 별도 레이어라 depth 점은 못 지움
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 12.0
+          obstacle_max_range: 12.0
+      depth_layer:
+        # sim 변형 2026-10-22 (8.16 H4): ObstacleLayer -> VoxelLayer. 2D 지우기는 높이를 몰라 바닥 점까지 가는 광선이 낮은 상자 위를 지나며
+        # 상자 칸을 지웠다(depth_clear 추가 후 S4 간격 6.0 -> 3.9 cm). 3D로 지우면 상자 위 광선은 상자 칸(높이 0~0.11 m)을 건드리지 않는다.
+        # Height-aware clearing: rays to the floor beyond a low box pass above it and no longer erase it.
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: true
+        publish_voxel_map: false
+        origin_z: 0.0
+        z_resolution: 0.05
+        z_voxels: 10
+        max_obstacle_height: 2.0
+        mark_threshold: 0
+        unknown_threshold: 15
+        # depth_cloud added 2026-10-05 (checklist 8.12, troubleshooting/021): LiDAR misses thin/low
+        # obstacles (a chair leg caused a real collision). jetrover_perception's sparse_point_cloud
+        # node already self-filters anything inside the robot's own footprint (see its source) --
+        # min/max_obstacle_height here only bounds it further, no extra margin needed on our side.
+        # Depends on the arm being in its home pose (base.yaml arm_home_pose_rad) so the camera
+        # actually points at the floor ahead; a different arm pose just means this source sees
+        # nothing useful, not that it marks anything wrong. Local costmap only (short range,
+        # rolling window) -- not worth adding to the static global costmap too.
+        # 2026-10-06: LiDAR(높이 평면)는 낮은 상자 위로 지나가 상자 칸을 '빈 공간'으로 지움 -> 카메라 사각(<18cm)에 들어간
+        # 상자를 잊고 옆으로 밀었다. 그래서 이 레이어는 depth만 쓰고 depth만 지운다(2026-10-07 레이어 분리).
+        observation_sources: depth_cloud depth_clear
+        # depth_clear (sim 변형 2026-10-22, 8.16, troubleshooting/053): 빈 바닥 점으로 지우기만 한다(표시 안 함). depth_cloud는 장애물 점만
+        # 있어서 장애물이 떠난 뒤 지울 광선이 없었다. 바닥 점을 받아야 하므로 min_obstacle_height -0.2(launch의 -0.1→0.09 치환을 피함).
+        # Clearing-only source of free-floor points from sparse_point_cloud (publish_clearing): depth_cloud alone left marks behind.
+        depth_clear:
+          topic: /depth_cam/depth/points_clear
+          max_obstacle_height: 2.0
+          min_obstacle_height: -0.2
+          clearing: true
+          marking: false
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          obstacle_max_range: 3.0
+        depth_cloud:
+          topic: /depth_cam/depth/points_sparse
+          max_obstacle_height: 2.0
+          min_obstacle_height: -0.1  # small tolerance for floor noise, not a real "below floor" case
+          clearing: true
+          marking: true
+          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          obstacle_max_range: 3.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 10.0  # 3 -> 5 (2026-10-06) -> 10 (2026-10-09): cost now falls off quickly so detours stay close (box trial M3 detoured 41 cm where ~10 cm was enough) / 장애물 근처 비용을 빨리 줄여 우회 폭 축소
+        # 0.3 -> 0.2 (2026-10-05): footprint(~0.16-0.18m) + 0.3m inflation made the planner
+        # refuse "Start occupied" when the robot was simply near (not blocked by) an obstacle
+        # in this small room. Tried 0.15 first but Nav2 itself warned that's below the
+        # footprint's inscribed radius (0.17) -- unsafe, cost math assumes inflation_radius >=
+        # inscribed_radius. 0.2 clears that minimum with a little margin.
+        inflation_radius: 0.30  # 0.40 -> 0.25 (2026-10-09): with the measured footprint (inscribed 0.14) the 0.40 cost band pushed the box detour to ~40 cm (needed ~15). 0.25 -> 0.40 (2026-10-06): 상자를 여유 0으로 스치는 경로를 밀어내려고 완만한 비용 구간을 넓힘(통로를 막지는 않음): footprint 0.36x0.50(내접 0.18)에 맞춤. 0.2 -> 0.3 (2026-10-05): footprint 확대(내접 반경 0.24)에 맞춤, 0.2는 내접 반경보다 작아서 Nav2가 오류를 냄
