@@ -1,12 +1,30 @@
-# Gazebo 회피 주행 정밀도 — 결과와 최종 설정 (2026-10-20 1차, 2026-10-21 2차·최종)
+# Gazebo 회피 주행 정밀도 — 결과와 최종 설정 (2026-10-20 1차, 2026-10-21 2차, 2026-10-21 최종: 2차 + depth 지우기 켬)
 
 PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision-test-plan.md`, 체크리스트 8.15.
 시험은 host PC의 Gazebo Harmonic(headless, 실시간 대비 약 0.45배)에서 했고, 판정은 gz 모델의 **정답 자세**(로봇·상자)다.
-실기 설정은 바꾸지 않았다. 최종 설정은 시험용 변형 `tools/nav/ab_params/nav2_params_sim_avoid.yaml`이다(2차 설정, 파일 머리 2줄에 기본값 대비 변경 목록).
+실기 설정은 바꾸지 않았다. 최종 설정은 시험용 변형 `tools/nav/ab_params/nav2_params_sim_avoid.yaml`이다(2차 설정에서 depth 지우기만 실기처럼 다시 켬, 파일 머리 2줄에 기본값 대비 변경 목록).
 
-## 1. 최종 결과 — 2차 (2026-10-21, `Log/sim_avoid/final2_*.json`, 정밀 접근 포함, 정답 위치로 Nav2 초기화)
+## 0. 최종 결과 — depth 지우기 켬 (2026-10-21, `Log/sim_avoid/final_clr_*.json`)
+2차 설정(1절)에서 depth 레이어 `clearing`만 실기 설정과 같이 다시 `true`로 바꿨다. 끈 상태는 움직이는 물체의 잔상이 남아 실기·동적 회피에 불리하다.
+
+| 항목 (목표) | S2 (20회) | S4 (20회) | S1 (10회) |
+|---|---|---|---|
+| 성공 (≥ 9/10) | 20/20 | 20/20 | 10/10 |
+| 도착 위치 오차, 최대 (≤ 5 cm) | 1.9 cm | 1.9 cm | 1.9 cm |
+| 상자 최소 간격, 최소 / 평균 (≥ 5 cm) | 5.6 / 6.6 cm | 5.0 / 5.9 cm | 36.5 cm |
+| 시간, 최대 (≤ 25 s) | 13.1 s | 24.6 s | 10.6 s |
+| 몸 방향 이탈 20° 초과 | 0 | 1 (66°) | 0 |
+| 전역 경로 뒤집힘 | 0 | 1회 시행에서 1번 | 0 |
+| **모든 기준 동시 만족** | **20/20** | **18/20** | **10/10** |
+
+판정: 계획서 기준 "≥ 9/10" **달성**. S4에서 놓친 2회는
+(1) 목표 B 근처(상자를 지나 약 0.4 m)에서 한 번 크게 회전(yaw 157°, 상자 0.8 m 안이라 회피 구간 지표에 들어감, RotationShim의 목표 근처 회전으로 추정),
+(2) 출발 직후 처음 6번의 계획은 왼쪽, 이후 오른쪽 — 상자가 정면 한가운데라 방향을 정하는 동안 한 번 바뀜(간격 5.6 cm, 20.9 s로 정상 도착).
+지우기를 끈 2차(1절) 대비: 간격은 같거나 좋고(5 cm 미만 1 → 0), 꼬리 사례가 1 → 2.
+
+## 1. 2차 결과 — depth 지우기 끔 (2026-10-21, `Log/sim_avoid/final2_*.json`, 정밀 접근 포함, 정답 위치로 Nav2 초기화)
 설정: DWB + RotationShim, **ObstacleFootprint**(몸 다각형 검사, scale 0.02), 팽창 반경 0.30, footprint 여유 global +5 / local +3 cm,
-**local 코스트맵 해상도 2.5 cm**, Twirling 30, depth 레이어 지우기 끔, **controller `failure_tolerance` 1.0 s**,
+**local 코스트맵 해상도 2.5 cm**, Twirling 30, depth 레이어 지우기 끔(0절에서 다시 켬), **controller `failure_tolerance` 1.0 s**,
 **collision_monitor 감속 영역 몸 + 5 cm**, goal 허용 0.20 + 정밀 접근 노드. S2·S4는 왕복(A→B, B→A) 각 10회 = 20회, S1은 10회.
 
 | 항목 (목표) | S2 | S4 | S1 |
@@ -41,7 +59,7 @@ PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision
 | 4 | 순간이동 뒤 odom 프레임 local costmap에 유령 장애물 → 회차 2부터 정지 | 회차마다 두 costmap 비우기 | 재현성 확보 | 049 |
 | 5 | 바닥 요철·벽 아래 램프가 깊이 장애물로 찍힘(빈 방 20/24 지점) | 여유 100 mm, 최소 높이 0.09 m(sim만) | 오검출 제거 | 050 |
 | 6 | 상자 두께보다 짧은 깊이 압출(0.15 m)·정면만 보이는 상자 | 압출 0.25 m(sim만) | 상자가 코스트맵에서 온전히 보임 | 050 |
-| 7 | depth 레이어 레이캐스트가 상자 쪽을 지움 | depth 레이어 `clearing: false` | 상자 유지 | 050 |
+| 7 | depth 레이어 레이캐스트가 상자 쪽을 지움 | (1·2차) depth 레이어 `clearing: false` → (최종) 몸 다각형 검사 뒤 다시 `true` | 켜도 간격 5 cm 이상 유지(0절) | 050 |
 | 8 | 팽창 반경 0.25 < 내접 반경 → 간격이 비용으로 안 나옴 | 0.30 + 완만한 구배 | S2 간격 2.8 → 5~6 cm | 050 |
 | 9 | S4에서 DWB가 제자리 회전(±0.12 rad/s)에 갇힘 | (1차) BaseObstacle 0.1→0.05, Twirling 10→30 | S4 12/12(멈춤 0) | 051 |
 | 10 | 도착이 12~19 cm 못 미침(Smac 허용 오차로 목표=경로 끝) | 정밀 접근 노드 | 오차 1.7~1.9 cm | — |
@@ -69,16 +87,17 @@ PRD `prd/sim-avoidance-precision.md`, 시험 계획 `prd/sim-avoidance-precision
 # host, 저장소 루트. 변형 파일 = tools/nav/ab_params/nav2_params_<이름>.yaml
 VARIANTS="sim_avoid" SCENS="S4 S2 S1" REPEATS=10 bash tools/sim/run_variants.sh > /tmp/log 2>&1
 # 또는 한 시나리오: TAG=t SCEN=S4 REPEATS=10 APPROACH=1 CTRL=dwb PARAMS=tools/nav/ab_params/nav2_params_sim_avoid.yaml bash tools/sim/sim_avoid_run.sh
-python3 tools/sim/avoid_trials.py summary --tag final2_S4
+python3 tools/sim/avoid_trials.py summary --tag final_clr_S4
 ```
 원자료: `Log/sim_avoid/*.json`(시행별 정답 궤적·명령·/plan·collision_monitor 상태·지표), `Log/sim_avoid_trials*.csv`.
 진단 도구: `costmap_snapshot.py`(코스트맵 그림), `dwb_eval_probe.py`(DWB 평가자 점수), `corridor_width.py`, `costmap_probe.py`.
 Nav2 로그(`/tmp/av_nav.log`)에서 `No valid trajectories`·`Running wait`를 보면 컨트롤러 실패와 BT 대기를 바로 알 수 있다.
 
 ## 6. 한계와 다음 일
-- **실기 미검증**: 이 변형(ObstacleFootprint, 해상도, failure_tolerance, 감속 영역, 팽창, depth 지우기 끔)은 실기에 적용하지 않았다. 실기 B 5회(체크리스트 8.15 6번)는 사용자가 로봇 옆에 있을 때 한다.
-  특히 감속 영역 축소와 depth 지우기 끔은 실기 안전·잔상 영향을 따로 확인해야 한다.
+- **실기 미검증**: 이 변형(ObstacleFootprint, 해상도, failure_tolerance, 감속 영역, 팽창)은 실기에 적용하지 않았다. 실기 B 5회(체크리스트 8.15 6번)는 사용자가 로봇 옆에 있을 때 한다.
+  특히 감속 영역 축소는 실기 안전 여유를 줄이므로 따로 확인해야 한다.
 - sim은 정답 자세로 위치를 초기화한다. 실기 도착 정확도는 AMCL(3~8 cm)이 한계다.
 - 좁은 통로(폭 0.45 m 등)에서 팽창·여유가 통과를 막는지 시험하지 않았다.
 - local 해상도 2.5 cm는 local 코스트맵 칸 수를 4배로 늘린다. Jetson에서의 컨트롤러 주기(10 Hz)는 확인하지 않았다.
+- 정지 장애물만 검증했다. 움직이는 장애물(동적 회피)은 다음 작업(depth 지우기 켬이 전제).
 - sim 속도(RTF 0.45) 병목은 측정하지 않았다(렌더링/물리 추정).

@@ -19,3 +19,9 @@
 - `tools/sim/check_depth_obstacles.py`(상자 35/35), `depth_fp_survey.py`(빈 방 오검출), `costmap_snapshot.py`.
 - `inflation_radius`는 항상 내접 반경 + 여유보다 크게 둔다.
 - 실기에서 depth 지우기를 끄면 움직이는 물체의 잔상이 남으므로 실기 적용은 따로 검증한다.
+
+## 추가 (2026-10-21): depth 지우기를 다시 켬
+- 몸 다각형 검사(ObstacleFootprint)·local 2.5 cm 격자로 바꾼 뒤(052), 지우기를 다시 켜도 S2 20/20·S4 18/20·S1 10/10, 간격 최소 5.0 cm로 목표를 유지했다
+  (`docs/benchmarks/sim/avoidance_precision_20261020.md` 0절). 그래서 sim 변형도 실기처럼 `clearing: true`로 되돌렸다. 끄면 움직이는 물체의 잔상이 남는다.
+- 지워지는 문제 자체(높이를 모르는 2D 레이캐스트)는 그대로다. 다시 문제가 되면 높이를 구분하는 VoxelLayer가 근본 해결 후보다.
+

@@ -1,5 +1,5 @@
-# sim 회피 주행 시험용 최종 변형 (2026-10-21, docs/benchmarks/sim/avoidance_precision_20261020.md 2차). 실기 설정이 아니다 — 실기에는 검증 전까지 적용하지 않는다.
-# base = nav2_params.yaml 의 DWB. 변경(이전→새): inflation_radius 0.25→0.30 (global/local), footprint_padding global +0.05 / local +0.03, local resolution 0.05→0.025, BaseObstacle→ObstacleFootprint(scale 0.02), Twirling.scale 10→30, depth_cloud clearing true→false (global/local), controller failure_tolerance 0→1.0, collision_monitor FootprintSlow body+10cm→body+5cm, xy_goal_tolerance 0.20/0.18 (정밀 접근 노드가 마무리).
+# sim 회피 주행 시험용 최종 변형 (2026-10-21, docs/benchmarks/sim/avoidance_precision_20261020.md 2차 + depth 지우기 다시 켬). 실기 설정이 아니다 — 실기에는 검증 전까지 적용하지 않는다.
+# base = nav2_params.yaml 의 DWB. 변경(이전→새): inflation_radius 0.25→0.30 (global/local), footprint_padding global +0.05 / local +0.03, local resolution 0.05→0.025, BaseObstacle→ObstacleFootprint(scale 0.02), Twirling.scale 10→30, depth_cloud clearing은 실기와 같이 true 유지(1차에서 껐다가 2차 뒤 다시 켬), controller failure_tolerance 0→1.0, collision_monitor FootprintSlow body+10cm→body+5cm, xy_goal_tolerance 0.20/0.18 (정밀 접근 노드가 마무리).
 # Nav2 stack params (checklist 8번, prd/slam-nav2.md).
 # 8.2=costmap, 8.3=planner_server, 8.4=controller_server(DWB), 8.5=bt_navigator,
 # 8.6=behavior_server. velocity_smoother는 jetrover_base의 기존 속도 제한(max_linear 0.2 m/s,
@@ -61,7 +61,7 @@ global_costmap:
           topic: /depth_cam/depth/points_sparse
           max_obstacle_height: 2.0
           min_obstacle_height: -0.1
-          clearing: false
+          clearing: true
           marking: true
           data_type: "PointCloud2"
           raytrace_max_range: 3.0
@@ -429,7 +429,7 @@ local_costmap:
           topic: /depth_cam/depth/points_sparse
           max_obstacle_height: 2.0
           min_obstacle_height: -0.1  # small tolerance for floor noise, not a real "below floor" case
-          clearing: false
+          clearing: true
           marking: true
           data_type: "PointCloud2"
           raytrace_max_range: 3.0
