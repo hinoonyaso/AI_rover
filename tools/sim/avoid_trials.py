@@ -76,7 +76,8 @@ FIELDS = ['tag', 'scenario', 'leg', 'n', 'stamp', 'success', 'status', 'nav_stat
           'approach_time_s', 'time_s', 'pos_err_m', 'yaw_err_deg',
           'min_clearance_m', 'box_moved_m', 'detour_width_m', 'vy_flips_near', 'vy_flips_per_s_near',
           'stopped_s_near', 'near_time_s', 'heading_dev_deg_near', 'heading_dev_deg_all', 'plan_flips',
-          'plan_sides', 'n_plans', 'amcl_init_err_m', 'amcl_end_err_m']
+          'plan_sides', 'n_plans', 'amcl_init_err_m', 'amcl_end_err_m',
+          'dyn_min_gap_m', 'dyn_contact', 'dyn_stop_gap_m', 'dyn_wait_s', 'dyn_resume_delay_s', 'dyn_blocked_s']
 
 
 def quat_yaw(q):
@@ -340,6 +341,19 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
     out['nav_status'], out['approach_status'] = nav_status, approach_status
     out['nav_time_s'], out['approach_time_s'] = float(t_nav_end - g['t'][0]), float(approach_time)
     out['success'] = bool(status == 'succeeded' and out['min_clearance_m'] > 0 and out['box_moved_m'] < 0.02)
+    if spec.get('dyn'):
+        # 움직이는 장애물 지표: 시나리오에서 쓰는 모델만(정답 열 7~9 person_0, 10~12 dyn_box, 없으면 방 밖으로 취급).
+        # Dynamic-obstacle metrics for the models this scenario moves (nan columns = absent -> treated as parked).
+        used = {mo.model for mo in DYN.scenarios()[scen]['motions']}
+        obstacles = []
+        for name, col, kind in (('person_0', 7, 'person'), ('dyn_box', 10, 'box')):
+            if name in used and rows.shape[1] > col + 2:
+                ox = np.where(np.isfinite(rows[:, col]), rows[:, col], 99.0)
+                obstacles.append({'kind': kind, 'x': ox, 'y': np.nan_to_num(rows[:, col + 1]),
+                                  'yaw': np.nan_to_num(rows[:, col + 2])})
+        out.update(M.dynamic_summary(g, obstacles, start_rad, goal, FOOTPRINT_HALF, DYN.PERSON_LEGS, DYN.PERSON_LEG_R,
+                                     (DYN.DYN_BOX_SIZE[0] / 2, DYN.DYN_BOX_SIZE[1] / 2)))
+        out['success'] = bool(status == 'succeeded' and not out['dyn_contact'])
     out['amcl_init_err_m'] = amcl_init_err
     out['amcl_end_err_m'] = (float(math.hypot(amcl_end[0] - g['rx'][-1], amcl_end[1] - g['ry'][-1]))
                              if amcl_end else float('nan'))
@@ -367,7 +381,16 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
                    'cmd': cmd[::max(1, len(cmd) // 400)].round(4).tolist(),
                    'smoothed': thin(node.smooth), 'out': thin(node.out), 'collision_monitor': thin(node.cm, 200),
                    'dyn_cmd': dyn_log}, f)
-    if not quiet:
+    if not quiet and spec.get('dyn'):
+        print(f'{tag} {scen}{leg} #{n}: {"OK  " if out["success"] else "FAIL"} {status:9s} {out["time_s"]:5.1f} s  '
+              f'err {out["pos_err_m"] * 100:4.1f} cm  dyn gap {out["dyn_min_gap_m"] * 100:5.1f} cm  '
+              f'stop gap {out["dyn_stop_gap_m"] * 100:5.1f} cm  wait {out["dyn_wait_s"]:4.1f} s  '
+              f'resume {out["dyn_resume_delay_s"]:4.1f} s  blocked {out["dyn_blocked_s"]:4.1f} s  '
+              f'hdg {out["heading_dev_deg_all"]:4.0f} deg'
+              + (f'  [nav {nav_status} {out["nav_time_s"]:.1f} s, approach {approach_status} {approach_time:.1f} s]'
+                 if approach else ''),
+              flush=True)
+    elif not quiet:
         print(f'{tag} {scen}{leg} #{n}: {"OK  " if out["success"] else "FAIL"} {status:9s} {out["time_s"]:5.1f} s  '
               f'err {out["pos_err_m"] * 100:4.1f} cm  gap {out["min_clearance_m"] * 100:5.1f} cm  '
               f'detour {out["detour_width_m"] * 100:4.1f} cm  flips {out["vy_flips_near"]:2d}  '
@@ -394,9 +417,24 @@ def summary(prefix):
           f'{"vy flips":>11s} {"stop s":>11s} {"hdg dev":>11s} {"plan flips":>11s}')
     for (tag, scen, leg), rs in sorted(groups.items()):
         ok = sum(r['success'] == 'True' for r in rs)
+        if scen.startswith('D'):
+            continue
         print(f'{tag:14s} {scen + leg:5s} {ok:3d}/{len(rs):<2d} {stat(rs, "time_s")} {stat(rs, "pos_err_m", 100)} '
               f'{stat(rs, "min_clearance_m", 100)} {stat(rs, "detour_width_m", 100)} {stat(rs, "vy_flips_near")} '
               f'{stat(rs, "stopped_s_near")} {stat(rs, "heading_dev_deg_near")} {stat(rs, "plan_flips")}')
+    dyn = {k: v for k, v in groups.items() if k[1].startswith('D')}
+    if dyn:
+        # 동적 장애물 시나리오 요약(8.16): 접촉 수, 장애물과 최소 간격(최소/평균), 정지 시 간격, 대기, 재출발 지연(최대)
+        print(f'{"tag":14s} {"scen":5s} {"ok":>6s} {"contact":>7s} {"min gap cm":>10s} {"gap cm":>11s} {"stop gap cm":>11s} '
+              f'{"wait s":>11s} {"resume s":>11s} {"err cm":>11s} {"time s":>11s}')
+    for (tag, scen, leg), rs in sorted(dyn.items()):
+        ok = sum(r['success'] == 'True' for r in rs)
+        contact = sum(r.get('dyn_contact') == 'True' for r in rs)
+        gaps = [float(r['dyn_min_gap_m']) * 100 for r in rs if r.get('dyn_min_gap_m') not in ('', 'nan', None)]
+        res = [float(r['dyn_resume_delay_s']) for r in rs if r.get('dyn_resume_delay_s') not in ('', 'nan', None)]
+        print(f'{tag:14s} {scen + leg:5s} {ok:3d}/{len(rs):<2d} {contact:7d} {(min(gaps) if gaps else float("nan")):10.1f} '
+              f'{stat(rs, "dyn_min_gap_m", 100)} {stat(rs, "dyn_stop_gap_m", 100)} {stat(rs, "dyn_wait_s")} '
+              f'{(max(res) if res else float("nan")):11.1f} {stat(rs, "pos_err_m", 100)} {stat(rs, "time_s")}')
 
 
 def main():

@@ -180,3 +180,84 @@ def summarize(gt, cmd, plans, start, goal, box_size, footprint_half=(0.19, 0.14)
         'plan_sides': ''.join('L' if s > 0 else 'R' for s in sides[:60]),
         'n_plans': len(plans),
     }
+
+
+# ---- 동적 장애물 지표 (체크리스트 8.16, prd/sim-dynamic-avoidance-test-plan.md) ----
+# Dynamic-obstacle metrics. Obstacles: kind 'person' (two leg circles) or 'box' (rectangle), ground-truth pose arrays.
+DYN_NEAR_M = 1.0          # an obstacle counts as "near" within this gap / 이 간격 안이면 가까운 장애물
+CORRIDOR_MARGIN = 0.10    # robot corridor half width = robot half width + this / 로봇 통로 반폭 = 몸 반폭 + 여유
+RESUME_SPEED = 0.03       # m/s: moving again / 다시 움직임
+
+
+def point_rect_signed(p, poly):
+    """Distance from point p to a convex polygon, negative (minus depth) when p is inside."""
+    p = np.asarray(p, float)
+    d = min(_point_segment(p, poly[i], poly[(i + 1) % len(poly)]) for i in range(len(poly)))
+    inside = all(np.cross(poly[(i + 1) % len(poly)] - poly[i], p - poly[i]) >= 0 for i in range(len(poly)))
+    return -d if inside else d
+
+
+def obstacle_gap(robot_poly, obs, i, legs, leg_r, box_half):
+    """Gap (m) between the robot polygon and obstacle `obs` at sample i (person legs or box)."""
+    x, y, yaw = obs['x'][i], obs['y'][i], obs['yaw'][i]
+    if obs['kind'] == 'person':
+        c, s = math.cos(yaw), math.sin(yaw)
+        return min(point_rect_signed((x + c * lx - s * ly, y + s * lx + c * ly), robot_poly) - leg_r for lx, ly in legs)
+    return rect_gap(robot_poly, rect_corners(x, y, yaw, *box_half))
+
+
+def dynamic_summary(gt, obstacles, start, goal, footprint_half=(0.166, 0.13), legs=((0.0, 0.10), (0.0, -0.10)),
+                    leg_r=0.06, box_half=(0.165, 0.11), parked_x=7.0):
+    """Metrics against moving obstacles.
+
+    gt         dict of arrays t, rx, ry, ryaw (ground truth)
+    obstacles  list of dicts {kind: 'person'|'box', x, y, yaw} (arrays aligned with gt; x > parked_x = parked)
+    returns    dyn_min_gap_m (nan when no obstacle in the room), dyn_contact, dyn_stop_gap_m (gap when the robot first stopped
+               with an obstacle near, nan if it never did), dyn_wait_s (stopped seconds outside the start/goal zones),
+               dyn_resume_delay_s (max over episodes: obstacle left the corridor ahead -> robot moving again; nan if none)
+    """
+    t = np.asarray(gt['t'], float)
+    rx, ry, ryaw = (np.asarray(gt[k], float) for k in ('rx', 'ry', 'ryaw'))
+    n = len(t)
+    speed = speed_series(t, rx, ry)
+    dt = np.diff(t, prepend=t[0])
+    direction, _ = line_frame(start, goal)
+    gaps = np.full(n, np.inf)
+    blocking = np.zeros(n, bool)      # an obstacle in the robot corridor ahead / 로봇 앞 통로에 장애물
+    half_w = footprint_half[1] + CORRIDOR_MARGIN
+    for i in range(n):
+        poly = rect_corners(rx[i], ry[i], ryaw[i], *footprint_half)
+        for obs in obstacles:
+            if obs['x'][i] > parked_x:
+                continue
+            gaps[i] = min(gaps[i], obstacle_gap(poly, obs, i, legs, leg_r, box_half))
+            rel = np.array([obs['x'][i] - rx[i], obs['y'][i] - ry[i]])
+            ahead = float(rel @ direction)
+            lat = float(direction[0] * rel[1] - direction[1] * rel[0])
+            reach = leg_r + abs(legs[0][1]) if obs['kind'] == 'person' else max(box_half)
+            remaining = float((np.asarray(goal[:2]) - np.array([rx[i], ry[i]])) @ direction)
+            if 0.0 < ahead < remaining + footprint_half[0] and abs(lat) < half_w + reach:
+                blocking[i] = True
+    in_room = np.isfinite(gaps)
+    stopped = (speed < STOP_SPEED) & (t - t[0] > 1.0) & (np.hypot(rx - goal[0], ry - goal[1]) > 0.15)
+    near = in_room & (gaps < DYN_NEAR_M)
+    first_stop = np.nonzero(stopped & near)[0]
+    delays = []
+    i = 1
+    while i < n:
+        if blocking[i - 1] and not blocking[i] and speed[i] < RESUME_SPEED:
+            j = i
+            while j < n and speed[j] < RESUME_SPEED:
+                j += 1
+            if j < n:
+                delays.append(t[j] - t[i])
+            i = j
+        i += 1
+    return {
+        'dyn_min_gap_m': float(gaps[in_room].min()) if in_room.any() else float('nan'),
+        'dyn_contact': bool(in_room.any() and gaps[in_room].min() <= 0.0),
+        'dyn_stop_gap_m': float(gaps[first_stop[0]]) if len(first_stop) else float('nan'),
+        'dyn_wait_s': float(np.sum(dt[stopped])),
+        'dyn_resume_delay_s': float(max(delays)) if delays else float('nan'),
+        'dyn_blocked_s': float(np.sum(dt[blocking])),
+    }

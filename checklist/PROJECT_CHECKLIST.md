@@ -329,9 +329,9 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [x] 1.2 `tools/sim/dyn_obstacles.py`(움직임 순수 함수 + D1~D4 + `ObstacleDriver`, 단위시험 5개): ros_gz_bridge로 연결한 `set_pose`를 sim 시간 20 Hz로 호출(5.9 ms/회), 시작 조건 = 목표 후 초 또는 로봇 진행 거리. `avoid_trials.py --scenario D1..D4|dyn`, 래퍼가 브리지를 띄움
   - [x] 1.3 `check_dyn_obstacles.py`: 속도 오차 D1 1.7 % · D3 0.8 %, 사람 다리 /scan 20/20, 낮은 상자 depth 7/7. 흔적 지움은 depth 지우기 전용 점(`publish_clearing` + `depth_clear` 관측원, sim 변형 `nav2_params_dyn_clr.yaml`)을 넣어 D1 80→3칸, D3 154→0칸(즉시). **남은 3칸은 카메라 바닥 시야 끝(0.76 m) 너머라 2 s 기준 미달** — 로봇이 다가가면 지워질 것으로 추정, 3단계에서 영향 확인
   - [x] 1.4 (발견) `sim_avoid_run.sh`가 바깥 `timeout`에 끊기면 Gazebo·Nav2·브리지가 남아 다음 Nav2 기동 실패 → trap 정리·잔여 검사·서브셸 wait로 수정
-- [ ] 2. 시험 도구 확장 (L0 + L5-sim)
-  - [ ] 2.1 지표: 움직이는 장애물과 최소 간격·접촉, 정지 반응 거리, 재출발 지연, 대기 시간 + 단위시험(합성 궤적)
-  - [ ] 2.2 시나리오 D1~D4를 반복 실행기에 추가, 요약 표
+- [x] 2. 시험 도구 확장 (L0 + L5-sim, 2026-10-22)
+  - [x] 2.1 `avoid_metrics.dynamic_summary`: 장애물과 최소 간격·접촉(사람 = 다리 원 두 개, 상자 = 직사각형), 처음 멈춘 순간 간격, 대기 시간, 재출발 지연(장애물이 로봇 앞 통로를 벗어난 뒤 0.03 m/s까지), 통로 막힘 시간 + 단위시험 3개(전체 13개 통과)
+  - [x] 2.2 `avoid_trials.py --scenario D1..D4|dyn`, CSV 열 추가, 동적 요약 표. D1 1회 스모크: 성공, 간격 24.8 cm(사람이 먼저 지나가 정지 없음)
 - [ ] 3. baseline: 현재 설정으로 D1~D4 각 10회, 실패 유형 분류 (L5-sim)
 - [ ] 4. 반응형 개선 — 가설별 단일 변수, 각 10회 (L5-sim): collision_monitor `approach`/정지 영역, BT 대기·재시도, DWB가 움직이는 것을 돌아가려 하지 않게, (필요 시) VoxelLayer
 - [ ] 5. 최종 검증: D1~D4 각 10회 접촉 0, 간격 ≥ 10 cm, 도착(≤ 5 cm) ≥ 9/10, 재출발 ≤ 2 s, D4는 5 s 대기 뒤 회피 도착 + S1/S2/S4 회귀 ≥ 9/10

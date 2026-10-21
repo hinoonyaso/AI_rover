@@ -123,3 +123,50 @@ def test_speed_series():
     x = 0.1 * t
     s = M.speed_series(t, x, np.zeros_like(t))
     assert abs(s[-1] - 0.1) < 1e-9 and s[0] == 0.0
+
+
+# ---- dynamic obstacles ----
+def _line_run(stop_between=None, speed=0.1, hz=20, t_end=12.0):
+    """Robot on x = 1.0 driving +y from 0.3; optionally standing still between two times."""
+    t = np.arange(0.0, t_end, 1.0 / hz)
+    y = np.empty_like(t)
+    pos = 0.3
+    for k, tk in enumerate(t):
+        y[k] = pos
+        if not (stop_between and stop_between[0] <= tk < stop_between[1]):
+            pos += speed / hz
+    return {'t': t, 'rx': np.full_like(t, 1.0), 'ry': y, 'ryaw': np.full_like(t, math.pi / 2)}
+
+
+def test_point_rect_signed_inside_negative():
+    sq = M.rect_corners(0, 0, 0, 0.5, 0.5)
+    assert abs(M.point_rect_signed((1.0, 0.0), sq) - 0.5) < 1e-9
+    assert abs(M.point_rect_signed((0.4, 0.0), sq) + 0.1) < 1e-9
+
+
+def test_dynamic_crossing_person_stop_and_resume():
+    gt = _line_run(stop_between=(2.0, 6.0))
+    t = gt['t']
+    # person crosses y = 1.0 from x 1.6 to 0.4 between t 2 and 6 s (robot waits at y 0.5)
+    px = np.where(t < 2.0, 9.0, np.where(t > 6.0, 9.0, 1.6 - 0.3 * (t - 2.0)))
+    obs = [{'kind': 'person', 'x': px, 'y': np.full_like(t, 1.0), 'yaw': np.full_like(t, math.pi)}]
+    out = M.dynamic_summary(gt, obs, (1.0, 0.3, math.pi / 2), (1.0, 1.4, math.pi / 2))
+    # robot front at y 0.666 while waiting, nearest leg surface at y 0.84 -> 0.174 m
+    assert not out['dyn_contact'] and abs(out['dyn_min_gap_m'] - 0.174) < 0.01
+    assert 3.5 < out['dyn_wait_s'] < 4.5
+    assert out['dyn_stop_gap_m'] > 0.2
+    # the person leaves the corridor (x < 1.0 - 0.23 - 0.16) at t ~5.3; the robot starts at t 6
+    assert 0.5 < out['dyn_resume_delay_s'] < 0.9
+    assert out['dyn_blocked_s'] > 0.5
+
+
+def test_dynamic_box_contact_and_parked():
+    gt = _line_run()
+    t = gt['t']
+    bx = np.where(t < 3.0, 9.0, 1.0)                  # box appears on the line at y 0.85 at t 3 (robot drives through it)
+    obs = [{'kind': 'box', 'x': bx, 'y': np.full_like(t, 0.85), 'yaw': np.zeros_like(t)}]
+    out = M.dynamic_summary(gt, obs, (1.0, 0.3, math.pi / 2), (1.0, 1.4, math.pi / 2))
+    assert out['dyn_contact'] and out['dyn_min_gap_m'] < 0
+    none = M.dynamic_summary(gt, [{'kind': 'box', 'x': np.full_like(t, 9.0), 'y': t * 0, 'yaw': t * 0}],
+                             (1.0, 0.3, math.pi / 2), (1.0, 1.4, math.pi / 2))
+    assert math.isnan(none['dyn_min_gap_m']) and not none['dyn_contact'] and math.isnan(none['dyn_resume_delay_s'])
