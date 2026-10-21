@@ -324,10 +324,11 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 
 ### 8.16 Gazebo 동적 장애물 대응 — 반응형, 멈추고 기다리기 (PRD `prd/sim-dynamic-avoidance.md`, 시험 계획 `prd/sim-dynamic-avoidance-test-plan.md`, 2026-10-21 착수)
 목표: 사람·굴러오는 낮은 상자·갑자기 나타난 상자에 부딪히지 않고, 멈춰서 기다렸다가 다시 출발해 도착. 기본 설정 = 8.15 최종 `nav2_params_sim_avoid.yaml`(depth 지우기 켬).
-- [ ] 1. 동적 장애물 시뮬레이션 (L0 + L5-sim)
-  - [ ] 1.1 사람 모델(다리 두 개 + 몸통), 낮은 상자, 갑자기 나타나는 상자를 월드에 추가
-  - [ ] 1.2 구동 노드: 정해진 경로·속도로 순간이동 반복(sim 시간 기준), 시작 조건(시각 또는 로봇 위치)
-  - [ ] 1.3 확인: 속도 오차 ≤ 10%, 사람 다리 /scan 감지, 낮은 상자 depth 감지, 지나간 뒤 2 s 안에 코스트맵에서 지워짐
+- [x] 1. 동적 장애물 시뮬레이션 (L0 + L5-sim, 2026-10-22, troubleshooting/053)
+  - [x] 1.1 `room_lap2_objects.sdf`에 `person_0`(다리 r 6 cm 두 개 + 몸통), `dyn_box`(33×22×11 cm) — 일반 모델 + 중력 끔, 방 밖 (8, 8)에 세워 둠(바닥 아래로 숨기면 LiDAR에 남았음). 갑자기 나타나는 상자는 `dyn_box`를 씀
+  - [x] 1.2 `tools/sim/dyn_obstacles.py`(움직임 순수 함수 + D1~D4 + `ObstacleDriver`, 단위시험 5개): ros_gz_bridge로 연결한 `set_pose`를 sim 시간 20 Hz로 호출(5.9 ms/회), 시작 조건 = 목표 후 초 또는 로봇 진행 거리. `avoid_trials.py --scenario D1..D4|dyn`, 래퍼가 브리지를 띄움
+  - [x] 1.3 `check_dyn_obstacles.py`: 속도 오차 D1 1.7 % · D3 0.8 %, 사람 다리 /scan 20/20, 낮은 상자 depth 7/7. 흔적 지움은 depth 지우기 전용 점(`publish_clearing` + `depth_clear` 관측원, sim 변형 `nav2_params_dyn_clr.yaml`)을 넣어 D1 80→3칸, D3 154→0칸(즉시). **남은 3칸은 카메라 바닥 시야 끝(0.76 m) 너머라 2 s 기준 미달** — 로봇이 다가가면 지워질 것으로 추정, 3단계에서 영향 확인
+  - [x] 1.4 (발견) `sim_avoid_run.sh`가 바깥 `timeout`에 끊기면 Gazebo·Nav2·브리지가 남아 다음 Nav2 기동 실패 → trap 정리·잔여 검사·서브셸 wait로 수정
 - [ ] 2. 시험 도구 확장 (L0 + L5-sim)
   - [ ] 2.1 지표: 움직이는 장애물과 최소 간격·접촉, 정지 반응 거리, 재출발 지연, 대기 시간 + 단위시험(합성 궤적)
   - [ ] 2.2 시나리오 D1~D4를 반복 실행기에 추가, 요약 표

@@ -84,5 +84,40 @@
         </visual>
       </link>
     </model>
+    <!-- 동적 장애물 시험(8.16, 2026-10-21): 평소엔 방 밖 바닥 위(8, 8)에 세워 두고 tools/sim/dyn_obstacle_driver.py가 set_pose로 옮긴다.
+         일반 모델 + 중력 끔(놓은 자리에 머묾). 바닥 아래(z = -5)로 숨기면 LiDAR에서 사라지지 않았다(2026-10-22) → 방 밖 바닥 위로 숨긴다.
+         접촉은 정답 기하로 판정한다(밀리면 정답 자세로 보임).
+         Dynamic-obstacle test models, parked outside the room on the floor and moved by set_pose (gravity off).
+         Parking below the floor (z = -5) left them visible to the LiDAR, so park at (8, 8). -->
+    <model name="person_0">
+      <static>false</static>
+      <pose>8.0 8.0 0.002 0 0 0</pose>
+      <!-- 다리 두 개(반경 6 cm, LiDAR 높이에 걸림) + 몸통. 모델 원점 = 두 다리 사이 바닥 / legs r 6 cm hit the LiDAR plane -->
+      <link name="body">
+        <gravity>false</gravity>
+        <inertial><mass>20.0</mass><inertia><ixx>2.0</ixx><iyy>2.0</iyy><izz>0.5</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <collision name="leg_l"><pose>0 0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry></collision>
+        <visual name="leg_l_v"><pose>0 0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.5 1</ambient><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+        <collision name="leg_r"><pose>0 -0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry></collision>
+        <visual name="leg_r_v"><pose>0 -0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.5 1</ambient><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+        <collision name="torso"><pose>0 0 1.10 0 0 0</pose><geometry><box><size>0.22 0.42 0.60</size></box></geometry></collision>
+        <visual name="torso_v"><pose>0 0 1.10 0 0 0</pose><geometry><box><size>0.22 0.42 0.60</size></box></geometry>
+          <material><ambient>0.7 0.3 0.3 1</ambient><diffuse>0.7 0.3 0.3 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="dyn_box">
+      <static>false</static>
+      <pose>8.0 8.6 0.002 0 0 0</pose>
+      <!-- object_0과 같은 33x22x11 cm 상자(LiDAR에 안 보임). 원점 = 바닥 중심 / same size as object_0, origin on the floor -->
+      <link name="body">
+        <gravity>false</gravity>
+        <inertial><mass>0.5</mass><inertia><ixx>2.521e-03</ixx><iyy>5.042e-03</iyy><izz>6.554e-03</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <collision name="c"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.3300 0.2200 0.1100</size></box></geometry></collision>
+        <visual name="v"><pose>0 0 0.055 0 0 0</pose><geometry><box><size>0.3300 0.2200 0.1100</size></box></geometry>
+          <material><ambient>0.3 0.5 0.3 1</ambient><diffuse>0.3 0.5 0.3 1</diffuse></material></visual>
+      </link>
+    </model>
   </world>
 </sdf>

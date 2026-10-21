@@ -2,3 +2,4 @@
 *.yaml
 # sim 회피 시험 최종 변형은 재현을 위해 추적 / tracked for reproducibility
 !nav2_params_sim_avoid.yaml
+!nav2_params_dyn_clr.yaml

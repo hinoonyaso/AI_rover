@@ -127,6 +127,8 @@
 | (sim 변형, 2차) collision_monitor `FootprintSlow` | 몸 + 약 10 cm `[[0.28, 0.22],...]` → **몸 + 약 5 cm `[[0.23, 0.18],...]`** | 2026-10-21 | 감속 영역이 계획 간격을 덮어 상자 옆에서 내내 50% 속도(B 출발 7~14 s). 실기 적용 전 안전 검토 필요 | troubleshooting/052 |
 | (sim 변형, 2차, 시도 후 폐기) DWB `sim_time` 1.5 → 1.0, Twirling 30 → 20·15 | — | 2026-10-21 | 각각 B 출발 지연(최대 37.8 s), 멈춤 재발(10/12·11/12) | `docs/benchmarks/sim/avoidance_precision_20261020.md` 4절 |
 | (sim 변형, 최종) `depth_cloud.clearing` | false → **true** (실기와 같음) | 2026-10-21 | 몸 다각형 검사 뒤에는 켜도 S2 20/20·S4 18/20·S1 10/10, 간격 최소 5.0 cm. 끄면 움직이는 물체 잔상 | troubleshooting/050 |
+| (인식, 기본값 불변) `sparse_point_cloud.publish_clearing` / `clearing_stride_factor` | 새 파라미터, 기본 **false** / 2 (sim launch만 true, `SIM_DEPTH_CLEARING`) | 2026-10-22 | 장애물 점만 보내서 지나간 장애물 흔적을 지울 광선이 없었음. 빈 바닥 점을 `depth/points_clear`로 | troubleshooting/053 |
+| (sim 변형 `nav2_params_dyn_clr.yaml`) depth 레이어 관측원 `depth_clear` | 추가(marking false, clearing true, min_obstacle_height −0.2) | 2026-10-22 | 흔적 D1 80→3칸, D3 154→0칸. 남은 3칸은 카메라 바닥 시야 끝 너머 | troubleshooting/053 |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

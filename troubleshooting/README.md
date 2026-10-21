@@ -79,3 +79,4 @@
 | 050 | [깊이 장애물 오검출·상자 일부만 찍힘·옆을 지나면 지워짐·팽창 반경 < 내접 반경](050-sim-depth-obstacle-box-visibility.md) | 해결 (sim 전용) |
 | 051 | [상자 정면(S4)에서 DWB가 제자리 회전에 갇혀 정지](051-dwb-rotation-local-minimum-s4.md) | 해결 (sim 변형, 실기 미검증) |
 | 052 | [상자 간격 3 cm 안팎(몸 뒤 모서리), ObstacleFootprint 5 s 정지, collision_monitor 감속이 계획 간격을 덮음](052-sim-avoid-corner-clearance-and-slowdown.md) | 해결 (sim 변형, 실기 미검증) |
+| 053 | [동적 장애물 sim 준비: 바닥 아래로 숨긴 모델이 LiDAR에 남음, 지나간 장애물 흔적이 코스트맵에 남음(depth는 장애물 점만 보냄), timeout으로 끊긴 시험의 잔여 프로세스](053-sim-dynamic-obstacles-setup.md) | 해결 (시야 끝 너머 3칸 남음) |

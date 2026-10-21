@@ -42,6 +42,7 @@ import tf2_ros
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import avoid_metrics as M  # noqa: E402
+import dyn_obstacles as DYN  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 CSV_PATH = os.path.join(ROOT, 'Log', 'sim_avoid_trials.csv')
@@ -66,6 +67,11 @@ SCENARIOS = {
     'S2': {'box': (1.21, 0.78), 'legs': {'AB': ((*A, 83.0), B), 'BA': ((*B, -97.0), A)}},
     'S4': {'box': (1.00, 0.78), 'legs': {'AB': ((*A, 83.0), B), 'BA': ((*B, -97.0), A)}},
 }
+# 동적 장애물 시나리오 D1~D4(8.16): 정지 상자 object_0은 방 밖으로 치우고 dyn_obstacles.py의 모델을 움직인다.
+# Dynamic-obstacle scenarios: object_0 is parked away; the models of dyn_obstacles.py move (motions rebuilt every trial).
+for _name, _sc in DYN.scenarios().items():
+    SCENARIOS[_name] = {'box': DYN.OBJECT_0_PARK, 'legs': _sc['legs'], 'dyn': True}
+DYN_MODELS = ('person_0', 'dyn_box')
 FIELDS = ['tag', 'scenario', 'leg', 'n', 'stamp', 'success', 'status', 'nav_status', 'nav_time_s', 'approach_status',
           'approach_time_s', 'time_s', 'pos_err_m', 'yaw_err_deg',
           'min_clearance_m', 'box_moved_m', 'detour_width_m', 'vy_flips_near', 'vy_flips_per_s_near',
@@ -113,9 +119,10 @@ class GroundTruth:
         st = m.get('header', {}).get('stamp', {})
         t = int(st.get('sec', 0)) + float(st.get('nsec', 0)) * 1e-9
         robot = box = None
+        dyn = {}
         for p in m.get('pose', []):
             name = p.get('name')
-            if name not in ('jetrover', BOX):
+            if name not in ('jetrover', BOX) + DYN_MODELS:
                 continue
             pos = p.get('position', {})
             o = p.get('orientation', {})
@@ -127,8 +134,13 @@ class GroundTruth:
                 robot = val
             elif name == BOX and box is None:
                 box = val
+            elif name in DYN_MODELS and name not in dyn:
+                dyn[name] = val
         if robot and box:
-            row = (t, *robot, *box)
+            # 열: t, 로봇 x y yaw, 상자 x y yaw, person_0 x y yaw, dyn_box x y yaw (없으면 nan)
+            # columns: t, robot, box, then person_0 and dyn_box (nan when absent)
+            nan3 = (float('nan'),) * 3
+            row = (t, *robot, *box, *dyn.get('person_0', nan3), *dyn.get('dyn_box', nan3))
             self.latest = row
             if self.recording:
                 self.rows.append(row)
@@ -244,6 +256,11 @@ def setup_leg(node, gt, scen, start, box):
 def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False):
     spec = SCENARIOS[scen]
     start, goal_xy = spec['legs'][leg]
+    driver = getattr(node, 'driver', None) if spec.get('dyn') else None
+    if spec.get('dyn') and driver is None:
+        raise SystemExit(f'{scen} needs the set_pose bridge (dynamic obstacles)')
+    if driver:
+        driver.park_all()
     amcl_init_err = setup_leg(node, gt, scen, start, spec['box'])
     line_yaw = math.atan2(goal_xy[1] - start[1], goal_xy[0] - start[0])
     goal = (goal_xy[0], goal_xy[1], line_yaw)
@@ -263,6 +280,8 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
     goal_msg.pose.pose.position.x, goal_msg.pose.pose.position.y = goal[0], goal[1]
     goal_msg.pose.pose.orientation.z, goal_msg.pose.pose.orientation.w = math.sin(line_yaw / 2), math.cos(line_yaw / 2)
     status, t0 = None, time.time()
+    if driver:
+        driver.begin(DYN.scenarios()[scen]['motions'], start[:2], goal_xy, node.now())
     send = node.client.send_goal_async(goal_msg)
     rclpy.spin_until_future_complete(node, send)
     handle = send.result()
@@ -305,12 +324,16 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
             approach_status = 'skipped' if dist > 0.28 else 'no_server'
     node.spin(1.5)
     gt.recording = False
+    dyn_log = []
+    if driver:
+        dyn_log = [list(x) for x in driver.log[::max(1, len(driver.log) // 600)]]
+        driver.end()
     amcl_end = node.amcl_pose()
     rows = np.array(gt.rows)
     if len(rows) < 10:
         print(f'{tag} {scen}{leg} #{n}: only {len(rows)} ground-truth samples - skipped', flush=True)
         return None
-    g = {k: rows[:, i] for i, k in enumerate(('t', 'rx', 'ry', 'ryaw', 'bx', 'by', 'byaw'))}
+    g = {k: rows[:, i] for i, k in enumerate(('t', 'rx', 'ry', 'ryaw', 'bx', 'by', 'byaw'))}   # extra columns: DYN_MODELS
     cmd = np.array(node.cmd) if node.cmd else np.zeros((0, 4))
     c = {'t': cmd[:, 0], 'vx': cmd[:, 1], 'vy': cmd[:, 2], 'wz': cmd[:, 3]}
     out = M.summarize(g, c, node.plans, start_rad, goal, BOX_SIZE, FOOTPRINT_HALF, status)
@@ -342,7 +365,8 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
             return [list(x) for x in lst[::max(1, len(lst) // n)]]
         json.dump({**row, 'start': start_rad, 'goal': goal, 'gt': rows[::step].round(4).tolist(),
                    'cmd': cmd[::max(1, len(cmd) // 400)].round(4).tolist(),
-                   'smoothed': thin(node.smooth), 'out': thin(node.out), 'collision_monitor': thin(node.cm, 200)}, f)
+                   'smoothed': thin(node.smooth), 'out': thin(node.out), 'collision_monitor': thin(node.cm, 200),
+                   'dyn_cmd': dyn_log}, f)
     if not quiet:
         print(f'{tag} {scen}{leg} #{n}: {"OK  " if out["success"] else "FAIL"} {status:9s} {out["time_s"]:5.1f} s  '
               f'err {out["pos_err_m"] * 100:4.1f} cm  gap {out["min_clearance_m"] * 100:5.1f} cm  '
@@ -380,7 +404,7 @@ def main():
     sub = ap.add_subparsers(dest='cmd', required=True)
     r = sub.add_parser('run')
     r.add_argument('--tag', required=True, help='condition label, e.g. dwb, mppi, dwb_h1')
-    r.add_argument('--scenario', default='S2', choices=sorted(SCENARIOS) + ['all'])
+    r.add_argument('--scenario', default='S2', choices=sorted(SCENARIOS) + ['all', 'dyn'])
     r.add_argument('--repeats', type=int, default=3)
     r.add_argument('--timeout', type=float, default=90.0, help='wall-clock seconds per leg')
     r.add_argument('--approach', action='store_true', help='call the precise_approach action after Nav2 (node must be running)')
@@ -393,12 +417,21 @@ def main():
         sys.exit('export ROS_DOMAIN_ID=31 first (keep away from the robot, domain 25)')
     rclpy.init()
     node, gt = Runner(), GroundTruth()
+    # all = 정지 상자 S1/S2/S4(예전과 같음), dyn = 동적 D1~D4 / all keeps its old meaning (static scenarios), dyn = D1-D4
+    if args.scenario in ('all', 'dyn'):
+        scens = [s for s in sorted(SCENARIOS) if bool(SCENARIOS[s].get('dyn')) == (args.scenario == 'dyn')]
+    else:
+        scens = [args.scenario]
+    if any(SCENARIOS[s].get('dyn') for s in scens):
+        # 동적 장애물 구동기: set_pose 서비스 브리지가 떠 있어야 한다(sim_avoid_run.sh가 띄움).
+        node.driver = DYN.ObstacleDriver(node, WORLD, lambda: gt.latest[1:3] if gt.latest else None)
+        if not node.driver.ready():
+            raise SystemExit('set_pose bridge not available (ros_gz_bridge parameter_bridge .../set_pose@...)')
     try:
         node.spin(3.0)
         if gt.latest is None:
             gt.recording = False
             node.spin(2.0)
-        scens = sorted(SCENARIOS) if args.scenario == 'all' else [args.scenario]
         for scen in scens:
             for n in range(1, args.repeats + 1):
                 for leg in SCENARIOS[scen]['legs']:

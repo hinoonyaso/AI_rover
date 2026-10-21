@@ -91,6 +91,18 @@ class SparsePointCloud(Node):
         self.declare_parameter('extrude_step_m', 0.1)
         self.extrude_depth = self.get_parameter('extrude_depth_m').value
         self.extrude_step = self.get_parameter('extrude_step_m').value
+        # Clearing cloud (2026-10-22, checklist 8.16, troubleshooting/053): the obstacle cloud
+        # holds ONLY obstacle points, so when an obstacle leaves there is no ray to clear its
+        # cells and the mark stays in the costmap. With publish_clearing, pixels that match the
+        # background (free floor) go to depth/points_clear for a Nav2 observation source with
+        # marking false / clearing true. Off by default (real robot unchanged until validated).
+        # 한글: 장애물 점만 보내면 장애물이 떠난 뒤 지울 광선이 없어 흔적이 남는다.
+        # 기준과 같은 바닥 점을 지우기 전용 토픽으로 보낸다(기본 끔).
+        self.declare_parameter('publish_clearing', False)
+        # clearing points every stride*factor pixels / 지우기 점 간격 배수
+        self.declare_parameter('clearing_stride_factor', 2)
+        self.publish_clearing = bool(self.get_parameter('publish_clearing').value)
+        self.clear_step = max(1, int(self.get_parameter('clearing_stride_factor').value))
         self.stride = self.get_parameter('stride').value
         self.every_nth = self.get_parameter('process_every_nth').value
         self.background_margin_mm = self.get_parameter('background_margin_mm').value
@@ -139,6 +151,8 @@ class SparsePointCloud(Node):
         self.intrinsics = None
 
         self.pub = self.create_publisher(PointCloud2, 'depth/points_sparse', 10)
+        self.pub_clear = (self.create_publisher(PointCloud2, 'depth/points_clear', 10)
+                          if self.publish_clearing else None)
         self.create_subscription(
             CameraInfo, 'depth/camera_info', self._info_cb, qos_profile_sensor_data)
         self.create_subscription(
@@ -219,6 +233,20 @@ class SparsePointCloud(Node):
         valid = (
             (depth_sparse > 0) & (bg > 0) &
             (depth_sparse.astype(np.int32) < bg.astype(np.int32) - self.background_margin_mm))
+        if self.pub_clear is not None:
+            # Free floor = within the margin of the background. Sub-sampled: the rays only
+            # need to cover the area. 한글: 기준과 margin 안으로 같은 픽셀 = 빈 바닥, 더 성기게.
+            k = self.clear_step
+            diff = np.abs(depth_sparse.astype(np.int32) - bg.astype(np.int32))
+            free = (depth_sparse > 0) & (bg > 0) & (diff <= self.background_margin_mm)
+            sub = np.zeros_like(free)
+            sub[::k, ::k] = True
+            free &= sub
+            zf = z[free]
+            clear_pts = np.stack(
+                [(us[free] - cx) * zf / fx, (vs[free] - cy) * zf / fy, zf], axis=-1)
+            self.pub_clear.publish(
+                point_cloud2.create_cloud(msg.header, self._fields(), clear_pts))
         x = (us[valid] - cx) * z[valid] / fx
         y = (vs[valid] - cy) * z[valid] / fy
         z = z[valid]
@@ -233,13 +261,16 @@ class SparsePointCloud(Node):
                 d += self.extrude_step
             points = np.concatenate(layers, axis=0)
 
-        fields = [
+        cloud = point_cloud2.create_cloud(msg.header, self._fields(), points)
+        self.pub.publish(cloud)
+
+    @staticmethod
+    def _fields():
+        return [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
             PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
         ]
-        cloud = point_cloud2.create_cloud(msg.header, fields, points)
-        self.pub.publish(cloud)
 
 
 def main():

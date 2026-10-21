@@ -111,6 +111,10 @@ def setup(context):
                                # Extrusion behind the seen face: the real 0.15 m is 7 cm shorter than the box (0.22 m), so the far
                                # 7 cm was missing in the costmap and the robot cut the far corner. Sim 0.25 m; real robot unchanged.
                                'extrude_depth_m': float(os.environ.get('SIM_DEPTH_EXTRUDE_M', '0.25')),
+                               # 빈 바닥 점을 지우기 전용 토픽(depth/points_clear)으로도 보낸다(8.16, troubleshooting/053): 장애물 점만
+                               # 보내면 움직이는 장애물이 지나간 흔적이 코스트맵에 남는다. SIM_DEPTH_CLEARING=0이면 끔. 실기는 아직 끔.
+                               # Also publish free-floor points for a clearing-only Nav2 source (moving obstacles left marks).
+                               'publish_clearing': os.environ.get('SIM_DEPTH_CLEARING', '1') == '1',
                                'background_depth_path': os.path.join(
                                    share, 'config', 'depth_background_ref_sim.npy')}, sim_time])
 
