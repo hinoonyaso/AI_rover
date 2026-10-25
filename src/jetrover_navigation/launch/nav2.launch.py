@@ -62,7 +62,9 @@ def generate_launch_description():
             # 영구히 막았다(tools/sim/depth_fp_survey.py, 2026-10-19). 9 cm 이하는 무시하고 상자(11 cm) 윗면은 그대로 잡힌다.
             # Sim only: depth layer min_obstacle_height -0.1 -> 0.09. The scanned mesh has floor bumps and wall-foot ramps; their
             # stale marks blocked corridors for good. The box top (0.11 m) is still seen. The real robot is untouched.
-            text = re.sub(r'(min_obstacle_height:\s*)-0\.1\b', r'\g<1>0.09', text)
+            # 2026-10-25: 공식 depth 최소 높이가 -0.1 -> 0.06(실기 바닥 오검출)이라 0.06도 치환.
+            # 지우기 전용 관측원(-0.2)은 그대로. The official value became 0.06; rewrite it too.
+            text = re.sub(r'(min_obstacle_height:\s*)(?:-0\.1|0\.06)\b', r'\g<1>0.09', text)
             with tempfile.NamedTemporaryFile('w', suffix='_sim.yaml', delete=False) as f:
                 f.write(text)
                 params = f.name
