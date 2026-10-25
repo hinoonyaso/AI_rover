@@ -90,7 +90,7 @@ global_costmap:
         depth_cloud:
           topic: /depth_cam/depth/points_sparse
           max_obstacle_height: 2.0
-          min_obstacle_height: -0.1
+          min_obstacle_height: 0.06  # 실기 시험 2026-10-25: -0.1 -> 0.06. 카메라 바닥 시야 끝(정면 0.7~0.9 m)의 바닥 오검출(높이 최대 5 cm)이 상자 옆 0.2~0.66 m를 막아 왼쪽으로 크게 우회(B02). 상자(12 cm)는 위쪽이 잡힘
           clearing: true
           marking: true
           data_type: "PointCloud2"
@@ -538,7 +538,7 @@ local_costmap:
         depth_cloud:
           topic: /depth_cam/depth/points_sparse
           max_obstacle_height: 2.0
-          min_obstacle_height: -0.1  # small tolerance for floor noise, not a real "below floor" case
+          min_obstacle_height: 0.06  # 실기 시험 2026-10-25: -0.1 -> 0.06. 카메라 바닥 시야 끝(정면 0.7~0.9 m)의 바닥 오검출(높이 최대 5 cm)이 상자 옆 0.2~0.66 m를 막아 왼쪽으로 크게 우회(B02). 상자(12 cm)는 위쪽이 잡힘
           clearing: true
           marking: true
           data_type: "PointCloud2"

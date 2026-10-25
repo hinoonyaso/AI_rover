@@ -59,3 +59,8 @@ ros2 run jetrover_navigation precise_approach.py
 ## 5. 기록
 - bag + `meta.json`: `bags/real_avoid/`, `bags/real_person/`. 판정은 `set_meta.py`.
 - 결과 문서: `docs/benchmarks/navigation/real_avoid_<날짜>.md`, 체크리스트 8.15/8.16 6번, 문제는 troubleshooting.
+
+## 6. 결과 (2026-10-25)
+- `docs/benchmarks/navigation/real_avoid_20261025.md`: B 5/5 접촉 0, 사람 가로지르기 5회 접촉 0(매번 정지 후 재출발). 시험 중 depth 최소 높이를 0.06 m로 바꿈(B03부터). 문제 기록 troubleshooting/055.
+- 사람 시험 안내는 "로봇 바퀴가 움직이기 시작하면 걷기"로 해야 타이밍이 맞는다.
+

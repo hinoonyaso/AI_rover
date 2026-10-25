@@ -319,7 +319,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 3. 회피 개선 (sim, 변형별 4~6회) — 채택: 팽창 0.30, depth 지우기 끔, BaseObstacle 0.05, Twirling 30(sim 변형 `nav2_params_sim_avoid.yaml`). 폐기한 가설과 수치는 벤치마크 문서 4절. H2(경로 뒤집힘)는 최종 40회 0, H4(MPPI)는 미시험
 - [x] 4. 정밀 접근 노드 — `precise_approach.py`(단위시험 8개), sim 도착 오차 1.7~1.9 cm(정답 기준), `avoid_trials.py --approach`로 연결
 - [x] 5. 최종 시뮬레이션 검증 — **최종(2026-10-21, 2차 설정 + depth 지우기 다시 켬): 모든 기준 동시 만족 S2 20/20, S4 18/20, S1 10/10, 간격 최소 5.0 cm, 시간 최대 24.6 s** (벤치마크 0절). 그 전 2차(depth 지우기 끔, `nav2_params_sim_avoid.yaml`: ObstacleFootprint, local 해상도 2.5 cm, failure_tolerance 1.0, collision_monitor 감속 영역 몸 + 5 cm, troubleshooting/052): S2·S4 각 왕복 10회씩 20회, S1 10회 — 성공 50/50, 도착 오차 ≤ 1.9 cm, 간격 최소 S2 5.7 / S4 4.9 cm(5 cm 미만은 S4 1회), 시간 최대 13.4 / 21.3 s, 몸 방향 최대 9°, 뒤집힘·정지·상자 밀림 0 → 모든 기준을 함께 만족한 시행 S2 20/20, S4 19/20, S1 10/10. (1차 2026-10-20 BaseObstacle 설정은 간격 5 cm 미만 12/40으로 미달 — 벤치마크 문서 1절)
-- [ ] 6. 실기 검증(L4, 사용자 입회): 실기 B 5회 성공 ≥ 4/5, 충돌 0. sim 변형 설정은 실기에 적용하지 않았다(감속 영역 축소·depth 지우기 끔은 실기 안전 검토, local 해상도 2.5 cm는 Jetson 컨트롤러 주기 확인 필요)
+- [x] 6. 실기 검증(L4, 2026-10-25, `docs/benchmarks/navigation/real_avoid_20261025.md`): 실기 B 5회 **성공 5/5, 상자 접촉 0** (시험 변형 `nav2_params_real_test.yaml` + 정밀 접근, 출발은 사용자가 정한 자리). 3~5회차 18.6~21.3 s, 우회 42~47 cm. B02는 카메라 바닥 시야 끝 바닥 오검출로 68 cm 우회 → depth 최소 높이 0.06 m(시험 변형). **실제 위치는 진행 방향 +8~9 cm(줄자), AMCL은 1.5 cm라고 판단 — 미해결**(troubleshooting/055). 공식 설정 반영은 별도 결정
 - [ ] 7. (후속) 좁은 통로(폭 0.45 m 등)에서 팽창·여유가 통과를 막는지 sim 시험, S4 시간·몸 방향 이탈 꼬리 줄이기, sim 속도(RTF 0.45) 병목 측정
 
 ### 8.16 Gazebo 동적 장애물 대응 — 반응형, 멈추고 기다리기 (PRD `prd/sim-dynamic-avoidance.md`, 시험 계획 `prd/sim-dynamic-avoidance-test-plan.md`, 2026-10-21 착수)
@@ -335,9 +335,10 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 3. baseline (2026-10-22, `dyn_clr` = 8.15 최종 + depth 지우기 관측원, 각 10회): D1~D3 10/10씩 간격 12~33 cm지만 **정지 0회**(장애물이 0.6 m 넘게 앞에서 먼저 지나감), D4 간격 2.4~4.4 cm·대기 없음. → 멈춰야 하는 D5(사람이 바로 앞을 천천히)·D6(경로 위에 4 s 서 있다 물러남) 추가. D6 첫 설계는 사람이 비켜 가는 로봇 쪽으로 걸어 들어가 시나리오 수정(troubleshooting/054)
 - [x] 4. 반응형 개선 (각 6~8회, 벤치마크 3절): 채택 H1 BT `PathLongerOnApproach`, H3 collision_monitor `TallStop`(LiDAR 전용 정지 영역), H4 depth VoxelLayer(2D 지우기가 낮은 상자를 지워 S4 간격 6.0→3.9 cm였던 회귀 해결), H4f TallStop 앞 16 cm, H5 BT 1.2배·3 s, H6 RotationShim 1.4→1.65. 폐기 H2 `approach`. 최종 변형 `tools/nav/ab_params/nav2_params_sim_dyn.yaml`
 - [x] 5. 최종 검증 (2026-10-22, `docs/benchmarks/sim/dynamic_obstacles_20261022.md`): 모든 기준 동시 만족 D1 10/10, D2 10/10, D3 10/10, **D4 9/10**(1회 간격 4.8 cm, 정지 상자 기준 5 cm 적용), D5 10/10, D6 10/10 — 접촉 0, 사람 간격 최소 11.1 cm, 재출발 ≤ 1.8 s, D4 대기 5.0~5.3 s, 도착 오차 ≤ 1.9 cm. 회귀 S1 10/10, S2 20/20, S4 18/20
-- [ ] 6. 실기 검증(L4, 별도 승인·사용자 입회): 사람 가로지르기 5회 접촉 0. 절차 `prd/real-avoidance-test-procedure.md`
+- [x] 6. 실기 검증(L4, 2026-10-25, `docs/benchmarks/navigation/real_avoid_20261025.md`): 사람 가로지르기 5회 접촉 0. 절차 `prd/real-avoidance-test-procedure.md`
   - [x] 6.1 준비(2026-10-25): 실기 시험 변형 `tools/nav/ab_params/nav2_params_real_test.yaml`(sim 최종 + 방향별 정지 영역 `DirStop` — `TallStop`은 sim 좁은 통로 0.50/0.60 m 0/6·실기 B 녹화에서 벽 옆 정지 위험, troubleshooting/054 6절), 카메라 launch 인자 `depth_publish_clearing`·`depth_extrude_m`(기본값 불변), `run_trial.py --approach`, 녹화 재생 부하 측정 `tools/nav/replay_load.sh`(컨트롤러 CPU 31→45 %, 10 Hz 유지), 실기 B 녹화로 정지 영역에 로봇 자신이 안 잡힘 확인. sim B'(DirStop) D5 사람 간격 평균 9.0 cm로 10 cm 기준 미달 — 실기에서 확인
-  - [ ] 6.2 실기 B 상자 우회 5회(8.15 6번과 같이), 사람 가로지르기 5회 + 서 있다 물러남 3회
+  - [x] 6.2 실기(2026-10-25): B 5/5(위 8.15 6번). 사람 가로지르기 5회(D03~D07) **접촉 0, 매번 DirStop 정지 후 재출발**, 최소 간격 5.8~15.3 cm (6~7 cm는 사람이 앞면 7 cm 앞을 지나간 경우, 정지 거리 2~3 cm). 서 있다 물러남 2회: 출발 직후 잡히면 38 cm 앞 정지·3 s 대기 후 회피, 처음부터 서 있으면 대기 없이 회피(반응형 한계). 발견: 사람 앞 정지-출발 반복, 8~9 cm 지나침(troubleshooting/055)
+  - [ ] 6.3 (후속) 공식 설정 반영 결정, 8~9 cm 위치 치우침 원인, DirStop 정지 해제 조건, 사람 구분(2단계)
 
 ## 9. Navigation BT
 - [ ] Nav2 BT 구조 이해
