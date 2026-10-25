@@ -200,6 +200,26 @@ def confirm_previous_trial():
         print('previous trial %s: collision none (confirmed) -> %s' % (path, m['outcome']))
 
 
+def relocalize(node, radius=0.3):
+    """Scan-match near the current pose and let it reset AMCL (/initialpose). Returns a dict for meta.json.
+
+    한글: 지금 위치 근처(반경 radius)에서 스캔 매칭 → 확신이 있으면 /initialpose로 AMCL을 다시 잡는다. 이동 전후 자세도 남긴다.
+    """
+    node.wait_stopped()
+    before = node.tf_pose()
+    if before is None:
+        return {'status': 'no_pose'}
+    rc = subprocess.run(['ros2', 'run', 'jetrover_navigation', 'scan_match_init.py', '--near', '%.3f' % before[0],
+                         '%.3f' % before[1], '--near-radius', str(radius)], capture_output=True, text=True, timeout=90)
+    published = 'published /initialpose' in rc.stdout + rc.stderr
+    node.spin(2.0)
+    after = node.tf_pose()
+    out = {'status': 'published' if published else 'not_confident', 'before': before, 'after': after}
+    if after is not None:
+        out['shift_m'] = round(math.hypot(after[0] - before[0], after[1] - before[1]), 3)
+    return out
+
+
 def run_approach(node, gx, gy, gyaw, max_start_m=0.28, timeout_s=25.0):
     """Precise approach after Nav2 (tools: jetrover_navigation precise_approach.py). Returns a dict for meta.json.
 
@@ -252,6 +272,10 @@ def main():
     # 2026-10-25 (8.15/8.16 실기): Nav2가 끝난 뒤 목표 0.28 m 안이면 정밀 접근(precise_approach 노드)을 이어서 호출 — sim 시험과 같은 순서.
     # Call the precise_approach action after Nav2 when within 0.28 m of the goal (the node must be running), as in the sim.
     ap.add_argument('--approach', action='store_true', help='run precise_approach after Nav2 (node must be running)')
+    # 2026-10-25 (troubleshooting/055): AMCL이 이동을 5~7 % 짧게 잡아 실제로 8~9 cm 더 갔다(스캔 매칭은 줄자와 1 cm 안).
+    # 정밀 접근 직전에 지금 위치 근처에서 스캔 매칭으로 AMCL을 다시 잡는다. / re-localize by scan matching before the approach.
+    ap.add_argument('--relocalize', action='store_true',
+                    help='with --approach: scan-match near the current pose and reset AMCL before the precise approach')
     ap.add_argument('--start', type=float, nargs=3, metavar=('X', 'Y', 'YAW_DEG'),
                     help='use this start pose (map) instead of S; A/B/D goals become FORWARD_M ahead of it')
     args = ap.parse_args()
@@ -346,7 +370,10 @@ def main():
             if status is None:
                 status = {4: 'succeeded', 5: 'canceled', 6: 'aborted'}.get(res.result().status, str(res.result().status))
         if args.approach and status in ('succeeded', 'aborted'):
+            reloc = relocalize(node) if args.relocalize else None
             approach = run_approach(node, gx, gy, gyaw)
+            if reloc is not None:
+                approach['relocalize'] = reloc
             print('precise approach: %s' % approach)
     except KeyboardInterrupt:
         cancel_ok, cancel_msg = node.cancel_goal(handle)
