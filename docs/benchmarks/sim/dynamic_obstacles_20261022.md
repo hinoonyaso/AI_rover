@@ -62,3 +62,12 @@ python3 tools/sim/avoid_trials.py summary --prefix dynfin
 - 장애물 모델은 위치만 옮기는 방식이라 로봇을 피하지 않는다. 시나리오가 사람을 로봇 쪽으로 걷게 하면 '접촉'이 나오는데 로봇 잘못이 아니다(D6 첫 설계, troubleshooting/054). `dyn_contact_moving`으로 구분한다.
 - 카메라 바닥 시야 끝(약 0.76 m) 너머로 늘린 장애물 점은 지울 광선이 없어 몇 칸 남는다(053). 로봇이 다가가면 지워진다.
 - D4 기준(간격 ≥ 5 cm)은 정지 상자 기준을 적용한 해석이다(PRD의 10 cm는 움직이는 장애물 기준).
+
+## 7. 실기 준비 (2026-10-25)
+- 실기 B 녹화(`bags/ab_mppi/trial_B01`, `bags/e6v2_encoder/trial_B02`)의 `/scan`을 로봇 기준으로 바꿔 보니 `TallStop` 안에 로봇 자신은 0점이지만,
+  상자를 오른쪽으로 돌 때 동쪽 벽이 몸 옆 약 11 cm에 들어와 3 s 동안 6~27점 → 실기에서 벽 옆 정지 위험.
+- sim 좁은 통로(N50/N60, `dyn_obstacles.py`): `TallStop` 0/6 통과, 방향별 `DirStop` 6/6. `DirStop`의 앞 영역 옆을 +2 → +6 cm로 넓힌 B'로
+  D5 사람 간격 평균 7.3 → 9.0 cm(아직 10 cm 미만), D6 10 cm 이상 유지. 실기 시험 변형 `tools/nav/ab_params/nav2_params_real_test.yaml` = sim 최종 + B'.
+- Jetson 부하(녹화 재생 `tools/nav/replay_load.sh`, 25 s): 컨트롤러 CPU 공식 31 % / sim 최종 48 % / 실기 시험 변형 45 %(코어 1개 기준), 제어 주기 경고 0.
+  재생에는 카메라 드라이버·지우기 점이 없으니 실기 L2에서 다시 본다.
+- 절차서 `prd/real-avoidance-test-procedure.md`.

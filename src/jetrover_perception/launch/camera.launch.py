@@ -76,7 +76,16 @@ def launch_setup(context):
         name='sparse_point_cloud',
         namespace=camera_name,
         output='screen',
-        parameters=[{'home_pose_rad': _arm_home_pose()}],
+        # depth_publish_clearing / depth_extrude_m (2026-10-25, 8.15/8.16 실기 시험용):
+        # 기본값은 지금 실기와 같다(끔 / 0.15 m). 지우기 전용 바닥 점(troubleshooting/053)과
+        # 상자 두께에 맞춘 연장(sim 0.25 m, 8.15)을 시험할 때만 켠다.
+        # Defaults keep the current real-robot behaviour; the sim-validated values are opt-in.
+        parameters=[{
+            'home_pose_rad': _arm_home_pose(),
+            'publish_clearing':
+                LaunchConfiguration('depth_publish_clearing').perform(context) == 'true',
+            'extrude_depth_m': float(LaunchConfiguration('depth_extrude_m').perform(context)),
+        }],
     )
 
     return [container, depth_colorizer, sparse_point_cloud]
@@ -88,5 +97,13 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'colorizer', default_value='true',
             description='Run depth_colorizer (viewing only); false during Nav2 tests to save CPU'),
+        DeclareLaunchArgument(
+            'depth_publish_clearing', default_value='false',
+            description='sparse_point_cloud: also publish free-floor points on '
+                        'depth/points_clear (clearing-only source)'),
+        DeclareLaunchArgument(
+            'depth_extrude_m', default_value='0.15',
+            description='sparse_point_cloud: extend obstacle points behind the seen face '
+                        '(sim tests used 0.25)'),
         OpaqueFunction(function=launch_setup),
     ])

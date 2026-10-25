@@ -71,7 +71,7 @@ SCENARIOS = {
 # Dynamic-obstacle scenarios: object_0 is parked away; the models of dyn_obstacles.py move (motions rebuilt every trial).
 for _name, _sc in DYN.scenarios().items():
     SCENARIOS[_name] = {'box': DYN.OBJECT_0_PARK, 'legs': _sc['legs'], 'dyn': True}
-DYN_MODELS = ('person_0', 'dyn_box')
+DYN_MODELS = ('person_0', 'dyn_box', 'gate_l', 'gate_r')
 FIELDS = ['tag', 'scenario', 'leg', 'n', 'stamp', 'success', 'status', 'nav_status', 'nav_time_s', 'approach_status',
           'approach_time_s', 'time_s', 'pos_err_m', 'yaw_err_deg',
           'min_clearance_m', 'box_moved_m', 'detour_width_m', 'vy_flips_near', 'vy_flips_per_s_near',
@@ -139,10 +139,10 @@ class GroundTruth:
             elif name in DYN_MODELS and name not in dyn:
                 dyn[name] = val
         if robot and box:
-            # 열: t, 로봇 x y yaw, 상자 x y yaw, person_0 x y yaw, dyn_box x y yaw (없으면 nan)
-            # columns: t, robot, box, then person_0 and dyn_box (nan when absent)
+            # 열: t, 로봇 x y yaw, 상자 x y yaw, 그다음 DYN_MODELS 순서로 x y yaw (없으면 nan)
+            # columns: t, robot, box, then each of DYN_MODELS (nan when absent)
             nan3 = (float('nan'),) * 3
-            row = (t, *robot, *box, *dyn.get('person_0', nan3), *dyn.get('dyn_box', nan3))
+            row = (t, *robot, *box, *[v for name in DYN_MODELS for v in dyn.get(name, nan3)])
             self.latest = row
             if self.recording:
                 self.rows.append(row)
@@ -347,11 +347,16 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
         # Dynamic-obstacle metrics for the models this scenario moves (nan columns = absent -> treated as parked).
         used = {mo.model for mo in DYN.scenarios()[scen]['motions']}
         obstacles = []
-        for name, col, kind in (('person_0', 7, 'person'), ('dyn_box', 10, 'box')):
+        sizes = {'dyn_box': DYN.DYN_BOX_SIZE, 'gate_l': DYN.GATE_SIZE, 'gate_r': DYN.GATE_SIZE}
+        for k, name in enumerate(DYN_MODELS):
+            col = 7 + 3 * k
             if name in used and rows.shape[1] > col + 2:
                 ox = np.where(np.isfinite(rows[:, col]), rows[:, col], 99.0)
-                obstacles.append({'kind': kind, 'x': ox, 'y': np.nan_to_num(rows[:, col + 1]),
-                                  'yaw': np.nan_to_num(rows[:, col + 2])})
+                ob = {'kind': 'person' if name == 'person_0' else 'box', 'x': ox,
+                      'y': np.nan_to_num(rows[:, col + 1]), 'yaw': np.nan_to_num(rows[:, col + 2])}
+                if name in sizes:
+                    ob['half'] = (sizes[name][0] / 2, sizes[name][1] / 2)
+                obstacles.append(ob)
         out.update(M.dynamic_summary(g, obstacles, start_rad, goal, FOOTPRINT_HALF, DYN.PERSON_LEGS, DYN.PERSON_LEG_R,
                                      (DYN.DYN_BOX_SIZE[0] / 2, DYN.DYN_BOX_SIZE[1] / 2)))
         out['success'] = bool(status == 'succeeded' and not out['dyn_contact'])
@@ -419,12 +424,12 @@ def summary(prefix):
           f'{"vy flips":>11s} {"stop s":>11s} {"hdg dev":>11s} {"plan flips":>11s}')
     for (tag, scen, leg), rs in sorted(groups.items()):
         ok = sum(r['success'] == 'True' for r in rs)
-        if scen.startswith('D'):
+        if SCENARIOS.get(scen, {}).get('dyn'):
             continue
         print(f'{tag:14s} {scen + leg:5s} {ok:3d}/{len(rs):<2d} {stat(rs, "time_s")} {stat(rs, "pos_err_m", 100)} '
               f'{stat(rs, "min_clearance_m", 100)} {stat(rs, "detour_width_m", 100)} {stat(rs, "vy_flips_near")} '
               f'{stat(rs, "stopped_s_near")} {stat(rs, "heading_dev_deg_near")} {stat(rs, "plan_flips")}')
-    dyn = {k: v for k, v in groups.items() if k[1].startswith('D')}
+    dyn = {k: v for k, v in groups.items() if SCENARIOS.get(k[1], {}).get('dyn')}
     if dyn:
         # 동적 장애물 시나리오 요약(8.16): 접촉 수, 장애물과 최소 간격(최소/평균), 정지 시 간격, 대기, 재출발 지연(최대)
         print(f'{"tag":14s} {"scen":5s} {"ok":>6s} {"contact":>7s} {"min gap cm":>10s} {"gap cm":>11s} {"stop gap cm":>11s} '
@@ -459,7 +464,8 @@ def main():
     node, gt = Runner(), GroundTruth()
     # all = 정지 상자 S1/S2/S4(예전과 같음), dyn = 동적 D1~D4 / all keeps its old meaning (static scenarios), dyn = D1-D4
     if args.scenario in ('all', 'dyn'):
-        scens = [s for s in sorted(SCENARIOS) if bool(SCENARIOS[s].get('dyn')) == (args.scenario == 'dyn')]
+        scens = [s for s in sorted(SCENARIOS) if bool(SCENARIOS[s].get('dyn')) == (args.scenario == 'dyn')
+                 and not s.startswith('N')]   # N50/N60 (narrow passage) run by name / 좁은 통로는 이름으로
     else:
         scens = [args.scenario]
     if any(SCENARIOS[s].get('dyn') for s in scens):

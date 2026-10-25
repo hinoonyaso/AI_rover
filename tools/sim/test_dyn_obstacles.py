@@ -48,7 +48,9 @@ def test_progress_and_triggers():
 
 def test_scenarios_cross_the_robot_line():
     sc = D.scenarios()
-    assert set(sc) == {'D1', 'D2', 'D3', 'D4', 'D5', 'D6'}
+    assert set(sc) == {'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'N50', 'N60'}
+    gl, gr = (m.path[0] for m in sc['N50']['motions'])
+    assert abs((gr[0] - gl[0]) - D.GATE_SIZE[0] - 0.50) < 1e-9      # gap between the inner wall ends = 0.50
     for name in ('D1', 'D3'):
         m = sc[name]['motions'][0]
         xs = [p[0] for p in m.path]

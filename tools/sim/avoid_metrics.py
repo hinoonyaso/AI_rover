@@ -203,7 +203,7 @@ def obstacle_gap(robot_poly, obs, i, legs, leg_r, box_half):
     if obs['kind'] == 'person':
         c, s = math.cos(yaw), math.sin(yaw)
         return min(point_rect_signed((x + c * lx - s * ly, y + s * lx + c * ly), robot_poly) - leg_r for lx, ly in legs)
-    return rect_gap(robot_poly, rect_corners(x, y, yaw, *box_half))
+    return rect_gap(robot_poly, rect_corners(x, y, yaw, *obs.get('half', box_half)))
 
 
 def dynamic_summary(gt, obstacles, start, goal, footprint_half=(0.166, 0.13), legs=((0.0, 0.10), (0.0, -0.10)),
@@ -234,7 +234,7 @@ def dynamic_summary(gt, obstacles, start, goal, footprint_half=(0.166, 0.13), le
             rel = np.array([obs['x'][i] - rx[i], obs['y'][i] - ry[i]])
             ahead = float(rel @ direction)
             lat = float(direction[0] * rel[1] - direction[1] * rel[0])
-            reach = leg_r + abs(legs[0][1]) if obs['kind'] == 'person' else max(box_half)
+            reach = leg_r + abs(legs[0][1]) if obs['kind'] == 'person' else max(obs.get('half', box_half))
             remaining = float((np.asarray(goal[:2]) - np.array([rx[i], ry[i]])) @ direction)
             if 0.0 < ahead < remaining + footprint_half[0] and abs(lat) < half_w + reach:
                 blocking[i] = True

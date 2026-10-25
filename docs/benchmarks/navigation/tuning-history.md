@@ -134,6 +134,8 @@
 | (sim 변형, 시도 후 폐기) collision_monitor `approach` 1.0 s | — | 2026-10-22 | 사람 간격 개선 없음(5.7~7.1 cm) | 벤치마크 3절 H2 |
 | (sim 변형) depth 레이어 plugin | ObstacleLayer → **VoxelLayer**(origin_z 0, z_resolution 0.05, z_voxels 10) | 2026-10-22 | 2D 지우기 광선이 낮은 상자를 지워 S4 간격 6.0→3.9 cm. 3D로 회복(5.3~5.7) | troubleshooting/054 |
 | (sim 변형) RotationShim `angular_dist_threshold` | 1.4 → **1.65** | 2026-10-22 | 갑자기 나타난 상자 15 cm 앞에서 다시 출발할 때 87° 제자리 회전 → 간격 3.9 cm. S2/S4 회귀 없음 | troubleshooting/054 |
+| (실기 시험 변형 `nav2_params_real_test.yaml`) collision_monitor | `TallStop`(사방 12·앞 16 cm) → **`DirStop`** velocity polygon(holonomic, 앞으로: 앞 16·옆 6 cm, 옆으로: 그쪽 12 cm, 나머지 2 cm; 앞 영역 옆 +2 cm 시도 후 +6) | 2026-10-25 | `TallStop`은 sim 좁은 통로 0/6·실기 B 녹화에서 벽 옆 정지 위험. `DirStop` 통로 6/6, D5 사람 간격 평균 7.3(+2) → 9.0 cm(+6). 공식 설정은 그대로 | troubleshooting/054 6절 |
+| (인식 launch, 기본값 불변) `camera.launch.py` 인자 `depth_publish_clearing`(false) / `depth_extrude_m`(0.15) | 새 인자 | 2026-10-25 | 실기 시험에서 `true` / `0.25`로 sim과 같은 조건 | `prd/real-avoidance-test-procedure.md` |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

@@ -93,6 +93,17 @@ def judged_pose(meta):
     return None, None
 
 
+def line_offset_m(meta, pose):
+    """|lateral offset| of pose from the start line. meta['start'] (run_trial.py --start, 2026-10-25) gives the line
+    through the start along its heading; older trials have none and use the x = START_X line (S heading +y).
+    한글: 출발점이 기록돼 있으면 그 방향 직선 기준, 없으면(예전 기록) x = 1.05 직선 기준."""
+    st = meta.get('start')
+    if not st:
+        return abs(pose['x'] - START_X)
+    yaw = math.radians(st['yaw_deg'])
+    return abs(-math.sin(yaw) * (pose['x'] - st['x']) + math.cos(yaw) * (pose['y'] - st['y']))
+
+
 def judge(meta):
     """Return (outcome, reason). Does not modify meta."""
     auto = meta.get('auto', {})
@@ -121,8 +132,10 @@ def judge(meta):
         why.append('pos %.1f cm' % (e['pos_m'] * 100))
     if math.radians(e['yaw_deg']) > YAW_TOL_RAD:
         why.append('yaw %.1f deg' % e['yaw_deg'])
-    if meta.get('scenario') == 'B' and abs(pose['x'] - START_X) > LINE_TOL_M:
-        why.append('line %.1f cm' % (abs(pose['x'] - START_X) * 100))
+    if meta.get('scenario') == 'B':
+        line = line_offset_m(meta, pose)
+        if line > LINE_TOL_M:
+            why.append('line %.1f cm' % (line * 100))
     if why:
         return 'fail', '%s: %s' % (src, ', '.join(why))
     if meta.get('collision') is None:

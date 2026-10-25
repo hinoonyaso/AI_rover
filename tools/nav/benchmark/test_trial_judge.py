@@ -86,6 +86,17 @@ class Outcome(unittest.TestCase):
         slow['auto']['elapsed_s'] = 61.0
         self.assertEqual(j.set_collision(j.apply_scan(slow, scan()), False, 'test')['outcome'], 'fail')
 
+    def test_line_check_follows_a_recorded_start_heading(self):
+        # start (0.5, 0.2) heading 0 deg (+x): the line is y = 0.2, so x is free and y is the offset
+        b = meta(scenario='B', start={'x': 0.5, 'y': 0.2, 'yaw_deg': 0.0})
+        b['goal'] = {'x': 1.8, 'y': 0.2, 'yaw_deg': 0.0}
+        on_line = j.set_collision(j.apply_scan(b, scan(x=1.75, y=0.24, yaw=0.0)), False, 'test')
+        self.assertEqual(on_line['outcome'], 'success')
+        off = copy.deepcopy(b)
+        off = j.set_collision(j.apply_scan(off, scan(x=1.75, y=0.32, yaw=0.0)), False, 'test')
+        self.assertIn('line 12.0 cm', off['outcome_reason'])
+        self.assertAlmostEqual(j.line_offset_m({}, {'x': 1.10, 'y': 0.0}), 0.05)   # old trials: |x - 1.05|
+
 
 class StopAndMvp(unittest.TestCase):
     def test_not_stopped_blocks_the_scan_judgement(self):

@@ -16,10 +16,11 @@ import math  # noqa: I100
 
 RATE_HZ = 20.0           # set_pose rate in simulated time / 시뮬레이션 시간 기준 갱신 주기
 Z = 0.002                # model origin height (just above the floor) / 바닥 바로 위
-PARK = {'person_0': (8.0, 8.0), 'dyn_box': (8.0, 8.6)}
+PARK = {'person_0': (8.0, 8.0), 'dyn_box': (8.0, 8.6), 'gate_l': (8.0, 9.6), 'gate_r': (8.0, 9.9)}
 PERSON_LEGS = ((0.0, 0.10), (0.0, -0.10))   # leg centres in the model frame / 모델 기준 다리 중심
 PERSON_LEG_R = 0.06
 DYN_BOX_SIZE = (0.33, 0.22)
+GATE_SIZE = (0.70, 0.10)                    # narrow-passage wall (x, y), 0.5 m tall / 좁은 통로 벽
 OBJECT_0_PARK = (8.0, 9.2)                  # the static-avoidance box is moved away in D scenarios / D 시나리오에선 치움
 
 # A↔B line of the static-avoidance scenarios (avoid_trials.py), longest straight run in the scan room.
@@ -92,6 +93,13 @@ def triggered(m, t_since_goal, robot_progress):
     return m.robot_progress_m is not None and robot_progress is not None and robot_progress >= m.robot_progress_m
 
 
+def _gate_motions(width, x0=1.0, y=0.80):
+    """Two walls appearing at the start, leaving a gap `width` centred on x0 (speed 0 = stay)."""
+    off = width / 2 + GATE_SIZE[0] / 2
+    return [Motion('gate_l', [(x0 - off, y)], 0.0, after_s=0.0, park_at_end=False),
+            Motion('gate_r', [(x0 + off, y)], 0.0, after_s=0.0, park_at_end=False)]
+
+
 def scenarios():
     """D1-D6 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22). Fresh Motion objects each call.
 
@@ -120,6 +128,11 @@ def scenarios():
         # person stands on the path 4 s, then steps back to the right (leaving to the left walked it into the detouring robot)
         'D6': {'legs': leg, 'motions': [Motion('person_0', [(1.55, 0.95), (1.00, 0.95), (1.55, 0.95)], 0.4, yaw_deg=180.0,
                                                robot_progress_m=0.05, pause_at=1, pause_s=4.0)]},
+        # N50/N60 (2026-10-25 실기 준비) 좁은 통로: y 0.80에 LiDAR에 보이는 벽 두 개, 경로선(x 1.0) 가운데 틈 0.50/0.60 m.
+        # 로봇 폭 0.26 m. 정지 영역(TallStop)이 벽 옆 통과를 막는지 본다(실기 B에서 동쪽 벽까지 몸 옆 약 11 cm).
+        # narrow passage: two LiDAR-visible walls at y 0.80 leaving a 0.50 / 0.60 m gap on the A-B line
+        'N50': {'legs': leg, 'motions': _gate_motions(0.50)},
+        'N60': {'legs': leg, 'motions': _gate_motions(0.60)},
     }
 
 

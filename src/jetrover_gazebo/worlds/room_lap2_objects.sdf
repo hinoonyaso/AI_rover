@@ -119,5 +119,29 @@
           <material><ambient>0.3 0.5 0.3 1</ambient><diffuse>0.3 0.5 0.3 1</diffuse></material></visual>
       </link>
     </model>
+    <!-- 좁은 통로 시험 벽 두 개(8.16 실기 준비, 2026-10-25): 0.70 x 0.10 x 0.50 m, LiDAR에 보이는 높이. 평소 방 밖에 세워 둠.
+         Narrow-passage gate walls (LiDAR-visible), parked outside the room; moved by dyn_obstacles.py. -->
+    <model name="gate_l">
+      <static>false</static>
+      <pose>8.0 9.6 0.002 0 0 0</pose>
+      <link name="body">
+        <gravity>false</gravity>
+        <inertial><mass>5.0</mass><inertia><ixx>0.1</ixx><iyy>0.3</iyy><izz>0.3</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <collision name="c"><pose>0 0 0.25 0 0 0</pose><geometry><box><size>0.70 0.10 0.50</size></box></geometry></collision>
+        <visual name="v"><pose>0 0 0.25 0 0 0</pose><geometry><box><size>0.70 0.10 0.50</size></box></geometry>
+          <material><ambient>0.5 0.5 0.55 1</ambient><diffuse>0.5 0.5 0.55 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="gate_r">
+      <static>false</static>
+      <pose>8.0 9.9 0.002 0 0 0</pose>
+      <link name="body">
+        <gravity>false</gravity>
+        <inertial><mass>5.0</mass><inertia><ixx>0.1</ixx><iyy>0.3</iyy><izz>0.3</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <collision name="c"><pose>0 0 0.25 0 0 0</pose><geometry><box><size>0.70 0.10 0.50</size></box></geometry></collision>
+        <visual name="v"><pose>0 0 0.25 0 0 0</pose><geometry><box><size>0.70 0.10 0.50</size></box></geometry>
+          <material><ambient>0.5 0.5 0.55 1</ambient><diffuse>0.5 0.5 0.55 1</diffuse></material></visual>
+      </link>
+    </model>
   </world>
 </sdf>

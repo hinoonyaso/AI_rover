@@ -52,6 +52,23 @@ SCENARIOS = {
     # 한글: C의 좌우 대칭(오른쪽 대각 + 시계 90° 회전). 왼쪽에 치울 수 없는 물체가 있어 C가 영향을 받음.
     'E': {'goal': (1.50, 0.70, 0.0), 'mode': 'pose'},
 }
+# --start X Y YAW (2026-10-25, 8.15/8.16 실기): 출발점을 바꿀 때 A/B/D 목표는 출발 방향으로 이 거리만큼 앞(원래 S 기준과 같은 거리).
+# With --start, the A/B/D goals are this far ahead of the start along its heading (same distances as from the original S).
+FORWARD_M = {'A': 1.00, 'B': 1.30, 'D': 1.00}
+
+
+def ahead(start, dist):
+    """Map pose `dist` m ahead of start (x, y, yaw_deg), same heading. 한글: 출발 방향으로 dist m 앞."""
+    yaw = math.radians(start[2])
+    return (start[0] + dist * math.cos(yaw), start[1] + dist * math.sin(yaw), start[2])
+
+
+def line_offset(start, x, y):
+    """Signed lateral offset (m) of (x, y) from the line through start along its heading (left +)."""
+    yaw = math.radians(start[2])
+    return -math.sin(yaw) * (x - start[0]) + math.cos(yaw) * (y - start[1])
+
+
 TOPICS = ('/tf /tf_static /odom /amcl_pose /cmd_vel /cmd_vel_nav /scan /plan /received_global_plan '
           '/depth_cam/depth/points_sparse /global_costmap/costmap /local_costmap/costmap '
           '/collision_monitor_state').split()
@@ -183,6 +200,40 @@ def confirm_previous_trial():
         print('previous trial %s: collision none (confirmed) -> %s' % (path, m['outcome']))
 
 
+def run_approach(node, gx, gy, gyaw, max_start_m=0.28, timeout_s=25.0):
+    """Precise approach after Nav2 (tools: jetrover_navigation precise_approach.py). Returns a dict for meta.json.
+
+    한글: Nav2 종료 후 목표 max_start_m 안이면 정밀 접근 액션 호출. 노드가 속도(0.06 m/s)·시작 거리(0.30 m)·시간(20 s)을 제한한다.
+    """
+    pose = node.tf_pose() or node.amcl
+    if pose is None:
+        return {'status': 'no_pose'}
+    dist = math.hypot(pose[0] - gx, pose[1] - gy)
+    if dist > max_start_m:
+        return {'status': 'skipped', 'start_dist_m': round(dist, 3)}
+    client = ActionClient(node, NavigateToPose, 'precise_approach')
+    if not client.wait_for_server(timeout_sec=3.0):
+        return {'status': 'no_server', 'start_dist_m': round(dist, 3)}
+    goal = NavigateToPose.Goal()
+    goal.pose = make_pose(gx, gy, gyaw)
+    t0 = time.time()
+    send = client.send_goal_async(goal)
+    rclpy.spin_until_future_complete(node, send)
+    handle = send.result()
+    if not handle.accepted:
+        return {'status': 'rejected', 'start_dist_m': round(dist, 3)}
+    res = handle.get_result_async()
+    while not res.done() and time.time() - t0 < timeout_s:
+        rclpy.spin_once(node, timeout_sec=0.05)
+    if not res.done():
+        node.cancel_goal(handle)
+        node.spin(1.0)
+        status = 'timeout'
+    else:
+        status = {4: 'succeeded', 5: 'canceled', 6: 'aborted'}.get(res.result().status, str(res.result().status))
+    return {'status': status, 'start_dist_m': round(dist, 3), 'time_s': round(time.time() - t0, 1)}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('scenario', choices=sorted(SCENARIOS))
@@ -198,9 +249,21 @@ def main():
     ap.add_argument('--nominal-start', action='store_true',
                     help='old behaviour: force AMCL to the nominal START instead of scan matching')
     ap.add_argument('--no-scan', action='store_true', help='do not scan-match the final pose (manual tape only)')
+    # 2026-10-25 (8.15/8.16 실기): Nav2가 끝난 뒤 목표 0.28 m 안이면 정밀 접근(precise_approach 노드)을 이어서 호출 — sim 시험과 같은 순서.
+    # Call the precise_approach action after Nav2 when within 0.28 m of the goal (the node must be running), as in the sim.
+    ap.add_argument('--approach', action='store_true', help='run precise_approach after Nav2 (node must be running)')
+    ap.add_argument('--start', type=float, nargs=3, metavar=('X', 'Y', 'YAW_DEG'),
+                    help='use this start pose (map) instead of S; A/B/D goals become FORWARD_M ahead of it')
     args = ap.parse_args()
-    confirm_previous_trial()
+    global START
     sc = SCENARIOS[args.scenario]
+    if args.start:
+        if args.scenario not in FORWARD_M:
+            sys.exit('--start works with A/B/D only (their goals are a distance ahead of the start)')
+        START = tuple(args.start)
+        sc = dict(sc, goal=ahead(START, FORWARD_M[args.scenario]))
+        print('start %.2f %.2f %.0f deg -> goal %.2f %.2f (%.2f m ahead)' % (*START, *sc['goal'][:2], FORWARD_M[args.scenario]))
+    confirm_previous_trial()
     gx, gy, gyaw = sc['goal']
     out_dir = 'bags/%s/trial_%s%02d' % (args.tag, args.scenario, args.trial)
     if os.path.exists(out_dir):
@@ -243,6 +306,7 @@ def main():
     node.tf_track.clear()
 
     fb = {'recoveries': 0, 'remaining': None}
+    approach = None
     t0 = time.time()
     status = None
     if sc['mode'] == 'line':
@@ -281,6 +345,9 @@ def main():
                     break
             if status is None:
                 status = {4: 'succeeded', 5: 'canceled', 6: 'aborted'}.get(res.result().status, str(res.result().status))
+        if args.approach and status in ('succeeded', 'aborted'):
+            approach = run_approach(node, gx, gy, gyaw)
+            print('precise approach: %s' % approach)
     except KeyboardInterrupt:
         cancel_ok, cancel_msg = node.cancel_goal(handle)
         status = 'interrupted'
@@ -328,17 +395,19 @@ def main():
 
     line_dev = None
     track = node.tf_track or node.track
+    # 직선 이탈은 출발 방향 기준(원래 S는 +y 방향이라 |x - 1.05|와 같다) / lateral offset from the start heading line
     if args.scenario in ('A', 'B', 'D') and track:
-        line_dev = max(abs(x - START[0]) for _, x, _ in track)
+        line_dev = max(abs(line_offset(START, x, y)) for _, x, y in track)
     pos_err = math.hypot(final[0] - gx, final[1] - gy) if final else None
     yaw_err = abs(wrap(final[2] - gyaw)) if final else None
-    final_dev = abs(final[0] - START[0]) if (final and args.scenario in ('A', 'B', 'D')) else None
+    final_dev = abs(line_offset(START, final[0], final[1])) if (final and args.scenario in ('A', 'B', 'D')) else None
     plan_short = None
     if node.plan_end is not None:
         plan_short = math.hypot(node.plan_end[0] - gx, node.plan_end[1] - gy)
     invalid = plan_short is not None and plan_short > judge.PLAN_CUT_M
     meta = {
         'scenario': args.scenario, 'trial': args.trial, 'goal': {'x': gx, 'y': gy, 'yaw_deg': gyaw},
+        'start': {'x': START[0], 'y': START[1], 'yaw_deg': START[2]},   # trial_judge.line_offset_m
         'outcome': None,
         'collision': None,   # 한글: 사람이 판정 (set_meta.py, 또는 다음 회차 시작 시 '충돌 없음'으로 확정)
         'recoveries': fb['recoveries'], 'measured_final': None,
@@ -349,7 +418,7 @@ def main():
                  'start_from': 'nominal' if args.nominal_start else 'scan_match',
                  'last_plan_end_to_goal_m': plan_short, 'invalid_plan_cut_short': invalid,
                  'stopped_before_measure': stopped, 'stop_reason': stop_reason, 'stop_recovery': stop_recovery,
-                 'cancel': cancel_msg, 'safety_error': safety_error},
+                 'cancel': cancel_msg, 'safety_error': safety_error, 'approach': approach},
         'notes': ''}
     meta = judge.apply_scan(meta, scan)
     with open(os.path.join(out_dir, 'meta.json'), 'w') as f:

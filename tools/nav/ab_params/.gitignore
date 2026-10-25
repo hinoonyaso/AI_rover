@@ -4,3 +4,4 @@
 !nav2_params_sim_avoid.yaml
 !nav2_params_dyn_clr.yaml
 !nav2_params_sim_dyn.yaml
+!nav2_params_real_test.yaml
