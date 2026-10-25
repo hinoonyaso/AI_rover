@@ -2,7 +2,7 @@
 # 한글: Gazebo 동적 장애물(사람, 낮은 상자)을 정해진 경로·속도로 움직이는 구동기와 시나리오 D1~D4 (체크리스트 8.16, host).
 #       움직임 계산은 순수 함수(단위시험 test_dyn_obstacles.py), 실제 이동은 ros_gz_bridge로 연결한 /world/<w>/set_pose 서비스.
 #       모델은 room_lap2_objects.sdf의 person_0, dyn_box(중력 끔, 평소 방 밖 (8, 8)에 세워 둠).
-"""Kinematic driver for the dynamic-obstacle test models and the D1-D6 scenarios (checklist 8.16, host).
+"""Kinematic driver for the dynamic-obstacle test models and the D1-D7 scenarios (checklist 8.16, host).
 
 Models (room_lap2_objects.sdf): person_0 (two legs r 6 cm that cross the LiDAR plane + torso) and dyn_box (33 x 22 x 11 cm,
 below the LiDAR, seen only by the depth camera). Both have gravity off and are parked outside the room at (8, 8).
@@ -101,7 +101,7 @@ def _gate_motions(width, x0=1.0, y=0.80):
 
 
 def scenarios():
-    """D1-D6 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22). Fresh Motion objects each call.
+    """D1-D7 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22, D7 2026-10-25). Fresh Motion objects each call.
 
     Robot A (1.02, 0.30, 83 deg) -> B (1.00, 1.25). Crossing line y 1.00: the obstacle reaches the robot path while the
     robot centre is about 0.55-0.65 m before it (the scan room is too short for the planned 0.6-0.8 m everywhere).
@@ -128,6 +128,11 @@ def scenarios():
         # person stands on the path 4 s, then steps back to the right (leaving to the left walked it into the detouring robot)
         'D6': {'legs': leg, 'motions': [Motion('person_0', [(1.55, 0.95), (1.00, 0.95), (1.55, 0.95)], 0.4, yaw_deg=180.0,
                                                robot_progress_m=0.05, pause_at=1, pause_s=4.0)]},
+        # D7 (2026-10-25, 실기 D09 재현) 사람이 처음부터 경로 위(로봇 앞 약 0.75 m, 목표 근처)에 8 s 서 있다가 오른쪽으로 물러남.
+        #    실기에서 사람 바로 앞 정지-출발 반복이 나온 상황(troubleshooting/055).
+        # person stands on the path from the start (near the goal) for 8 s, then steps right: real D09, stop-go jitter
+        'D7': {'legs': leg, 'motions': [Motion('person_0', [(1.00, 1.05), (1.55, 1.05)], 0.4, yaw_deg=180.0,
+                                               after_s=0.0, pause_at=0, pause_s=8.0)]},
         # N50/N60 (2026-10-25 실기 준비) 좁은 통로: y 0.80에 LiDAR에 보이는 벽 두 개, 경로선(x 1.0) 가운데 틈 0.50/0.60 m.
         # 로봇 폭 0.26 m. 정지 영역(TallStop)이 벽 옆 통과를 막는지 본다(실기 B에서 동쪽 벽까지 몸 옆 약 11 cm).
         # narrow passage: two LiDAR-visible walls at y 0.80 leaving a 0.50 / 0.60 m gap on the A-B line
