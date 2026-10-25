@@ -6,3 +6,5 @@
 !nav2_params_sim_dyn.yaml
 !nav2_params_real_test.yaml
 !nav2_params_sim_dir3.yaml
+!nav2_params_real_tol05.yaml
+!nav2_params_sim_tol05.yaml
