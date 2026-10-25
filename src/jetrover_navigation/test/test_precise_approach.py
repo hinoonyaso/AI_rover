@@ -4,7 +4,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts'))
-from precise_approach import approach_command, body_error, wrap  # noqa: E402, I100
+from precise_approach import (  # noqa: E402, I100
+    approach_command, body_error, scan_match_published, wrap)
 
 V_MAX, W_MAX = 0.06, 0.25
 
@@ -64,3 +65,11 @@ def test_converges_in_a_simulated_loop():
         yaw += wz * dt
     ex, ey, eyaw = body_error((x, y, yaw), goal)
     assert math.hypot(ex, ey) < 0.02 and abs(eyaw) < math.radians(2.0)
+
+
+def test_scan_match_published_parses_the_initialpose_line():
+    log = '[INFO] [scan_match_init]: published /initialpose (1.10, 0.22, 107deg)\n...'
+    ok, pose = scan_match_published(log)
+    assert ok and pose == (1.10, 0.22, 107.0)
+    ok, pose = scan_match_published('[WARN] not confident (score 0.71)')
+    assert not ok and pose is None

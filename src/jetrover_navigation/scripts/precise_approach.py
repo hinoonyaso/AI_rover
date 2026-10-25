@@ -15,6 +15,14 @@ yaw at once with a small proportional controller until the position error is bel
 in the loop. A goal farther than max_start_dist (0.30 m) is rejected: this is a last-few-cm
 tool, not a planner. Aborted on timeout (time_limit_s 20) or when the pose TF is stale.
 Its accuracy is limited by the localization (AMCL error).
+
+Relocalize (2026-10-25, troubleshooting/055, default on): on the real robot AMCL
+under-reports motion by 5-7 %, so the robot stopped 8-9 cm past the goal although AMCL
+said 1.5 cm. Before approaching, the node waits until /odom says the robot stands still,
+runs scan_match_init.py near the current pose (radius relocalize_radius_m) and, when the
+match is confident, AMCL is reset to it (/initialpose). Straight 1.00 m x3 then ended
+0.98 m by tape. Off in the simulator (ground-truth localization).
+한글: 접근 전 스캔 매칭으로 AMCL 재위치(실기 +8~9 cm -> -2 cm). sim은 끈다.
 """
 import math
 import time
@@ -48,6 +56,18 @@ def approach_command(ex, ey, eyaw, v_max=0.06, v_min=0.025, w_max=0.25, w_min=0.
     return vx, vy, wz
 
 
+def scan_match_published(text):
+    """Return (published, (x, y, yaw_deg) or None) from scan_match_init.py output.
+
+    한글: 스캔 매칭이 /initialpose를 냈는지.
+    """
+    import re
+    r = re.search(r'published /initialpose \(([-\d.]+), ([-\d.]+), ([-\d.]+)deg\)', text)
+    if not r:
+        return False, None
+    return True, tuple(float(v) for v in r.groups())
+
+
 def body_error(robot, goal):
     """Goal minus robot pose in the robot frame: (ex, ey, eyaw); poses (x, y, yaw) in map."""
     dx, dy = goal[0] - robot[0], goal[1] - robot[1]
@@ -57,8 +77,10 @@ def body_error(robot, goal):
 
 def main():
     import rclpy
+    import subprocess
     from geometry_msgs.msg import Twist
     from nav2_msgs.action import NavigateToPose
+    from nav_msgs.msg import Odometry
     from rclpy.action import ActionServer, CancelResponse, GoalResponse
     from rclpy.node import Node
     import tf2_ros
@@ -80,6 +102,12 @@ def main():
             self.frame = gp('global_frame', 'map').value
             self.base = gp('base_frame', 'base_footprint').value
             self.cmd_topic = gp('cmd_vel_topic', '/cmd_vel_nav').value
+            # 접근 전 스캔 매칭 재위치(docstring) / scan-match relocalize before approaching
+            self.relocalize = bool(gp('relocalize', True).value)
+            self.reloc_radius = float(gp('relocalize_radius_m', 0.3).value)
+            self.reloc_timeout = float(gp('relocalize_timeout_s', 60.0).value)
+            self.speed = None            # latest /odom planar speed / 최근 /odom 속도
+            self.create_subscription(Odometry, 'odom', self.on_odom, 10)
             self.buf = tf2_ros.Buffer()
             self.tfl = tf2_ros.TransformListener(self.buf, self)
             self.pub = self.create_publisher(Twist, self.cmd_topic, 10)
@@ -88,7 +116,53 @@ def main():
                 goal_callback=self.on_goal, cancel_callback=lambda _: CancelResponse.ACCEPT)
             self.get_logger().info(
                 f'precise approach ready: tol {self.pos_tol} m / {math.degrees(self.yaw_tol):.1f} '
-                f'deg, v <= {self.v_max} m/s, {self.cmd_topic}')
+                f'deg, v <= {self.v_max} m/s, {self.cmd_topic}, '
+                f'relocalize {self.relocalize}')
+
+        def on_odom(self, m):
+            t = m.twist.twist
+            self.speed = (time.monotonic(), math.hypot(t.linear.x, t.linear.y), abs(t.angular.z))
+
+        def wait_stopped(self, hold=0.5, limit=3.0):
+            """Return True once /odom was fresh and below 0.01 m/s, 0.02 rad/s for hold s.
+
+            한글: 정지 확인.
+            """
+            t0, since = time.monotonic(), None
+            while time.monotonic() - t0 < limit:
+                s = self.speed
+                fresh = s is not None and time.monotonic() - s[0] < 0.5
+                ok = fresh and s[1] < 0.01 and s[2] < 0.02
+                since = (since or time.monotonic()) if ok else None
+                if since and time.monotonic() - since >= hold:
+                    return True
+                time.sleep(0.05)
+            return False
+
+        def relocalize_now(self):
+            """Scan-match near the current pose (AMCL takes a confident result); return a log."""
+            robot = self.pose()
+            if robot is None:
+                return 'no pose'
+            if not self.wait_stopped():
+                return 'not stopped: skipped'
+            try:
+                cmd = ['ros2', 'run', 'jetrover_navigation', 'scan_match_init.py',
+                       '--near', '%.3f' % robot[0], '%.3f' % robot[1],
+                       '--near-radius', str(self.reloc_radius)]
+                rc = subprocess.run(cmd, capture_output=True, text=True,
+                                    timeout=self.reloc_timeout)
+            except subprocess.TimeoutExpired:
+                return 'scan matching timed out'
+            ok, pose = scan_match_published(rc.stdout + rc.stderr)
+            if not ok:
+                return 'not confident: kept AMCL'
+            time.sleep(2.0)       # AMCL takes /initialpose and republishes TF / AMCL 반영 대기
+            after = self.pose()
+            shift = (math.hypot(after[0] - robot[0], after[1] - robot[1])
+                     if after else float('nan'))
+            return (f'AMCL reset to ({pose[0]:.2f}, {pose[1]:.2f}, {pose[2]:.0f} deg), '
+                    f'moved {shift * 100:.1f} cm')
 
         def pose(self):
             try:
@@ -128,6 +202,18 @@ def main():
         def execute(self, handle):
             goal = self.goal_pose(handle.request)
             result = NavigateToPose.Result()
+            if self.relocalize:
+                self.stop()
+                self.get_logger().info('relocalize: ' + self.relocalize_now())
+                robot = self.pose()
+                if robot is not None:
+                    ex, ey, _ = body_error(robot, goal)
+                    # 재위치 뒤 목표가 너무 멀면 계획기 몫 / far goals are the planner's job
+                    dist = math.hypot(ex, ey)
+                    if dist > self.max_start + 0.10:
+                        self.get_logger().warn(f'after relocalize the goal is {dist:.2f} m away')
+                        handle.abort()
+                        return result
             t0, in_tol_since = time.monotonic(), None
             period = 1.0 / self.rate
             while rclpy.ok():

@@ -81,7 +81,8 @@ if [ "${GTLOC:-1}" = 1 ]; then
   L=$!; sleep 4
 fi
 if [ "${APPROACH:-0}" = 1 ]; then
-  ros2 run jetrover_navigation precise_approach.py --ros-args -p use_sim_time:=true > $LOGDIR/av_approach.log 2>&1 &
+  # relocalize 끔: sim은 정답 위치를 쓴다(스캔 매칭 재위치는 실기 AMCL용) / sim uses ground-truth localization
+  ros2 run jetrover_navigation precise_approach.py --ros-args -p use_sim_time:=true -p relocalize:=false > $LOGDIR/av_approach.log 2>&1 &
   AP=$!; sleep 4
 fi
 # 시험은 백그라운드로 돌리고 wait: 전경 명령 중엔 bash가 신호(trap)를 늦게 처리한다. / run in the background so traps fire promptly
