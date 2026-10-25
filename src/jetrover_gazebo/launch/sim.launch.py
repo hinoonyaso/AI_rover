@@ -118,6 +118,16 @@ def setup(context):
                                'background_depth_path': os.path.join(
                                    share, 'config', 'depth_background_ref_sim.npy')}, sim_time])
 
+    # depth 장애물 점에서 LiDAR가 보는 점을 뺀 낮은 물체만(depth/points_low, 2026-10-25 시험, troubleshooting/055).
+    # SIM_DEPTH_LIDAR_FILTER=1일 때만. Nav2 변형이 depth_cloud 토픽을 points_low로 바꿔 쓴다.
+    # Low-only depth cloud (points near a LiDAR return removed) for a Nav2 variant; opt-in with SIM_DEPTH_LIDAR_FILTER=1.
+    depth_filter = Node(package='jetrover_perception', executable='depth_scan_filter.py',
+                        name='depth_scan_filter', namespace='depth_cam', output='screen',
+                        condition=IfCondition(LaunchConfiguration('depth_obstacles')),
+                        remappings=[('points_in', 'depth/points_sparse'), ('points_out', 'depth/points_low'),
+                                    ('scan', '/scan')],
+                        parameters=[sim_time]) if os.environ.get('SIM_DEPTH_LIDAR_FILTER', '0') == '1' else None
+
     # scanned-room models (models/room_lap2, Phase 3) / 스캔 방 모델 경로
     models = AppendEnvironmentVariable('GZ_SIM_RESOURCE_PATH', os.path.join(share, 'models'))
     # 로봇 메쉬(model://jetrover_description/meshes/...)를 찾도록 그 패키지 share의 상위 폴더.
@@ -129,6 +139,7 @@ def setup(context):
         os.path.dirname(get_package_share_directory('jetrover_description')))
     return [
         models, robot_meshes, gz, rsp, spawn, bridge, optical_tf, ekf, relay, depth_conv, sparse,
+        *([depth_filter] if depth_filter else []),
         RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=[jsb])),
         RegisterEventHandler(OnProcessExit(
             target_action=jsb,

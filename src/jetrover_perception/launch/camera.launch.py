@@ -76,9 +76,10 @@ def launch_setup(context):
         name='sparse_point_cloud',
         namespace=camera_name,
         output='screen',
-        # depth_publish_clearing / depth_extrude_m (2026-10-25): 실기 시험(8.15/8.16 6번) 통과 후 기본값을 켬 / 0.25 m로
-        # (이전 끔 / 0.15 m). 공식 nav2_params.yaml의 depth_clear 관측원이 depth/points_clear를 쓴다(troubleshooting/053).
-        # Defaults switched on after the real tests (was off / 0.15 m); nav2_params.yaml's depth_clear source needs them.
+        # depth_publish_clearing / depth_extrude_m (2026-10-25): 실기 시험(8.15/8.16 6번) 통과 후
+        # 기본값을 켬 / 0.25 m로(이전 끔 / 0.15 m). 공식 nav2_params.yaml의 depth_clear 관측원이
+        # depth/points_clear를 쓴다(troubleshooting/053).
+        # Defaults switched on after the real tests (was off / 0.15 m); depth_clear needs them.
         parameters=[{
             'home_pose_rad': _arm_home_pose(),
             'publish_clearing':
@@ -87,7 +88,21 @@ def launch_setup(context):
         }],
     )
 
-    return [container, depth_colorizer, sparse_point_cloud]
+    # depth 장애물 점에서 LiDAR가 보는 점을 뺀 낮은 물체만 depth/points_low로
+    # (2026-10-25 시험, troubleshooting/055). 기본 끔. nav2_params_real_low.yaml과 함께 쓴다.
+    # Low-only depth cloud for the Nav2 depth layer (off by default).
+    depth_scan_filter = Node(
+        package='jetrover_perception',
+        executable='depth_scan_filter.py',
+        name='depth_scan_filter',
+        namespace=camera_name,
+        output='screen',
+        condition=IfCondition(LaunchConfiguration('depth_lidar_filter')),
+        remappings=[('points_in', 'depth/points_sparse'),
+                    ('points_out', 'depth/points_low'), ('scan', '/scan')],
+    )
+
+    return [container, depth_colorizer, sparse_point_cloud, depth_scan_filter]
 
 
 def generate_launch_description():
@@ -100,6 +115,9 @@ def generate_launch_description():
             'depth_publish_clearing', default_value='true',
             description='sparse_point_cloud: also publish free-floor points on '
                         'depth/points_clear (clearing-only source)'),
+        DeclareLaunchArgument(
+            'depth_lidar_filter', default_value='false',
+            description='run depth_scan_filter: depth/points_low without points the LiDAR sees'),
         DeclareLaunchArgument(
             'depth_extrude_m', default_value='0.25',
             description='sparse_point_cloud: extend obstacle points behind the seen face '
