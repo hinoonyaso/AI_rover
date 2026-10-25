@@ -343,7 +343,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [x] 6.6 재위치를 `precise_approach` 노드에 넣음(`relocalize` 기본 켬, sim 실행기는 끔, 단위시험 9개). 새 공식 설정으로 실기 B 2회·직선 2회: 줄자 1.31/1.31/1.00/0.97 m(목표 1.30/1.30/1.00/1.00), 상자 접촉 0
   - [ ] 6.7 (후속) 정밀 접근(재위치 포함)을 Navigation BT(9번)/미션에 붙이기 — 지금은 노드를 따로 띄우고 따로 호출해야 함. 붙인 뒤 목표 허용 오차 재검토
   - [~] 6.5 DirStop 정지-출발 반복: sim 시나리오 D7 추가, 재현 약함(기존 6회 중 1회). 수정안 dir3(옆으로 갈 때도 앞 몸 + 8 cm) 회귀 없음 → **실기 확인 후 공식 반영 결정**. 사람 구분은 2단계
-  - [~] 6.8 (발견) 사람이 목표 근처에 서 있으면 목표 30 cm 앞에서 성공으로 끝남(Smac `tolerance` 0.25 — 막힌 목표 대신 0.25 m 안 빈 곳까지 경로). 0.25 → 0.05 sim: D7 6/6 목표 도착(1.8 cm, 사람이 비킬 때까지 대기), S2 8/8·S4 8/8·D4 4/4·D6 3/3 회귀 없음. 실기 2회 원래 목표 도달. 단 사람이 비킨 뒤 20~25 s 기어감(depth 흔적이 카메라 바닥 광선 위 높이에 남음) → `depth_scan_filter.py`(LiDAR가 보는 점을 depth에서 뺌) sim 통과, 실기 확인 대기(`camera.launch.py depth_lidar_filter:=true` + `nav2_params_real_low.yaml`) — troubleshooting/055 5절
+  - [~] 6.8 (발견) 사람이 목표 근처에 서 있으면 목표 30 cm 앞에서 성공으로 끝남(Smac `tolerance` 0.25 — 막힌 목표 대신 0.25 m 안 빈 곳까지 경로). 0.25 → 0.05 sim: D7 6/6 목표 도착(1.8 cm, 사람이 비킬 때까지 대기), S2 8/8·S4 8/8·D4 4/4·D6 3/3 회귀 없음. 실기 2회 원래 목표 도달. 단 사람이 비킨 뒤 20~25 s 기어감(depth 흔적이 카메라 바닥 광선 위 높이에 남음) → `depth_scan_filter.py`(LiDAR가 보는 점을 depth에서 뺌) sim 통과, 실기 확인 대기(`camera.launch.py depth_lidar_filter:=true` + `nav2_params_real_low.yaml`) — troubleshooting/055 5절. 2026-10-26 실기 2회는 절차 문제(비킨 뒤 LiDAR 범위 안에 서 있음 / 안 비킴)로 판정 못 함, 접촉 0 — 재시험(벤치마크 7절)
 
 ## 9. Navigation BT (PRD 초안 `prd/navigation-bt.md`, 2026-10-25 — 사용자 결정 3개 대기)
 - [ ] Nav2 BT 구조 이해

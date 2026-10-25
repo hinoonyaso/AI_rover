@@ -43,3 +43,5 @@
 - 대책 시험: `depth_scan_filter.py` — depth 장애물 점 중 LiDAR 점 10 cm 안의 점을 버린 `depth/points_low`를 Nav2 depth 레이어에(키 큰 물체는 LiDAR 레이어가 표시·지우기).
   sim(`SIM_DEPTH_LIDAR_FILTER=1`, `nav2_params_sim_lowdepth.yaml`): D7 6/6(19.5~21.4 s, 1.7~1.9 cm), 낮은 상자 감지 유지(D3 3/3, D4 3/3 간격 ≥ 5.7 cm, S2/S4 8/8 간격 ≥ 4.6 cm).
   실기 확인 대기(`camera.launch.py depth_lidar_filter:=true` + `nav2_params_real_low.yaml`). collision_monitor는 원래 depth 점을 계속 씀(안전망).
+
+- 2026-10-26: 필터 켠 실기 재시험 2회는 시험 절차 문제로 판정 못 함(`docs/benchmarks/navigation/real_avoid_20261025.md` 7절). 미해결, 재시험 예정.
