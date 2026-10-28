@@ -46,3 +46,4 @@
 
 - 2026-10-26: 필터 켠 실기 재시험 2회는 시험 절차 문제로 판정 못 함.
 - **2026-10-28 해결**: 실기 D06/D07 비킨 뒤 약 3 s에 출발, 기어감 0 s, 줄자 1.02/0.99 m. Smac tolerance 0.05와 depth_scan_filter(points_low)를 공식 반영(사용자 승인). 상세 `docs/benchmarks/navigation/real_avoid_20261025.md` 7절.
+- **같은 날 필터 되돌림**: 필터가 발 점을 지워 사람 발을 밟음(troubleshooting/056). 기어감은 다시 미해결 — 낮은 점은 지우지 않는 필터로 sim 재시험 예정.

@@ -142,6 +142,7 @@
 | (sim·실기 시험 변형) Smac `GridBased.tolerance` | 0.25 → **0.05** 시험 | 2026-10-25 | 0.25는 근거 기록 없음. 목표 근처가 막히면 0.25 m 안 빈 곳까지만 경로를 만들어 목표 30 cm 앞에서 성공(실기 D09, sim D7). 0.05: sim D7 6/6 목표 도착, 회귀 없음. 실기 확인 후 공식 반영 결정 | troubleshooting/055 |
 | (sim·실기 시험 변형) depth 레이어 입력 | `/depth_cam/depth/points_sparse` → **`points_low`**(`depth_scan_filter.py`: LiDAR 점 10 cm 안 depth 점 제거) | 2026-10-25 | 사람이 비킨 뒤 다리 depth 흔적(카메라 바닥 광선보다 높은 3D 칸)이 안 지워져 20~25 s 기어감. sim D7 6/6·낮은 상자 회귀 없음. collision_monitor는 원래 점 유지 | troubleshooting/055 5절 |
 | **공식 반영 (2026-10-28, 사용자 승인)** Smac `tolerance` 0.25→**0.05**, local/global costmap depth 토픽 `points_sparse`→**`points_low`**, `camera.launch.py depth_lidar_filter` 기본 false→**true**, sim `SIM_DEPTH_LIDAR_FILTER` 기본 0→**1** | 위 두 시험 변형 그대로(collision_monitor는 `points_sparse` 유지) | 2026-10-28 | 실기 `bags/real_low` D06/D07: 사람이 비킨 뒤 약 3 s에 출발, 기어감 20~25 s→**0 s**, 줄자 1.02/0.99 m, 접촉 0. 사람 없는 D03 1.01 m. 목표 위에 처음부터 사람이 있으면 출발 안 하고 재시도 6회(약 40 s) 뒤 실패(D04/D05) |
+| **되돌림 (2026-10-28 같은 날)** costmap depth 토픽 `points_low`→**`points_sparse`**, `depth_lidar_filter` 기본 true→**false**, sim `SIM_DEPTH_LIDAR_FILTER` 기본 1→**0** | Smac `tolerance` 0.05는 유지 | 2026-10-28 | **안전 사고**: 필터가 다리 아래 발 점(z 0.05~0.11 m)을 지워 실기 `bags/real_dir3/trial_D01`에서 로봇이 사람 옆을 지나가며 발을 밟음(troubleshooting/056) |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

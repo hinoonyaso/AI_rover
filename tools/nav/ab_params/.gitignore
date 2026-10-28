@@ -10,3 +10,4 @@
 !nav2_params_sim_tol05.yaml
 !nav2_params_real_low.yaml
 !nav2_params_sim_lowdepth.yaml
+!nav2_params_real_dir3.yaml

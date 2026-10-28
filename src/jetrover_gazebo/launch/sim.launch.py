@@ -119,14 +119,14 @@ def setup(context):
                                    share, 'config', 'depth_background_ref_sim.npy')}, sim_time])
 
     # depth 장애물 점에서 LiDAR가 보는 점을 뺀 낮은 물체만(depth/points_low, 2026-10-25 시험, troubleshooting/055).
-    # 2026-10-28부터 기본 켬(공식 nav2_params가 points_low를 씀). 끄려면 SIM_DEPTH_LIDAR_FILTER=0.
-    # Low-only depth cloud (points near a LiDAR return removed); the official Nav2 params use it. Default on (2026-10-28).
+    # SIM_DEPTH_LIDAR_FILTER=1일 때만(2026-10-28 기본 켬 → 같은 날 되돌림: 발 점을 지움, troubleshooting/056).
+    # Low-only depth cloud (points near a LiDAR return removed) for a Nav2 variant; opt-in with SIM_DEPTH_LIDAR_FILTER=1.
     depth_filter = Node(package='jetrover_perception', executable='depth_scan_filter.py',
                         name='depth_scan_filter', namespace='depth_cam', output='screen',
                         condition=IfCondition(LaunchConfiguration('depth_obstacles')),
                         remappings=[('points_in', 'depth/points_sparse'), ('points_out', 'depth/points_low'),
                                     ('scan', '/scan')],
-                        parameters=[sim_time]) if os.environ.get('SIM_DEPTH_LIDAR_FILTER', '1') == '1' else None
+                        parameters=[sim_time]) if os.environ.get('SIM_DEPTH_LIDAR_FILTER', '0') == '1' else None
 
     # scanned-room models (models/room_lap2, Phase 3) / 스캔 방 모델 경로
     models = AppendEnvironmentVariable('GZ_SIM_RESOURCE_PATH', os.path.join(share, 'models'))

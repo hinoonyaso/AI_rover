@@ -1,4 +1,5 @@
-# 2026-10-28: Smac tolerance 0.05 + costmap depth 토픽 points_low(depth_scan_filter) 공식 반영(사용자 승인, real_avoid_20261025.md 7절).
+# 2026-10-28: Smac tolerance 0.05 공식 반영(사용자 승인, real_avoid_20261025.md 7절). costmap depth points_low(depth_scan_filter)도 반영했다가
+#   같은 날 되돌림 — 필터가 다리 아래 발 점을 지워 실기에서 사람 발을 밟음(troubleshooting/056).
 # 2026-10-25: 실기 시험(8.15/8.16 6번, docs/benchmarks/navigation/real_avoid_20261025.md) 통과 설정 중 회피·안전 설정을 공식 반영(사용자 승인).
 #   목표 허용 오차(0.10/0.08)는 그대로 — 정밀 접근 노드가 미션/BT에 붙기 전까지. 변경 목록·이전 값은 docs/benchmarks/navigation/tuning-history.md.
 # Nav2 stack params (checklist 8번, prd/slam-nav2.md).
@@ -81,7 +82,7 @@ global_costmap:
           raytrace_max_range: 3.0
           obstacle_max_range: 3.0
         depth_cloud:
-          topic: /depth_cam/depth/points_low   # was points_sparse (2026-10-28, 실기 real_low D06/D07): LiDAR가 보는 점을 뺀 depth(depth_scan_filter) — 사람이 떠난 뒤 카메라 바닥 광선으로 못 지우는 흔적 방지, troubleshooting/055
+          topic: /depth_cam/depth/points_sparse   # 2026-10-28 points_low 반영 후 같은 날 되돌림: depth_scan_filter가 다리 아래 발 점을 지워 로봇이 사람 발을 밟음(troubleshooting/056)
           max_obstacle_height: 2.0
           min_obstacle_height: 0.06  # -0.1 -> 0.06 (2026-10-25, 실기 B02): 카메라 바닥 시야 끝(정면 0.7~0.9 m) 바닥 오검출(높이 최대 5 cm)이 코스트맵을 막음(troubleshooting/055)
           clearing: true
@@ -529,7 +530,7 @@ local_costmap:
           raytrace_max_range: 3.0
           obstacle_max_range: 3.0
         depth_cloud:
-          topic: /depth_cam/depth/points_low   # was points_sparse (2026-10-28, 실기 real_low D06/D07): LiDAR가 보는 점을 뺀 depth(depth_scan_filter) — 사람이 떠난 뒤 카메라 바닥 광선으로 못 지우는 흔적 방지, troubleshooting/055
+          topic: /depth_cam/depth/points_sparse   # 2026-10-28 points_low 반영 후 같은 날 되돌림: depth_scan_filter가 다리 아래 발 점을 지워 로봇이 사람 발을 밟음(troubleshooting/056)
           max_obstacle_height: 2.0
           min_obstacle_height: 0.06  # -0.1 -> 0.06 (2026-10-25, 실기 B02): 카메라 바닥 시야 끝(정면 0.7~0.9 m) 바닥 오검출(높이 최대 5 cm)이 코스트맵을 막음(troubleshooting/055)
           clearing: true
