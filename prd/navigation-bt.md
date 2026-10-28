@@ -1,6 +1,6 @@
 # PRD: Navigation BT — 한 번의 내비게이션 요청으로 "가서 정확히 맞추기" (체크리스트 9번)
 
-- 작성: 2026-10-25. 신뢰 수준: **계획 — 초안, 사용자 승인 전**(아래 "결정할 것"에 답을 받은 뒤 확정).
+- 작성: 2026-10-25. 확정: 2026-10-28(사용자 결정 3개 받음, 아래 "결정"). 신뢰 수준: **계획**.
 - 관련: 실기 결과 `docs/benchmarks/navigation/real_avoid_20261025.md`(정밀 접근 + 재위치로 도착 −3~+1 cm), `src/jetrover_navigation/scripts/precise_approach.py`,
   BT `src/jetrover_navigation/config/behavior_trees/navigate_to_pose_wait_obstacle.xml`(공식 기본), troubleshooting/055.
 
@@ -35,10 +35,27 @@
 
 추천: **A**(체크리스트 9번 "Custom BT node" 항목과 맞고, 미션 BT가 단일 액션만 쓰면 된다). 재위치는 지금처럼 정밀 접근 노드 안에서 한다(BT 노드는 액션만 부름).
 
-## 결정할 것 (사용자)
-1. 구현 방법 A / B / C
-2. 정밀 도착 여부: 모든 목표 / 목표별 플래그(예: BT 블랙보드 값 또는 별도 액션 이름) / 특정 지점 목록(충전소·작업대 등)
-3. 정밀 접근 실패(시작 거리 초과·시간 초과) 시: 재시도 1회 후 실패 보고 / 실패 보고만
+## 결정 (2026-10-28, 사용자)
+1. 구현 방법: **A. C++ BT 노드**.
+2. 정밀 도착 범위: **목표마다 지정**. 방법: `NavigateToPose` 목표의 `behavior_tree` 필드(Nav2 표준)로 BT 파일을 고른다 —
+   비우면 기본 `navigate_to_pose_wait_obstacle.xml`(지금과 같음), 정밀 도착이 필요하면 `navigate_to_pose_precise.xml`.
+   새 메시지·플래그 없이 미션/웹이 목표마다 고를 수 있다.
+3. 정밀 접근 실패(시작 거리 초과·시간 초과·목표 막힘): **1회 재시도 후 실패 보고**. 재시도 = Nav2로 목표 근처까지 다시 간 뒤 정밀 접근 한 번 더.
+   실패 결과에는 이유(막힘/시작 거리 초과/시간 초과)를 담는다.
+
+## 설계 (확정, 2026-10-28 구현에서 조정)
+- **BT 노드: 새 C++ 플러그인 대신 Nav2 내장 `NavigateToPose` BT 액션 노드를 쓴다.** 정밀 접근 서버가 `NavigateToPose` 액션 타입이라
+  내장 노드의 `server_name="precise_approach"` 포트만 바꾸면 결정 A(BT 안의 액션 노드: 취소·피드백·재시도가 BT 안에서 일관)를 그대로 만족한다.
+  bt_navigator 기본 플러그인 목록에 이미 있어 `plugin_lib_names` 등록·빌드·gtest가 필요 없다(유지할 코드 0줄).
+  `jetrover_nav_plugins`에 전용 노드를 만드는 것은 이 노드로 부족한 점(예: 전용 포트)이 생길 때로 미룬다.
+- `navigate_to_pose_precise.xml` = `RecoveryNode(number_of_retries=1)` 안에 `Sequence`[`navigate_to_pose_wait_obstacle.xml`의 주행 부분 복사,
+  `NavigateToPose name="PreciseApproach" server_name="precise_approach"`], 재시도 전 `Wait 2 s`.
+  costmap 비우기는 넣지 않았다 — 막힌 목표는 주행 부분의 자체 복구가 이미 비우고, 정밀 접근 실패 뒤 지우면 사람·상자 흔적까지 지워 안전 쪽이 나쁘다.
+- 실패 이유: `precise_approach.py`가 결과 `error_code`에 9101(시작 거리 초과)/9102(시간 초과)/9103(위치 없음)을 담고,
+  bt_navigator `error_code_names`에 `precise_approach_error_code`를 더해 NavigateToPose 결과로 전달한다. 막힘은 Nav2 계획기 코드(`compute_path_error_code`).
+  먼 목표는 거부(이유 없음) 대신 수락 후 9101로 중단한다.
+- `nav2.launch.py`가 `precise_approach.py`를 함께 띄운다(인자 `precise_approach`, 기본 true; sim은 `relocalize` false). 따로 띄우면 같은 서버가 둘이 된다.
+- Nav2 목표 허용 오차(0.10/0.08)는 정밀 BT가 실기 검증된 뒤 재검토(넓히면 목표 앞 진동·시간 감소).
 
 ## 제약
 - AGENTS.md 안전 규칙, 공식 설정 변경은 tuning-history 기록. 후진 금지 유지.

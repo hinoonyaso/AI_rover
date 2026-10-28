@@ -12,8 +12,9 @@ Goal: NavigateToPose action `precise_approach` (map frame pose). The robot moves
 yaw at once with a small proportional controller until the position error is below pos_tol
 (0.02 m) and the yaw error below yaw_tol (2 deg) for hold_s (0.4 s). Commands go to
 /cmd_vel_nav (-> velocity smoother -> collision monitor -> /cmd_vel), so the safety net stays
-in the loop. A goal farther than max_start_dist (0.30 m) is rejected: this is a last-few-cm
-tool, not a planner. Aborted on timeout (time_limit_s 20) or when the pose TF is stale.
+in the loop. A goal farther than max_start_dist (0.30 m) is aborted (START_TOO_FAR): this is a
+last-few-cm tool, not a planner. Aborted on timeout (time_limit_s 20, TIMEOUT) or when the pose TF
+is stale (POSE_LOST); the result's error_code / error_msg carry the reason (9.4, 2026-10-28).
 Its accuracy is limited by the localization (AMCL error).
 
 Relocalize (2026-10-25, troubleshooting/055, default on): on the real robot AMCL
@@ -54,6 +55,13 @@ def approach_command(ex, ey, eyaw, v_max=0.06, v_min=0.025, w_max=0.25, w_min=0.
         w = min(w_max, max(w_min, yaw_gain * abs(eyaw)))
         wz = math.copysign(w, eyaw)
     return vx, vy, wz
+
+
+# 실패 이유 코드(결과 error_code, 2026-10-28 체크리스트 9.4). NavigateToPose는 NONE=0만 정의해서 9100번대를 따로 쓴다.
+# Failure reasons in the result error_code (NavigateToPose defines only NONE=0; 9100+ are ours).
+START_TOO_FAR = 9101   # 목표가 시작 거리 제한보다 멂(재위치 뒤 포함) / goal beyond max_start_dist (also after relocalizing)
+TIMEOUT = 9102         # time_limit 안에 허용 오차에 못 들어옴 / not within tolerance before time_limit
+POSE_LOST = 9103       # map->base TF가 없거나 오래됨 / pose TF missing or stale
 
 
 def scan_match_published(text):
@@ -188,20 +196,36 @@ def main():
             if robot is None:
                 self.get_logger().warn('rejected: no fresh pose TF')
                 return GoalResponse.REJECT
-            ex, ey, _ = body_error(robot, self.goal_pose(req))
-            if math.hypot(ex, ey) > self.max_start:
-                dist = math.hypot(ex, ey)
-                self.get_logger().warn(f'rejected: goal {dist:.2f} m away (> {self.max_start} m)')
-                return GoalResponse.REJECT
+            # 먼 목표도 받아서 execute에서 이유 코드와 함께 중단(거부하면 BT가 이유를 모름)
+            # far goals are accepted and aborted with START_TOO_FAR in execute (a rejection carries no reason)
             return GoalResponse.ACCEPT
 
         def stop(self):
+            # 종료 중(컨텍스트 무효)에는 발행할 수 없다 / cannot publish after the context is shut down
+            if not rclpy.ok():
+                return
             for _ in range(3):
                 self.pub.publish(Twist())
+
+        def fail(self, handle, result, code, msg):
+            """Stop, log and abort with a reason code. 한글: 멈추고 이유 코드와 함께 중단."""
+            self.stop()
+            self.get_logger().warn(msg)
+            result.error_code, result.error_msg = code, msg
+            handle.abort()
+            return result
 
         def execute(self, handle):
             goal = self.goal_pose(handle.request)
             result = NavigateToPose.Result()
+            robot = self.pose()
+            if robot is None:
+                return self.fail(handle, result, POSE_LOST, 'pose TF stale')
+            ex, ey, _ = body_error(robot, goal)
+            if math.hypot(ex, ey) > self.max_start + (0.10 if self.relocalize else 0.0):
+                # 재위치로 AMCL이 8~9 cm 바뀔 수 있어 재위치 전에는 0.10 m 더 봐준다 / AMCL may shift 8-9 cm on relocalize
+                return self.fail(handle, result, START_TOO_FAR,
+                                 f'goal {math.hypot(ex, ey):.2f} m away (> {self.max_start} m)')
             if self.relocalize:
                 self.stop()
                 self.get_logger().info('relocalize: ' + self.relocalize_now())
@@ -211,9 +235,8 @@ def main():
                     # 재위치 뒤 목표가 너무 멀면 계획기 몫 / far goals are the planner's job
                     dist = math.hypot(ex, ey)
                     if dist > self.max_start + 0.10:
-                        self.get_logger().warn(f'after relocalize the goal is {dist:.2f} m away')
-                        handle.abort()
-                        return result
+                        return self.fail(handle, result, START_TOO_FAR,
+                                         f'after relocalize the goal is {dist:.2f} m away')
             t0, in_tol_since = time.monotonic(), None
             period = 1.0 / self.rate
             while rclpy.ok():
@@ -222,16 +245,10 @@ def main():
                     handle.canceled()
                     return result
                 if time.monotonic() - t0 > self.time_limit:
-                    self.stop()
-                    self.get_logger().warn('timeout')
-                    handle.abort()
-                    return result
+                    return self.fail(handle, result, TIMEOUT, f'not within tolerance after {self.time_limit} s')
                 robot = self.pose()
                 if robot is None:
-                    self.stop()
-                    self.get_logger().warn('pose TF stale: abort')
-                    handle.abort()
-                    return result
+                    return self.fail(handle, result, POSE_LOST, 'pose TF stale')
                 ex, ey, eyaw = body_error(robot, goal)
                 fb = NavigateToPose.Feedback()
                 fb.distance_remaining = float(math.hypot(ex, ey))
@@ -240,6 +257,10 @@ def main():
                     in_tol_since = in_tol_since or time.monotonic()
                     if time.monotonic() - in_tol_since >= self.hold_s:
                         self.stop()
+                        # 성공 기록(BT가 정말 불렀는지 로그로 확인) / log success so BT calls are visible
+                        self.get_logger().info(
+                            f'succeeded: err {math.hypot(ex, ey) * 100:.1f} cm / '
+                            f'{math.degrees(eyaw):.1f} deg in {time.monotonic() - t0:.1f} s')
                         handle.succeed()
                         return result
                 else:

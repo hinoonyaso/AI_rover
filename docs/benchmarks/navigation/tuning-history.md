@@ -143,6 +143,7 @@
 | (sim·실기 시험 변형) depth 레이어 입력 | `/depth_cam/depth/points_sparse` → **`points_low`**(`depth_scan_filter.py`: LiDAR 점 10 cm 안 depth 점 제거) | 2026-10-25 | 사람이 비킨 뒤 다리 depth 흔적(카메라 바닥 광선보다 높은 3D 칸)이 안 지워져 20~25 s 기어감. sim D7 6/6·낮은 상자 회귀 없음. collision_monitor는 원래 점 유지 | troubleshooting/055 5절 |
 | **공식 반영 (2026-10-28, 사용자 승인)** Smac `tolerance` 0.25→**0.05**, local/global costmap depth 토픽 `points_sparse`→**`points_low`**, `camera.launch.py depth_lidar_filter` 기본 false→**true**, sim `SIM_DEPTH_LIDAR_FILTER` 기본 0→**1** | 위 두 시험 변형 그대로(collision_monitor는 `points_sparse` 유지) | 2026-10-28 | 실기 `bags/real_low` D06/D07: 사람이 비킨 뒤 약 3 s에 출발, 기어감 20~25 s→**0 s**, 줄자 1.02/0.99 m, 접촉 0. 사람 없는 D03 1.01 m. 목표 위에 처음부터 사람이 있으면 출발 안 하고 재시도 6회(약 40 s) 뒤 실패(D04/D05) |
 | **되돌림 (2026-10-28 같은 날)** costmap depth 토픽 `points_low`→**`points_sparse`**, `depth_lidar_filter` 기본 true→**false**, sim `SIM_DEPTH_LIDAR_FILTER` 기본 1→**0** | Smac `tolerance` 0.05는 유지 | 2026-10-28 | **안전 사고**: 필터가 다리 아래 발 점(z 0.05~0.11 m)을 지워 실기 `bags/real_dir3/trial_D01`에서 로봇이 사람 옆을 지나가며 발을 밟음(troubleshooting/056) |
+| bt_navigator `error_code_names` | 기본 2개 → **+ `precise_approach_error_code`** (sim 변형 `nav2_params_sim_tol05.yaml`도 같게) | 2026-10-28 | 정밀 도착 BT(`navigate_to_pose_precise.xml`, 9.2)의 정밀 접근 실패 이유(9101 시작 거리 초과/9102 시간 초과/9103 위치 없음)를 NavigateToPose 결과 `error_code`로 전달. 주행 동작은 안 바뀜. sim 확인: 강제 시간 초과에서 결과 9102 | 체크리스트 9.4 |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).

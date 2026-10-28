@@ -1,0 +1,74 @@
+<!--
+  2026-10-28 (checklist 9.2, prd/navigation-bt.md): precise-arrival BT, chosen per goal through
+  NavigateToPose.behavior_tree (the default BT stays navigate_to_pose_wait_obstacle.xml).
+  = the "NavigateRecovery" subtree of navigate_to_pose_wait_obstacle.xml unchanged (keep in sync), then the
+  precise_approach action server (scan-match relocalize + last few cm, 2 cm / 2 deg) called through Nav2's own
+  NavigateToPose BT node (server_name="precise_approach", same action type). If either part fails, wait 2 s and run
+  both once more (user decision: one retry, then report failure). The precise_approach failure reason
+  (9101 start too far / 9102 timeout / 9103 pose lost) lands in {precise_approach_error_code}.
+  한글: 목표마다 고르는 정밀 도착 BT. 기본 BT의 주행 부분 그대로 + 정밀 접근. 실패하면 2초 기다렸다 한 번 더, 그래도 안 되면 실패.
+  재시도 사이에 costmap을 비우지 않는다(2026-10-06: 비우면 옆의 상자 기억이 지워져 위험).
+-->
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="1" name="PreciseArrivalRetry">
+      <Sequence name="NavigateThenApproach">
+        <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+          <PipelineSequence name="NavigateWithReplanning">
+            <ControllerSelector selected_controller="{selected_controller}" default_controller="FollowPath" topic_name="controller_selector"/>
+            <PlannerSelector selected_planner="{selected_planner}" default_planner="GridBased" topic_name="planner_selector"/>
+            <RateController hz="0.5">
+              <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+                <ComputePathToPose goal="{goal}" path="{path}" planner_id="{selected_planner}" error_code_id="{compute_path_error_code}"/>
+                <Sequence>
+                  <WouldAPlannerRecoveryHelp error_code="{compute_path_error_code}"/>
+                  <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+                </Sequence>
+              </RecoveryNode>
+            </RateController>
+            <!-- 2026-10-22 (8.16 동적 장애물, sim 시험용): 경로가 갑자기 길어지면(장애물이 막아 돌아가야 함) 주행을 멈추고 기다린다.
+                 Nav2 navigate_to_pose_w_replanning_goal_patience_and_recovery.xml과 같은 방식. 기다린 뒤에도 막혀 있으면 긴 경로로 간다.
+                 Stop and wait when the replanned path suddenly gets longer (something blocks the way), as in nav2's goal_patience BT. -->
+            <ReactiveSequence name="MonitorAndFollowPath">
+              <!-- 2026-10-22 H5: length_factor 1.1 -> 1.2, wait 5.0 -> 3.0 s. 1.1/5 s는 상자가 점점 더 보이며 경로가 두 번 길어져 9~12 s 기다렸고(D4),
+                   지나가는 상자에도 5 s를 다 채워 재출발이 2.1 s 늦었다(D3). / waited twice (9-12 s) and resumed late with 1.1 / 5 s -->
+              <PathLongerOnApproach path="{path}" prox_len="3.0" length_factor="1.2">
+                <RetryUntilSuccessful num_attempts="1">
+                  <SequenceWithMemory name="CancelingControlAndWait">
+                    <CancelControl name="ControlCancel"/>
+                    <Wait wait_duration="3.0"/>
+                  </SequenceWithMemory>
+                </RetryUntilSuccessful>
+              </PathLongerOnApproach>
+              <RecoveryNode number_of_retries="1" name="FollowPath">
+                <FollowPath path="{path}" controller_id="{selected_controller}" error_code_id="{follow_path_error_code}"/>
+                <Sequence>
+                  <WouldAControllerRecoveryHelp error_code="{follow_path_error_code}"/>
+                  <!-- 2026-10-06: 로컬 costmap 비우기 제거(상자 기억 보존). 대신 1초 대기 후 같은 경로로 재시도 -->
+                  <Wait wait_duration="1.0"/>
+                </Sequence>
+              </RecoveryNode>
+            </ReactiveSequence>
+          </PipelineSequence>
+          <Sequence>
+            <Fallback>
+              <WouldAControllerRecoveryHelp error_code="{follow_path_error_code}"/>
+              <WouldAPlannerRecoveryHelp error_code="{compute_path_error_code}"/>
+            </Fallback>
+            <ReactiveFallback name="RecoveryFallback">
+              <GoalUpdated/>
+              <RoundRobin name="RecoveryActions">
+                <!-- 2026-10-06: ClearingActions 제거. 비용 맵을 비우면 옆으로 벗어나 안 보이는 상자 기억까지 지워져 경로가 다시 상자를 가로지르며 좌우를 반복했다 -->
+                <!-- 2026-10-06: Spin 제거. 상자 옆에서 제자리 회전하면 모서리가 휩쓸려 위험하고 자세가 어긋났다 -->
+                <Wait wait_duration="5.0"/>
+              </RoundRobin>
+            </ReactiveFallback>
+          </Sequence>
+        </RecoveryNode>
+        <NavigateToPose name="PreciseApproach" goal="{goal}" server_name="precise_approach" server_timeout="1000"
+                        error_code_id="{precise_approach_error_code}"/>
+      </Sequence>
+      <Wait wait_duration="2.0"/>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

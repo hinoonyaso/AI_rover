@@ -16,6 +16,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -36,6 +37,11 @@ def generate_launch_description():
     auto_arg = DeclareLaunchArgument('auto_localize', default_value='true')
     # 한글: Gazebo에서는 use_sim_time:=true(navigation_launch가 모든 Nav2 노드 파라미터를 덮어씀).
     sim_arg = DeclareLaunchArgument('use_sim_time', default_value='false')
+    # 한글: 정밀 접근 노드(precise_approach.py)를 같이 띄운다(체크리스트 9.3, 2026-10-28). 정밀 도착 BT
+    # (navigate_to_pose_precise.xml)가 이 액션 서버를 부른다. 따로 띄우는 시험 도구는 false로 중복을 막는다.
+    # Also start the precise_approach action server used by the precise-arrival BT (9.3);
+    # false when a test tool runs its own.
+    approach_arg = DeclareLaunchArgument('precise_approach', default_value='true')
     localization = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(nav_share, 'launch', 'localization.launch.py')),
@@ -68,7 +74,7 @@ def generate_launch_description():
             with tempfile.NamedTemporaryFile('w', suffix='_sim.yaml', delete=False) as f:
                 f.write(text)
                 params = f.name
-        return [IncludeLaunchDescription(
+        actions = [IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(bringup_share, 'launch', 'navigation_launch.py')),
             launch_arguments={
@@ -77,6 +83,13 @@ def generate_launch_description():
                 'autostart': 'true',
                 'log_level': LaunchConfiguration('log_level'),
             }.items())]
+        if LaunchConfiguration('precise_approach').perform(context).lower() == 'true':
+            # sim은 정답 위치를 쓰므로 스캔 매칭 재위치를 끈다 / no scan-match relocalize in sim (ground-truth pose)
+            actions.append(Node(package='jetrover_navigation', executable='precise_approach.py',
+                                name='precise_approach', output='screen',
+                                parameters=[{'use_sim_time': sim, 'relocalize': not sim}]))
+        return actions
 
     return LaunchDescription(
-        [map_arg, log_level_arg, params_arg, auto_arg, sim_arg, localization, OpaqueFunction(function=include_navigation)])
+        [map_arg, log_level_arg, params_arg, auto_arg, sim_arg, approach_arg, localization,
+         OpaqueFunction(function=include_navigation)])

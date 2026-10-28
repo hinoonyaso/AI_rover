@@ -350,11 +350,11 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] Nav2 BT 구조 이해 (기본 BT `navigate_to_pose_wait_obstacle.xml`: PathLongerOnApproach 1.2배·3 s 대기, 2026-10-22~25)
 - [x] 기본 NavigateToPose BT (`navigate_to_pose_no_backup.xml` → `navigate_to_pose_wait_obstacle.xml`, 공식 기본)
 - [x] Recovery BT (후진 없는 복구, 대기·costmap 비우기)
-- [ ] 9.1 `jetrover_nav_plugins`에 `PreciseApproach` BT 액션 노드(NavigateToPose 타입, 서버 `precise_approach`) + gtest
-- [ ] 9.2 `navigate_to_pose_precise.xml`: 주행 성공 → PreciseApproach, RecoveryNode 1회 재시도(사이에 costmap 비우기)
-- [ ] 9.3 bt_navigator `plugin_lib_names` 등록, `nav2.launch.py`가 `precise_approach.py`를 함께 띄움(sim은 relocalize false)
-- [ ] 9.4 실패 이유(막힘/시작 거리 초과/시간 초과)를 결과에 담기
-- [ ] 9.5 sim 검증: 정밀 BT로 직선·S2·S4·D 각 10회, 정답 오차 ≤ 3 cm, 회귀 없음
+- [x] 9.1 BT 액션 노드: Nav2 내장 `NavigateToPose` 노드를 `server_name="precise_approach"`로 사용(새 C++ 불필요, PRD 설계 참조). 2026-10-29 sim에서 목표마다 정밀 접근 호출 확인
+- [x] 9.2 `navigate_to_pose_precise.xml`: 주행 성공 → PreciseApproach, RecoveryNode 1회 재시도(사이에 Wait 2 s, costmap은 안 비움 — PRD). sim 강제 실패: 정밀 접근 정확히 2번 뒤 실패
+- [x] 9.3 `nav2.launch.py`가 `precise_approach.py`를 함께 띄움(인자 `precise_approach`, sim은 relocalize false). 내장 노드라 플러그인 등록 불필요
+- [x] 9.4 실패 이유를 결과 `error_code`에: 9101 시작 거리 초과/9102 시간 초과/9103 위치 없음, 막힘은 계획기 코드. sim: 강제 시간 초과 → 결과 9102 (`error_msg`는 비어 옴)
+- [x] 9.5 sim 검증: 정밀 BT로 직선·S2·S4·D7 각 10회 40/40, 오차 1.7~1.9 cm, 회귀 없음(S4 최소 간격 1회 4.1 cm 관찰), 강제 실패 → 2번 시도 후 9101/9102 (`docs/benchmarks/navigation/navigation_bt_sim_20261029.md`, 2026-10-29)
 - [ ] 9.6 실기 검증: 직선 3·상자 3, 줄자 ≤ 3 cm, 접촉 0
 - [ ] 9.7 Nav2 목표 허용 오차(0.10/0.08) 재검토 → 끝나면 8.16 6.7도 닫기
 

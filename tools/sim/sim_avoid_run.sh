@@ -5,6 +5,8 @@
 #   env: CTRL  dwb | mppi | mppi_nolr | <path to a params yaml>   (default dwb = nav2_params.yaml)
 #        TAG   label in the CSV (default = CTRL)     SCEN S1|S2|S4|all|D1..D4|dyn (default S2)     REPEATS (default 3)
 #        APPROACH 1: also run the precise approach node and call it after Nav2
+#        BT  NavigateToPose.behavior_tree for each goal (starts the precise approach node; the BT calls it)
+#        APPROACH_ARGS extra --ros-args for that node, e.g. '-p max_start_dist_m:=0.0' to force a failure (9.5 retry check)
 #        GTLOC 1 (default) ground-truth localization / 0 AMCL   GTNOISE position error sigma m for GTLOC=1
 #        RUNCMD command to run instead of the trials   PARAMS extra Nav2 params file overriding CTRL   GUI=true to show Gazebo   LOGDIR (default /tmp)
 source /opt/ros/jazzy/setup.bash; source ~/jetrover_ws/install/setup.bash
@@ -63,7 +65,7 @@ nav2_ready() {
 }
 N=""
 for attempt in 1 2; do
-  ros2 launch jetrover_navigation nav2.launch.py use_sim_time:=true auto_localize:=false $PF > $LOGDIR/av_nav.log 2>&1 &
+  ros2 launch jetrover_navigation nav2.launch.py use_sim_time:=true auto_localize:=false precise_approach:=false $PF > $LOGDIR/av_nav.log 2>&1 &
   N=$!
   if nav2_ready; then echo "Nav2 ready (attempt $attempt)"; break; fi
   echo "Nav2 not ready after attempt $attempt"; kill -INT -- -$N 2>/dev/null; sleep 8; kill -KILL -- -$N 2>/dev/null; N=""
@@ -80,16 +82,17 @@ if [ "${GTLOC:-1}" = 1 ]; then
   python3 tools/sim/gt_localization.py --noise "${GTNOISE:-0}" >> $LOGDIR/av_gtloc.log 2>&1 &
   L=$!; sleep 4
 fi
-if [ "${APPROACH:-0}" = 1 ]; then
+if [ "${APPROACH:-0}" = 1 ] || [ -n "${BT:-}" ]; then
+  # BT(정밀 도착 BT 파일)를 주면 그 BT가 이 노드를 부른다 / the precise-arrival BT calls this node
   # relocalize 끔: sim은 정답 위치를 쓴다(스캔 매칭 재위치는 실기 AMCL용) / sim uses ground-truth localization
-  ros2 run jetrover_navigation precise_approach.py --ros-args -p use_sim_time:=true -p relocalize:=false > $LOGDIR/av_approach.log 2>&1 &
+  ros2 run jetrover_navigation precise_approach.py --ros-args -p use_sim_time:=true -p relocalize:=false ${APPROACH_ARGS:-} > $LOGDIR/av_approach.log 2>&1 &
   AP=$!; sleep 4
 fi
 # 시험은 백그라운드로 돌리고 wait: 전경 명령 중엔 bash가 신호(trap)를 늦게 처리한다. / run in the background so traps fire promptly
 # 서브셸로 감싸 $!가 프로세스 그룹 리더가 되게 한다 / subshell so that $! is the process-group leader
 (
 if [ -n "${RUNCMD:-}" ]; then bash -c "$RUNCMD" 2>&1 | grep -v "^\s*$"        # e.g. RUNCMD='python3 tools/sim/amcl_drift_check.py --spin --drive'
-else python3 tools/sim/avoid_trials.py run --tag "$TAG" --scenario "${SCEN:-S2}" --repeats "${REPEATS:-3}" $([ "${APPROACH:-0}" = 1 ] && echo --approach) 2>&1 | grep -v "^\s*$"; fi
+else python3 tools/sim/avoid_trials.py run --tag "$TAG" --scenario "${SCEN:-S2}" --repeats "${REPEATS:-3}" $([ "${APPROACH:-0}" = 1 ] && echo --approach) $([ -n "${BT:-}" ] && echo --bt "$BT") 2>&1 | grep -v "^\s*$"; fi
 ) &
 W=$!
 wait $W
