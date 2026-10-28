@@ -343,14 +343,20 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [x] 6.6 재위치를 `precise_approach` 노드에 넣음(`relocalize` 기본 켬, sim 실행기는 끔, 단위시험 9개). 새 공식 설정으로 실기 B 2회·직선 2회: 줄자 1.31/1.31/1.00/0.97 m(목표 1.30/1.30/1.00/1.00), 상자 접촉 0
   - [ ] 6.7 (후속) 정밀 접근(재위치 포함)을 Navigation BT(9번)/미션에 붙이기 — 지금은 노드를 따로 띄우고 따로 호출해야 함. 붙인 뒤 목표 허용 오차 재검토
   - [~] 6.5 DirStop 정지-출발 반복 (2026-10-28 실기 D01은 필터 사고로 판정 제외, 중단): sim 시나리오 D7 추가, 재현 약함(기존 6회 중 1회). 수정안 dir3(옆으로 갈 때도 앞 몸 + 8 cm) 회귀 없음 → **실기 확인 후 공식 반영 결정**. 사람 구분은 2단계
-  - [~] 6.8 (발견) 사람이 목표 근처에 서 있으면 목표 30 cm 앞에서 성공으로 끝남(Smac `tolerance` 0.25 — 막힌 목표 대신 0.25 m 안 빈 곳까지 경로). 0.25 → 0.05 sim: D7 6/6 목표 도착(1.8 cm, 사람이 비킬 때까지 대기), S2 8/8·S4 8/8·D4 4/4·D6 3/3 회귀 없음. 실기 2회 원래 목표 도달. 단 사람이 비킨 뒤 20~25 s 기어감(depth 흔적이 카메라 바닥 광선 위 높이에 남음) → `depth_scan_filter.py`(LiDAR가 보는 점을 depth에서 뺌) sim 통과, 실기 확인 대기(`camera.launch.py depth_lidar_filter:=true` + `nav2_params_real_low.yaml`) — troubleshooting/055 5절. 2026-10-26 실기 2회는 절차 문제(비킨 뒤 LiDAR 범위 안에 서 있음 / 안 비킴)로 판정 못 함, 접촉 0 — 2026-10-28 실기 D06/D07 통과(비킨 뒤 약 3 s 출발, 기어감 20~25 s→0 s, 줄자 1.02/0.99 m, 접촉 0) → 공식 반영했다가 **같은 날 필터 되돌림**: 필터가 발 점을 지워 사람 발을 밟음(troubleshooting/056). Smac 0.05만 공식 유지. 다음: 낮은 점(z < 0.12~0.15)은 지우지 않는 필터 + 옆을 스쳐 지나가는 sim 시나리오
+  - [~] 6.8 (발견) 사람이 목표 근처에 서 있으면 목표 30 cm 앞에서 성공으로 끝남(Smac `tolerance` 0.25 — 막힌 목표 대신 0.25 m 안 빈 곳까지 경로). 0.25 → 0.05 sim: D7 6/6 목표 도착(1.8 cm, 사람이 비킬 때까지 대기), S2 8/8·S4 8/8·D4 4/4·D6 3/3 회귀 없음. 실기 2회 원래 목표 도달. 단 사람이 비킨 뒤 20~25 s 기어감(depth 흔적이 카메라 바닥 광선 위 높이에 남음) → `depth_scan_filter.py`(LiDAR가 보는 점을 depth에서 뺌) sim 통과, 실기 확인 대기(`camera.launch.py depth_lidar_filter:=true` + `nav2_params_real_low.yaml`) — troubleshooting/055 5절. 2026-10-26 실기 2회는 절차 문제(비킨 뒤 LiDAR 범위 안에 서 있음 / 안 비킴)로 판정 못 함, 접촉 0 — 2026-10-28 실기 D06/D07 통과(비킨 뒤 약 3 s 출발, 기어감 20~25 s→0 s, 줄자 1.02/0.99 m, 접촉 0) → 공식 반영했다가 **같은 날 필터 되돌림**: 필터가 발 점을 지워 사람 발을 밟음(troubleshooting/056). Smac 0.05만 공식 유지. 2026-10-29 필터 수정(z < 0.13 점은 항상 남김) + sim 발·옆 사람 시나리오 D8~D10: 접촉 0/27, 회귀 없음(D7 6/6·D3·D4·S2·S4·N50). 단 sim은 발 지움을 재현 못 하고, 필터 없어도 D10 발 간격 약 1 cm(056) → 다음: 발 쪽 여유 대책 결정, 실기 상자+막대 확인
 
-## 9. Navigation BT (PRD 초안 `prd/navigation-bt.md`, 2026-10-25 — 사용자 결정 3개 대기)
-- [ ] Nav2 BT 구조 이해
-- [ ] 기본 NavigateToPose BT
-- [ ] Recovery BT
-- [ ] Custom BT XML
-- [ ] 필요한 Custom BT node (예: ComputePath → FollowPath → 실패 → ClearCostmap → Retry)
+## 9. Navigation BT (PRD `prd/navigation-bt.md` 확정 2026-10-28, TEST PLAN `prd/navigation-bt-test-plan.md`)
+결정: C++ BT 노드 / 목표마다 지정(`NavigateToPose.behavior_tree`로 정밀 BT 선택) / 정밀 접근 실패 시 1회 재시도 후 실패 보고.
+- [x] Nav2 BT 구조 이해 (기본 BT `navigate_to_pose_wait_obstacle.xml`: PathLongerOnApproach 1.2배·3 s 대기, 2026-10-22~25)
+- [x] 기본 NavigateToPose BT (`navigate_to_pose_no_backup.xml` → `navigate_to_pose_wait_obstacle.xml`, 공식 기본)
+- [x] Recovery BT (후진 없는 복구, 대기·costmap 비우기)
+- [ ] 9.1 `jetrover_nav_plugins`에 `PreciseApproach` BT 액션 노드(NavigateToPose 타입, 서버 `precise_approach`) + gtest
+- [ ] 9.2 `navigate_to_pose_precise.xml`: 주행 성공 → PreciseApproach, RecoveryNode 1회 재시도(사이에 costmap 비우기)
+- [ ] 9.3 bt_navigator `plugin_lib_names` 등록, `nav2.launch.py`가 `precise_approach.py`를 함께 띄움(sim은 relocalize false)
+- [ ] 9.4 실패 이유(막힘/시작 거리 초과/시간 초과)를 결과에 담기
+- [ ] 9.5 sim 검증: 정밀 BT로 직선·S2·S4·D 각 10회, 정답 오차 ≤ 3 cm, 회귀 없음
+- [ ] 9.6 실기 검증: 직선 3·상자 3, 줄자 ≤ 3 cm, 접촉 0
+- [ ] 9.7 Nav2 목표 허용 오차(0.10/0.08) 재검토 → 끝나면 8.16 6.7도 닫기
 
 ## 10. 정밀 위치 정렬 (AprilTag + PnP + TF2)
 - [ ] AprilTag detector

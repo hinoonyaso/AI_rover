@@ -255,7 +255,7 @@ def setup_leg(node, gt, scen, start, box):
     return err
 
 
-def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False):
+def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False, bt=''):
     spec = SCENARIOS[scen]
     start, goal_xy = spec['legs'][leg]
     driver = getattr(node, 'driver', None) if spec.get('dyn') else None
@@ -281,7 +281,10 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
     goal_msg.pose.header.frame_id = 'map'
     goal_msg.pose.pose.position.x, goal_msg.pose.pose.position.y = goal[0], goal[1]
     goal_msg.pose.pose.orientation.z, goal_msg.pose.pose.orientation.w = math.sin(line_yaw / 2), math.cos(line_yaw / 2)
+    # 목표마다 BT 선택(9.5, 정밀 도착 BT 시험) / per-goal BT (precise-arrival BT tests); '' = default BT
+    goal_msg.behavior_tree = bt
     status, t0 = None, time.time()
+    nav_error_code, nav_error_msg = 0, ''
     if driver:
         driver.begin(DYN.scenarios()[scen]['motions'], start[:2], goal_xy, node.now())
     send = node.client.send_goal_async(goal_msg)
@@ -299,6 +302,8 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
                 break
         if status is None:
             status = {4: 'succeeded', 5: 'canceled', 6: 'aborted'}.get(res.result().status, str(res.result().status))
+            nav_error_code = int(res.result().result.error_code)
+            nav_error_msg = str(getattr(res.result().result, 'error_msg', ''))
     nav_status, t_nav_end = status, node.now()
     approach_status, approach_time = '', 0.0
     if approach:
@@ -358,9 +363,10 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False)
                     ob['half'] = (sizes[name][0] / 2, sizes[name][1] / 2)
                 obstacles.append(ob)
         out.update(M.dynamic_summary(g, obstacles, start_rad, goal, FOOTPRINT_HALF, DYN.PERSON_LEGS, DYN.PERSON_LEG_R,
-                                     (DYN.DYN_BOX_SIZE[0] / 2, DYN.DYN_BOX_SIZE[1] / 2)))
+                                     (DYN.DYN_BOX_SIZE[0] / 2, DYN.DYN_BOX_SIZE[1] / 2), feet=DYN.PERSON_FEET))
         out['success'] = bool(status == 'succeeded' and not out['dyn_contact'])
     out['amcl_init_err_m'] = amcl_init_err
+    out['nav_error_code'], out['nav_error_msg'], out['bt'] = nav_error_code, nav_error_msg, os.path.basename(bt)
     out['amcl_end_err_m'] = (float(math.hypot(amcl_end[0] - g['rx'][-1], amcl_end[1] - g['ry'][-1]))
                              if amcl_end else float('nan'))
     stamp = time.strftime('%Y%m%d_%H%M%S')
@@ -453,6 +459,7 @@ def main():
     r.add_argument('--repeats', type=int, default=3)
     r.add_argument('--timeout', type=float, default=90.0, help='wall-clock seconds per leg')
     r.add_argument('--approach', action='store_true', help='call the precise_approach action after Nav2 (node must be running)')
+    r.add_argument('--bt', default='', help='behavior_tree for each goal (e.g. the precise-arrival BT); default BT if empty')
     s = sub.add_parser('summary')
     s.add_argument('--prefix', default='')
     args = ap.parse_args()
@@ -481,7 +488,7 @@ def main():
         for scen in scens:
             for n in range(1, args.repeats + 1):
                 for leg in SCENARIOS[scen]['legs']:
-                    run_trial(node, gt, args.tag, scen, leg, n, args.timeout, approach=args.approach)
+                    run_trial(node, gt, args.tag, scen, leg, n, args.timeout, approach=args.approach, bt=args.bt)
     finally:
         gt.stop()
         summary(args.tag)

@@ -197,17 +197,24 @@ def point_rect_signed(p, poly):
     return -d if inside else d
 
 
-def obstacle_gap(robot_poly, obs, i, legs, leg_r, box_half):
-    """Gap (m) between the robot polygon and obstacle `obs` at sample i (person legs or box)."""
+def obstacle_gap(robot_poly, obs, i, legs, leg_r, box_half, feet=()):
+    """Gap (m) between the robot polygon and obstacle `obs` at sample i (person legs + feet, or box).
+
+    feet: rectangles (cx, cy, hx, hy) in the person frame (2026-10-28, troubleshooting/056: a foot was run over in the real test).
+    한글: 사람은 다리(원)와 발(사각형) 중 가장 가까운 것까지의 간격.
+    """
     x, y, yaw = obs['x'][i], obs['y'][i], obs['yaw'][i]
     if obs['kind'] == 'person':
         c, s = math.cos(yaw), math.sin(yaw)
-        return min(point_rect_signed((x + c * lx - s * ly, y + s * lx + c * ly), robot_poly) - leg_r for lx, ly in legs)
+        gap = min(point_rect_signed((x + c * lx - s * ly, y + s * lx + c * ly), robot_poly) - leg_r for lx, ly in legs)
+        for fx, fy, hx, hy in feet:
+            gap = min(gap, rect_gap(robot_poly, rect_corners(x + c * fx - s * fy, y + s * fx + c * fy, yaw, hx, hy)))
+        return gap
     return rect_gap(robot_poly, rect_corners(x, y, yaw, *obs.get('half', box_half)))
 
 
 def dynamic_summary(gt, obstacles, start, goal, footprint_half=(0.166, 0.13), legs=((0.0, 0.10), (0.0, -0.10)),
-                    leg_r=0.06, box_half=(0.165, 0.11), parked_x=7.0):
+                    leg_r=0.06, box_half=(0.165, 0.11), parked_x=7.0, feet=()):
     """Metrics against moving obstacles.
 
     gt         dict of arrays t, rx, ry, ryaw (ground truth)
@@ -230,7 +237,7 @@ def dynamic_summary(gt, obstacles, start, goal, footprint_half=(0.166, 0.13), le
         for obs in obstacles:
             if obs['x'][i] > parked_x:
                 continue
-            gaps[i] = min(gaps[i], obstacle_gap(poly, obs, i, legs, leg_r, box_half))
+            gaps[i] = min(gaps[i], obstacle_gap(poly, obs, i, legs, leg_r, box_half, feet))
             rel = np.array([obs['x'][i] - rx[i], obs['y'][i] - ry[i]])
             ahead = float(rel @ direction)
             lat = float(direction[0] * rel[1] - direction[1] * rel[0])

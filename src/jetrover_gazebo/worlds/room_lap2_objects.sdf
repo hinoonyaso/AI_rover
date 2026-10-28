@@ -92,7 +92,7 @@
     <model name="person_0">
       <static>false</static>
       <pose>8.0 8.0 0.002 0 0 0</pose>
-      <!-- 다리 두 개(반경 6 cm, LiDAR 높이에 걸림) + 몸통. 모델 원점 = 두 다리 사이 바닥 / legs r 6 cm hit the LiDAR plane -->
+      <!-- 다리 두 개(반경 6 cm, LiDAR 높이에 걸림) + 발 두 개 + 몸통. 모델 원점 = 두 다리 사이 바닥, +x = 사람이 보는 쪽 / legs r 6 cm hit the LiDAR plane, +x = facing -->
       <link name="body">
         <gravity>false</gravity>
         <inertial><mass>20.0</mass><inertia><ixx>2.0</ixx><iyy>2.0</iyy><izz>0.5</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
@@ -102,6 +102,14 @@
         <collision name="leg_r"><pose>0 -0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry></collision>
         <visual name="leg_r_v"><pose>0 -0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry>
           <material><ambient>0.2 0.2 0.5 1</ambient><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+        <!-- 발 두 개(2026-10-28, troubleshooting/056): 길이 24 x 폭 10 x 높이 11 cm(실기 발 depth 점 z 0.05~0.11; sim depth는 0.09 아래를 버려 8 cm면 안 보임), 다리 중심에서 앞(+x)으로 18 cm까지. LiDAR(0.157 m) 아래.
+             feet 24 x 10 x 11 cm reaching 18 cm ahead (+x = facing) of each leg; below the LiDAR plane (depth camera only) -->
+        <collision name="foot_l"><pose>0.06 0.10 0.055 0 0 0</pose><geometry><box><size>0.24 0.10 0.11</size></box></geometry></collision>
+        <visual name="foot_l_v"><pose>0.06 0.10 0.055 0 0 0</pose><geometry><box><size>0.24 0.10 0.11</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
+        <collision name="foot_r"><pose>0.06 -0.10 0.055 0 0 0</pose><geometry><box><size>0.24 0.10 0.11</size></box></geometry></collision>
+        <visual name="foot_r_v"><pose>0.06 -0.10 0.055 0 0 0</pose><geometry><box><size>0.24 0.10 0.11</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
         <collision name="torso"><pose>0 0 1.10 0 0 0</pose><geometry><box><size>0.22 0.42 0.60</size></box></geometry></collision>
         <visual name="torso_v"><pose>0 0 1.10 0 0 0</pose><geometry><box><size>0.22 0.42 0.60</size></box></geometry>
           <material><ambient>0.7 0.3 0.3 1</ambient><diffuse>0.7 0.3 0.3 1</diffuse></material></visual>

@@ -48,7 +48,7 @@ def test_progress_and_triggers():
 
 def test_scenarios_cross_the_robot_line():
     sc = D.scenarios()
-    assert set(sc) == {'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'N50', 'N60'}
+    assert set(sc) == {'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'N50', 'N60'}
     gl, gr = (m.path[0] for m in sc['N50']['motions'])
     assert abs((gr[0] - gl[0]) - D.GATE_SIZE[0] - 0.50) < 1e-9      # gap between the inner wall ends = 0.50
     for name in ('D1', 'D3'):
@@ -66,3 +66,16 @@ def test_pause_at_waypoint():
     assert D.motion_pose(m, 5.5) == (1.0, 0.0)          # still standing (2 + 4 = 6 s)
     x, _ = D.motion_pose(m, 7.0)
     assert abs(x - 1.5) < 1e-9                          # walking again
+
+
+def test_beside_scenarios_feet_point_into_the_lane():
+    # D8~D10: 사람이 경로선(x 약 1.01) 왼쪽에서 경로를 보고(+x) 서 있음, 발끝이 선에서 0.17/0.12/0.07 m
+    # person left of the line facing it; toe tips 0.17 / 0.12 / 0.07 m from the line
+    sc = D.scenarios()
+    for name, off, toe in (('D8', 0.35, 0.17), ('D9', 0.30, 0.12), ('D10', 0.25, 0.07)):
+        m = sc[name]['motions'][0]
+        (x, y), = m.path
+        assert m.speed == 0.0 and not m.park_at_end and m.yaw_deg == 0.0
+        assert abs((1.01 - x) - off) < 1e-9, name
+        tip = max(fx + hx for fx, fy, hx, hy in D.PERSON_FEET)
+        assert abs((1.01 - (x + tip)) - toe) < 1e-9, name

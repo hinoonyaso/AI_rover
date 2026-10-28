@@ -29,3 +29,13 @@ def test_many_points_chunked():
     scan = np.array([[0.0, 0.0]])
     keep = keep_mask(pts, scan, 0.2)
     assert np.array_equal(keep, np.hypot(pts[:, 0], pts[:, 1]) > 0.2)
+
+
+def test_low_points_near_scan_are_kept():
+    # 2026-10-28 사고(troubleshooting/056): 다리(LiDAR 점) 바로 앞 발 점(z 0.06)은 지우면 안 된다
+    # foot points under/next to a leg (LiDAR return) must survive; leg points above keep_below_z are still dropped
+    scan = np.array([[0.30, 0.20]])
+    pts = np.array([[0.30, 0.15], [0.30, 0.15], [0.30, 0.15], [0.60, 0.0]])
+    z = np.array([0.06, 0.12, 0.30, 0.30])
+    keep = keep_mask(pts, scan, 0.10, z, 0.13)
+    assert keep.tolist() == [True, True, False, True]

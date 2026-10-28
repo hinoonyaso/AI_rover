@@ -19,6 +19,9 @@ Z = 0.002                # model origin height (just above the floor) / 바닥 �
 PARK = {'person_0': (8.0, 8.0), 'dyn_box': (8.0, 8.6), 'gate_l': (8.0, 9.6), 'gate_r': (8.0, 9.9)}
 PERSON_LEGS = ((0.0, 0.10), (0.0, -0.10))   # leg centres in the model frame / 모델 기준 다리 중심
 PERSON_LEG_R = 0.06
+# 발(2026-10-28, troubleshooting/056): (cx, cy, hx, hy) 모델 기준, +x = 사람이 보는 쪽. room_lap2_objects.sdf foot_l/foot_r와 같게.
+# feet rectangles (centre, half sizes) in the model frame, matching foot_l/foot_r in room_lap2_objects.sdf
+PERSON_FEET = ((0.06, 0.10, 0.12, 0.05), (0.06, -0.10, 0.12, 0.05))
 DYN_BOX_SIZE = (0.33, 0.22)
 GATE_SIZE = (0.70, 0.10)                    # narrow-passage wall (x, y), 0.5 m tall / 좁은 통로 벽
 OBJECT_0_PARK = (8.0, 9.2)                  # the static-avoidance box is moved away in D scenarios / D 시나리오에선 치움
@@ -101,7 +104,9 @@ def _gate_motions(width, x0=1.0, y=0.80):
 
 
 def scenarios():
-    """D1-D7 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22, D7 2026-10-25). Fresh Motion objects each call.
+    """D1-D10 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22, D7 2026-10-25, D8-D10 2026-10-28).
+
+    Fresh Motion objects each call.
 
     Robot A (1.02, 0.30, 83 deg) -> B (1.00, 1.25). Crossing line y 1.00: the obstacle reaches the robot path while the
     robot centre is about 0.55-0.65 m before it (the scan room is too short for the planned 0.6-0.8 m everywhere).
@@ -133,6 +138,18 @@ def scenarios():
         # person stands on the path from the start (near the goal) for 8 s, then steps right: real D09, stop-go jitter
         'D7': {'legs': leg, 'motions': [Motion('person_0', [(1.00, 1.05), (1.55, 1.05)], 0.4, yaw_deg=180.0,
                                                after_s=0.0, pause_at=0, pause_s=8.0)]},
+        # D8~D10 (2026-10-28, troubleshooting/056 실기 사고 재현) 사람이 처음부터 끝까지 경로 왼쪽 옆에 **경로를 보고**(+x) 서 있고
+        #    로봇이 옆을 스쳐 지나감. 발이 경로 쪽으로 18 cm 나와 있어 LiDAR엔 다리만 보이고 발은 depth만 본다(실기: 다리 y 0.20, 발 y 0.12).
+        #    사람 중심이 경로선 왼쪽 0.35 / 0.30 / 0.25 m(y 0.85, 로봇 출발 중심에서 약 0.55 m 앞) → 발끝이 선에서 0.17 / 0.12 / 0.07 m
+        #    (로봇 몸 반폭 0.13). 발 접촉이 지표(dyn_contact).
+        # person stands left of the path facing it, feet sticking 18 cm into the lane below the LiDAR plane (the real accident);
+        # toe tips 0.17 / 0.12 / 0.07 m from the line (robot half width 0.13)
+        'D8': {'legs': leg, 'motions': [Motion('person_0', [(1.01 - 0.35, 0.85)], 0.0, yaw_deg=0.0, after_s=0.0,
+                                               park_at_end=False)]},
+        'D9': {'legs': leg, 'motions': [Motion('person_0', [(1.01 - 0.30, 0.85)], 0.0, yaw_deg=0.0, after_s=0.0,
+                                               park_at_end=False)]},
+        'D10': {'legs': leg, 'motions': [Motion('person_0', [(1.01 - 0.25, 0.85)], 0.0, yaw_deg=0.0, after_s=0.0,
+                                                park_at_end=False)]},
         # N50/N60 (2026-10-25 실기 준비) 좁은 통로: y 0.80에 LiDAR에 보이는 벽 두 개, 경로선(x 1.0) 가운데 틈 0.50/0.60 m.
         # 로봇 폭 0.26 m. 정지 영역(TallStop)이 벽 옆 통과를 막는지 본다(실기 B에서 동쪽 벽까지 몸 옆 약 11 cm).
         # narrow passage: two LiDAR-visible walls at y 0.80 leaving a 0.50 / 0.60 m gap on the A-B line

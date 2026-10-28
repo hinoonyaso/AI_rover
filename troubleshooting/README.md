@@ -82,4 +82,4 @@
 | 053 | [동적 장애물 sim 준비: 바닥 아래로 숨긴 모델이 LiDAR에 남음, 지나간 장애물 흔적이 코스트맵에 남음(depth는 장애물 점만 보냄), timeout으로 끊긴 시험의 잔여 프로세스](053-sim-dynamic-obstacles-setup.md) | 해결 (시야 끝 너머 3칸 남음) |
 | 054 | [동적 장애물 반응형: 사람 모델이 로봇 쪽으로 걸어 들어간 시험 결함, 2D 지우기가 낮은 상자를 지움(VoxelLayer), 새 장애물 앞 87° 회전, BT 대기 두 번](054-sim-dynamic-obstacle-reactive.md) | 해결 (sim 변형, 실기 미검증) |
 | 055 | [실기 회피·사람 시험: 카메라 바닥 시야 끝 오검출로 큰 우회, 진행 방향 8~9 cm 지나침, 사람 앞 정지-출발 반복, 처음부터 있던 사람엔 대기 없음](055-real-avoid-test-findings.md) | 일부 해결(오검출: 공식 반영, 8~9 cm: 정밀 접근 전 스캔 매칭 재위치로 −2 cm), 나머지 미해결 |
-| 056 | [depth_scan_filter가 사람 발 점을 지워 로봇이 사람 발을 밟음 (안전 사고, 실기 dir3 D01)](056-depth-filter-removed-feet.md) | 공식 반영 되돌림, 필터 수정은 미해결 |
+| 056 | [depth_scan_filter가 사람 발 점을 지워 로봇이 사람 발을 밟음 (안전 사고, 실기 dir3 D01)](056-depth-filter-removed-feet.md) | 공식 반영 되돌림; 필터 수정 sim 통과(실기 대기), 발 옆 간격 1 cm 문제 남음 |

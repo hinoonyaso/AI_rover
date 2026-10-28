@@ -170,3 +170,15 @@ def test_dynamic_box_contact_and_parked():
     none = M.dynamic_summary(gt, [{'kind': 'box', 'x': np.full_like(t, 9.0), 'y': t * 0, 'yaw': t * 0}],
                              (1.0, 0.3, math.pi / 2), (1.0, 1.4, math.pi / 2))
     assert math.isnan(none['dyn_min_gap_m']) and not none['dyn_contact'] and math.isnan(none['dyn_resume_delay_s'])
+
+
+def test_person_gap_counts_feet():
+    # 발(사각형)이 몸 앞에 있으면 다리보다 먼저 닿는다 / a foot ahead of the legs touches before the legs do
+    poly = M.rect_corners(0.0, 0.0, 0.0, 0.166, 0.13)
+    # person at x 0.60 facing -x (yaw pi): legs 0.60 ahead, feet reach 0.60 - 0.18 = 0.42
+    obs = {'kind': 'person', 'x': [0.60], 'y': [0.0], 'yaw': [math.pi]}
+    legs = ((0.0, 0.10), (0.0, -0.10))
+    no_feet = M.obstacle_gap(poly, obs, 0, legs, 0.06, (0.1, 0.1))
+    with_feet = M.obstacle_gap(poly, obs, 0, legs, 0.06, (0.1, 0.1), ((0.06, 0.10, 0.12, 0.05), (0.06, -0.10, 0.12, 0.05)))
+    assert abs(no_feet - (0.60 - 0.06 - 0.166)) < 1e-6
+    assert abs(with_feet - (0.42 - 0.166)) < 1e-6
