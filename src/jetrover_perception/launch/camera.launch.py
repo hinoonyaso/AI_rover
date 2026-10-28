@@ -116,7 +116,7 @@ def generate_launch_description():
             description='sparse_point_cloud: also publish free-floor points on '
                         'depth/points_clear (clearing-only source)'),
         DeclareLaunchArgument(
-            'depth_lidar_filter', default_value='false',
+            'depth_lidar_filter', default_value='true',
             description='run depth_scan_filter: depth/points_low without points the LiDAR sees'),
         DeclareLaunchArgument(
             'depth_extrude_m', default_value='0.25',

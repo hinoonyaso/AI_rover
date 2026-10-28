@@ -1,3 +1,4 @@
+# 2026-10-28: Smac tolerance 0.05 + costmap depth 토픽 points_low(depth_scan_filter) 공식 반영(사용자 승인, real_avoid_20261025.md 7절).
 # 2026-10-25: 실기 시험(8.15/8.16 6번, docs/benchmarks/navigation/real_avoid_20261025.md) 통과 설정 중 회피·안전 설정을 공식 반영(사용자 승인).
 #   목표 허용 오차(0.10/0.08)는 그대로 — 정밀 접근 노드가 미션/BT에 붙기 전까지. 변경 목록·이전 값은 docs/benchmarks/navigation/tuning-history.md.
 # Nav2 stack params (checklist 8번, prd/slam-nav2.md).
@@ -80,7 +81,7 @@ global_costmap:
           raytrace_max_range: 3.0
           obstacle_max_range: 3.0
         depth_cloud:
-          topic: /depth_cam/depth/points_sparse
+          topic: /depth_cam/depth/points_low   # was points_sparse (2026-10-28, 실기 real_low D06/D07): LiDAR가 보는 점을 뺀 depth(depth_scan_filter) — 사람이 떠난 뒤 카메라 바닥 광선으로 못 지우는 흔적 방지, troubleshooting/055
           max_obstacle_height: 2.0
           min_obstacle_height: 0.06  # -0.1 -> 0.06 (2026-10-25, 실기 B02): 카메라 바닥 시야 끝(정면 0.7~0.9 m) 바닥 오검출(높이 최대 5 cm)이 코스트맵을 막음(troubleshooting/055)
           clearing: true
@@ -107,7 +108,7 @@ planner_server:
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_smac_planner::SmacPlanner2D"
-      tolerance: 0.25
+      tolerance: 0.05  # was 0.25 (2026-10-28): 목표 근처가 막히면 0.25 m 안 빈 곳까지 가서 목표 30 cm 앞 성공으로 끝났다(실기 D09, sim D7). 이제 막힌 목표는 대기·재시도 후 실패
       downsample_costmap: false
       allow_unknown: true
       max_iterations: 1000000
@@ -528,7 +529,7 @@ local_costmap:
           raytrace_max_range: 3.0
           obstacle_max_range: 3.0
         depth_cloud:
-          topic: /depth_cam/depth/points_sparse
+          topic: /depth_cam/depth/points_low   # was points_sparse (2026-10-28, 실기 real_low D06/D07): LiDAR가 보는 점을 뺀 depth(depth_scan_filter) — 사람이 떠난 뒤 카메라 바닥 광선으로 못 지우는 흔적 방지, troubleshooting/055
           max_obstacle_height: 2.0
           min_obstacle_height: 0.06  # -0.1 -> 0.06 (2026-10-25, 실기 B02): 카메라 바닥 시야 끝(정면 0.7~0.9 m) 바닥 오검출(높이 최대 5 cm)이 코스트맵을 막음(troubleshooting/055)
           clearing: true
