@@ -200,14 +200,15 @@ def point_rect_signed(p, poly):
 def obstacle_gap(robot_poly, obs, i, legs, leg_r, box_half, feet=()):
     """Gap (m) between the robot polygon and obstacle `obs` at sample i (person legs + feet, or box).
 
-    feet: rectangles (cx, cy, hx, hy) in the person frame (2026-10-28, troubleshooting/056: a foot was run over in the real test).
+    feet: rectangles (cx, cy, hx, hy) in the person frame (2026-10-28, troubleshooting/056: a foot was run over in the real test);
+          obs['feet'] overrides it (per-model feet, 2026-10-29).
     한글: 사람은 다리(원)와 발(사각형) 중 가장 가까운 것까지의 간격.
     """
     x, y, yaw = obs['x'][i], obs['y'][i], obs['yaw'][i]
     if obs['kind'] == 'person':
         c, s = math.cos(yaw), math.sin(yaw)
         gap = min(point_rect_signed((x + c * lx - s * ly, y + s * lx + c * ly), robot_poly) - leg_r for lx, ly in legs)
-        for fx, fy, hx, hy in feet:
+        for fx, fy, hx, hy in obs.get('feet', feet):
             gap = min(gap, rect_gap(robot_poly, rect_corners(x + c * fx - s * fy, y + s * fx + c * fy, yaw, hx, hy)))
         return gap
     return rect_gap(robot_poly, rect_corners(x, y, yaw, *obs.get('half', box_half)))

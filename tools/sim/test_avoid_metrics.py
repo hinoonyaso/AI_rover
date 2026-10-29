@@ -182,3 +182,14 @@ def test_person_gap_counts_feet():
     with_feet = M.obstacle_gap(poly, obs, 0, legs, 0.06, (0.1, 0.1), ((0.06, 0.10, 0.12, 0.05), (0.06, -0.10, 0.12, 0.05)))
     assert abs(no_feet - (0.60 - 0.06 - 0.166)) < 1e-6
     assert abs(with_feet - (0.42 - 0.166)) < 1e-6
+
+
+def test_obstacle_feet_override_default():
+    # 장애물마다 발 모양(obs['feet'])이 기본값보다 우선 / per-obstacle feet win over the default
+    poly = M.rect_corners(0.0, 0.0, 0.0, 0.166, 0.13)
+    legs = ((0.0, 0.10), (0.0, -0.10))
+    long_feet = ((0.06, 0.10, 0.12, 0.05), (0.06, -0.10, 0.12, 0.05))
+    short = ((0.04, 0.10, 0.10, 0.05), (0.04, -0.10, 0.10, 0.05))
+    obs = {'kind': 'person', 'x': [0.60], 'y': [0.0], 'yaw': [math.pi], 'feet': short}
+    gap = M.obstacle_gap(poly, obs, 0, legs, 0.06, (0.1, 0.1), long_feet)
+    assert abs(gap - (0.60 - 0.14 - 0.166)) < 1e-6

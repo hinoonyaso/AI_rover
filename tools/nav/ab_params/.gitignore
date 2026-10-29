@@ -11,3 +11,7 @@
 !nav2_params_real_low.yaml
 !nav2_params_sim_lowdepth.yaml
 !nav2_params_real_dir3.yaml
+# 2026-10-29 발 쪽 여유 대책 비교(troubleshooting/056) / foot-clearance comparison variants
+!nav2_params_sim_pad05.yaml
+!nav2_params_sim_pad07.yaml
+!nav2_params_sim_ofs05.yaml

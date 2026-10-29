@@ -71,7 +71,7 @@ SCENARIOS = {
 # Dynamic-obstacle scenarios: object_0 is parked away; the models of dyn_obstacles.py move (motions rebuilt every trial).
 for _name, _sc in DYN.scenarios().items():
     SCENARIOS[_name] = {'box': DYN.OBJECT_0_PARK, 'legs': _sc['legs'], 'dyn': True}
-DYN_MODELS = ('person_0', 'dyn_box', 'gate_l', 'gate_r')
+DYN_MODELS = ('person_0', 'dyn_box', 'gate_l', 'gate_r', 'person_1')   # new models go last (column layout)
 FIELDS = ['tag', 'scenario', 'leg', 'n', 'stamp', 'success', 'status', 'nav_status', 'nav_time_s', 'approach_status',
           'approach_time_s', 'time_s', 'pos_err_m', 'yaw_err_deg',
           'min_clearance_m', 'box_moved_m', 'detour_width_m', 'vy_flips_near', 'vy_flips_per_s_near',
@@ -357,10 +357,12 @@ def run_trial(node, gt, tag, scen, leg, n, timeout, quiet=False, approach=False,
             col = 7 + 3 * k
             if name in used and rows.shape[1] > col + 2:
                 ox = np.where(np.isfinite(rows[:, col]), rows[:, col], 99.0)
-                ob = {'kind': 'person' if name == 'person_0' else 'box', 'x': ox,
+                ob = {'kind': 'person' if name.startswith('person') else 'box', 'x': ox,
                       'y': np.nan_to_num(rows[:, col + 1]), 'yaw': np.nan_to_num(rows[:, col + 2])}
                 if name in sizes:
                     ob['half'] = (sizes[name][0] / 2, sizes[name][1] / 2)
+                if name in DYN.FEET:
+                    ob['feet'] = DYN.FEET[name]      # 모델마다 발 모양이 다름 / per-model feet
                 obstacles.append(ob)
         out.update(M.dynamic_summary(g, obstacles, start_rad, goal, FOOTPRINT_HALF, DYN.PERSON_LEGS, DYN.PERSON_LEG_R,
                                      (DYN.DYN_BOX_SIZE[0] / 2, DYN.DYN_BOX_SIZE[1] / 2), feet=DYN.PERSON_FEET))
@@ -455,7 +457,8 @@ def main():
     sub = ap.add_subparsers(dest='cmd', required=True)
     r = sub.add_parser('run')
     r.add_argument('--tag', required=True, help='condition label, e.g. dwb, mppi, dwb_h1')
-    r.add_argument('--scenario', default='S2', choices=sorted(SCENARIOS) + ['all', 'dyn'])
+    # 쉼표로 여러 개(2026-10-29, Gazebo·Nav2를 한 번만 띄움) / comma-separated list runs several in one bringup
+    r.add_argument('--scenario', default='S2', help='|'.join(sorted(SCENARIOS) + ['all', 'dyn']) + ', or a comma list (D10,S2)')
     r.add_argument('--repeats', type=int, default=3)
     r.add_argument('--timeout', type=float, default=90.0, help='wall-clock seconds per leg')
     r.add_argument('--approach', action='store_true', help='call the precise_approach action after Nav2 (node must be running)')
@@ -474,7 +477,10 @@ def main():
         scens = [s for s in sorted(SCENARIOS) if bool(SCENARIOS[s].get('dyn')) == (args.scenario == 'dyn')
                  and not s.startswith('N')]   # N50/N60 (narrow passage) run by name / 좁은 통로는 이름으로
     else:
-        scens = [args.scenario]
+        scens = args.scenario.split(',')
+        bad = [s for s in scens if s not in SCENARIOS]
+        if bad:
+            sys.exit(f'unknown scenario(s) {bad}')
     if any(SCENARIOS[s].get('dyn') for s in scens):
         # 동적 장애물 구동기: set_pose 서비스 브리지가 떠 있어야 한다(sim_avoid_run.sh가 띄움).
         node.driver = DYN.ObstacleDriver(node, WORLD, lambda: gt.latest[1:3] if gt.latest else None)

@@ -4,6 +4,7 @@
 """Costmap values around given points (host, ROS_DOMAIN_ID=31, Nav2 running).
 
   python3 tools/sim/costmap_probe.py --robot 1.0 1.45 90 --points 1.0,1.45 1.02,0.37 [--wait 6] [--half 0.2]
+      [--person 0.76 0.85 0]   (place person_0 at x y yaw_deg, e.g. D10, to see whether its feet are marked)
 Values (Nav2 costmap topic): 0 free, 1..98 inflation gradient, 99 inscribed (centre cannot be here), 100 lethal, -1 unknown.
 Prints a (2*half/0.05+1)^2 grid per point and per costmap (global, local) around the point, north up.
 """
@@ -26,6 +27,8 @@ def main():
     ap.add_argument('--wait', type=float, default=6.0)
     ap.add_argument('--half', type=float, default=0.2)
     ap.add_argument('--box', type=float, nargs=2, default=None, help='box centre (default: parked under the floor)')
+    # 2026-10-29 troubleshooting/056: 사람 발이 코스트맵에 찍히는지 / are the person's feet marked
+    ap.add_argument('--person', type=float, nargs=3, default=None, help='person_0 x y yaw_deg (default: parked)')
     args = ap.parse_args()
     rclpy.init()
     node, gt = T.Runner(), T.GroundTruth()
@@ -37,6 +40,8 @@ def main():
         for c in T.CUBES:
             T.gz_set_pose(c, 0.45, 1.35, -3.0)
         T.gz_set_pose(T.BOX, *(args.box if args.box else (0.45, 1.35)), 0.055 if args.box else -3.0)
+        if args.person:
+            T.gz_set_pose('person_0', args.person[0], args.person[1], 0.002, args.person[2])
         x, y, yaw = args.robot
         T.gz_set_pose('jetrover', x, y, 0.01, yaw)
         node.spin(1.0)

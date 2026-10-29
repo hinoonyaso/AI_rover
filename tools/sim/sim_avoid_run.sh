@@ -3,8 +3,9 @@
 #       끝나면 프로세스 그룹을 종료한다. 실기 로봇은 쓰지 않는다. 사용: CTRL=dwb SCEN=S2 REPEATS=5 bash tools/sim/sim_avoid_run.sh
 # Host: Gazebo (depth obstacles) + Nav2 with the chosen controller, then tools/sim/avoid_trials.py.
 #   env: CTRL  dwb | mppi | mppi_nolr | <path to a params yaml>   (default dwb = nav2_params.yaml)
-#        TAG   label in the CSV (default = CTRL)     SCEN S1|S2|S4|all|D1..D4|dyn (default S2)     REPEATS (default 3)
+#        TAG   label in the CSV (default = CTRL)     SCEN S1|S2|S4|all|D1..D12|N50|dyn or a comma list (default S2)     REPEATS (default 3)
 #        APPROACH 1: also run the precise approach node and call it after Nav2
+#        TIMEOUT wall-clock seconds per leg (default 90; a blocked goal with the precise BT needs ~200)
 #        BT  NavigateToPose.behavior_tree for each goal (starts the precise approach node; the BT calls it)
 #        APPROACH_ARGS extra --ros-args for that node, e.g. '-p max_start_dist_m:=0.0' to force a failure (9.5 retry check)
 #        GTLOC 1 (default) ground-truth localization / 0 AMCL   GTNOISE position error sigma m for GTLOC=1
@@ -92,7 +93,7 @@ fi
 # 서브셸로 감싸 $!가 프로세스 그룹 리더가 되게 한다 / subshell so that $! is the process-group leader
 (
 if [ -n "${RUNCMD:-}" ]; then bash -c "$RUNCMD" 2>&1 | grep -v "^\s*$"        # e.g. RUNCMD='python3 tools/sim/amcl_drift_check.py --spin --drive'
-else python3 tools/sim/avoid_trials.py run --tag "$TAG" --scenario "${SCEN:-S2}" --repeats "${REPEATS:-3}" $([ "${APPROACH:-0}" = 1 ] && echo --approach) $([ -n "${BT:-}" ] && echo --bt "$BT") 2>&1 | grep -v "^\s*$"; fi
+else python3 tools/sim/avoid_trials.py run --tag "$TAG" --scenario "${SCEN:-S2}" --repeats "${REPEATS:-3}" --timeout "${TIMEOUT:-90}" $([ "${APPROACH:-0}" = 1 ] && echo --approach) $([ -n "${BT:-}" ] && echo --bt "$BT") 2>&1 | grep -v "^\s*$"; fi
 ) &
 W=$!
 wait $W

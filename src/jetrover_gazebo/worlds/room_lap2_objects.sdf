@@ -115,6 +115,33 @@
           <material><ambient>0.7 0.3 0.3 1</ambient><diffuse>0.7 0.3 0.3 1</diffuse></material></visual>
       </link>
     </model>
+    <model name="person_1">
+      <static>false</static>
+      <pose>8.0 10.3 0.002 0 0 0</pose>
+      <!-- person_0과 같고 발만 짧음 / same as person_0 with shorter feet. 다리 두 개(반경 6 cm, LiDAR 높이에 걸림) + 발 두 개 + 몸통. 모델 원점 = 두 다리 사이 바닥, +x = 사람이 보는 쪽 / legs r 6 cm hit the LiDAR plane, +x = facing -->
+      <link name="body">
+        <gravity>false</gravity>
+        <inertial><mass>20.0</mass><inertia><ixx>2.0</ixx><iyy>2.0</iyy><izz>0.5</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <collision name="leg_l"><pose>0 0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry></collision>
+        <visual name="leg_l_v"><pose>0 0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.5 1</ambient><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+        <collision name="leg_r"><pose>0 -0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry></collision>
+        <visual name="leg_r_v"><pose>0 -0.10 0.40 0 0 0</pose><geometry><cylinder><radius>0.06</radius><length>0.80</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.5 1</ambient><diffuse>0.2 0.2 0.5 1</diffuse></material></visual>
+        <!-- 발 두 개(2026-10-29, troubleshooting/056 실기 사고 재현용): 길이 20 cm, 다리 중심에서 앞으로 14 cm = 다리 표면에서 8 cm(옛 depth_scan_filter 반경 10 cm 안).
+             person_0 발(18 cm)은 반경 밖이라 옛 필터도 지우지 못해 사고가 재현되지 않았다.
+             short feet: toes 8 cm past the leg surface, inside the old filter radius (person_0's feet are outside it) -->
+        <collision name="foot_l"><pose>0.04 0.10 0.055 0 0 0</pose><geometry><box><size>0.20 0.10 0.11</size></box></geometry></collision>
+        <visual name="foot_l_v"><pose>0.04 0.10 0.055 0 0 0</pose><geometry><box><size>0.20 0.10 0.11</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
+        <collision name="foot_r"><pose>0.04 -0.10 0.055 0 0 0</pose><geometry><box><size>0.20 0.10 0.11</size></box></geometry></collision>
+        <visual name="foot_r_v"><pose>0.04 -0.10 0.055 0 0 0</pose><geometry><box><size>0.20 0.10 0.11</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material></visual>
+        <collision name="torso"><pose>0 0 1.10 0 0 0</pose><geometry><box><size>0.22 0.42 0.60</size></box></geometry></collision>
+        <visual name="torso_v"><pose>0 0 1.10 0 0 0</pose><geometry><box><size>0.22 0.42 0.60</size></box></geometry>
+          <material><ambient>0.7 0.3 0.3 1</ambient><diffuse>0.7 0.3 0.3 1</diffuse></material></visual>
+      </link>
+    </model>
     <model name="dyn_box">
       <static>false</static>
       <pose>8.0 8.6 0.002 0 0 0</pose>

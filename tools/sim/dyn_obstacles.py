@@ -16,12 +16,16 @@ import math  # noqa: I100
 
 RATE_HZ = 20.0           # set_pose rate in simulated time / 시뮬레이션 시간 기준 갱신 주기
 Z = 0.002                # model origin height (just above the floor) / 바닥 바로 위
-PARK = {'person_0': (8.0, 8.0), 'dyn_box': (8.0, 8.6), 'gate_l': (8.0, 9.6), 'gate_r': (8.0, 9.9)}
+PARK = {'person_0': (8.0, 8.0), 'dyn_box': (8.0, 8.6), 'gate_l': (8.0, 9.6), 'gate_r': (8.0, 9.9), 'person_1': (8.0, 10.3)}
 PERSON_LEGS = ((0.0, 0.10), (0.0, -0.10))   # leg centres in the model frame / 모델 기준 다리 중심
 PERSON_LEG_R = 0.06
 # 발(2026-10-28, troubleshooting/056): (cx, cy, hx, hy) 모델 기준, +x = 사람이 보는 쪽. room_lap2_objects.sdf foot_l/foot_r와 같게.
 # feet rectangles (centre, half sizes) in the model frame, matching foot_l/foot_r in room_lap2_objects.sdf
 PERSON_FEET = ((0.06, 0.10, 0.12, 0.05), (0.06, -0.10, 0.12, 0.05))
+# person_1 (2026-10-29): 발끝이 다리 표면에서 8 cm — 옛 필터 반경(10 cm) 안이라 실기 사고처럼 지워진다.
+# person_1 has short feet (toes 8 cm past the leg surface, inside the old filter radius) to reproduce the real accident
+PERSON_SHORT_FEET = ((0.04, 0.10, 0.10, 0.05), (0.04, -0.10, 0.10, 0.05))
+FEET = {'person_0': PERSON_FEET, 'person_1': PERSON_SHORT_FEET}
 DYN_BOX_SIZE = (0.33, 0.22)
 GATE_SIZE = (0.70, 0.10)                    # narrow-passage wall (x, y), 0.5 m tall / 좁은 통로 벽
 OBJECT_0_PARK = (8.0, 9.2)                  # the static-avoidance box is moved away in D scenarios / D 시나리오에선 치움
@@ -104,7 +108,7 @@ def _gate_motions(width, x0=1.0, y=0.80):
 
 
 def scenarios():
-    """D1-D10 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22, D7 2026-10-25, D8-D10 2026-10-28).
+    """D1-D13 (prd/sim-dynamic-avoidance-test-plan.md; D5/D6 added 2026-10-22, D7 2026-10-25, D8-D10 2026-10-28, D11-D13 2026-10-29).
 
     Fresh Motion objects each call.
 
@@ -149,6 +153,19 @@ def scenarios():
         'D9': {'legs': leg, 'motions': [Motion('person_0', [(1.01 - 0.30, 0.85)], 0.0, yaw_deg=0.0, after_s=0.0,
                                                park_at_end=False)]},
         'D10': {'legs': leg, 'motions': [Motion('person_0', [(1.01 - 0.25, 0.85)], 0.0, yaw_deg=0.0, after_s=0.0,
+                                                park_at_end=False)]},
+        # D11/D12 (2026-10-29, troubleshooting/056) 실기 사고 재현: 발이 짧은 person_1(발끝 = 다리 중심 + 0.14)이 경로를 보고 서 있음.
+        #    다리 중심이 선에서 0.24 / 0.22 m → 발끝 0.10 / 0.08 m(몸 반폭 0.13 안), 다리 표면 0.18 / 0.16 m(실기: 다리 y 0.20, 발 y 0.12).
+        #    옛 필터(SIM_DEPTH_KEEP_BELOW_Z=-1)는 발 점을 지워야 하고(접촉 기대), 새 필터·필터 없음은 발을 피해야 한다.
+        # the real accident: short-footed person beside the path, toes 0.10 / 0.08 m from the line, all foot points within
+        # 10 cm of the leg LiDAR points (the old filter should erase them)
+        'D11': {'legs': leg, 'motions': [Motion('person_1', [(1.01 - 0.24, 0.85)], 0.0, yaw_deg=0.0, after_s=0.0,
+                                                park_at_end=False)]},
+        'D12': {'legs': leg, 'motions': [Motion('person_1', [(1.01 - 0.22, 0.85)], 0.0, yaw_deg=0.0, after_s=0.0,
+                                                park_at_end=False)]},
+        # D13 (2026-10-29, 체크리스트 9.4/9.5) 목표 위에 사람이 계속 서 있음: 막힌 목표 → 계획 실패 코드 확인(정밀 BT는 1회 재시도 뒤 실패).
+        #    다른 지표보다 결과 상태·error_code를 본다. / a person stays on the goal: blocked-goal failure code (BT retries once)
+        'D13': {'legs': leg, 'motions': [Motion('person_0', [(B[0], B[1])], 0.0, yaw_deg=-90.0, after_s=0.0,
                                                 park_at_end=False)]},
         # N50/N60 (2026-10-25 실기 준비) 좁은 통로: y 0.80에 LiDAR에 보이는 벽 두 개, 경로선(x 1.0) 가운데 틈 0.50/0.60 m.
         # 로봇 폭 0.26 m. 정지 영역(TallStop)이 벽 옆 통과를 막는지 본다(실기 B에서 동쪽 벽까지 몸 옆 약 11 cm).

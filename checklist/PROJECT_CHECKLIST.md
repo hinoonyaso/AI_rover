@@ -15,8 +15,8 @@
 - [x] ROS2 Jazzy 설치
 - [x] colcon, rosdep 개발환경
 - [x] ~/jetrover_ws workspace 구성
-- [ ] Docker 기반 재현 가능한 개발환경
-- [ ] 전체 패키지 버전/환경 문서화
+- [ ] Docker 기반 재현 가능한 개발환경 — 보류(2026-10-29): micro-ROS Jetson 빌드가 docker 불가, 버전 스냅샷으로 대신 (`docs/environment/README.md`)
+- [x] 전체 패키지 버전/환경 문서화 (2026-10-29: `tools/env/snapshot_versions.sh` → `docs/environment/`, Jetson + host 스냅샷과 요약표)
 - 현재 단계에서는 Docker보다 로봇 기능 구현이 우선이다.
 
 ## 1. STM32 / Base Driver
@@ -237,7 +237,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [~] 8.13.3 회피 재시험(2026-10-09, troubleshooting/034): 정면 상자 5회 실패(원인 수정) → 상자 오른쪽 20 cm 옮겨 **MPPI 3/3 성공**(15~17 s, collision_monitor 개입 없음). 우회 폭 37~42 cm로 과대(이상적 ~15) → inflation 0.40→0.25 적용, 주행 확인 전(배터리). DWB 같은 조건 비교도 남음
   - [~] 8.13.4 depth 기준 영상 홈 자세 게이트(`sparse_point_cloud`, ±0.08 rad + 1초 debounce, 벗어나면 발행 중지 → CM 정지). 실기: 팔 접힘(0.65 rad) 차단 확인, 0.04는 주행 중 백래시로 열림/닫힘 반복해서 완화함
   - [x] 8.13.5 카메라 감지거리 재설계(2026-10-09): 손목 joint4 1.6043 → 1.45, 바닥 시야 0.21~0.62 → **0.26~0.81 m**, 자기 바퀴 시야 밖, LiDAR 가림 변화 없음. 기준 depth 재촬영(이전 백업), 빈 바닥 거짓 점 0, 상자 범퍼 10/30/60 cm 모두 검출(60 cm는 아래 4 cm만). 기록 `docs/benchmarks/perception/home_pose_20261009.md`
-  - [ ] 8.13.14 depth 레이어 `raytrace_min_range`: 새 홈 자세의 사각지대(범퍼~8 cm)에 들어간 상자를 depth 광선이 지우지 않게(회피 단계)
+  - [~] 8.13.14 depth 레이어 `raytrace_min_range`: 새 홈 자세의 사각지대(범퍼~8 cm)에 들어간 상자를 depth 광선이 지우지 않게(회피 단계). 2026-10-30 sim(`tools/sim/blind_zone_check.py`, 1회): 범퍼~상자 40→3 cm와 5 s 정지 내내 상자 칸 비용 100 — sim에선 지워지지 않아 대책 불필요로 보임. 실기 홈 자세 확인 대기(`docs/benchmarks/navigation/foot_clearance_sim_20261030.md` 4절)
   - [x] 8.13.15 footprint 줄자 실측(2026-10-09): 36×26 cm → 플래너 0.38×0.28(+1 cm), collision_monitor 정지 0.40×0.30 / 감속 0.56×0.44. 이전 0.36×0.50은 미실측 과대값
   - [~] 8.13.16 MPPI(Omni) 설정 `config/mppi_followpath.yaml` + `make_variants.sh`로 `nav2_params_mppi.yaml` 생성. 로드맵 4단계를 앞당김(2026-10-09 사용자 승인). 2회 시험, 튜닝 전
   - [~] 8.13.17 회피 방식(정면 유지 + 대각 이동, 회전은 큰 방향 전환에서만): MPPI 목표 근처 기준 0.35 m 적용 후 **왕복 3/4 성공**(옆 이동 15~18 cm, 몸 방향 2~11°, 2026-10-09). 실패 1회(F2-4, 48 cm 우회 후 진동): **2026-10-10 bag 분석** — 회전 직후 전역 경로가 41 cm 우회로 바뀌고, 목표가 몸 기준 왼쪽 ~75°인 지점에서 40 s 정체(경로 정상, MPPI 출력 ≈0, 몸 옆 8 cm 안 센서 점). 막은 물체는 bag에 costmap이 없어 미확정 → `straight_trial.py --bag`에 scan/depth 점/costmap 추가(troubleshooting/034). M3~M8 접촉 없음
@@ -343,7 +343,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [x] 6.6 재위치를 `precise_approach` 노드에 넣음(`relocalize` 기본 켬, sim 실행기는 끔, 단위시험 9개). 새 공식 설정으로 실기 B 2회·직선 2회: 줄자 1.31/1.31/1.00/0.97 m(목표 1.30/1.30/1.00/1.00), 상자 접촉 0
   - [ ] 6.7 (후속) 정밀 접근(재위치 포함)을 Navigation BT(9번)/미션에 붙이기 — 지금은 노드를 따로 띄우고 따로 호출해야 함. 붙인 뒤 목표 허용 오차 재검토
   - [~] 6.5 DirStop 정지-출발 반복 (2026-10-28 실기 D01은 필터 사고로 판정 제외, 중단): sim 시나리오 D7 추가, 재현 약함(기존 6회 중 1회). 수정안 dir3(옆으로 갈 때도 앞 몸 + 8 cm) 회귀 없음 → **실기 확인 후 공식 반영 결정**. 사람 구분은 2단계
-  - [~] 6.8 (발견) 사람이 목표 근처에 서 있으면 목표 30 cm 앞에서 성공으로 끝남(Smac `tolerance` 0.25 — 막힌 목표 대신 0.25 m 안 빈 곳까지 경로). 0.25 → 0.05 sim: D7 6/6 목표 도착(1.8 cm, 사람이 비킬 때까지 대기), S2 8/8·S4 8/8·D4 4/4·D6 3/3 회귀 없음. 실기 2회 원래 목표 도달. 단 사람이 비킨 뒤 20~25 s 기어감(depth 흔적이 카메라 바닥 광선 위 높이에 남음) → `depth_scan_filter.py`(LiDAR가 보는 점을 depth에서 뺌) sim 통과, 실기 확인 대기(`camera.launch.py depth_lidar_filter:=true` + `nav2_params_real_low.yaml`) — troubleshooting/055 5절. 2026-10-26 실기 2회는 절차 문제(비킨 뒤 LiDAR 범위 안에 서 있음 / 안 비킴)로 판정 못 함, 접촉 0 — 2026-10-28 실기 D06/D07 통과(비킨 뒤 약 3 s 출발, 기어감 20~25 s→0 s, 줄자 1.02/0.99 m, 접촉 0) → 공식 반영했다가 **같은 날 필터 되돌림**: 필터가 발 점을 지워 사람 발을 밟음(troubleshooting/056). Smac 0.05만 공식 유지. 2026-10-29 필터 수정(z < 0.13 점은 항상 남김) + sim 발·옆 사람 시나리오 D8~D10: 접촉 0/27, 회귀 없음(D7 6/6·D3·D4·S2·S4·N50). 단 sim은 발 지움을 재현 못 하고, 필터 없어도 D10 발 간격 약 1 cm(056) → 다음: 발 쪽 여유 대책 결정, 실기 상자+막대 확인
+  - [~] 6.8 (발견) 사람이 목표 근처에 서 있으면 목표 30 cm 앞에서 성공으로 끝남(Smac `tolerance` 0.25 — 막힌 목표 대신 0.25 m 안 빈 곳까지 경로). 0.25 → 0.05 sim: D7 6/6 목표 도착(1.8 cm, 사람이 비킬 때까지 대기), S2 8/8·S4 8/8·D4 4/4·D6 3/3 회귀 없음. 실기 2회 원래 목표 도달. 단 사람이 비킨 뒤 20~25 s 기어감(depth 흔적이 카메라 바닥 광선 위 높이에 남음) → `depth_scan_filter.py`(LiDAR가 보는 점을 depth에서 뺌) sim 통과, 실기 확인 대기(`camera.launch.py depth_lidar_filter:=true` + `nav2_params_real_low.yaml`) — troubleshooting/055 5절. 2026-10-26 실기 2회는 절차 문제(비킨 뒤 LiDAR 범위 안에 서 있음 / 안 비킴)로 판정 못 함, 접촉 0 — 2026-10-28 실기 D06/D07 통과(비킨 뒤 약 3 s 출발, 기어감 20~25 s→0 s, 줄자 1.02/0.99 m, 접촉 0) → 공식 반영했다가 **같은 날 필터 되돌림**: 필터가 발 점을 지워 사람 발을 밟음(troubleshooting/056). Smac 0.05만 공식 유지. 2026-10-29 필터 수정(z < 0.13 점은 항상 남김) + sim 발·옆 사람 시나리오 D8~D10: 접촉 0/27, 회귀 없음(D7 6/6·D3·D4·S2·S4·N50). 단 sim은 발 지움을 재현 못 하고, 필터 없어도 D10 발 간격 약 1 cm(056) → 2026-10-30 sim: 발이 짧은 사람 D11/D12로 사고 재현(옛 필터 1~2 cm, 새 필터·필터 없음 7~8 cm), 여유 대책 비교 local `footprint_padding` 0.05가 발 ≥ 8.2 cm·회귀 없음(`docs/benchmarks/navigation/foot_clearance_sim_20261030.md`) → 다음: 대책 사용자 결정, 실기 상자+막대 확인
 
 ## 9. Navigation BT (PRD `prd/navigation-bt.md` 확정 2026-10-28, TEST PLAN `prd/navigation-bt-test-plan.md`)
 결정: C++ BT 노드 / 목표마다 지정(`NavigateToPose.behavior_tree`로 정밀 BT 선택) / 정밀 접근 실패 시 1회 재시도 후 실패 보고.
@@ -353,12 +353,12 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 9.1 BT 액션 노드: Nav2 내장 `NavigateToPose` 노드를 `server_name="precise_approach"`로 사용(새 C++ 불필요, PRD 설계 참조). 2026-10-29 sim에서 목표마다 정밀 접근 호출 확인
 - [x] 9.2 `navigate_to_pose_precise.xml`: 주행 성공 → PreciseApproach, RecoveryNode 1회 재시도(사이에 Wait 2 s, costmap은 안 비움 — PRD). sim 강제 실패: 정밀 접근 정확히 2번 뒤 실패
 - [x] 9.3 `nav2.launch.py`가 `precise_approach.py`를 함께 띄움(인자 `precise_approach`, sim은 relocalize false). 내장 노드라 플러그인 등록 불필요
-- [x] 9.4 실패 이유를 결과 `error_code`에: 9101 시작 거리 초과/9102 시간 초과/9103 위치 없음, 막힘은 계획기 코드. sim: 강제 시간 초과 → 결과 9102 (`error_msg`는 비어 옴)
+- [x] 9.4 실패 이유를 결과 `error_code`에: 9101 시작 거리 초과/9102 시간 초과/9103 위치 없음, 막힘은 계획기 코드. sim: 강제 시간 초과 → 결과 9102 (`error_msg`는 비어 옴). 2026-10-30 막힌 목표(D13, 사람이 목표 위): 기본 BT 34.8 s·정밀 BT 68.6 s(1회 재시도) 뒤 208(ComputePathToPose NO_VALID_PATH), 접촉 0. 정밀 접근은 costmap을 안 봐서 목표가 사람 옆이면 발 간격 8 → 2 cm(D11) — 경로 비용 검사 후보(새 기능, 결정 대기)
 - [x] 9.5 sim 검증: 정밀 BT로 직선·S2·S4·D7 각 10회 40/40, 오차 1.7~1.9 cm, 회귀 없음(S4 최소 간격 1회 4.1 cm 관찰), 강제 실패 → 2번 시도 후 9101/9102 (`docs/benchmarks/navigation/navigation_bt_sim_20261029.md`, 2026-10-29)
 - [ ] 9.6 실기 검증: 직선 3·상자 3, 줄자 ≤ 3 cm, 접촉 0
 - [ ] 9.7 Nav2 목표 허용 오차(0.10/0.08) 재검토 → 끝나면 8.16 6.7도 닫기
 
-## 10. 정밀 위치 정렬 (AprilTag + PnP + TF2)
+## 10. 정밀 위치 정렬 (AprilTag + PnP + TF2) — PRD 초안 `prd/apriltag-alignment.md`(2026-10-29, 사용자 결정 4개 대기), TEST PLAN `prd/apriltag-alignment-test-plan.md`
 - [ ] AprilTag detector
 - [ ] Tag pose
 - [ ] Desk marker, Charging marker, Workstation marker

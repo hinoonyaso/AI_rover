@@ -48,7 +48,7 @@ def test_progress_and_triggers():
 
 def test_scenarios_cross_the_robot_line():
     sc = D.scenarios()
-    assert set(sc) == {'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'N50', 'N60'}
+    assert set(sc) == {'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D11', 'D12', 'D13', 'N50', 'N60'}
     gl, gr = (m.path[0] for m in sc['N50']['motions'])
     assert abs((gr[0] - gl[0]) - D.GATE_SIZE[0] - 0.50) < 1e-9      # gap between the inner wall ends = 0.50
     for name in ('D1', 'D3'):
@@ -78,4 +78,18 @@ def test_beside_scenarios_feet_point_into_the_lane():
         assert m.speed == 0.0 and not m.park_at_end and m.yaw_deg == 0.0
         assert abs((1.01 - x) - off) < 1e-9, name
         tip = max(fx + hx for fx, fy, hx, hy in D.PERSON_FEET)
+        assert abs((1.01 - (x + tip)) - toe) < 1e-9, name
+
+
+def test_short_feet_scenarios_reproduce_the_accident():
+    # D11/D12: person_1 발끝이 다리 표면에서 8 cm(옛 필터 반경 10 cm 안), 선에서 0.10/0.08 m
+    # person_1 toes 8 cm past the leg surface (inside the old 10 cm filter radius), 0.10 / 0.08 m from the line
+    tip = max(fx + hx for fx, fy, hx, hy in D.PERSON_SHORT_FEET)
+    assert abs(tip - D.PERSON_LEG_R - 0.08) < 1e-9
+    assert D.FEET['person_1'] == D.PERSON_SHORT_FEET and 'person_1' in D.PARK
+    sc = D.scenarios()
+    for name, toe in (('D11', 0.10), ('D12', 0.08)):
+        m = sc[name]['motions'][0]
+        (x, y), = m.path
+        assert m.model == 'person_1' and m.speed == 0.0 and not m.park_at_end
         assert abs((1.01 - (x + tip)) - toe) < 1e-9, name
