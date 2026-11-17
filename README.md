@@ -34,19 +34,24 @@ Hiwonder JetRover의 메카넘 구동부와 로봇팔을 바탕으로, Jetson Or
 
 실제 로봇의 RGB-D·LiDAR 데이터를 약 371초 녹화하고 RTAB-Map으로 자세를 추정한 뒤, Open3D TSDF로 방 메쉬를 만들었습니다. 기존 2D 지도와 정합한 잔차 중앙값은 **4.4 cm**였으며, 이후 메쉬를 경량화하고 텍스처를 적용해 Gazebo 월드로 가져갔습니다. 이는 특정 데이터와 조건에서의 결과이며 모든 환경에서의 정확도를 뜻하지 않습니다. [스캔·정합·Gazebo 시험 기록](docs/benchmarks/sim/room_scan_20261014.md)
 
-![실제 RGB-D 스캔에서 재구성된 방 메쉬의 투시도와 평면도](docs/images/digital-twin-reconstructed-mesh.png)
+### Blender로 가공한 방 메쉬와 Gazebo 월드
 
-*저장소의 실제 재구성 GLB 메쉬에서 정점 10만 개를 표본 추출해 다시 그린 시각화입니다. Open3D 프로그램 스크린샷은 아니며, 색상은 카메라 텍스처가 아닌 높이(Z)를 나타냅니다.*
+아래는 기존 RGB-D 스캔을 지도에 정합한 후 **Blender로 텍스처를 구워 만든 Gazebo용 메쉬**를 Open3D 0.20에서 직접 연 화면입니다. 작은 구멍을 자동으로 보완하고, 스캔되지 않은 바닥은 별도 텍스처 바닥판으로 채웠습니다. 바닥 보완은 합성 형상이며 실제 스캔 결과가 아닙니다. Blender에서 벽·가구를 수작업으로 정리한 기록은 없습니다. [가공 절차와 제한](docs/benchmarks/sim/room_scan_20261014.md)
 
-### Open3D 재구성 메쉬와 Gazebo 월드
+![Open3D에서 연 Blender 텍스처 처리된 스캔 방 메쉬](docs/images/open3d-scanned-room.png)
 
-아래 첫 화면은 저장된 방 메쉬를 **Open3D 0.20에서 직접 열어** 촬영한 것입니다. 원본 TSDF 재구성 작업은 Open3D 0.19로 수행했고, 이 화면에는 Gazebo용으로 경량화하고 텍스처를 적용한 메쉬를 사용했습니다.
-
-![Open3D에서 연 실제 RGB-D 스캔 방 메쉬](docs/images/open3d-scanned-room.png)
-
-두 번째 화면은 같은 스캔 방을 가져온 **Gazebo 시뮬레이션**에 JetRover 모델과 가상 장애물을 배치한 모습입니다. 주행 명령 없이 캡처했으며 실제 주행 결과가 아닙니다.
+아래 Gazebo 화면은 **같은 방 메쉬와 바닥 보완 모델**에 JetRover와 가상 장애물을 배치한 시뮬레이션입니다. 주행 명령 없이 캡처했습니다. 가상 화면의 대체 렌더러를 사용해 Open3D 화면보다 어둡고 일부 표면이 다르게 보이므로 텍스처 품질 비교에는 적합하지 않습니다.
 
 ![Gazebo 스캔 방 월드 안의 JetRover 모델](docs/images/gazebo-scanned-room-robot.png)
+
+<details>
+<summary>높이별 색상으로 다시 그린 메쉬 시각화</summary>
+
+![실제 RGB-D 스캔에서 재구성된 방 메쉬의 투시도와 평면도](docs/images/digital-twin-reconstructed-mesh.png)
+
+저장소 GLB 메쉬에서 정점 10만 개를 표본 추출해 그린 시각화입니다. 색상은 카메라 텍스처가 아닌 높이(Z)를 나타냅니다.
+
+</details>
 
 ### SLAM 지도와 LiDAR 스캔
 
