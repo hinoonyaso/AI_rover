@@ -58,6 +58,26 @@ Hiwonder JetRover의 메카넘 구동부와 로봇팔을 바탕으로, Jetson Or
 
 ![샘플 데이터로 표시한 벡터 데이터베이스와 문서 검색 화면](docs/images/dashboard-knowledge-demo.png)
 
+### 센서 보정 작업 공간
+
+IMU, 카메라, LiDAR와 주행·로봇팔 관련 보정 항목을 선택하고 측정 및 결과를 검토합니다. 아래는 **시험 서버에서 캡처한 UI**이며 보정 정확도나 실기 적용 성공을 뜻하지 않습니다.
+
+![샘플 서버에서 캡처한 센서 보정 작업 공간](docs/images/dashboard-calibration-demo.png)
+
+### 실제 RGB-D 영상과 정합 확인
+
+정지 상태의 실제 카메라로 촬영한 컬러·깊이 영상과 RGB 영상에 깊이 경계를 표시한 검증 기록입니다. 깊이 영상은 미터 단위이며 흰 부분은 유효한 깊이값이 없는 영역입니다. [촬영 자세와 측정 기록](docs/benchmarks/perception/scan_pose_20261010.md) · [정합 확인 기록](checklist/PROJECT_CHECKLIST.md)
+
+![실제 카메라의 컬러 영상과 깊이 영상](docs/benchmarks/perception/scan_pose_20261010_B.png)
+
+![실제 RGB 영상에 깊이 경계선을 겹친 정합 확인 이미지](src/jetrover_perception/verification/rgb_depth_alignment_20261004.png)
+
+### Nav2 장애물 비용지도
+
+기존 시험에서 저장한 로컬·글로벌 비용지도 시각화입니다. 각 지도 위의 사각형과 화살표는 로봇의 위치와 방향을 나타냅니다. 이 화면만으로 주행 안전성을 판단할 수는 없습니다.
+
+![Nav2 로컬 및 글로벌 비용지도 기록](docs/images/nav2-costmaps-20261007.png)
+
 ### RGB-D 포인트클라우드
 
 Orbbec 카메라의 깊이 정보를 이용한 포인트클라우드 확인 기록입니다. 좌측은 위에서 본 점 분포, 우측은 정면 투영입니다. 이미지와 측정 조건은 [카메라 검증 기록](checklist/PROJECT_CHECKLIST.md)을 참고하세요.
