@@ -30,6 +30,16 @@ Hiwonder JetRover의 메카넘 구동부와 로봇팔을 바탕으로, Jetson Or
 
 *저장소의 실제 재구성 GLB 메쉬에서 정점 10만 개를 표본 추출해 다시 그린 시각화입니다. Open3D 프로그램 스크린샷은 아니며, 색상은 카메라 텍스처가 아닌 높이(Z)를 나타냅니다.*
 
+### Open3D 재구성 메쉬와 Gazebo 월드
+
+아래 첫 화면은 저장된 방 메쉬를 **Open3D 0.20에서 직접 열어** 촬영한 것입니다. 원본 TSDF 재구성 작업은 Open3D 0.19로 수행했고, 이 화면에는 Gazebo용으로 경량화하고 텍스처를 적용한 메쉬를 사용했습니다.
+
+![Open3D에서 연 실제 RGB-D 스캔 방 메쉬](docs/images/open3d-scanned-room.png)
+
+두 번째 화면은 같은 스캔 방을 가져온 **Gazebo 시뮬레이션**에 JetRover 모델과 가상 장애물을 배치한 모습입니다. 주행 명령 없이 캡처했으며 실제 주행 결과가 아닙니다.
+
+![Gazebo 스캔 방 월드 안의 JetRover 모델](docs/images/gazebo-scanned-room-robot.png)
+
 ### SLAM 지도와 LiDAR 스캔
 
 실제 로봇을 한 바퀴 수동 주행하며 만든 지도와 당시 LiDAR 스캔입니다. 흑백 지도에 스캔 거리와 로봇 위치를 겹쳐 보여줍니다. [SLAM 진행 기록](checklist/PROJECT_CHECKLIST.md)
