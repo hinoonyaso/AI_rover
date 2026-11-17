@@ -27,6 +27,7 @@
 #include "jetrover_interfaces/action/grasp.hpp"
 #include "jetrover_interfaces/srv/release.hpp"
 
+#include "jetrover_base/accel_calibration.hpp"
 #include "jetrover_base/command_guard.hpp"
 #include "jetrover_base/crash_guard.hpp"
 #include "jetrover_base/grasp_controller.hpp"
@@ -68,6 +69,9 @@ public:
   BaseNode()
   : Node("base_node")
   {
+    // Sensor-only mode blocks physical actuator and e-stop commands throughout this process.
+    // 한글: 센서 전용 모드는 이 프로세스에서 모터·팔·비상정지 해제 명령을 차단한다.
+    sensor_only_ = declare_parameter<bool>("sensor_only", false);
     // 한글: 파라미터 선언: 시리얼 포트(by-id 경로는 재부팅해도 안 바뀜), baudrate 1Mbps, 폴링 주기 5ms. 값은 config/base.yaml에서 덮어쓴다.
     port_name_ = declare_parameter<std::string>(
       "port", "/dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00");
@@ -96,6 +100,11 @@ public:
     }
     watchdog_ = LinkWatchdog(cmd_vel_timeout_, stm32_timeout_);
 
+    accel_offset_ = declare_parameter<std::vector<double>>("accel_offset_m_s2", {0.0, 0.0, 0.0});
+    accel_scale_ = declare_parameter<std::vector<double>>("accel_scale", {1.0, 1.0, 1.0});
+    if (!valid_accel_calibration(accel_offset_, accel_scale_)) {
+      throw std::invalid_argument("invalid accel_offset_m_s2/accel_scale");
+    }
     imu_frame_ = declare_parameter<std::string>("imu_frame", "imu_link");
     gravity_ = declare_parameter<double>("gravity", 9.80665);
     // 한글: 자이로 bias(변환된 base_link 축, rad/s). 길이가 3이 아니면 0으로 대체한다.
@@ -107,6 +116,7 @@ public:
 
     imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("imu/data_raw", rclcpp::SensorDataQoS());
     battery_pub_ = create_publisher<sensor_msgs::msg::BatteryState>("battery_state", 10);
+    wheel_feedback_pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>("wheel/feedback", rclcpp::SensorDataQoS());
     low_battery_volts_ = declare_parameter<double>("low_battery_volts", 10.0);
 
     odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
@@ -180,15 +190,25 @@ public:
     odom_timer_ = create_wall_timer(
       std::chrono::duration<double>(1.0 / odom_rate), [this]() {publish_odom();});
 
-    cmd_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>(
-      "cmd_vel", 1, [this](geometry_msgs::msg::Twist::ConstSharedPtr msg) {on_cmd_vel(*msg);});
+    if (!sensor_only_) {
+      cmd_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>(
+        "cmd_vel", 1, [this](geometry_msgs::msg::Twist::ConstSharedPtr msg) {on_cmd_vel(*msg);});
+    }
 
     timer_ = create_wall_timer(std::chrono::milliseconds(poll_period_ms), [this]() {poll();});
     stats_timer_ = create_wall_timer(1s, [this]() {log_stats();});
-    watchdog_timer_ = create_wall_timer(50ms, [this]() {watchdog();});
+    if (!sensor_only_) {
+      watchdog_timer_ = create_wall_timer(50ms, [this]() {watchdog();});
+    }
 
     // 한글: 로봇팔 관련: 위치 읽기(joint_states)는 기본 켜짐, 팔 구동(arm_command_enabled)은 기본 꺼짐(안전).
     publish_arm_joint_states_ = declare_parameter<bool>("publish_arm_joint_states", true);
+    // Explicit opt-in permits only position/temperature reads in sensor-only mode.
+    // 한글: 센서 전용 모드에서 명시적으로 선택한 경우에만 위치·온도 읽기를 허용한다.
+    const bool sensor_arm_read_enabled = declare_parameter<bool>("sensor_arm_read_enabled", false);
+    if (sensor_only_ && !sensor_arm_read_enabled) {
+      publish_arm_joint_states_ = false;
+    }
     if (publish_arm_joint_states_) {
       arm_joint_names_ = declare_parameter<std::vector<std::string>>(
         "arm_joint_names", {"joint1", "joint2", "joint3", "joint4", "joint5", "r_joint"});
@@ -260,6 +280,9 @@ public:
         // Arm motion is off by default: the first software-driven arm move on this robot
         // (checklist 14). Every guard below exists so a bad command can't slam a joint.
         arm_command_enabled_ = declare_parameter<bool>("arm_command_enabled", false);
+        if (sensor_only_) {
+          arm_command_enabled_ = false;
+        }
         arm_move_duration_s_ = declare_parameter<double>("arm_move_duration_s", 2.0);
         arm_max_step_rad_ = declare_parameter<double>("arm_max_step_rad", 0.35);
         arm_pulse_min_ = declare_parameter<int64_t>("arm_pulse_min", 100);
@@ -381,7 +404,7 @@ private:
       RCLCPP_INFO(get_logger(), "Opened %s @ %d", port_name_.c_str(), baudrate_);
       watchdog_.on_open(now().seconds());
       stop_motors();
-      if (clear_estop_on_start_) {
+      if (clear_estop_on_start_ && !sensor_only_) {
         // The rrc_m4 firmware latches an e-stop (a test script, a fault) until it is cleared; starting this node is a
         // deliberate act, so release it. Vendor firmware ignores the frame. 한글: 시작할 때 e-stop 해제(벤더 펌웨어는 무시).
         const auto clear = build_diag_clear_estop();
@@ -390,7 +413,9 @@ private:
         }
       }
       const auto stop_frame = build_motor_packet({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
-      crash_guard::arm(serial_.fd(), stop_frame);
+      if (!sensor_only_) {
+        crash_guard::arm(serial_.fd(), stop_frame);
+      }
       return true;
     }
     RCLCPP_WARN_THROTTLE(
@@ -548,7 +573,7 @@ private:
     watchdog_.on_stopped();
     cmd_vx_ = cmd_vy_ = cmd_wz_ = 0.0;
     send_motors({{1, 0.0f}, {2, 0.0f}, {3, 0.0f}, {4, 0.0f}});
-    if (motor_stop_frame_on_stop_ && serial_.is_open()) {
+    if (!sensor_only_ && motor_stop_frame_on_stop_ && serial_.is_open()) {
       const auto frame = build_motor_stop_packet(0x0F);
       if (!serial_.write(frame.data(), frame.size())) {
         RCLCPP_ERROR(get_logger(), "Motor stop write failed: %s", serial_.last_error().c_str());
@@ -558,7 +583,7 @@ private:
 
   void send_motors(const std::vector<MotorCommand> & motors)
   {
-    if (!serial_.is_open()) {
+    if (sensor_only_ || !serial_.is_open()) {
       return;
     }
     const auto frame = build_motor_packet(motors);
@@ -588,6 +613,28 @@ private:
         wheel_rps_[i] = wheels.rps[i];
       }
       last_wheel_feedback_s_ = now().seconds();
+      // Publish only actual decoded feedback; absence is not a zero-speed measurement.
+      // 한글: 실제 수신한 피드백만 발행하고 미수신을 정지 속도로 표시하지 않는다.
+      diagnostic_msgs::msg::DiagnosticArray arr;
+      arr.header.stamp = now();
+      diagnostic_msgs::msg::DiagnosticStatus status;
+      status.name = "wheel_feedback";
+      status.hardware_id = "rrc_m4";
+      status.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+      for (int i = 0; i < 4; ++i) {
+        diagnostic_msgs::msg::KeyValue speed;
+        speed.key = "port_" + std::to_string(i + 1) + "_rps";
+        speed.value = std::to_string(wheels.rps[i]);
+        status.values.push_back(speed);
+        diagnostic_msgs::msg::KeyValue counter;
+        counter.key = "port_" + std::to_string(i + 1) + "_counter";
+        counter.value = std::to_string(wheels.counter[i]);
+        status.values.push_back(counter);
+      }
+      arr.status.push_back(status);
+      if (std::all_of(std::begin(wheels.rps), std::end(wheels.rps), [](float v) {return std::isfinite(v);})) {
+        wheel_feedback_pub_->publish(arr);
+      }
       return;
     }
 
@@ -1289,17 +1336,19 @@ private:
     // No orientation estimate (REP-145).
     msg.orientation_covariance[0] = -1.0;
 
-    msg.linear_acceleration.x = -imu.ay * gravity_;
-    msg.linear_acceleration.y = -imu.ax * gravity_;
-    msg.linear_acceleration.z = -imu.az * gravity_;
+    const auto acceleration = calibrate_accel({-imu.ay * gravity_, -imu.ax * gravity_, -imu.az * gravity_},
+                                                accel_offset_, accel_scale_);
+    msg.linear_acceleration.x = acceleration[0];
+    msg.linear_acceleration.y = acceleration[1];
+    msg.linear_acceleration.z = acceleration[2];
 
     msg.angular_velocity.x = -imu.gy * kDegToRad - gyro_bias_[0];
     msg.angular_velocity.y = -imu.gx * kDegToRad - gyro_bias_[1];
     msg.angular_velocity.z = -imu.gz * kDegToRad - gyro_bias_[2];
 
-    msg.linear_acceleration_covariance[0] = 0.0004;
-    msg.linear_acceleration_covariance[4] = 0.0004;
-    msg.linear_acceleration_covariance[8] = 0.004;
+    msg.linear_acceleration_covariance[0] = 0.0004 * accel_scale_[0] * accel_scale_[0];
+    msg.linear_acceleration_covariance[4] = 0.0004 * accel_scale_[1] * accel_scale_[1];
+    msg.linear_acceleration_covariance[8] = 0.004 * accel_scale_[2] * accel_scale_[2];
     msg.angular_velocity_covariance[0] = 0.01;
     msg.angular_velocity_covariance[4] = 0.01;
     msg.angular_velocity_covariance[8] = 0.01;
@@ -1336,6 +1385,8 @@ private:
   std::string imu_frame_;
   double gravity_{9.80665};
   std::vector<double> gyro_bias_;
+  std::vector<double> accel_offset_;
+  std::vector<double> accel_scale_;
 
   std::string odom_frame_;
   std::string base_frame_;
@@ -1346,6 +1397,7 @@ private:
   TwistSource twist_source_{TwistSource::Command};
   double wheel_feedback_timeout_{0.2};
   bool clear_estop_on_start_{true};
+  bool sensor_only_{false};
   double wheel_rps_[4]{0.0, 0.0, 0.0, 0.0};
   double last_wheel_feedback_s_{0.0};
   int auto_twist_state_{-1};  // -1 unknown (the first decision is always logged), 0 command, 1 encoder
@@ -1396,6 +1448,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::TimerBase::SharedPtr arm_poll_timer_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr servo_stats_pub_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr wheel_feedback_pub_;
   rclcpp::TimerBase::SharedPtr arm_temp_timer_;
   std::size_t arm_temp_index_{0};
   double arm_temp_warn_c_{75.0};
