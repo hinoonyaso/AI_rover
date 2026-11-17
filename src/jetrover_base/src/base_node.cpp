@@ -116,7 +116,8 @@ public:
 
     imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("imu/data_raw", rclcpp::SensorDataQoS());
     battery_pub_ = create_publisher<sensor_msgs::msg::BatteryState>("battery_state", 10);
-    wheel_feedback_pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>("wheel/feedback", rclcpp::SensorDataQoS());
+    wheel_feedback_pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>("wheel/feedback",
+        rclcpp::SensorDataQoS());
     low_battery_volts_ = declare_parameter<double>("low_battery_volts", 10.0);
 
     odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
@@ -632,7 +633,8 @@ private:
         status.values.push_back(counter);
       }
       arr.status.push_back(status);
-      if (std::all_of(std::begin(wheels.rps), std::end(wheels.rps), [](float v) {return std::isfinite(v);})) {
+      const auto finite_rps = [](float value) {return std::isfinite(value);};
+      if (std::all_of(std::begin(wheels.rps), std::end(wheels.rps), finite_rps)) {
         wheel_feedback_pub_->publish(arr);
       }
       return;
@@ -1336,7 +1338,8 @@ private:
     // No orientation estimate (REP-145).
     msg.orientation_covariance[0] = -1.0;
 
-    const auto acceleration = calibrate_accel({-imu.ay * gravity_, -imu.ax * gravity_, -imu.az * gravity_},
+    const auto acceleration = calibrate_accel({-imu.ay * gravity_, -imu.ax * gravity_,
+          -imu.az * gravity_},
                                                 accel_offset_, accel_scale_);
     msg.linear_acceleration.x = acceleration[0];
     msg.linear_acceleration.y = acceleration[1];

@@ -37,7 +37,10 @@ def main():
         info = m.info
         g = np.array(m.data).reshape(info.height, info.width)
         bx = args.box_x if args.box_x is not None else T.SCENARIOS['S2']['box'][0]
-        print(f'box x {bx - T.BOX_SIZE[0] / 2:.3f}..{bx + T.BOX_SIZE[0] / 2:.3f}, y {0.89..1.11} (left edge = {bx - T.BOX_SIZE[0] / 2:.3f})')
+        by = T.SCENARIOS['S2']['box'][1]
+        print(f'box x {bx - T.BOX_SIZE[0] / 2:.3f}..{bx + T.BOX_SIZE[0] / 2:.3f}, '
+              f'y {by - T.BOX_SIZE[1] / 2:.3f}..{by + T.BOX_SIZE[1] / 2:.3f} '
+              f'(left edge = {bx - T.BOX_SIZE[0] / 2:.3f})')
         y = args.y[0]
         while y <= args.y[1] + 1e-9:
             iy = int((y - info.origin.position.y) / info.resolution)

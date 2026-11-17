@@ -87,3 +87,5 @@
 | 058 | [Gazebo 재기동 후 위치 갱신 지연과 점검 표본 부족](058-gazebo-clock-reset-and-inspection.md) | 위치 시계 역행 처리 수정·시뮬레이션 검증; 간헐적 영상 표본 부족과 과거 주행 시간 초과 원인은 미확정 |
 
 - [059 팔 보정 자세 수집 서보 응답 미확인](059-arm-observation-snapshot-age.md) — 스냅샷 2초 주기와 1.5초 신선도 제한 충돌; 0.5초로 변경 후 실제 TF 수집 3회 확인.
+
+- [060 GitHub Actions 정적 검사와 ROS 서식 실패](060-ci-python-and-uncrustify.md) — Python 구문 및 C++ 서식 수정, GitHub Actions 재검증 진행.

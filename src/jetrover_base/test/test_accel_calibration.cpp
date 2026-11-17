@@ -17,5 +17,6 @@ TEST(AccelCalibration, RejectsInvalidShapeNanAndBounds)
   using namespace jetrover_base;
   EXPECT_FALSE(valid_accel_calibration({0}, {1, 1, 1}));
   EXPECT_FALSE(valid_accel_calibration({0, 0, 0}, {1, 0, 1}));
-  EXPECT_FALSE(valid_accel_calibration({0, 0, std::numeric_limits<double>::quiet_NaN()}, {1, 1, 1}));
+  EXPECT_FALSE(valid_accel_calibration({0, 0, std::numeric_limits<double>::quiet_NaN()},
+    {1, 1, 1}));
 }

@@ -617,6 +617,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - 권장 토픽: /cmd_vel /odom /imu/data_raw /scan /tf /tf_static /detections /diagnostics
 
 ## 29. Deployment (개발: SSH + tmux)
+- [~] GitHub Actions 실패 복구(2026-11-18): Python 문법과 ROS C++ 서식 수정, 로컬 정적·기존 ROS 테스트 통과. GitHub 재실행 결과 확인 필요 (`troubleshooting/060-ci-python-and-uncrustify.md`).
 - [ ] systemd, 자동 ROS bringup
 - [ ] FastAPI 자동 실행, DB 자동 실행, React serving
 - [ ] watchdog/restart policy, log rotation
