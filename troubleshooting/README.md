@@ -88,4 +88,4 @@
 
 - [059 팔 보정 자세 수집 서보 응답 미확인](059-arm-observation-snapshot-age.md) — 스냅샷 2초 주기와 1.5초 신선도 제한 충돌; 0.5초로 변경 후 실제 TF 수집 3회 확인.
 
-- [060 GitHub Actions 정적 검사와 ROS 서식 실패](060-ci-python-and-uncrustify.md) — Python 구문 및 C++ 서식 수정, GitHub Actions 재검증 진행.
+- [060 GitHub Actions 정적 검사와 ROS 서식 실패](060-ci-python-and-uncrustify.md) — Python 구문 및 C++ 서식 수정, GitHub Actions 세 작업 통과.
