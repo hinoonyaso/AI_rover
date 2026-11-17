@@ -165,3 +165,9 @@ STM32 펌웨어(`firmware/rrc_m4`)의 micro-ROS 정적 라이브러리를 Jetson
 - 확인: `ros2 launch gz_ros2_control_demos mecanum_drive_example.launch.py`가 뜨고 키보드로 옆이동.
 - 디지털 트윈(Phase 2~3)용 추가(host): `sudo apt install ros-jazzy-rtabmap-ros git-lfs && git lfs install`, `pip install open3d`.
 - 상태: **계획(host에서 미실행)** — 실행 후 결과를 여기 갱신.
+
+
+### 한국어 스피커 개발 환경 (2026-11-11, 사용자 계정)
+- USB GeneralPlus `1b3f:2008`, ALSA `plughw:CARD=Device,DEV=0`. `aplay`로 한국어 안내를 재생하고 사용자가 청취 확인했다. 시스템 기본 출력과 믹서 설정은 변경하지 않았다.
+- `~/.local/share/jetrover-tts/venv`: Python 3.12 venv, Piper 1.8.0 및 `tools/audio/requirements-jetson.txt` 고정 버전. `~/.local/share/jetrover-tts/voices/ko_KR-kss-medium.onnx`와 JSON. 설치·재현 명령, 모델 해시 및 라이선스는 `tools/audio/README.md`. 시스템 Python에 설치하지 않았다.
+- 음성 명령 파이프라인은 미구현; TTS 모델의 품질·지연과 상용 라이선스는 별도 평가가 필요하다.

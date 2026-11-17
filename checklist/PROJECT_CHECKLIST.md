@@ -1,8 +1,11 @@
 # JetRover ROS2 Jazzy 전체 프로젝트 체크리스트
 
 상태: `[x]` 완료 · `[~]` 부분 완료/추가 검증 필요 · `[ ]` 미완료
-작업을 끝낼 때마다 이 파일의 상태를 갱신하고 `README.md`의 진행률 표도 고친다.
+작업을 끝낼 때마다 이 파일의 해당 상태와 근거를 갱신한다. `README.md`의 진행률 표는 과거 스냅샷이다.
 0번 섹션은 사용자가 알려준 환경 정보 기준이며, 1~3번은 실제 로봇에서 확인한 내용이다.
+
+## 작업 지침 기록
+- [x] 2026-11-11: 현재 `jetrover_ws`에서 작업 위치·검증·안전 지침을 정리하고 인수인계 문서를 작성함. 이전 환경의 인수인계 원본은 찾지 못함. 로컬 Claude 대화·메모리·파일 이력은 `/home/sang/claude_backup_20261111/README.md`에 백업(2026-11-11, 기록 범위·손상 내용 명시).
 
 ## 0. Jetson 개발환경
 - [x] Jetson Orin Nano 8GB OS 설치
@@ -355,6 +358,16 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] 9.3 `nav2.launch.py`가 `precise_approach.py`를 함께 띄움(인자 `precise_approach`, sim은 relocalize false). 내장 노드라 플러그인 등록 불필요
 - [x] 9.4 실패 이유를 결과 `error_code`에: 9101 시작 거리 초과/9102 시간 초과/9103 위치 없음, 막힘은 계획기 코드. sim: 강제 시간 초과 → 결과 9102 (`error_msg`는 비어 옴). 2026-10-30 막힌 목표(D13, 사람이 목표 위): 기본 BT 34.8 s·정밀 BT 68.6 s(1회 재시도) 뒤 208(ComputePathToPose NO_VALID_PATH), 접촉 0. 정밀 접근은 costmap을 안 봐서 목표가 사람 옆이면 발 간격 8 → 2 cm(D11) — 경로 비용 검사 후보(새 기능, 결정 대기)
 - [x] 9.5 sim 검증: 정밀 BT로 직선·S2·S4·D7 각 10회 40/40, 오차 1.7~1.9 cm, 회귀 없음(S4 최소 간격 1회 4.1 cm 관찰), 강제 실패 → 2번 시도 후 9101/9102 (`docs/benchmarks/navigation/navigation_bt_sim_20261029.md`, 2026-10-29)
+- [~] 9.4a 정밀 접근 안전 검사: [PRD](../prd/precise-approach-safety.md)·[시험 계획](../prd/precise-approach-safety-test-plan.md) 초안(2026-11-11). 구현·시뮬레이션·실기 미검증.
+  - [x] 현재 제어 흐름과 costmap 설정 확인, 설계·시험 계획 초안 작성.
+  - [ ] Jazzy costmap/footprint 인터페이스와 지연 확인, 충돌 검사 방식·수치 확정.
+  - [x] 시뮬레이션 메시 복구: 사용자 계정에 Ubuntu arm64 git-lfs 3.4.1 설치, LFS 객체 3개 checkout 및 fsck 통과(2026-11-11).
+  - [~] D11 기존 동작 1회: 정밀 접근 시간 초과 2회, 목표 미도달·발 간격 3.33 cm·접촉 0. 느린 Jetson 환경으로 기존 성공 시험과 비교 불가. `docs/benchmarks/navigation/precise_safety_baseline_20261111.md`.
+  - [~] D11 기준 재현: tol05 + 정밀 접근 벽시계 120초, 성공 1/1·간격 2.31 cm·접촉 0. 같은 설정 20초 재시험도 성공 1/1·간격 2.22 cm. 오프라인 swept-disc 합성 시험 5개와 읽기 전용 costmap 관찰; 제어 미연결·신선도/오탐/회귀 미검증. 상세 `docs/benchmarks/navigation/precise_safety_baseline_20261111.md`.
+  - [ ] 정밀 접근 종료 시 ROS context 무효 publish 예외 조사(2026-11-11 시뮬레이션 종료 중).
+  - [~] 시뮬레이션 전용 기본 꺼짐 가드 구현: D11/D12 각각 1회 차단(9104), 간격 8.23/7.59 cm·접촉 0; S1 1회 성공(오차 1.80 cm); 지도 누락 9105 + 0 속도 ROS 시험 통과. 반복·시간/TF 오류·동적 장애물 및 정상 회귀 미완료.
+  - [ ] 발·장애물 시나리오와 정상 주행 회귀 시뮬레이션, 결과 기록.
+  - [ ] 별도 승인 후 실기 검증과 공식 반영 여부 결정.
 - [ ] 9.6 실기 검증: 직선 3·상자 3, 줄자 ≤ 3 cm, 접촉 0
 - [ ] 9.7 Nav2 목표 허용 오차(0.10/0.08) 재검토 → 끝나면 8.16 6.7도 닫기
 
@@ -457,12 +470,29 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [ ] safety velocity limit
 
 ## 17. Mission Behavior Tree (BehaviorTree.CPP)
+- [~] Gazebo 경광등 점검: `prd/gazebo-stack-light.md`, 시험 `prd/gazebo-stack-light-test-plan.md` (2026-11-16 사용자 승인).
+  - [~] 대시보드 Gazebo 자동 준비 (`prd/dashboard-gazebo-auto-start.md`, 2026-11-17): 격리 환경·가상 경광등 자동 생성 및 임무 완료/취소 시 정리. 사전 수동 실행 없는 API→주행→점검 1회 성공, 준비 중 취소 1회 및 잔여 프로세스 없음. 반복·강제 종료 검증은 남음.
+  - [x] RGB 영상의 색별 점등·소등·깜빡임 판정과 불충분 관측 처리, 합성 영상 L0 시험 4건 통과(2026-11-16). 임계값은 시뮬레이션 시험용이며 Gazebo 영상 검증·연동은 이후 작업.
+  - [~] 별도 Gazebo 시험 월드·모형과 실제 가상 카메라 영상 검증: 고정 카메라에서 세 색 점등·소등과 초록 깜빡임 확인. 주행 후 로봇 카메라로 on/off/on과 off/on/off 조합 확인(2026-11-16). 로봇 카메라 깜빡임 및 실기는 미검증.
+  - [~] Gazebo 주행 뒤 점검 실행 및 결과·실패·취소 처리: 브라우저 점검 중 취소, Gazebo 점검 중 관리자 재시작·영상 브리지 중단 시험 각 1회 통과(2026-11-16). 반복 기동 오류 재현 시 라이프사이클 서비스 응답 전송 시간 초과 확인; 시험 준비 판단 오류 수정 후 전체 임무 3/3 성공. 응답 전송 실패의 근본 원인·장시간 안정성은 미확정.
+    - 격리 기동 대조: 같은 탐색 조건에서 공유 메모리 사용 0/3, 미사용 3/3. Gazebo 전용 루프백 UDP로 우회 후 대시보드→주행→점검 3/3 성공, 대시보드 서비스 재시작 및 API 확인. SHM 내부 원인과 장시간 안정성은 미확정(`prd/gazebo-stack-light-test-plan.md`).
+  - [~] 관제 화면의 점검 종류·단계·색별 결과 표시: 임무 생성, 주행/점검 단계 및 결과·미확인·실패 사유 구현. 격리 Firefox→Gazebo 주행→카메라 결과 표시 1회와 점검 중 취소 1회 통과(2026-11-16). 더 많은 조합과 반복 검증은 남음.
+- [~] 임무 생성·실행·관제: `prd/mission-management.md`, 시험 `prd/mission-management-test-plan.md` (2026-11-15 사용자 승인). 처음에는 하드웨어 없는 모의 임무, 실제 로봇 연결과 시험은 별도 게이트.
+  - [x] 모의 전용 요청 검증과 상태 전이 순수 로직 구현 및 L0 시험 (`tools/ops/backend/mission_contract.py`, `tools/ops/test_mission_contract.py`, 2026-11-15). 실제 모드 거부, 취소 경쟁과 종결 불변성 확인. DB 중복 처리·API·실제 ROS 계약은 이후 작업.
+  - [x] 중복 요청, 임무/이력 스키마·API 계약 및 실패·복구 규칙 구체화: `prd/mission-management-contract.md` (2026-11-15, 설계 대조). 해당 DB·API·동시성 검증은 미구현이며 다음 작업에서 수행.
+  - [x] 격리 DB 기반 모의 임무 관리자와 원자적 상태·이력 저장, 단일 실행 및 재시작 복구: `/tmp` SQLite 전용 `tools/ops/backend/mission_simulator.py`, 격리 시험 7건(2026-11-15). 명시적 단계 진행 시제품이며 MySQL·서비스·API 연결은 이후 작업.
+  - [~] 모의 임무 생성·실행·취소, 현재 단계와 이력 API 및 대시보드 연결: 임시 SQLite 시제품·API·화면 구현, 격리 API 시험과 Firefox 조작 확인(2026-11-15). MySQL 영속화 및 페이지네이션 미구현.
+  - [x] 격리 SQLite 모의 장애·동시성·취소·재시작 및 Firefox UI 검증과 문서화 (2026-11-15): 관련 단위/ASGI 23건 통과, Firefox 격리 생성·성공·이력·취소 2회 통과. MySQL 및 실기 검증은 별도.
+  - [~] 실제 임무 시나리오·권한·안전 게이트 확정 후 BT/ROS 어댑터와 시뮬레이션: 대시보드 API→격리 Gazebo 주행 연결 및 시작점 반복 2/2 성공(2026-11-16, `docs/benchmarks/sim/mission_dashboard_gazebo_20261116.md`);  주행 단계 후보의 격리 가짜 Action 시험(2026-11-15) 및 Gazebo/Nav2 직접 목표 시험(2026-11-16): 첫 목표는 90초 취소, 목표 부근 재시도 29.4초 성공(`docs/benchmarks/sim/mission_navigation_20261116.md`). 실제 임무/권한·안전 게이트, BT·관리자 연동, 반복 성능 및 실기는 미구현·미검증.
+  - [ ] 별도 승인과 안전 준비 후 L2~L5 실기 및 통합 검증.
 목표: FetchObject = CheckRobotReady → NavigateToDesk → AlignToDesk → DetectObject → EstimatePose → Pick → VerifyGrasp → NavigateToUser → Deliver
 - [ ] BehaviorTree.CPP
 - [ ] Mission Manager
 - [ ] Navigate / Detect / Grasp Action wrapper
 - [ ] Retry, Timeout, Fallback, Recovery, Cancel
 - [ ] Emergency abort
+
+- [~] 관제·기록·운영 개발 환경(2026-11-12 착수): `prd/operations-environment.md`, 시험 `prd/operations-environment-test-plan.md`. 읽기 전용 FastAPI/React, 사용자 MySQL, 지표/시작 이벤트 기록, ROS 센서 모니터, 백업·수동 rosbag·안정성 시험 도구, 부팅 사용자 서비스 구성. DB 중단·복구·백업 복원 및 격리 ROS 시험 통과, 1분 12표본 오류 0. 실기 센서/재부팅/장시간 부하 및 로봇 제어 연결 미검증. `tools/ops/README.md` 참조.
 
 ## 18. FastAPI Backend (React → REST/WebSocket → FastAPI → ROS2 Bridge → Robot)
 개발 순서(9단계, 전체 통합 이후)상 아직 착수 안 함. 상세: `prd/jetinspect-m.md` 17절, `prd/jetinspect-m-pipelines.md` 18절.
@@ -474,6 +504,27 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - FastAPI가 직접 PWM이나 motor packet을 보내지는 않는다.
 
 ## 19. React 관제 UI (React + TypeScript + Vite)
+- [~] 2026-11-17 사용자 승인·전원 스위치 옆 및 공간 확인 후 팔 joint2~4 홈 이동(3초, 그리퍼·토크·비상정지 변경 없음): 배터리 12.52 V, 실제 joint2 -0.6618/joint3 1.6671/joint4 1.4535 rad, 읽기 전용 모드 복귀. 카메라 홈 게이트 열림, 기존 깊이 장애물 토픽 약 7.4 Hz 수신. RGB-D 보정값 미적용·실제 보정 입력 검증은 별도.
+- [~] 통합 캘리브레이션 11종: `prd/dashboard-calibration-workspace.md`, `prd/dashboard-calibration-workspace-test-plan.md`.
+  - [x] 11종 공통 목록·후보 이력 및 과거 후보 복원. 조회자 읽기/운영자 쓰기 분리.
+  - [~] IMU 자이로/6자세 가속도·컬러 체커보드 후보와 설치 설정 백업·검토·별도 적용·복원; 가속도 소비 노드 빌드와 센서 전용 서비스 반영, 격리 가짜 시리얼 시험. 실제 자세·체커보드 정확도와 실기 설정 변경은 미검증.
+  - [~] footprint 기본 양쪽 costmap 보수적 확대, LiDAR 설치 위치 적용·복원 및 스캔/TF 방향 관찰. 배터리는 다점 보정 후 대시보드 표시 전용, 원본 안전값 유지. LiDAR는 독립 실측한 lidar_link 장착 yaw도 제한·백업·복원 적용 가능(격리 파일 시험). 실제 각도 실측과 비용지도 실기 확인은 남음.
+  - [~] 휠 포트 피드백/기준 비교 및 raw odom 자동 기록, 명령 적분 기반 다회 시험 배율 적용·복원. 포트별 외부 속도계 다점 비교·비율과 잔차 계산 추가; 휠 펌웨어 속도 보정과 엔코더/EKF 보정은 미구현; 실제 구동 검증 별도.
+  - [~] RGB·깊이 동일 프레임의 시간 차 제한 영상쌍 및 대응점 오차 비교. 설치 설정의 HW/SW 깊이→컬러·정합 끔 선택과 백업·복원 추가(임시 파일 및 API 시험); 독립 3D 대응점 기반 깊이→컬러 변환 후보 계산 추가; 공장 외부 파라미터는 변경하지 않음; 미정합 깊이에 후보 변환을 적용하는 별도 ROS 토픽·후보 적용/복원 추가(합성 및 격리 ROS 시험), 큐브 인식·장애물 클라우드에서 보정 입력 선택 추가, 배경/보정 해시 검사 및 변경 시 발행 중단; 대시보드 기준 촬영·출처 선택과 격리 ROS 장애물 발행/차단 시험 통과; 실제 원본 영상·성능·정밀 실측과 Nav2 안전 연동은 미검증.
+  - [~] 관절 오프셋 적용·복원, 그리퍼 폭 2점 표시 보정, 다중 자세 핸드아이 및 TCP 접점 후보·모델 적용/복원; 체커보드와 시각 일치 팔 TF 핸드아이 캡처 추가(합성 보드 시험, 실제 영상/TF는 보드 미발견까지 확인). 팔 읽기 전용 센서 서비스 및 TCP TF 캡처 추가: 격리 ROS/가짜 시리얼 6관절 수신, 구동 프레임 0. 실제 읽기 전용 관측에서 6관절 응답과 TCP TF 수집 3회 확인; 그리퍼 외부 힘 측정은 사용자 요청으로 UI·API에서 제외(기존 저장 데이터 보존). 실제 다중 자세 측정·설정 검증과 폐루프 파지력 보정은 남음. 모니터 2초 스냅샷과 서보 1.5초 신선도 충돌은 0.5초 주기로 수정(troubleshooting/059).
+  - [~] 2026-11-17 핸드아이 연결: 카메라 드라이버는 고정 광학 변환을 설정에 따라 /tf에 주기 발행하므로 /tf_static만 구독하면 체인이 누락됨. 두 채널에서 제한된 프레임을 수집해 실제 변환 조회; 임시 모델 백업·복원 및 충돌 감지 시험. 실제 카메라/팔 보정값 변경은 하지 않음.
+- [~] 센서 드라이버 연결 관제: `prd/dashboard-sensor-connection.md`, `prd/dashboard-sensor-connection-test-plan.md`. 카메라 및 sensor_only base_node 개별 서비스와 UI 구현. 가짜 시리얼에서 구동 프레임 0, 실기 센서 수신 IMU 약 50Hz·카메라 약 29Hz 확인; 실기 구동 시험은 수행하지 않음.
+- [~] 카메라·IMU 보정 관제: 요구사항·시험 계획 초안 `prd/dashboard-sensor-calibration.md`, `prd/dashboard-sensor-calibration-test-plan.md`. 카메라 내부·IMU 자이로 후보 측정/저장 화면과 읽기 전용 센서 작업 구현. 합성 체커보드, 격리 ROS IMU, 후보 저장·권한 및 Firefox 화면 확인. 실제 설정 적용 및 실기 검증은 별도. 가속도계 여섯 자세 후보 계산 및 격리 시험 추가; 실기 자세·정확도 미검증.
+- [~] 읽기 전용 운영·센서 대시보드: `prd/dashboard-monitoring.md`, 검증 `prd/dashboard-monitoring-test-plan.md`. 로봇 동작이 어려워 하드웨어 없이 가능한 관제 작업을 우선 진행(2026-11-15 사용자 승인). 실기 센서 검증은 별도.
+  - [~] 웹 관제 보완(2026-11-17, `prd/web-control-completion.md`): MySQL 임무/이력 및 SQLite 원본 보존 이전·페이지 조회, Gazebo TF 지도 표시, 임무 DB 읽기 탐색, 로컬 로그인과 조회자/운영자 권한 구현. Firefox 로그인·모의 임무, Gazebo TF와 점검 재시험 1회, MySQL 재시작 후 API 복구 및 백엔드 44건 통과. 이전 Gazebo 시험은 180초 주행 실패 1회 후 기록 빈도 축소 재시험 성공 1회이며 원인 미확정. 실제 재부팅·장시간 안정성·실기 검증은 남음.
+    - LAN 직접 접속: `prd/dashboard-lan-https.md`. Wi-Fi IP 전용 HTTPS·인증·권한·출처 검사 및 Jetson 자체 LAN 주소와 Firefox 확인. 다른 물리 PC에서의 접속·인증서 신뢰 확인은 남음.
+    - 2026-11-17 후속: 목록·DB 임무/이력을 키셋 커서로 변경하고 새 기록 추가 중 페이지 안정성 확인. Gazebo 재기동 시 시계 역행으로 위치 갱신이 지연되는 문제를 수정하고 새 Gazebo 2회 주행·시계 역행 후 위치 갱신 확인. 관제 47건·관측기 4건·Firefox 모의 임무 시험 통과. 추가 점검 시험의 카메라 표본 부족 1회와 과거 주행 시간 초과 원인은 미확정.
+  - [x] API·화면·ROS 스냅샷 데이터 계약과 오류·신선도 기준 정리: `tools/ops/DATA_CONTRACT.md` (2026-11-15, L0 문서 대조).
+  - [~] 운영 상태와 센서별 데이터·시간·미확인 상태 표시: API 및 화면 구현, 가상 스냅샷과 React 렌더링 시험·UI 빌드 통과(2026-11-15). 실제 브라우저 상호작용 미검증.
+  - [~] 서버·ROS 모니터·DB 장애와 복구 및 빈 기록 구분: 화면 구현 및 가상 렌더링·API DB 실패 시험 통과(2026-11-15). 브라우저 상호작용과 격리된 서비스 중단·복구 통합 시험 미실시.
+  - [~] 기존 시스템 지표 이력과 운영 이벤트 표시: 화면 및 가상 이력 렌더링 구현·시험 완료(2026-11-15). 브라우저 상호작용 미검증, DB 기록 시각 시간대 미확인.
+  - [~] 하드웨어 없는 검증 및 README 기록: API 단위 시험 4건, React 서버 렌더링, UI 빌드, 서비스 적용 및 localhost API 확인(2026-11-15). 브라우저 및 서비스 장애 통합 시험 미실시.
+  - [ ] 장비 사용 가능 시 구동 없이 실제 센서 L2 대조 및 결과 기록.
 - [ ] Dashboard, Robot online/offline
 - [ ] Battery, STM32 heartbeat
 - [ ] Map, Robot pose, Global path
@@ -510,6 +561,13 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - 원칙: VLM → What?, YOLO + Depth → Where?
 
 ## 24. RAG (Document → Chunk → Embedding → VectorDB → Top-K → LLM)
+
+- [~] **지식 검색·벡터 DB 관제**: Qdrant 로컬 DB·다국어 검색·로컬 답변·대시보드 기본 구현. 실제 색인 9개 문서/195청크, 표본 검색·격리 API 시험; 실제 로그인→검색·답변 확인; 기본 답변 원문 방식으로 변경, 30개 고정 질문 출처 Hit@5 25/25·거부 5/5. 생성형 정확도/동시 부하 및 음성/이력 연계 미완료 (`prd/rag-knowledge-workspace.md`).
+  - [~] 로컬 벡터 DB 및 다국어 임베딩 호환성·자원 측정 (Jetson에서 작동 확인; 동시 부하 미검증)
+  - [~] 자료 허용목록·신뢰 메타데이터·안전한 색인과 복구 (9개 지정 문서, 재색인 실패 시 기존 유지 검증; 백업 복원 미검증)
+  - [~] 검색·출처 기반 답변 API 및 권한·오류 처리 (격리 API 시험과 로컬 LLM 단일 응답 확인; 실제 HTTPS 로그인·검색·답변 확인, 생성 정확도 미검증)
+  - [~] 대시보드 질의·벡터 DB 탐색·색인 관리 (빌드 통과; 브라우저 실사용 검증 대기)
+  - [~] 대표 질의·통합·동시 부하 평가: 30개 고정 질문 출처 및 거부 평가 완료, 문맥 확장·부분 일치 이후 기존 15개 질문의 엄격 문구 포함 12/15, 새 질문 7/8; 이전 생성형 2건 부정확, 센서 동시 약 159초 관측; 독립 평가·장시간 부하·음성/이력 연계 미완료
 자료: JetRover manual, STM32 protocol, STM32 hang NOTES, Nav2 config, MoveIt setup, Camera/LiDAR manual, Troubleshooting, Calibration 기록
 - [ ] Document loader, Chunker, Embedding
 - [ ] **VectorDB 제품 조사·결정** — PostgreSQL `pgvector` 확장으로 21번 DB 안에 통합할지, Qdrant/Milvus/Chroma 등 독립 VectorDB로 분리할지 미정(계획)
@@ -525,7 +583,20 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 
 ## 26. Voice AI (Mic → VAD → STT → LLM/Intent → BT → Robot → TTS)
 - [x] **하드웨어 확인(2026-09-28)**: 마이크 어레이 = USB `card 0` (XFM-DP-V0.0.18, iFlytek 원거리 마이크 어레이 보드, `arecord -D hw:0,0`), 스피커 = USB `card 1` (GeneralPlus USB Audio Device, `aplay -D plughw:1,0`, mono는 `plughw` 필요 — `hw`는 채널 수 불일치로 실패). 4초 녹음 후 재생 왕복으로 실사용 확인(목소리 들림, 무음 아님)
-- [ ] VAD, STT, Intent Router, LLM, TTS — **전부 미착수**. STT/TTS 엔진 자체가 아직 하나도 안 깔려 있음(whisper/vosk 등 확인함, 없음)
+- [~] 한국어 스피커 환경(2026-11-11): Jetson 사용자 가상환경에 Piper 1.8.0 + KSS medium 설치, USB `plughw:CARD=Device,DEV=0`로 한국어 합성·재생, 사용자 청취 확인. 사용·복구 `tools/audio/README.md`. KSS 학습 데이터는 비상업 라이선스, 실제 서비스/상용 사용 전 조건 확인. TTS 통합 기능은 미구현.
+- [~] 모노 소음 억제(2026-11-11): 처음 2초 배경 소음 프로필을 이용하는 오프라인 억제 및 메모리 내 마이크 비교 재생 도구 구현. 합성 신호 시험 6개 통과. 실제 마이크 20초 녹음 및 원본·처리본 재생 완료, 초기 2초 RMS 0.004261 → 0.003698; 사용자는 억제본이 더 선명하다고 평가. `tools/audio/README.md` 참조. 실시간 처리와 DOA는 별개.
+- [~] 실시간 모노 소음 억제(2026-11-11): 고정 소음 프로필·32ms 창/8ms 간격 처리와 ALSA 저음량 모니터링 구현, 합성·회귀 시험 9개 통과. 실기 20초 처리 완료, 최대 연산 0.78ms/8ms, 입력 피크 0.9888. 사용자 청취 결과 울림만 들림(스피커-마이크 재유입 추정, 미확인). 입력 종료 후 재생 시험 15초 완료(최대 연산 0.75ms/8ms), 사용자는 목소리가 잘 들리지만 음량이 작다고 평가하여 후재생 기본 음량 0.25→0.5 조정(변경 후 청취 미검증). 전체 입출력 지연 미측정, 에코 제거·음성 인식 통합 미구현. `tools/audio/README.md` 참조.
+- [~] 6채널 집음(2026-11-11): 보드 설정에서 `mic6_circle`, `cae_enable=1`, `beam=1`, `ivw_enable=1` 확인(실제 성능 미검증). 보정된 6채널 WAV용 오프라인 지연합 빔포머 구현 및 합성 시험 통과. 실제 독립 채널·배치 및 AEC 참조 연결 미확인, 실기 집음·AEC 미완료. `prd/audio-doa.md`와 `tools/audio/README.md` 참조.
+- [~] 6채널 실기 캡처(2026-11-11): 보드 캡처 점유 프로세스를 일시 중단하고 16kHz 8채널 12초 확보, 0~5번 신호 확인 및 미보정 좌표로 집음·DOA 계산 실행. 좌표·슬롯 의미·실제 방향 정확도·실시간 경로 미검증. 보드 프로세스와 USB 모노 입력 복구 확인, 재시작으로 초기화된 기존 로그는 `demo.log.before-array-probe`에 보존. `prd/audio-doa.md` 참조.
+- [~] 6채널 방향 보정 탐색(2026-11-11): 사용자 준비 확인 후 정면·좌·우·후면 10초씩 캡처, 0~5번 채널 시간차의 유효 좌표 추정(`experimental_geometry_20261111.json`, 미보정). 별도 후면 10초 시험: 기본 신뢰도 기준 추정 0/10, 문턱 0으로 낮춘 탐색에서는 10/10이 후면 ±30°이나 오탐 검증 없어 실사용 불가. 4방향 독립 정확도·실시간 경로 미완료. 상세 `prd/audio-doa.md`.
+- [~] R818 8채널 ADB 스트리밍(2026-11-11): 기존 음성 프로세스 일시 중단 후 8채널을 ADB 16진 인코딩으로 Jetson에 전송, 4방향 실기 시험. 1초 블록 약 1초 간격, 동시 사용 불가·종단간 지연 미측정. 초기 2초 억제 및 시험 문턱(RMS 100/공간 일치도 0.35) 적용 후 독립 시험에서 조용한 구간 후보 및 후면 각도 변동 발생. 미검증 후보만 출력, 로봇 제어 금지. `prd/audio-doa.md` 참조.
+- [~] 8채널·기존 음성 동시 접근 조사(2026-11-11): dsnoop 8채널 동시 캡처 2개 성공. 제조사 프로세스 dsnoop 전환 시 USB 모노 미약, 원래 실행 상태의 발화에서도 미약하여 원인 미확정. 제조사 mmap 입력을 FIFO로 비차단 복사하는 임시 실험에서 8채널 데이터 수신했으나 SIGPIPE·손실·음성 품질 미검증으로 상시 적용 금지. 보드 프로세스는 복구됐으나 정상 음질 재확인 필요. `prd/audio-doa.md` 참조.
+- [~] 동시 입력 복사·방향 재시험(2026-11-11): 기존 `demo` mmap 입력을 비차단 UNIX 데이터그램으로 복사하는 실험 구현. 200패킷×2 연속 수신 각 누락 0, ADB 강제 단절 시 기존 프로세스 생존 및 소켓 정리 후 재접속 확인. 정면·좌·우·후면 실기 주요 후보 각각 344~348°/90~94°/250~268°/148~154°(미보정, 오추정 존재), 각 22초 누락 0. 조용한 22초 RMS 45.3~50.9·공간 일치도 0.25~0.28. 장시간/음질/다양한 소음·지연·실제 좌표 미검증, 상시 운용·로봇 제어 금지. `prd/audio-doa.md` 참조.
+- [~] 음원 방향(DOA, 2026-11-11): R818 내부 ALSA는 16 kHz 8채널로 실제 실행 중(demo_vtn이 단일 캡처 장치 점유). Jetson USB 출력은 모노여서 8채널 실시간 전달 경로와 채널 배치는 미확인, 아직 GCC-PHAT 불가. 미확인 CH340에서 R818 핸드셰이크 수신·확인 응답 성공; 사용자 발화 중 각도 이벤트 미수신. `tools/audio/r818_doa.py` 진단·합성 프레임 5개 통과, 기기 각도/방향 보정 및 모든 소리의 연속 DOA 미검증. PRD `prd/audio-doa.md`, 시험 `prd/audio-doa-test-plan.md`. USB 커넥터 쪽이 로봇 후면(사용자 확인).
+  - [~] 다채널 SRP-PHAT 계산기·WAV/ALSA 입력 구현, 합성 방향·무음·8채널 매핑 등 16개 테스트 통과. 독립 잡음의 허위 방향(수정 전 92/100)을 공간 일치도 문턱 도입 후 별도 200회에서 억제. 합성 조건만 검증됨. 현재 보드의 채널 순서·실시간 전달·보정 및 실기 검증은 미완료(`prd/audio-doa.md`, `tools/audio/README.md`).
+- [~] 로컬·무료 클라우드 음성 개발 환경(2026-11-12): 사용자 폴더에 whisper.cpp base 다국어 CPU·Qwen3 1.7B Q4 CPU·Groq 호환 SDK 및 Git 제외 `.env` 준비, 기존 Piper 재사용. 합성 한국어 STT 단일 문장 일치(2.33초, 최대 RSS 약 284MiB), 로컬 인사 응답(5.87초, 약 2.28GiB), 클라우드 모의 검증 4개 통과. 실제 마이크 8초 녹음에서 인사 인식→로컬 LLM 응답→Piper 재생 명령 완료(사용자가 스피커 청취 확인). 실제 클라우드 호출은 사용자 키 필요, ROS/Nav2/DOA 동시 부하·VAD 및 로봇 통합은 별도 검증. `tools/voice/README.md`, `prd/voice-local-cloud.md` 참조.
+- [~] LangGraph 로컬/클라우드/VLM 자동 분기(2026-11-12): 규칙·로컬 모델 분류, 선택적 사진 업로드와 ROS 카메라 단발 캡처, 전송 허용 게이트 구현. 오프라인 회귀·분기 시험 9개 통과. Groq 텍스트 실제 응답 및 합성 이미지 VLM 빨간색 인식 확인(qwen/qwen3.8-27b); 실제 카메라 전송·음성 왕복·동시 부하 미검증. 로봇 구동 연결 없음. `tools/voice/README.md` 참조.
+- [ ] VAD, STT, Intent Router, LLM 및 음성 기능 통합 — 미착수. Piper 외 STT 엔진은 설치 여부 재확인 필요.
 - 안전 명령 STOP / CANCEL / HOME은 LLM 없이 deterministic하게 처리한다.
 
 ## 27. Diagnostics / Monitoring

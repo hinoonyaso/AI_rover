@@ -5,7 +5,7 @@
 
 ## 작업 시작 규칙
 1. 이 파일을 읽는다.
-2. `checklist/PROJECT_CHECKLIST.md`에서 현재 진행 상태를 확인한다.
+2. `docs/CLAUDE_HANDOFF.md`와 `checklist/PROJECT_CHECKLIST.md`에서 인수인계와 현재 진행 상태를 확인한다.
 3. 관련된 오류가 있을 법하면 `troubleshooting/README.md` 목록을 보고 해당 문서를 읽는다.
 4. 작업 대상 패키지의 README/config/launch를 먼저 확인한다.
 5. 새로 만들기 전에 이미 구현된 기능이 있는지 코드를 검색한다.
@@ -39,7 +39,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 뒤로 밀린다. 이 순서와 다른 순서로 진행해달라는 요청이 오면, 순서를 바꾸는 이유를 먼저 확인한다.
 전체 배경은 `prd/jetinspect-m.md` 13절.
 **2026-10-06 보정(사용자 승인)**: 순서는 그대로이고 2단계를 `Nav2 baseline → 엔코더 odom → Before/After 재시험 → DWB vs MPPI`로 세분화했다.
-`ros2_control` 팔 PRD는 그 뒤에 쓴다. 단계별 게이트는 `docs/ROADMAP.md`.
+DWB vs MPPI 비교는 완료됐고, 팔 MVP는 경로 A를 사용하며 `ros2_control`은 이후 PoC다. 단계별 게이트는 `docs/ROADMAP.md`. 이 순서와 로드맵이 충돌하면 임의로 선택하거나 변경하지 말고 사용자에게 확인한다.
 
 ### 1) PRD
 범위가 애매하면 코딩 전에 **먼저 사용자에게 명확화 질문**을 한다(목표, 범위, 비범위, 제약, 완료 기준).
@@ -53,12 +53,11 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 ### 3) 실행
 1. **한 번에 sub-task 하나만** 한다. 시작 전에 PRD와 그 sub-task, 관련 코드를 확인한다.
 2. 끝나면 build/test(해당하면 `colcon test`, 호스트 유닛테스트 등)를 돌리고, 실패하면 고친다.
-3. 통과하면 그 sub-task만 `[x]`로 바꾸고 새로 안 사실이 있으면 옆에 적는다. **끝내지 못한 걸 `[x]`로
-   표시하지 않는다.**
+3. 해당 sub-task의 적용 가능한 완료 기준을 모두 충족하면 `[x]`로 바꾸고 새로 안 사실을 옆에 적는다. 필요한 실기 검증이 남으면 `[~]`로 둔다.
 4. 하나 끝낼 때마다 무엇을 했는지 간단히 보고하고, 다음 sub-task로 넘어가기 전에 사용자의 확인을
    기다린다 — 단, 사용자가 "쭉 진행해"처럼 명시적으로 허락하면 그 지시를 따른다. 안전 규칙 대상
    (모터, flash 등)이거나 방향이 갈릴 수 있는 지점은 허락을 받았어도 다시 한번 멈춘다.
-5. 작업 중 발견한 새 문제는 그 자리에서 고치지 말고 Task 목록(체크리스트)에 sub-task로 추가한다.
+5. 현재 변경으로 발생한 실패는 현재 작업에서 해결한다. 무관한 새 문제는 체크리스트에 기록하고 별도 작업으로 둔다.
 6. 지금 sub-task와 무관한 리팩토링을 하지 않는다. 기존 동작을 깨뜨리지 않는다.
 7. parent task의 sub-task가 전부 끝나면 그 사실을 명확히 알린다.
 
@@ -101,7 +100,7 @@ Ryan Carson의 3-File System(요구사항 → 작업 분해 → 실행 규칙을
 | `troubleshooting/` | 오류 원인과 해결 기록 |
 | `docs/` | 로드맵(`ROADMAP.md`), 아키텍처, 설계 노트, 사례 정리, 벤치마크 결과/튜닝 이력. 인덱스는 `docs/README.md` |
 | `prd/` | 새 기능 착수 전 PRD (3-File System 1번째 파일). 언제/어떻게 쓰는지는 `prd/README.md`. `jetinspect-m.md`(+`-pipelines.md`)가 프로젝트 전체 기획서 |
-| `firmware/rrc_m4/` | STM32 자체 펌웨어 재작성 프로젝트(계획: `~/.claude/plans/enchanted-chasing-sky.md`). `lib/{protocol,core,comm}`(호스트 단위 시험) + `app/`(HAL+FreeRTOS, RRC/micro-ROS 두 빌드). **flash 전**, 개요는 `firmware/rrc_m4/README.md` |
+| `firmware/rrc_m4/` | STM32 자체 펌웨어 재작성 프로젝트(계획: `~/.claude/plans/enchanted-chasing-sky.md`). `lib/{protocol,core,comm}`(호스트 단위 시험) + `app/`(HAL+FreeRTOS, RRC/micro-ROS 두 빌드). 실기에 flash·검증됨(2026-10-10~11); 추가 flash는 사용자 승인 필요. 개요는 `firmware/rrc_m4/README.md` |
 | `src/jetrover_microros/` | micro-ROS 펌웨어용 호스트 패키지(브리지 노드 + agent launch). `jetrover_base`와 같은 시리얼 포트를 쓰므로 동시에 못 띄움 |
 | `tools/` | 시험/진단 스크립트: `parse_stm32.py`, `sniff_stm32.py`, `imu_calibration/`, `stm32_diagnostics/`(NOTES.md에 hang 조사 전체 기록, ST-Link `swd_backup.sh`/`swd_motor_probe.sh`), `ci/`(CI 정적 검사) |
 | `tools/nav/` | Nav2 실기 시험: `straight_trial.py`(1회 주행+지표, CSV `Log/wobble_trials_v3.csv`, `--bag`), `bag_timeline.py`(bag 시간순 요약), `trial_metrics.py`(+단위시험), `ab_params/`(변형 파라미터 생성), `benchmark/`(baseline 15회 도구), `stop_nav2.sh`(Nav2 종료 — 같은 Bash 호출에서 pkill 금지) |
@@ -122,10 +121,10 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 가져다 쓸 때마다 출처를 남긴다.
 
 ## 빌드와 실행
-- 빌드는 **반드시 `cd ~/jetrover_ws`에서** `colcon build --packages-select jetrover_base`. (`src/`에서 빌드하면 `src/build|install|log`가 생긴다: troubleshooting/005)
-- 실행: `source ~/jetrover_ws/install/setup.bash && ros2 launch jetrover_base base.launch.py` (`base_node` + URDF `robot_state_publisher` + robot_localization EKF).
+- 빌드 전 수정한 소스의 실제 경로와 워크스페이스 연결을 확인하고, 그 소스를 포함하는 워크스페이스 루트에서 빌드한다. `src/`에서 빌드하지 않는다(troubleshooting/005). `~/jetrover_ws`와 다른 체크아웃이 있으면 같은 소스라고 가정하지 않는다.
+- 변경한 패키지와 필요한 의존 패키지를 대상으로 빌드·시험한다. 예: 베이스만 대상이면 `colcon build --packages-select jetrover_base`. 실행 시에도 해당 워크스페이스의 `install/setup.bash`를 source한다.
 - **host PC의 Python 작업(스캔 처리 등)은 uv 환경에서 한다**(2026-10-14 사용자 지시): `uv venv` + `uv pip install`, 시스템 Python에 `pip install` 하지 않는다. ROS 패키지(rtabmap 등)는 apt + 시스템 ROS 환경. 상세 `tools/scan/README.md`.
-- 검사: `colcon test --packages-select jetrover_base` (flake8, uncrustify 등이 통과해야 한다).
+- 검사 예: `colcon test --packages-select jetrover_base` (해당 패키지의 flake8, uncrustify 등).
 - **새 ROS 패키지를 만들면 `.github/workflows/ci.yml`의 build/test 목록과 apt 의존성에도 추가한다.** 다른 패키지가 exec_depend로 참조하는데 목록에 없으면 colcon이 그 패키지 빌드를 거부한다(2026-10-09~10 CI가 `jetrover_nav_plugins` 누락으로 계속 실패).
 
 ## 테스트 레벨과 완료 기준
@@ -133,16 +132,15 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 |---|---|---|
 | L0 | build, lint, unit test | `colcon build`, `colcon test` |
 | L1 | 하드웨어 없이 가상 시리얼로 검증 | `tools/stm32_diagnostics/ekf_pipeline_test.py`, `odom_raw_test.py`, `crash_guard_test.py` |
-| L2 | 하드웨어 연결, **모터 비활성** | IMU/STM32 통신, `imu_soak.py`, `imu_calibration/` |
+| L2 | 하드웨어 연결, **바퀴 모터와 팔 구동·토크 변경 비활성** | IMU/STM32 통신, `imu_soak.py`, `imu_calibration/` |
 | L3 | **바퀴를 띄운** 모터 시험 | `motor_load_test.py` (사용자가 전원 스위치 옆에) |
 | L4 | 바닥 주행 | 0.05 m/s부터, 짧은 거리, 주변 공간 확보 |
 | L5 | 통합 자율 시험 | SLAM/Nav2/Perception/Mission |
 
 사용자가 "L2까지만"처럼 레벨을 지정하면 그 이상은 하지 않는다.
-체크리스트 항목을 `[x]`로 바꾸려면 구현, build 성공, `colcon test` 통과, 재현 가능한 config/launch, 수치와 결과 문서화가 필요하고,
-하드웨어가 관련된 기능은 **실제 로봇에서 검증**돼야 한다. 코드만 작성했거나 L1까지만 확인했으면 `[~]`로 둔다.
+체크리스트 항목은 성격에 맞는 검증과 해당 시험 계획의 완료 기준을 모두 충족하면 `[x]`로 표시한다. 코드 작업은 관련 빌드·시험과 필요한 config/launch 및 결과 기록을 확인하고, 문서·조사는 내용과 근거 등 적용 가능한 검증을 한다. 실기 검증이 완료 기준에 포함되어 남아 있으면 `[~]`로 둔다.
 
-## 확정된 사실 (다시 조사하지 않는다)
+## 확정된 사실 (환경 변경이나 반증이 없으면 반복 조사하지 않는다)
 - 링크: CH9102 USB-UART(`/dev/serial/by-id/usb-1a86_USB_Single_Serial_596F003889-if00`), STM32 UART2, **1,000,000 baud**.
 - 프레임: `AA 55 FUNC LEN DATA CRC8-MAXIM` (CRC는 FUNC+LEN+DATA). FUNC 0 배터리(`04`+u16 mV), 3 모터, 5 버스 서보(관절1~5+그리퍼10, read-position subcommand `05`: 요청 `[05,id]`→응답 `[id,05,success,pulse i16LE]`, pulse 0~1000↔0~240°), 7 IMU(가속도 g, 자이로 deg/s, float32×6), 8 게임패드. `base_node`가 FUNC5를 5Hz round-robin으로 폴링해서 `/joint_states`로 publish한다(2026-10-03). 팔 쓰기는 `arm/command`·`arm/command_timed`·`arm/torque`(2026-10-05~06, `arm_command_enabled`일 때만), 서보별 데드밴드 보정과 읽기 피드백 보정(2026-10-11, `base.yaml arm_deadband_overshoot`/`arm_feedback_trim_*`). rrc_m4는 확장 프레임 0x20 상태·0x21 바퀴·0x22 진단 명령·0x24 진단도 쓴다(`firmware/rrc_m4/README.md`).
 - **모터 ID는 0~3이다** (`DATA = 01, N, N×(id u8, rps f32)`).
@@ -170,8 +168,8 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
   - 자세한 내용은 `troubleshooting/001-stm32-firmware-hang.md`, `tools/stm32_diagnostics/NOTES.md`.
 
 ## 안전 규칙 (반드시 지킨다)
-1. 모터가 돌아가는 시험은 **바퀴를 띄우고**, 사용자가 **전원 스위치 옆에** 있고, **배터리가 충전된 상태**에서만 한다. 바닥 주행은 0.05 m/s로 짧게부터.
-2. 모터를 움직이는 명령이나 물리적으로 로봇을 움직이는 시험은 실행 전에 사용자에게 알리고, 끝나면 반드시 정지 명령을 보낸다 (`finally`).
+1. 바퀴를 띄운 모터 시험은 사용자가 **전원 스위치 옆에** 있고 **배터리가 충전된 상태**에서 한다. 바닥 주행은 별도 승인 후 주변 공간을 확보하고 0.05 m/s로 짧게 시작한다.
+2. 모터·로봇팔 구동과 팔 토크 변경은 실행 전 사용자 승인을 받는다. 물리적으로 움직이는 시험은 끝나면 반드시 정지 명령을 보낸다 (`finally`).
 3. `sudo`가 필요한 작업(apt 설치, `dmesg`, `lsof`)은 비밀번호가 없으므로 사용자에게 요청한다.
 4. 배터리 10 V 미만이면 충전을 요청한다. 시험 중 STM32가 조용해지면(`STM32 silent` 로그) 바로 알린다.
 5. 시험용 프로세스는 끝나면 `pgrep -x base_node` 등으로 남은 것이 없는지 확인한다 (troubleshooting/004).
@@ -179,7 +177,7 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 ## 사용자 승인 없이 하면 안 되는 작업
 먼저 무엇을 왜 하는지 설명하고 승인을 받은 뒤에 한다.
 - STM32 펌웨어 flash, 기존 `.hex` 덮어쓰기 (원본을 백업하기 전에는 하지 않는다. 다른 로봇(ROSOrin)용 `.hex`는 올리지 않는다)
-- 실제 모터/로봇팔을 움직이는 시험
+- 실제 모터/로봇팔을 움직이는 시험 및 팔 토크 변경
 - 파일이나 폴더 삭제: `rm -rf`는 대상을 먼저 확인한다. 워크스페이스 루트의 `build/ install/ log/`는 다시 만들 수 있지만,
   `src/` 아래의 것(소스 포함, `src/build|install|log`도 포함)은 승인 후에만 지운다.
 - 저장된 map, 캘리브레이션 값, config 덮어쓰기 (`gyro_bias`, `odom_*_scale` 등은 바꾸기 전에 이전 값을 문서에 남긴다)
@@ -213,8 +211,8 @@ MoveIt2/Voice/Navigation 단계에 착수하기 전에 **먼저 여기 비슷한
 - push는 사용자가 요청했을 때만 한다. 이미 push된 이력은 다시 쓰지 않는다(force push 금지 — 과거 커밋의 Co-Authored-By 줄도 그대로 둔다).
 
 ## 문서 규칙 (잊지 말 것)
-- **작업을 끝낼 때마다** `checklist/PROJECT_CHECKLIST.md`의 해당 항목 상태(`[x]`/`[~]`/`[ ]`)를 갱신하고, 새로 알게 된 수치나 원인을 항목 옆에 적는다. 진행률 표는 `checklist/README.md`.
-- **오류나 예상 밖의 동작이 생기면** `troubleshooting/`에 `NNN-제목.md`를 추가하고 `troubleshooting/README.md` 목록도 갱신한다. 형식은 증상 / 원인 / 해결 또는 우회 / 확인·재발 방지이며, 해결하지 못했어도 `미해결`로 적는다.
+- **작업을 끝낼 때마다** `checklist/PROJECT_CHECKLIST.md`의 해당 항목 상태(`[x]`/`[~]`/`[ ]`)를 갱신하고, 새로 알게 된 수치나 원인을 항목 옆에 적는다. `checklist/README.md`의 진행률 표는 과거 스냅샷이다.
+- **오류나 예상 밖의 동작이 생기면** 관련 `troubleshooting/` 문서에 기록한다. 새로운 주제일 때만 `NNN-제목.md`를 만들고 `troubleshooting/README.md` 목록을 갱신한다. 증상 / 원인 / 해결 또는 우회 / 확인·재발 방지를 적고, 해결하지 못했으면 `미해결`로 표시한다.
 - 재사용할 스크립트는 `/tmp`가 아니라 `tools/`에 둔다 (재부팅하면 `/tmp`가 지워진다: troubleshooting/008).
 - **`sudo apt install`이나 시스템 전역 설치(커널 모듈 등)를 할 때마다** `setup/ENVIRONMENT_SETUP.md`에 날짜·명령·이유·확인 방법을 추가한다. 사용자에게 설치를 요청할 때도 이 파일에 먼저 적어 둔다.
 - 큰 결정이나 수치(보정값, 시험 결과)는 관련 README/NOTES에 남긴다. 확인하지 않은 것을 사실처럼 쓰지 않는다.
