@@ -617,6 +617,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - 권장 토픽: /cmd_vel /odom /imu/data_raw /scan /tf /tf_static /detections /diagnostics
 
 ## 29. Deployment (개발: SSH + tmux)
+- [x] 포트폴리오 README 갱신(2026-11-18): 관제·Gazebo·RAG·로봇 구현과 검증 범위, 샘플 화면·기존 포인트클라우드 이미지 및 실행 안내 정리.
 - [x] GitHub Actions 실패 복구(2026-11-18): Python 문법과 ROS C++ 서식 수정, 로컬 검사 및 GitHub `72acff4`의 세 작업 통과 (`troubleshooting/060-ci-python-and-uncrustify.md`).
 - [ ] systemd, 자동 ROS bringup
 - [ ] FastAPI 자동 실행, DB 자동 실행, React serving
