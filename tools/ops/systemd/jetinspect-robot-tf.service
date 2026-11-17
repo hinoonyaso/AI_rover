@@ -1,0 +1,10 @@
+[Unit]
+Description=JetInspect robot description and TF publisher (manual start)
+
+[Service]
+Type=simple
+Environment=ROS_DOMAIN_ID=25
+ExecStart=/bin/bash -c 'source /opt/ros/jazzy/setup.bash && source %h/jetrover_ws/install/setup.bash && exec ros2 launch jetrover_description description.launch.py'
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true

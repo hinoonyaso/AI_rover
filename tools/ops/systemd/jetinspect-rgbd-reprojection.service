@@ -1,0 +1,10 @@
+[Unit]
+Description=JetInspect separate RGB-D reprojection (manual start)
+
+[Service]
+Type=simple
+Environment=ROS_DOMAIN_ID=25
+Environment=OPENBLAS_NUM_THREADS=1
+ExecStart=/bin/bash -c 'source /opt/ros/jazzy/setup.bash && exec /usr/bin/python3 %h/jetrover_ws/tools/ops/calibration/rgbd_reproject_node.py %h/.local/share/jetinspect-ops/calibration/rgbd-extrinsic-active.json'
+Restart=no
+NoNewPrivileges=true

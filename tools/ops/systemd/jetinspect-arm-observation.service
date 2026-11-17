@@ -1,0 +1,10 @@
+[Unit]
+Description=JetInspect base sensors and read-only arm observation (manual start)
+Conflicts=jetinspect-base-sensors.service
+
+[Service]
+Type=simple
+Environment=ROS_DOMAIN_ID=25
+ExecStart=/bin/bash -c 'source /opt/ros/jazzy/setup.bash && source %h/jetrover_ws/install/setup.bash && exec ros2 run jetrover_base base_node --ros-args --params-file %h/jetrover_ws/install/jetrover_base/share/jetrover_base/config/base.yaml -p sensor_only:=true -p sensor_arm_read_enabled:=true -p publish_arm_joint_states:=true -p arm_command_enabled:=false -p clear_estop_on_start:=false'
+Restart=no
+NoNewPrivileges=true

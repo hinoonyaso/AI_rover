@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {cameraComparison} from './src/cameraComparison.js';
+const candidate = {width:640,height:480,camera_matrix:[[510,0,321],[0,505,239],[0,0,1]]};
+const current = {width:640,height:480,matrix:[500,0,320,0,500,240,0,0,1]};
+assert.deepEqual(cameraComparison(candidate,current).values.map(item => item.difference),[10,5,1,-1]);
+assert.equal(cameraComparison(null,current).status,'missing');
+assert.equal(cameraComparison(candidate,{...current,width:320}).status,'resolution');
+assert.equal(cameraComparison({...candidate,camera_matrix:[[NaN,0,0],[0,1,0],[0,0,1]]},current).status,'invalid');
+assert.equal(cameraComparison({...candidate,camera_matrix:[[1],[2],[3]]},current).status,'invalid');
+assert.equal(cameraComparison({...candidate,camera_matrix:[[0,0,0],[0,1,0],[0,0,1]]},current).status,'invalid');
+console.log('Camera comparison: matching resolution, units, and invalid values passed');

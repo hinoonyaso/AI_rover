@@ -1,0 +1,13 @@
+[Unit]
+Description=JetInspect read-only ROS sensor monitor
+
+[Service]
+Type=simple
+Environment=ROS_DOMAIN_ID=25
+ExecStart=/bin/bash -c 'source /opt/ros/jazzy/setup.bash && exec /usr/bin/python3 %h/jetrover_ws/tools/ops/backend/ros_monitor.py'
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

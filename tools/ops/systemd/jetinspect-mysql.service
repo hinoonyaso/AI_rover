@@ -1,0 +1,14 @@
+[Unit]
+Description=JetInspect local MySQL (private socket only)
+
+[Service]
+Type=simple
+Environment=LD_LIBRARY_PATH=%h/.local/share/jetinspect-ops/mysql-root/usr/lib/aarch64-linux-gnu
+ExecStartPre=/usr/bin/python3 %h/jetrover_ws/tools/ops/prepare_mysql_socket.py
+ExecStart=%h/.local/share/jetinspect-ops/mysql/bin/mysqld --no-defaults --basedir=%h/.local/share/jetinspect-ops/mysql --datadir=%h/.local/share/jetinspect-ops/mysql-data --socket=%h/.local/share/jetinspect-ops/mysql-run/mysql.sock --pid-file=%h/.local/share/jetinspect-ops/mysql-run/mysql.pid --skip-networking --mysqlx=0 --innodb-buffer-pool-size=128M --performance-schema=OFF
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
