@@ -19,6 +19,7 @@ from gazebo_worker import GazeboWorker
 from mission_routes import router as mission_router
 from calibration_routes import router as calibration_router
 from sensor_services import router as sensor_services_router
+from knowledge_routes import router as knowledge_router
 from page_cursor import decode_cursor, encode_cursor
 from pathlib import Path
 
@@ -172,6 +173,7 @@ app.add_api_route('/api/session/password', change_password, methods=['POST'])
 app.include_router(mission_router)
 app.include_router(calibration_router)
 app.include_router(sensor_services_router)
+app.include_router(knowledge_router)
 
 
 import battery_settings
