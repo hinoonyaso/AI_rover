@@ -79,3 +79,11 @@ python3 tools/perception/arm_set_joint.py joint2 -0.6618
 python3 tools/perception/arm_set_joint.py joint4 1.45
 ```
 팔을 세운 상태라 무게중심이 높다 — 0.05~0.08 m/s 텔레옵만. 이 자세에선 depth 장애물 게이트가 닫힌다.
+
+## 3D 메쉬 미리보기
+
+포트폴리오 이미지는 원본 `room_visual.glb`의 정점 10만 개를 표본 추출해 높이별 색상으로 그린 것이다. Open3D 화면 캡처나 원본 카메라 색상은 아니다. NumPy와 Matplotlib가 있는 Python 환경에서 다음과 같이 재생성한다. GLB 2.0의 연속 float32 위치와 변환 없는 단일 메쉬 노드를 가정한다.
+
+```bash
+python3 tools/scan/render_room_preview.py src/jetrover_gazebo/models/room_lap2/meshes/room_visual.glb docs/images/digital-twin-reconstructed-mesh.png
+```

@@ -20,6 +20,22 @@ Hiwonder JetRover의 메카넘 구동부와 로봇팔을 바탕으로, Jetson Or
 | 지식 검색 | Qdrant 로컬 벡터 DB, 다국어 임베딩, 문서 근거 검색 및 대시보드 탐색 | 검색 평가 수행; 생성형 답변의 사실성 개선 필요 |
 | 음성 | Whisper 기반 STT, 로컬 Qwen·선택형 클라우드 LLM, Piper TTS 시험 | 단발 음성 시험; 상시 청취·실기 임무 연동 미완료 |
 
+## 디지털 트윈과 실제 지도
+
+### RGB-D 방 스캔 → Open3D 재구성
+
+실제 로봇의 RGB-D·LiDAR 데이터를 약 371초 녹화하고 RTAB-Map으로 자세를 추정한 뒤, Open3D TSDF로 방 메쉬를 만들었습니다. 기존 2D 지도와 정합한 잔차 중앙값은 **4.4 cm**였으며, 이후 메쉬를 경량화하고 텍스처를 적용해 Gazebo 월드로 가져갔습니다. 이는 특정 데이터와 조건에서의 결과이며 모든 환경에서의 정확도를 뜻하지 않습니다. [스캔·정합·Gazebo 시험 기록](docs/benchmarks/sim/room_scan_20261014.md)
+
+![실제 RGB-D 스캔에서 재구성된 방 메쉬의 투시도와 평면도](docs/images/digital-twin-reconstructed-mesh.png)
+
+*저장소의 실제 재구성 GLB 메쉬에서 정점 10만 개를 표본 추출해 다시 그린 시각화입니다. Open3D 프로그램 스크린샷은 아니며, 색상은 카메라 텍스처가 아닌 높이(Z)를 나타냅니다.*
+
+### SLAM 지도와 LiDAR 스캔
+
+실제 로봇을 한 바퀴 수동 주행하며 만든 지도와 당시 LiDAR 스캔입니다. 흑백 지도에 스캔 거리와 로봇 위치를 겹쳐 보여줍니다. [SLAM 진행 기록](checklist/PROJECT_CHECKLIST.md)
+
+![실제 주행으로 생성한 2D SLAM 지도와 LiDAR 스캔](docs/images/slam-lap1-real-20260922.png)
+
 ## 프로젝트 화면
 
 아래 대시보드 이미지는 **실제 UI를 격리된 시험 서버에서 샘플 데이터로 캡처한 화면**입니다. 표시된 수치와 임무 결과는 포트폴리오용 예시입니다.
