@@ -20,6 +20,14 @@ Hiwonder JetRover의 메카넘 구동부와 로봇팔을 바탕으로, Jetson Or
 | 지식 검색 | Qdrant 로컬 벡터 DB, 다국어 임베딩, 문서 근거 검색 및 대시보드 탐색 | 검색 평가 수행; 생성형 답변의 사실성 개선 필요 |
 | 음성 | Whisper 기반 STT, 로컬 Qwen·선택형 클라우드 LLM, Piper TTS 시험 | 단발 음성 시험; 상시 청취·실기 임무 연동 미완료 |
 
+## 로봇 외형과 URDF 모델
+
+메카넘 휠과 로봇팔을 장착한 JetRover의 제조사 제품 이미지와, 이 저장소의 URDF를 RViz에서 홈 자세의 가상 관절값으로 표시한 화면입니다. 제품 사진은 실제 프로젝트 기기를 촬영한 사진이 아닙니다. [제품 이미지 출처: Hiwonder](https://www.hiwonder.com/products/jetrover) · [URDF 모델](src/jetrover_description/urdf/jetrover.xacro)
+
+| JetRover 제품 외형 | 프로젝트 URDF 모델 · RViz |
+|:---:|:---:|
+| ![Hiwonder JetRover 제조사 제품 이미지](https://cdn.shopify.com/s/files/1/0084/2799/5187/files/JetRover_-1_5fa777de-b99b-4f65-a6dc-824f0cc527ae.png?v=1782202090) | ![RViz에서 표시한 JetRover URDF 모델](docs/images/jetrover-urdf-rviz.png) |
+
 ## 디지털 트윈과 실제 지도
 
 ### RGB-D 방 스캔 → Open3D 재구성
