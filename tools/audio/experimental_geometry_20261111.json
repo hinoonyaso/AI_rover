@@ -1,0 +1,39 @@
+{
+  "frame_id": "base_link_experimental",
+  "calibrated": false,
+  "channels": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "mic_xy_m": [
+    [
+      -0.019705,
+      -0.009504
+    ],
+    [
+      -0.011666,
+      -0.012827
+    ],
+    [
+      0.023921,
+      -0.012076
+    ],
+    [
+      0.008378,
+      0.018579
+    ],
+    [
+      0.015453,
+      0.01397
+    ],
+    [
+      -0.016382,
+      0.001858
+    ]
+  ],
+  "note": "Experimental fitted geometry from four manually labeled positions, not verified physical mic layout; do not use for robot movement."
+}
