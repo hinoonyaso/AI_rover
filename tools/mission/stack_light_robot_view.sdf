@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!-- Simulated test fixture for the fixed robot home pose; no physical collision.
+     한글: 로봇 홈 자세의 가상 카메라 시험용이며 물리 충돌을 만들지 않는다. -->
+<sdf version="1.9">
+  <model name="robot_view_stack_light">
+    <static>true</static>
+    <pose>1.001 1.770 0.158 0 0.880 1.5708</pose>
+    <link name="link">
+      <visual name="red"><pose>0 0 0.045 0 0 0</pose><geometry><box><size>0.004 0.035 0.035</size></box></geometry>
+        <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse><emissive>1 0 0 1</emissive></material></visual>
+      <visual name="yellow"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.004 0.035 0.035</size></box></geometry>
+        <material><ambient>0.025 0.025 0 1</ambient><diffuse>0.025 0.025 0 1</diffuse><emissive>0.025 0.025 0 1</emissive></material></visual>
+      <visual name="green"><pose>0 0 -0.045 0 0 0</pose><geometry><box><size>0.004 0.035 0.035</size></box></geometry>
+        <material><ambient>0 1 0 1</ambient><diffuse>0 1 0 1</diffuse><emissive>0 1 0 1</emissive></material></visual>
+    </link>
+  </model>
+</sdf>
