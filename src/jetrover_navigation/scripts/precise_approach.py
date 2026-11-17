@@ -59,9 +59,11 @@ def approach_command(ex, ey, eyaw, v_max=0.06, v_min=0.025, w_max=0.25, w_min=0.
 
 # 실패 이유 코드(결과 error_code, 2026-10-28 체크리스트 9.4). NavigateToPose는 NONE=0만 정의해서 9100번대를 따로 쓴다.
 # Failure reasons in the result error_code (NavigateToPose defines only NONE=0; 9100+ are ours).
-START_TOO_FAR = 9101   # 목표가 시작 거리 제한보다 멂(재위치 뒤 포함) / goal beyond max_start_dist (also after relocalizing)
+START_TOO_FAR = 9101   # 목표가 너무 멂 / goal beyond max_start_dist
 TIMEOUT = 9102         # time_limit 안에 허용 오차에 못 들어옴 / not within tolerance before time_limit
 POSE_LOST = 9103       # map->base TF가 없거나 오래됨 / pose TF missing or stale
+PATH_BLOCKED = 9104    # 시뮬레이션 검사: 경로 차단 / simulation guard: path blocked
+GUARD_UNAVAILABLE = 9105  # 시뮬레이션 검사: 입력 무효 / simulation guard: invalid input
 
 
 def scan_match_published(text):
@@ -88,7 +90,8 @@ def main():
     import subprocess
     from geometry_msgs.msg import Twist
     from nav2_msgs.action import NavigateToPose
-    from nav_msgs.msg import Odometry
+    from nav_msgs.msg import OccupancyGrid, Odometry
+    from rclpy.callback_groups import ReentrantCallbackGroup
     from rclpy.action import ActionServer, CancelResponse, GoalResponse
     from rclpy.node import Node
     import tf2_ros
@@ -114,6 +117,27 @@ def main():
             self.relocalize = bool(gp('relocalize', True).value)
             self.reloc_radius = float(gp('relocalize_radius_m', 0.3).value)
             self.reloc_timeout = float(gp('relocalize_timeout_s', 60.0).value)
+            # Experimental guard is opt-in and must never run on the real robot.
+            # 한글: 실험 검사는 명시적으로 켜야 하며 실제 로봇에서는 실행하지 않는다.
+            import os
+            self.sim_guard = bool(gp('sim_guard_enabled', False).value)
+            self.guard_radius = float(gp('sim_guard_radius_m', 0.30).value)
+            self.guard_wall_age = float(gp('sim_guard_max_wall_age_s', 8.0).value)
+            self.guard_ros_age = float(gp('sim_guard_max_ros_age_s', 1.5).value)
+            self.guard_grid = None
+            if self.sim_guard:
+                if (not self.get_parameter('use_sim_time').value or
+                        os.environ.get('ROS_DOMAIN_ID') != '31'):
+                    raise RuntimeError('sim guard requires use_sim_time and ROS_DOMAIN_ID=31')
+                if not all(math.isfinite(v) and v > 0.0 for v in
+                           (self.guard_radius, self.guard_wall_age, self.guard_ros_age)):
+                    raise ValueError('sim guard radius and age limits must be finite and positive')
+                from precise_guard_candidate import path_clear
+                self.path_clear = path_clear
+                self.guard_group = ReentrantCallbackGroup()
+                self.create_subscription(
+                    OccupancyGrid, '/local_costmap/costmap', self.on_guard_grid,
+                    10, callback_group=self.guard_group)
             self.speed = None            # latest /odom planar speed / 최근 /odom 속도
             self.create_subscription(Odometry, 'odom', self.on_odom, 10)
             self.buf = tf2_ros.Buffer()
@@ -126,6 +150,56 @@ def main():
                 f'precise approach ready: tol {self.pos_tol} m / {math.degrees(self.yaw_tol):.1f} '
                 f'deg, v <= {self.v_max} m/s, {self.cmd_topic}, '
                 f'relocalize {self.relocalize}')
+
+        def on_guard_grid(self, msg):
+            # Atomic reference swap keeps the message and receipt time together.
+            # 한글: 메시지와 수신 시각을 함께 교체해 같은 스냅샷으로 사용한다.
+            self.guard_grid = (time.monotonic(), msg)
+
+        def guard_check(self, goal):
+            """
+            Return (code, reason), failing closed on unavailable simulation data.
+
+            한글: 시뮬레이션 입력이 유효하지 않으면 실패 코드와 이유를 반환한다.
+            """
+            sample = self.guard_grid
+            if sample is None or time.monotonic() - sample[0] > self.guard_wall_age:
+                return GUARD_UNAVAILABLE, 'guard costmap missing or stale by receipt time'
+            m = sample[1]
+            try:
+                stamp = rclpy.time.Time.from_msg(m.header.stamp)
+                age = (self.get_clock().now() - stamp).nanoseconds * 1e-9
+                if age < -0.1 or age > self.guard_ros_age or not m.header.frame_id:
+                    return GUARD_UNAVAILABLE, 'guard costmap stamp or frame invalid'
+                q = m.info.origin.orientation
+                if (not all(math.isfinite(v) for v in (q.x, q.y, q.z, q.w)) or
+                        abs(q.x) > 1e-8 or abs(q.y) > 1e-8 or abs(q.z) > 1e-8 or
+                        abs(q.w - 1.0) > 1e-8):
+                    return GUARD_UNAVAILABLE, 'rotated or invalid costmap unsupported'
+                base = self.buf.lookup_transform(m.header.frame_id, self.base, rclpy.time.Time())
+                transform = self.buf.lookup_transform(
+                    m.header.frame_id, self.frame, rclpy.time.Time())
+                for t in (base, transform):
+                    delta = self.get_clock().now() - rclpy.time.Time.from_msg(t.header.stamp)
+                    tf_age = delta.nanoseconds * 1e-9
+                    if tf_age < -0.1 or tf_age > 1.0:
+                        return GUARD_UNAVAILABLE, 'guard transform stale'
+                tq = transform.transform.rotation
+                yaw = math.atan2(2 * (tq.w * tq.z + tq.x * tq.y),
+                                 1 - 2 * (tq.y * tq.y + tq.z * tq.z))
+                trans = transform.transform.translation
+                gx = trans.x + math.cos(yaw) * goal[0] - math.sin(yaw) * goal[1]
+                gy = trans.y + math.sin(yaw) * goal[0] + math.cos(yaw) * goal[1]
+                pos = base.transform.translation
+                origin = m.info.origin.position
+                ok = self.path_clear(m.data, m.info.width, m.info.height, m.info.resolution,
+                                     (origin.x, origin.y), (pos.x, pos.y), (gx, gy),
+                                     self.guard_radius)
+                if not ok:
+                    return PATH_BLOCKED, 'guard path blocked, unknown, out of bounds, or malformed'
+                return 0, ''
+            except Exception as exc:  # noqa: BLE001
+                return GUARD_UNAVAILABLE, f'guard data or TF error: {exc}'
 
         def on_odom(self, m):
             t = m.twist.twist
@@ -197,7 +271,7 @@ def main():
                 self.get_logger().warn('rejected: no fresh pose TF')
                 return GoalResponse.REJECT
             # 먼 목표도 받아서 execute에서 이유 코드와 함께 중단(거부하면 BT가 이유를 모름)
-            # far goals are accepted and aborted with START_TOO_FAR in execute (a rejection carries no reason)
+            # Far goals are aborted with START_TOO_FAR; rejection carries no reason.
             return GoalResponse.ACCEPT
 
         def stop(self):
@@ -223,7 +297,8 @@ def main():
                 return self.fail(handle, result, POSE_LOST, 'pose TF stale')
             ex, ey, _ = body_error(robot, goal)
             if math.hypot(ex, ey) > self.max_start + (0.10 if self.relocalize else 0.0):
-                # 재위치로 AMCL이 8~9 cm 바뀔 수 있어 재위치 전에는 0.10 m 더 봐준다 / AMCL may shift 8-9 cm on relocalize
+                # AMCL may shift 8–9 cm on relocalization; allow 0.10 m before it.
+                # 한글: 재위치 전에는 AMCL 이동을 고려해 0.10 m 더 허용한다.
                 return self.fail(handle, result, START_TOO_FAR,
                                  f'goal {math.hypot(ex, ey):.2f} m away (> {self.max_start} m)')
             if self.relocalize:
@@ -245,10 +320,15 @@ def main():
                     handle.canceled()
                     return result
                 if time.monotonic() - t0 > self.time_limit:
-                    return self.fail(handle, result, TIMEOUT, f'not within tolerance after {self.time_limit} s')
+                    return self.fail(
+                        handle, result, TIMEOUT, f'not within tolerance after {self.time_limit} s')
                 robot = self.pose()
                 if robot is None:
                     return self.fail(handle, result, POSE_LOST, 'pose TF stale')
+                if self.sim_guard:
+                    code, message = self.guard_check(goal)
+                    if code:
+                        return self.fail(handle, result, code, message)
                 ex, ey, eyaw = body_error(robot, goal)
                 fb = NavigateToPose.Feedback()
                 fb.distance_remaining = float(math.hypot(ex, ey))
