@@ -3,6 +3,8 @@
 # their color->rgb topic remap: their own rtabmap_slam.launch.py subscribes to the un-remapped
 # ".../color/image_raw" and ".../color/camera_info", so we keep the driver's natural names.
 import os
+import importlib.util
+import hashlib
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -67,6 +69,27 @@ def launch_setup(context):
         condition=IfCondition(LaunchConfiguration('colorizer')),
     )
 
+    depth_source = LaunchConfiguration('depth_source').perform(context)
+    if depth_source not in ('default', 'corrected'):
+        raise ValueError('depth_source must be default or corrected')
+    cloud_remappings = []
+    cloud_extra = {}
+    if depth_source == 'corrected':
+        # The old self-filter reference is invalid after changing the reprojection.
+        # 한글: 재투영이 바뀌면 기존 자기 차폐 기준 영상은 유효하지 않다.
+        guard_file = os.path.join(get_package_share_directory('jetrover_perception'), 'launch', 'depth_source_guard.py')
+        spec = importlib.util.spec_from_file_location('depth_source_guard', guard_file)
+        guard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(guard)
+        reference = LaunchConfiguration('corrected_background_path').perform(context)
+        calibration = os.path.expanduser('~/.local/share/jetinspect-ops/calibration/rgbd-extrinsic-active.json')
+        cloud_extra['background_depth_path'] = guard.validate_corrected_background(reference, calibration)
+        cloud_extra['background_calibration_path'] = calibration
+        with open(calibration, 'rb') as active_file:
+            cloud_extra['background_calibration_sha256'] = hashlib.sha256(active_file.read()).hexdigest()
+        cloud_remappings = [('depth/image_raw', 'depth_corrected/image_raw'),
+                            ('depth/camera_info', 'depth_corrected/camera_info')]
+
     # Sparse PointCloud2 built from a strided (downsampled) depth image, instead
     # of the camera driver's own heavy enable_point_cloud (troubleshooting/019).
     # 한글: 드라이버의 무거운 포인트클라우드 대신, 간격을 둔 depth 영상으로 가벼운 PointCloud2를 만든다.
@@ -76,12 +99,15 @@ def launch_setup(context):
         name='sparse_point_cloud',
         namespace=camera_name,
         output='screen',
+        remappings=cloud_remappings,
         # depth_publish_clearing / depth_extrude_m (2026-10-25): 실기 시험(8.15/8.16 6번) 통과 후
         # 기본값을 켬 / 0.25 m로(이전 끔 / 0.15 m). 공식 nav2_params.yaml의 depth_clear 관측원이
         # depth/points_clear를 쓴다(troubleshooting/053).
         # Defaults switched on after the real tests (was off / 0.15 m); depth_clear needs them.
         parameters=[{
             'home_pose_rad': _arm_home_pose(),
+            'expected_depth_frame': camera_name + '_color_optical_frame',
+            **cloud_extra,
             'publish_clearing':
                 LaunchConfiguration('depth_publish_clearing').perform(context) == 'true',
             'extrude_depth_m': float(LaunchConfiguration('depth_extrude_m').perform(context)),
@@ -108,6 +134,8 @@ def launch_setup(context):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('camera_name', default_value='depth_cam'),
+        DeclareLaunchArgument('depth_source', default_value='default', description='default or corrected depth for obstacle cloud'),
+        DeclareLaunchArgument('corrected_background_path', default_value='', description='verified corrected depth background npy'),
         DeclareLaunchArgument(
             'colorizer', default_value='true',
             description='Run depth_colorizer (viewing only); false during Nav2 tests to save CPU'),

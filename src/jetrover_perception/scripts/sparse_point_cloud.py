@@ -50,6 +50,8 @@ collision_monitor가 source_timeout 후 로봇을 세운다(잘못된 기준으�
 """
 import os
 import time
+import hashlib
+from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
 import numpy as np
@@ -77,6 +79,13 @@ class SparsePointCloud(Node):
             get_package_share_directory('jetrover_perception'),
             'config', 'depth_background_ref.npy')
         self.declare_parameter('background_depth_path', default_ref)
+        self.declare_parameter('background_calibration_path', '')
+        self.declare_parameter('background_calibration_sha256', '')
+        self.declare_parameter('expected_depth_frame', '')
+        self.expected_depth_frame = self.get_parameter('expected_depth_frame').value
+        self.intrinsics_frame = None
+        self.background_calibration_path = self.get_parameter('background_calibration_path').value
+        self.background_calibration_sha256 = self.get_parameter('background_calibration_sha256').value
         # mm, margin above typical depth-sensor noise at this range (troubleshooting/023).
         # 30 -> 60 (2026-10-05): with the wrist-raised home pose the camera sees the far floor, where
         # the noise exceeds 30 mm (~12 false points/frame, 0.9 at 60). A real box is >100 mm closer.
@@ -182,13 +191,33 @@ class SparsePointCloud(Node):
 
     # 한글: 카메라 내부 파라미터(fx, fy, cx, cy) 저장.
     def _info_cb(self, msg):
+        if self.expected_depth_frame and msg.header.frame_id != self.expected_depth_frame:
+            self.intrinsics = None
+            self.intrinsics_frame = None
+            return
         self.intrinsics = (msg.k[0], msg.k[4], msg.k[2], msg.k[5])  # fx, fy, cx, cy
+        self.intrinsics_frame = msg.header.frame_id
 
     # 한글: 기준 depth보다 margin 이상 '가까운' 픽셀만 장애물로 본다. 로봇 자신의 바퀴/섀시나 바닥은 기준과 같아서 제거되고, XY/높이 필터가 실제 장애물까지 지우던 문제(troubleshooting/023)를 피한다.
     def _depth_cb(self, msg):
         self._count += 1
         if self._count % self.every_nth != 0:
             return
+        # A raw depth frame must not be compared with a color-aligned background.
+        # 한글: 미정합 깊이를 컬러 정합 기준 영상과 비교하지 않는다.
+        if self.expected_depth_frame and (msg.header.frame_id != self.expected_depth_frame or self.intrinsics_frame != self.expected_depth_frame):
+            self.get_logger().warn('depth frame is not color aligned; cloud withheld', throttle_duration_sec=5.0)
+            return
+        if self.background_calibration_path:
+            # Withhold obstacle and clearing clouds if the calibration changes at runtime.
+            # 한글: 실행 중 보정값이 바뀌면 장애물과 지우기 점 모두 발행하지 않는다.
+            try:
+                calibration = Path(self.background_calibration_path)
+                if calibration.is_symlink() or calibration.stat().st_size > 65536 or hashlib.sha256(calibration.read_bytes()).hexdigest() != self.background_calibration_sha256:
+                    raise ValueError('calibration changed')
+            except (OSError, ValueError):
+                self.get_logger().warn('corrected background calibration mismatch; cloud withheld', throttle_duration_sec=5.0)
+                return
         if self.intrinsics is None:
             return
         fx, fy, cx, cy = self.intrinsics

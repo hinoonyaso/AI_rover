@@ -228,6 +228,11 @@ def main():
         def on_color(self, m):
             if self.k is None or self.depth is None:
                 return
+            # Aligned depth and color must refer to the same optical frame.
+            # 한글: 정합 깊이와 컬러 영상은 같은 광학 프레임이어야 한다.
+            if not m.header.frame_id or self.depth.header.frame_id != m.header.frame_id:
+                self.get_logger().warn('depth and colour frames differ: not aligned', throttle_duration_sec=5.0)
+                return
             t_c = m.header.stamp.sec + m.header.stamp.nanosec * 1e-9
             t_d = self.depth.header.stamp.sec + self.depth.header.stamp.nanosec * 1e-9
             if abs(t_c - t_d) > self.max_dt:
