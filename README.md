@@ -87,6 +87,12 @@ IMU, 카메라, LiDAR와 주행·로봇팔 관련 보정 항목을 선택하고 
 
 ![샘플 서버에서 캡처한 센서 보정 작업 공간](docs/images/dashboard-calibration-demo.png)
 
+### 실제 로봇팔 큐브 집기
+
+실제 JetRover가 카메라로 빨간 큐브를 찾고 로봇팔과 그리퍼로 집어 올리는 장면입니다. 2026-11-18에 촬영한 한 차례의 실기 예시로, 반복 성공률을 뜻하지 않습니다. 원본 영상을 회전하고 축소한 무음 GIF입니다.
+
+![실제 JetRover 로봇팔의 빨간 큐브 집기 영상](docs/images/cube-gripper-real.gif)
+
 ### 실제 RGB-D 영상과 정합 확인
 
 정지 상태의 실제 카메라로 촬영한 컬러·깊이 영상과 RGB 영상에 깊이 경계를 표시한 검증 기록입니다. 깊이 영상은 미터 단위이며 흰 부분은 유효한 깊이값이 없는 영역입니다. [촬영 자세와 측정 기록](docs/benchmarks/perception/scan_pose_20261010.md) · [정합 확인 기록](checklist/PROJECT_CHECKLIST.md)
