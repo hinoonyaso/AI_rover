@@ -105,3 +105,11 @@ ADB 경로는 현재 시스템의 임시 설치 경로이므로 재부팅 후 �
 ## R818 깨우기 이벤트 수신 기록
 
 `python3 tools/audio/r818_wake_probe.py --seconds 90`은 마이크 제어 시리얼의 모든 프레임을 기록한다(기본 수신 전용, `--ack`는 핸드셰이크 확인 응답 전송). 음성을 저장하지 않고 로봇을 움직이지 않는다. 2026-11-22 두 모드 모두 "Hello Hiwonder"에 이벤트가 없었다(`troubleshooting/063`).
+
+## R818 호출어 설정
+
+```bash
+python3 tools/audio/r818_set_wake_word.py --keyword "hello hi wonder" --threshold 500
+```
+
+보드가 `vtn/res.bin`을 다시 만들고 약 30초 뒤 음성 엔진을 재시작한다. 키워드는 엔진 사전 단어여야 한다(`hiwonder`는 인식 안 됨, 발화는 "Hello Hiwonder" 그대로). 실행 전 보드 `vtn/res.bin`을 백업한다. 2026-11-22 설정 상태·원래 자원 백업 위치는 `troubleshooting/063`.

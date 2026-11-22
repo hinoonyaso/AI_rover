@@ -80,6 +80,11 @@ def wake_angle(payload):
             info = json.loads(info)
         if not isinstance(info, dict):
             return None
+        # The real board nests the result: info = '{"ivw": {"angle": .., "keyword": ..}}'
+        # (seen in /data/build/demo.log, 2026-11-22). Keep the flat form for compatibility.
+        # 한글: 실제 보드는 info 문자열 안 ivw 객체에 각도를 담는다(2026-11-22 보드 로그 확인).
+        if isinstance(info.get('ivw'), dict):
+            info = info['ivw']
         angle = info.get('angle')
         if isinstance(angle, bool) or not isinstance(angle, (int, float)):
             return None

@@ -24,3 +24,13 @@
 - 제조사 자료(Elephant `mercury_speech`): 호스트는 포트에 쓰지 않고 `{"type":"aiui_event", "content":{"result","info"}}` JSON만 읽는다. Hiwonder 문서상 기본 호출어는 "hello hiwonder"이며 언어 전환은 Hiwonder 이미지의 GUI 도구/`xf_mic_asr_offline mic_init.launch.py`가 담당한다. 호출어 설정 시리얼 명령은 공개 자료에서 찾지 못함.
 - 원인 후보(미확정): ① 보드에 다른 호출어(중국어 "小幻小幻" 등) 또는 빈 호출어 자원이 설정됨, ② 2026-11-11 보드 내부 프로세스 재시작 실험 이후 보드 음성 처리 상태 이상(당시 모노 음량 저하 기록, `prd/audio-doa.md`), ③ 이벤트 송신에 호스트 측 설정 명령이 필요.
 - 다음 확인: 보드 내부를 ADB로 읽기 전용 확인(`vtn/vtn.ini`·호출어 자원·`demo.log`에서 발화 시 깨우기 로그) 또는 Hiwonder `xf_mic_asr_offline` 소스 확보. 이 확인 전에는 내장 호출어 기반 음성 관제를 구현 완료로 보지 않는다.
+
+## 해결: 보드 호출어를 "Hello Hiwonder" 단독으로 설정 (2026-11-22)
+
+- **원인 1**: ADB 읽기로 확인한 보드 로그(`/data/build/demo.log.before-array-probe`)의 과거 깨우기 이벤트 키워드가 `xiao3 huan4 xiao3 huan4`(小幻小幻). 보드 호출어가 중국어였다.
+- **원인 2**: `hello hiwonder`로 바꿔도 반응 없음. `hiwonder`는 엔진 영어 사전에 없는 단어로 보이며(자원 사용량 928 → `hello hi wonder` 1969), 사전 단어 3개 `hello hi wonder`로 바꾸자 즉시 이벤트 수신. 발화는 그대로 "Hello Hiwonder".
+- **방법**: 보드 펌웨어 `demo_vtn`이 시리얼 메시지(type 0x05) `{"type":"wakeup_keywords","content":{"keyword":"hello hi wonder","threshold":"500"}}`를 받으면 `ivw71_keyword_demo -content "<kw>;nCM:<th>|" -out /data/build/vtn/res.bin`으로 자원을 다시 만들고 `{"type":"wakeup_keywords","content":"keyword changed"}` 응답 후 약 30초 안에 음성 엔진을 재시작한다. 도구: `tools/audio/r818_set_wake_word.py`. 자원은 `/data`에 있어 재부팅 후에도 유지된다(이전 중국어 자원이 재부팅 후에도 유지됐던 것과 같음).
+- **백업**: 원래 자원 `~/backup_r818_20261122/res.bin.xiaohuan`(MD5 `80e34bc0a970c434cbec0fe1c9b8f6da`) 및 보드 `/data/build/vtn/res.bin.xiaohuan-20261122`, `vtn.ini`·`user_cfg.ini`. 복구: 보드에서 `cp -p vtn/res.bin.xiaohuan-20261122 vtn/res.bin` 후 `demo` 재시작, 또는 설정 도구로 키워드 재설정.
+- **이벤트 형식(실측)**: type 0x04, `{"type":"aiui_event","content":{"eventType":4,"info":"{\"ivw\":{\"angle\":..,\"score\":..,\"power\":..,\"beam\":..,\"keyword\":\"hello hi wonder\"}}","result":"hello hi wonder"}}`. 각도는 `info` 문자열 안 `ivw.angle`. 기존 `r818_doa.wake_angle`이 `info.angle`만 읽어 실제 이벤트를 놓치던 버그를 수정했다.
+- **문턱값**: 900에서는 미검출, 500에서 검출. 수신된 점수 505~786. 두 번의 90/75초 시험에서 이벤트 6개·3개였으나 사용자의 정확한 발화 횟수가 기록되지 않아 미탐·오탐률은 미측정. 점수 505·507에 음량(power) 4.2·11.0인 이벤트는 오탐 의심. 보드 자체의 비프·LED 반응은 없고 시리얼 이벤트로만 확인된다.
+- **남은 검증**: 정해진 횟수 발화 + 호출어 없는 일상 대화·TV 소음 구간으로 미탐/오탐 측정 후 문턱값(예 500~600) 결정, 각도 영점·방향 보정, 웹 음성 관제와 연결(현재 웹 경로는 브라우저 마이크+전사 호출어).

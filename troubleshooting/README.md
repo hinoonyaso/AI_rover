@@ -94,4 +94,4 @@
 
 - [062 관제 센서 복구와 깊이 장애물 데이터 미수신](062-dashboard-sensor-recovery.md) — 카메라 복구 확인, LiDAR 첫 재시작 초기화 정체 원인 미확정.
 
-- [063 음성 호출어 오인식](063-voice-wake-recognition.md) — 전사 호출어 미탐(프롬프트 시 오탐); 내장 "Hello Hiwonder" 전환 결정, 보드가 깨우기 이벤트를 보내지 않음(미해결).
+- [063 음성 호출어 오인식](063-voice-wake-recognition.md) — 보드 호출어가 중국어(小幻小幻)였고 `hiwonder`는 사전 밖 단어 → `hello hi wonder`(문턱 500)로 설정해 해결. 오탐률·웹 연결은 남음.

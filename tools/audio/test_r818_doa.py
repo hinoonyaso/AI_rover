@@ -46,3 +46,12 @@ def test_json_string_info():
     data = {'type': 'aiui_event', 'content': {'eventType': 4, 'info': '{"angle": 45}'}}
     payload = json.dumps(data).encode()
     assert wake_angle(frame(2, 7, payload)[7:-1]) == 45
+
+
+def test_real_board_nested_ivw_info():
+    # Copied from the board demo.log (2026-11-22). / 보드 demo.log에서 복사한 실제 이벤트.
+    info = json.dumps({'ivw': {'start_ms': 256440, 'end_ms': 257310, 'beam': 1, 'physical': 1,
+                               'score': 502.0, 'angle': 88.0, 'keyword': 'xiao3 huan4 xiao3 huan4'}})
+    data = {'content': {'arg1': 1, 'arg2': 0, 'eventType': 4, 'info': info,
+                        'result': 'xiao3 huan4 xiao3 huan4'}, 'type': 'aiui_event'}
+    assert wake_angle(json.dumps(data).encode()) == 88.0
