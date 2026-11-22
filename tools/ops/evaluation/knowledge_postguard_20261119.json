@@ -1,0 +1,20 @@
+[
+ {"q":"USB 변환기 드라이버가 커널에 포함됐는지 확인하는 명령은 무엇인가요?","source":"troubleshooting/012-ch341-module-missing.md","terms":["modinfo ch341"]},
+ {"q":"CH340 모듈을 빌드한 다음 커널 버전이 바뀌면 어떻게 해야 하나요?","source":"troubleshooting/012-ch341-module-missing.md","terms":["커널 업데이트 시 재빌드"]},
+ {"q":"깊이 카메라에서 시리얼 없는 USB 장치 때문에 열거가 일부만 실패하나요?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["스캔 전체가 실패"]},
+ {"q":"카메라 오류의 원인을 udev 규칙만 추가하면 해결할 수 있나요?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["udev 규칙만으로는"]},
+ {"q":"자이로 후보를 만들 때 기존에 적용한 보정은 어떻게 반영하나요?","source":"prd/dashboard-sensor-calibration.md","terms":["잔차에 더한다"]},
+ {"q":"측정된 센서 후보는 장치 설정에 즉시 적용되나요?","source":"prd/dashboard-sensor-calibration.md","terms":["자동 적용하지 않는다"]},
+ {"q":"사용자가 센서를 꺼두면 웹 화면에서 측정값을 추측해서 보여주나요?","source":"tools/ops/README.md","terms":["미확인"]},
+ {"q":"대시보드에서 조회자 계정도 센서 드라이버를 시작할 수 있나요?","source":"prd/dashboard-sensor-connection.md","terms":["조회자는 상태만 볼 수 있다"]},
+ {"q":"경광등 가상 검사에서 1회 상태 전환은 깜빡임으로 분류되나요?","source":"prd/gazebo-stack-light-test-plan.md","terms":["1회 전환은 미확인"]},
+ {"q":"대시보드 모의 임무의 실행 상태는 몇 초마다 갱신되나요?","source":"tools/ops/README.md","terms":["3초 간격"]},
+ {"q":"한국어 음성 합성에 사용하는 KSS 음성은 어떤 라이선스 제한이 있나요?","source":"tools/voice/README.md","terms":["비상업 라이선스"]},
+ {"q":"예전 STM32 멈춤을 DTR을 단독으로 눌러 소프트웨어 복구할 수 있었나요?","source":"troubleshooting/001-stm32-firmware-hang.md","terms":["DTR도 STM32를 리셋시키지 않는다"]},
+ {"q":"지금 로봇이 얼마만큼 움직였는지 문서에서 알려줘","source":null,"terms":[]},
+ {"q":"현재 로봇의 충전량은 얼마야?","source":null,"terms":[]},
+ {"q":"로봇에 붙인 스캐너의 잉크 카트리지 색은 뭐야?","source":null,"terms":[]},
+ {"q":"설치된 식기세척기 세제의 양은?","source":null,"terms":[]},
+ {"q":"내 택배가 어디 도착했는지 추적해줘","source":null,"terms":[]},
+ {"q":"지구에서 내일 유니콘 열차가 언제 출발해?","source":null,"terms":[]}
+]

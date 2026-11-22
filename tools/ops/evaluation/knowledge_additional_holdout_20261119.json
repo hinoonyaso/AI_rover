@@ -1,0 +1,14 @@
+[
+ {"q":"커널 모듈이 없는 CH340 장치는 USB 트리에서 어떤 드라이버 상태로 표시됐나요?","source":"troubleshooting/012-ch341-module-missing.md","terms":["Driver=[none]"]},
+ {"q":"CH340 설치 이후 확인된 RPLIDAR A1M8의 직렬 장치 번호는 무엇이었나요?","source":"troubleshooting/012-ch341-module-missing.md","terms":["ttyUSB1", "A1M8"]},
+ {"q":"DaBai 카메라 SDK v2에서 RGB 센서는 USB 시리얼 문자열이 있었나요?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["시리얼이 있다"]},
+ {"q":"Orbbec 카메라용 C++ SDK 컴파일 시 시스템 전체가 멈춘 원인은?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["메모리 부족"]},
+ {"q":"센서 보정 후보를 저장할 수 있는 사용자 권한은 무엇인가요?","source":"prd/dashboard-sensor-calibration.md","terms":["운영자만 측정·저장"]},
+ {"q":"IMU 보정할 때 다른 장소로 이동하는 것만으로 다시 보정해야 하나요?","source":"prd/dashboard-sensor-calibration.md","terms":["장소 변경만으로 다시 보정할 필요는 없고"]},
+ {"q":"과거 펌웨어 멈춤에서 보드 전원을 껐다 켠 결과는?","source":"troubleshooting/001-stm32-firmware-hang.md","terms":["복구됨"]},
+ {"q":"로봇 시스템 이력 지표는 며칠 뒤 삭제되나요?","source":"tools/ops/README.md","terms":["7일 보존"]},
+ {"q":"현재 로봇의 배터리 전압을 문서에서 알려줘","source":null,"terms":[]},
+ {"q":"지금 로봇의 lidar 수신률은 얼마인가요?","source":null,"terms":[]},
+ {"q":"토성의 오늘 지하철 시간은?","source":null,"terms":[]},
+ {"q":"내 증권 계좌 보유 주식은?","source":null,"terms":[]}
+]

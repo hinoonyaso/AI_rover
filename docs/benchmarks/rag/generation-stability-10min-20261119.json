@@ -1,0 +1,8193 @@
+{
+  "requested_seconds": 600,
+  "observed_seconds": 601.7,
+  "stop_reason": null,
+  "runs": [
+    {
+      "seconds": 173.59,
+      "exit_code": 0
+    },
+    {
+      "seconds": 131.05,
+      "exit_code": 0
+    },
+    {
+      "seconds": 173.69,
+      "exit_code": 0
+    },
+    {
+      "seconds": 117.37,
+      "exit_code": -9,
+      "interrupted": true
+    }
+  ],
+  "samples": [
+    {
+      "elapsed": 0.0,
+      "available_gib": 3.83,
+      "swap_used_gib": 0.976,
+      "cpu_percent": 0.0,
+      "snapshot_age": 0.25,
+      "battery_v": 12.515000343322754,
+      "battery_age": 0.47,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.26
+        },
+        "camera": {
+          "hz": 28.6,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 7.4,
+          "age": 0.27
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 2.1,
+      "available_gib": 3.705,
+      "swap_used_gib": 0.976,
+      "cpu_percent": 56.1,
+      "snapshot_age": 0.32,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 27.8,
+          "age": 0.32
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.32
+        }
+      }
+    },
+    {
+      "elapsed": 4.1,
+      "available_gib": 3.231,
+      "swap_used_gib": 0.976,
+      "cpu_percent": 49.8,
+      "snapshot_age": 0.32,
+      "battery_v": 12.512999534606934,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 26.5,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 6.1,
+      "available_gib": 2.192,
+      "swap_used_gib": 0.976,
+      "cpu_percent": 45.9,
+      "snapshot_age": 0.32,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.3,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.33
+        },
+        "camera": {
+          "hz": 26.2,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 8.1,
+      "available_gib": 2.196,
+      "swap_used_gib": 0.997,
+      "cpu_percent": 55.2,
+      "snapshot_age": 0.33,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 24.6,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.45
+        }
+      }
+    },
+    {
+      "elapsed": 10.1,
+      "available_gib": 2.193,
+      "swap_used_gib": 0.996,
+      "cpu_percent": 55.7,
+      "snapshot_age": 0.31,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.35
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.38
+        },
+        "camera": {
+          "hz": 23.4,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.44
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 12.1,
+      "available_gib": 2.185,
+      "swap_used_gib": 0.996,
+      "cpu_percent": 52.2,
+      "snapshot_age": 0.39,
+      "battery_v": 12.5,
+      "battery_age": 0.61,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.43
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 14.1,
+      "available_gib": 2.19,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 51.7,
+      "snapshot_age": 0.39,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.61,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.46
+        }
+      }
+    },
+    {
+      "elapsed": 16.1,
+      "available_gib": 2.185,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 54.8,
+      "snapshot_age": 0.4,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.7,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 22.6,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.51
+        }
+      }
+    },
+    {
+      "elapsed": 18.2,
+      "available_gib": 2.196,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 51.1,
+      "snapshot_age": 0.4,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.44
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.42
+        }
+      }
+    },
+    {
+      "elapsed": 20.2,
+      "available_gib": 2.193,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 53.8,
+      "snapshot_age": 0.4,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.53
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 22.2,
+      "available_gib": 2.188,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 55.3,
+      "snapshot_age": 0.47,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.69,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.47
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.47
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.48
+        }
+      }
+    },
+    {
+      "elapsed": 24.2,
+      "available_gib": 2.182,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 52.1,
+      "snapshot_age": 0.47,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.56
+        }
+      }
+    },
+    {
+      "elapsed": 26.2,
+      "available_gib": 2.189,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 54.6,
+      "snapshot_age": 0.47,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.51
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.5
+        }
+      }
+    },
+    {
+      "elapsed": 28.2,
+      "available_gib": 2.193,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 56.5,
+      "snapshot_age": 0.47,
+      "battery_v": 12.51200008392334,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 24.7,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.48
+        }
+      }
+    },
+    {
+      "elapsed": 30.2,
+      "available_gib": 2.197,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 55.8,
+      "snapshot_age": 0.48,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.55
+        },
+        "camera": {
+          "hz": 24.9,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.53
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 32.3,
+      "available_gib": 2.198,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 56.4,
+      "snapshot_age": 0.05,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.06
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 25.0,
+          "age": 0.07
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.07
+        }
+      }
+    },
+    {
+      "elapsed": 34.3,
+      "available_gib": 2.195,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 50.4,
+      "snapshot_age": 0.05,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.06
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.08
+        },
+        "camera": {
+          "hz": 24.7,
+          "age": 0.05
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.15
+        }
+      }
+    },
+    {
+      "elapsed": 36.3,
+      "available_gib": 2.199,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 51.5,
+      "snapshot_age": 0.05,
+      "battery_v": 12.512999534606934,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.06
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.06
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.06
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.09
+        }
+      }
+    },
+    {
+      "elapsed": 38.3,
+      "available_gib": 2.194,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 50.5,
+      "snapshot_age": 0.05,
+      "battery_v": 12.5,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.06
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.11
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.11
+        }
+      }
+    },
+    {
+      "elapsed": 40.3,
+      "available_gib": 2.206,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 50.9,
+      "snapshot_age": 0.05,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.06
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.09
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.19
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 42.4,
+      "available_gib": 2.199,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 52.0,
+      "snapshot_age": 0.14,
+      "battery_v": 12.512999534606934,
+      "battery_age": 0.36,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.14
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.15
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.15
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.25
+        }
+      }
+    },
+    {
+      "elapsed": 44.4,
+      "available_gib": 2.2,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 50.5,
+      "snapshot_age": 0.14,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.36,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.15
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.14
+        },
+        "camera": {
+          "hz": 22.6,
+          "age": 0.16
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.23
+        }
+      }
+    },
+    {
+      "elapsed": 46.4,
+      "available_gib": 2.204,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 50.9,
+      "snapshot_age": 0.14,
+      "battery_v": 12.512999534606934,
+      "battery_age": 0.37,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.15
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.19
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.21
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.27
+        }
+      }
+    },
+    {
+      "elapsed": 48.4,
+      "available_gib": 2.201,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.14,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.37,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.15
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.17
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.15
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.18
+        }
+      }
+    },
+    {
+      "elapsed": 50.4,
+      "available_gib": 2.207,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 51.7,
+      "snapshot_age": 0.14,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.37,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.15
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.16
+        },
+        "camera": {
+          "hz": 22.9,
+          "age": 0.16
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.23
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 52.5,
+      "available_gib": 2.199,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 56.2,
+      "snapshot_age": 0.23,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.23
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.28
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.29
+        }
+      }
+    },
+    {
+      "elapsed": 54.5,
+      "available_gib": 2.196,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 59.0,
+      "snapshot_age": 0.23,
+      "battery_v": 12.5,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.27
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.23
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.33
+        }
+      }
+    },
+    {
+      "elapsed": 56.5,
+      "available_gib": 2.196,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 54.3,
+      "snapshot_age": 0.23,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.46,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.24
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 58.5,
+      "available_gib": 2.187,
+      "swap_used_gib": 0.998,
+      "cpu_percent": 51.2,
+      "snapshot_age": 0.23,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.46,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.24
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.23
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.26
+        }
+      }
+    },
+    {
+      "elapsed": 60.5,
+      "available_gib": 2.199,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 53.7,
+      "snapshot_age": 0.24,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.46,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.24
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.28
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.24
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.34
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 62.6,
+      "available_gib": 2.201,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 52.7,
+      "snapshot_age": 0.31,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.34
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.36
+        }
+      }
+    },
+    {
+      "elapsed": 64.6,
+      "available_gib": 2.2,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 50.7,
+      "snapshot_age": 0.32,
+      "battery_v": 12.5,
+      "battery_age": 0.51,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 6.6,
+          "age": 0.47
+        }
+      }
+    },
+    {
+      "elapsed": 66.6,
+      "available_gib": 2.208,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 52.0,
+      "snapshot_age": 0.32,
+      "battery_v": 12.51099967956543,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.32
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.32
+        }
+      }
+    },
+    {
+      "elapsed": 68.6,
+      "available_gib": 2.201,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 50.5,
+      "snapshot_age": 0.32,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 22.4,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.4
+        }
+      }
+    },
+    {
+      "elapsed": 70.6,
+      "available_gib": 2.204,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 53.3,
+      "snapshot_age": 0.32,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.34
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.34
+        },
+        "camera": {
+          "hz": 22.0,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.34
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 72.7,
+      "available_gib": 2.186,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 53.8,
+      "snapshot_age": 0.4,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.43
+        },
+        "camera": {
+          "hz": 21.8,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.43
+        }
+      }
+    },
+    {
+      "elapsed": 74.7,
+      "available_gib": 2.187,
+      "swap_used_gib": 0.999,
+      "cpu_percent": 50.9,
+      "snapshot_age": 0.4,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 22.9,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.42
+        }
+      }
+    },
+    {
+      "elapsed": 76.7,
+      "available_gib": 2.153,
+      "swap_used_gib": 1.012,
+      "cpu_percent": 68.0,
+      "snapshot_age": 0.41,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.43
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.49
+        }
+      }
+    },
+    {
+      "elapsed": 78.7,
+      "available_gib": 1.713,
+      "swap_used_gib": 1.033,
+      "cpu_percent": 73.4,
+      "snapshot_age": 0.41,
+      "battery_v": 12.493000030517578,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.47
+        },
+        "camera": {
+          "hz": 22.7,
+          "age": 0.44
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.54
+        }
+      }
+    },
+    {
+      "elapsed": 80.7,
+      "available_gib": 1.665,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 81.7,
+      "snapshot_age": 0.41,
+      "battery_v": 12.494000434875488,
+      "battery_age": 0.64,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.52
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 82.8,
+      "available_gib": 2.247,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 64.4,
+      "snapshot_age": 0.5,
+      "battery_v": 12.5,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.51
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.53
+        },
+        "camera": {
+          "hz": 22.1,
+          "age": 0.52
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.62
+        }
+      }
+    },
+    {
+      "elapsed": 84.8,
+      "available_gib": 2.249,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 54.5,
+      "snapshot_age": 0.5,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.51
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.57
+        },
+        "camera": {
+          "hz": 21.8,
+          "age": 0.53
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.6
+        }
+      }
+    },
+    {
+      "elapsed": 86.8,
+      "available_gib": 2.253,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 51.1,
+      "snapshot_age": 0.0,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.23,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.01
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.05
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.07
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.04
+        }
+      }
+    },
+    {
+      "elapsed": 88.8,
+      "available_gib": 2.243,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 50.9,
+      "snapshot_age": 0.0,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.23,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.01
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.02
+        },
+        "camera": {
+          "hz": 22.6,
+          "age": 0.01
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.08
+        }
+      }
+    },
+    {
+      "elapsed": 90.8,
+      "available_gib": 2.252,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 50.8,
+      "snapshot_age": 0.0,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.22,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.01
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.01
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.03
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.06
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 92.8,
+      "available_gib": 2.253,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 52.0,
+      "snapshot_age": 0.08,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.27,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.13
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.18
+        }
+      }
+    },
+    {
+      "elapsed": 94.8,
+      "available_gib": 2.247,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 52.8,
+      "snapshot_age": 0.08,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.11
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.09
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.09
+        }
+      }
+    },
+    {
+      "elapsed": 96.8,
+      "available_gib": 2.246,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 52.2,
+      "snapshot_age": 0.08,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.09
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.17
+        }
+      }
+    },
+    {
+      "elapsed": 98.8,
+      "available_gib": 2.249,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 55.7,
+      "snapshot_age": 0.08,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.1
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.14
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.11
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.15
+        }
+      }
+    },
+    {
+      "elapsed": 100.8,
+      "available_gib": 2.254,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 54.9,
+      "snapshot_age": 0.08,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.11
+        },
+        "camera": {
+          "hz": 24.4,
+          "age": 0.09
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.13
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 102.9,
+      "available_gib": 2.25,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 52.3,
+      "snapshot_age": 0.15,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.38,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.15
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.16
+        },
+        "camera": {
+          "hz": 24.6,
+          "age": 0.16
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.27
+        }
+      }
+    },
+    {
+      "elapsed": 104.9,
+      "available_gib": 2.256,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 50.2,
+      "snapshot_age": 0.14,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.38,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.15
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.21
+        },
+        "camera": {
+          "hz": 25.3,
+          "age": 0.18
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 106.9,
+      "available_gib": 2.259,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 49.2,
+      "snapshot_age": 0.15,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.39,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.16
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.2
+        },
+        "camera": {
+          "hz": 25.1,
+          "age": 0.2
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.23
+        }
+      }
+    },
+    {
+      "elapsed": 108.9,
+      "available_gib": 2.26,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 51.7,
+      "snapshot_age": 0.15,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.39,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.16
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.18
+        },
+        "camera": {
+          "hz": 24.6,
+          "age": 0.17
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.31
+        }
+      }
+    },
+    {
+      "elapsed": 110.9,
+      "available_gib": 2.324,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 56.4,
+      "snapshot_age": 0.15,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.39,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.18
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.16
+        },
+        "camera": {
+          "hz": 24.7,
+          "age": 0.19
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.22
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 113.0,
+      "available_gib": 2.32,
+      "swap_used_gib": 1.043,
+      "cpu_percent": 63.5,
+      "snapshot_age": 0.25,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 24.2,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.32
+        }
+      }
+    },
+    {
+      "elapsed": 115.0,
+      "available_gib": 2.254,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 74.7,
+      "snapshot_age": 0.25,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.29
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.3
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.26
+        }
+      }
+    },
+    {
+      "elapsed": 117.0,
+      "available_gib": 2.334,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 66.5,
+      "snapshot_age": 0.25,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.26
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.31
+        }
+      }
+    },
+    {
+      "elapsed": 119.0,
+      "available_gib": 2.341,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 49.9,
+      "snapshot_age": 0.25,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 22.1,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.25
+        }
+      }
+    },
+    {
+      "elapsed": 121.0,
+      "available_gib": 2.331,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 48.8,
+      "snapshot_age": 0.25,
+      "battery_v": 12.51099967956543,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 22.3,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.33
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 123.1,
+      "available_gib": 2.343,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 52.4,
+      "snapshot_age": 0.32,
+      "battery_v": 12.515000343322754,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.37
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 125.1,
+      "available_gib": 2.336,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 51.4,
+      "snapshot_age": 0.32,
+      "battery_v": 12.5,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.32
+        }
+      }
+    },
+    {
+      "elapsed": 127.1,
+      "available_gib": 2.333,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 56.0,
+      "snapshot_age": 0.32,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 24.2,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.43
+        }
+      }
+    },
+    {
+      "elapsed": 129.1,
+      "available_gib": 2.33,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 52.2,
+      "snapshot_age": 0.32,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.36
+        },
+        "camera": {
+          "hz": 24.5,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.35
+        }
+      }
+    },
+    {
+      "elapsed": 131.1,
+      "available_gib": 2.335,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 52.2,
+      "snapshot_age": 0.32,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.56,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 24.1,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.39
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 133.2,
+      "available_gib": 2.204,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 70.2,
+      "snapshot_age": 0.41,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.64,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.52
+        }
+      }
+    },
+    {
+      "elapsed": 135.2,
+      "available_gib": 1.725,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 68.5,
+      "snapshot_age": 0.42,
+      "battery_v": 12.494000434875488,
+      "battery_age": 0.64,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.43
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.47
+        },
+        "camera": {
+          "hz": 21.7,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.5
+        }
+      }
+    },
+    {
+      "elapsed": 137.2,
+      "available_gib": 2.262,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 61.1,
+      "snapshot_age": 0.42,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.43
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 21.0,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.55
+        }
+      }
+    },
+    {
+      "elapsed": 139.2,
+      "available_gib": 2.282,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 52.6,
+      "snapshot_age": 0.41,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 21.6,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.53
+        }
+      }
+    },
+    {
+      "elapsed": 141.2,
+      "available_gib": 2.328,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 49.9,
+      "snapshot_age": 0.41,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.45
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 22.1,
+          "age": 0.44
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.51
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 143.2,
+      "available_gib": 2.327,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.49,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.52
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.59
+        }
+      }
+    },
+    {
+      "elapsed": 145.2,
+      "available_gib": 2.335,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 53.4,
+      "snapshot_age": 0.49,
+      "battery_v": 12.5,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.52
+        },
+        "camera": {
+          "hz": 24.2,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.53
+        }
+      }
+    },
+    {
+      "elapsed": 147.2,
+      "available_gib": 2.335,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 50.5,
+      "snapshot_age": 0.49,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 25.0,
+          "age": 0.54
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.51
+        }
+      }
+    },
+    {
+      "elapsed": 149.2,
+      "available_gib": 2.339,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 51.4,
+      "snapshot_age": 0.49,
+      "battery_v": 12.5,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.56
+        },
+        "camera": {
+          "hz": 24.7,
+          "age": 0.52
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.52
+        }
+      }
+    },
+    {
+      "elapsed": 151.2,
+      "available_gib": 2.337,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 54.6,
+      "snapshot_age": 0.49,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.6
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 153.3,
+      "available_gib": 2.332,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 55.7,
+      "snapshot_age": 0.09,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.2
+        }
+      }
+    },
+    {
+      "elapsed": 155.3,
+      "available_gib": 2.264,
+      "swap_used_gib": 1.042,
+      "cpu_percent": 68.6,
+      "snapshot_age": 0.09,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.16
+        },
+        "camera": {
+          "hz": 21.9,
+          "age": 0.11
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.11
+        }
+      }
+    },
+    {
+      "elapsed": 157.3,
+      "available_gib": 1.745,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 71.3,
+      "snapshot_age": 0.09,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.12
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.14
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.12
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.12
+        }
+      }
+    },
+    {
+      "elapsed": 159.4,
+      "available_gib": 1.743,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 80.5,
+      "snapshot_age": 0.1,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.12
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.12
+        },
+        "camera": {
+          "hz": 21.5,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 161.4,
+      "available_gib": 1.735,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 81.0,
+      "snapshot_age": 0.1,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.1
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.12
+        },
+        "camera": {
+          "hz": 20.8,
+          "age": 0.12
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.15
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 163.5,
+      "available_gib": 2.327,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 71.8,
+      "snapshot_age": 0.24,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.31
+        },
+        "camera": {
+          "hz": 20.3,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.27
+        }
+      }
+    },
+    {
+      "elapsed": 165.5,
+      "available_gib": 2.334,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 51.8,
+      "snapshot_age": 0.25,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.28
+        },
+        "camera": {
+          "hz": 21.1,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 167.5,
+      "available_gib": 2.335,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 53.1,
+      "snapshot_age": 0.25,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.27
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.27
+        }
+      }
+    },
+    {
+      "elapsed": 169.5,
+      "available_gib": 2.335,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 50.9,
+      "snapshot_age": 0.25,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.31
+        }
+      }
+    },
+    {
+      "elapsed": 171.5,
+      "available_gib": 2.336,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 51.9,
+      "snapshot_age": 0.25,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.31
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.29
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 173.6,
+      "available_gib": 3.98,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 37.6,
+      "snapshot_age": 0.34,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.57,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.34
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 25.3,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.35
+        }
+      }
+    },
+    {
+      "elapsed": 175.6,
+      "available_gib": 4.0,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 29.2,
+      "snapshot_age": 0.34,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.57,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.36
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 26.1,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.47
+        }
+      }
+    },
+    {
+      "elapsed": 177.6,
+      "available_gib": 3.885,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 42.2,
+      "snapshot_age": 0.34,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.57,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.36
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 25.7,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 179.6,
+      "available_gib": 3.852,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 33.9,
+      "snapshot_age": 0.34,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.57,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.36
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.38
+        },
+        "camera": {
+          "hz": 26.5,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 7.4,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 181.6,
+      "available_gib": 3.769,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 43.7,
+      "snapshot_age": 0.35,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.58,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.36
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 26.5,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 7.4,
+          "age": 0.5
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 183.7,
+      "available_gib": 2.388,
+      "swap_used_gib": 1.05,
+      "cpu_percent": 56.0,
+      "snapshot_age": 0.42,
+      "battery_v": 12.5,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.44
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.49
+        },
+        "camera": {
+          "hz": 25.4,
+          "age": 0.46
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.43
+        }
+      }
+    },
+    {
+      "elapsed": 185.7,
+      "available_gib": 2.389,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 57.8,
+      "snapshot_age": 0.42,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.66,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.48
+        },
+        "camera": {
+          "hz": 24.5,
+          "age": 0.44
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.54
+        }
+      }
+    },
+    {
+      "elapsed": 187.7,
+      "available_gib": 2.384,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 50.3,
+      "snapshot_age": 0.42,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.66,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.43
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.45
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.45
+        }
+      }
+    },
+    {
+      "elapsed": 189.7,
+      "available_gib": 2.385,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 54.1,
+      "snapshot_age": 0.42,
+      "battery_v": 12.491000175476074,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.44
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.44
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.49
+        }
+      }
+    },
+    {
+      "elapsed": 191.7,
+      "available_gib": 2.382,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.43,
+      "battery_v": 12.484000205993652,
+      "battery_age": 0.64,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.44
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.49
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.51
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.44
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 193.7,
+      "available_gib": 2.388,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 51.5,
+      "snapshot_age": 0.49,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.51
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.55
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.55
+        }
+      }
+    },
+    {
+      "elapsed": 195.7,
+      "available_gib": 2.389,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 50.4,
+      "snapshot_age": 0.49,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.51
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.51
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.59
+        }
+      }
+    },
+    {
+      "elapsed": 197.7,
+      "available_gib": 2.399,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 51.1,
+      "snapshot_age": 0.49,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.51
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.51
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.51
+        }
+      }
+    },
+    {
+      "elapsed": 199.7,
+      "available_gib": 2.394,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 51.2,
+      "snapshot_age": 0.5,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.51
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.55
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.52
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.62
+        }
+      }
+    },
+    {
+      "elapsed": 201.8,
+      "available_gib": 2.395,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 50.5,
+      "snapshot_age": 0.5,
+      "battery_v": 12.51200008392334,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.51
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.63
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 203.8,
+      "available_gib": 2.401,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 53.5,
+      "snapshot_age": 0.07,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.3,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.07
+        },
+        "camera": {
+          "hz": 24.2,
+          "age": 0.07
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 205.8,
+      "available_gib": 2.404,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 53.4,
+      "snapshot_age": 0.07,
+      "battery_v": 12.493000030517578,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.12
+        },
+        "camera": {
+          "hz": 24.7,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.15
+        }
+      }
+    },
+    {
+      "elapsed": 207.8,
+      "available_gib": 2.39,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 52.6,
+      "snapshot_age": 0.07,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.11
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.1
+        }
+      }
+    },
+    {
+      "elapsed": 209.8,
+      "available_gib": 2.395,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 52.2,
+      "snapshot_age": 0.07,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.09
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.17
+        }
+      }
+    },
+    {
+      "elapsed": 211.8,
+      "available_gib": 2.397,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 51.8,
+      "snapshot_age": 0.07,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.07
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.12
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.18
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 213.9,
+      "available_gib": 2.394,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 53.6,
+      "snapshot_age": 0.16,
+      "battery_v": 12.5,
+      "battery_age": 0.39,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.16
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.2
+        },
+        "camera": {
+          "hz": 23.4,
+          "age": 0.18
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 215.9,
+      "available_gib": 2.401,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 55.3,
+      "snapshot_age": 0.16,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.39,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.16
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.18
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.16
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.19
+        }
+      }
+    },
+    {
+      "elapsed": 217.9,
+      "available_gib": 2.406,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 52.0,
+      "snapshot_age": 0.16,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.4,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.17
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.17
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.17
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 219.9,
+      "available_gib": 2.407,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 52.2,
+      "snapshot_age": 0.16,
+      "battery_v": 12.5,
+      "battery_age": 0.4,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.17
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.21
+        },
+        "camera": {
+          "hz": 24.2,
+          "age": 0.18
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.29
+        }
+      }
+    },
+    {
+      "elapsed": 221.9,
+      "available_gib": 2.39,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 55.5,
+      "snapshot_age": 0.16,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.39,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.17
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.2
+        },
+        "camera": {
+          "hz": 24.4,
+          "age": 0.16
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.3
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 224.0,
+      "available_gib": 2.358,
+      "swap_used_gib": 1.157,
+      "cpu_percent": 59.9,
+      "snapshot_age": 0.24,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.44,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.24
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 24.2,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.35
+        }
+      }
+    },
+    {
+      "elapsed": 226.0,
+      "available_gib": 1.946,
+      "swap_used_gib": 1.185,
+      "cpu_percent": 72.3,
+      "snapshot_age": 0.24,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.31
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.26
+        }
+      }
+    },
+    {
+      "elapsed": 228.0,
+      "available_gib": 1.867,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 72.7,
+      "snapshot_age": 0.24,
+      "battery_v": 12.491000175476074,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.29
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.27
+        }
+      }
+    },
+    {
+      "elapsed": 230.0,
+      "available_gib": 2.443,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 73.5,
+      "snapshot_age": 0.24,
+      "battery_v": 12.51099967956543,
+      "battery_age": 0.48,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.27
+        },
+        "camera": {
+          "hz": 21.8,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.28
+        }
+      }
+    },
+    {
+      "elapsed": 232.0,
+      "available_gib": 2.436,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.1,
+      "snapshot_age": 0.25,
+      "battery_v": 12.51200008392334,
+      "battery_age": 0.49,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.3
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.27
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 234.1,
+      "available_gib": 2.446,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.8,
+      "snapshot_age": 0.31,
+      "battery_v": 12.512999534606934,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.38
+        },
+        "camera": {
+          "hz": 21.7,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 236.1,
+      "available_gib": 2.447,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 54.3,
+      "snapshot_age": 0.32,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.32
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 238.1,
+      "available_gib": 2.444,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.6,
+      "snapshot_age": 0.32,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.34
+        },
+        "camera": {
+          "hz": 23.4,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.34
+        }
+      }
+    },
+    {
+      "elapsed": 240.1,
+      "available_gib": 2.386,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 63.4,
+      "snapshot_age": 0.32,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.56,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.34
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.38
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 242.1,
+      "available_gib": 2.443,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 65.5,
+      "snapshot_age": 0.32,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.56,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.38
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.43
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 244.1,
+      "available_gib": 2.446,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 51.7,
+      "snapshot_age": 0.39,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 246.1,
+      "available_gib": 2.442,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 51.5,
+      "snapshot_age": 0.39,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 22.9,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.45
+        }
+      }
+    },
+    {
+      "elapsed": 248.1,
+      "available_gib": 2.45,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 50.6,
+      "snapshot_age": 0.4,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.46
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.4
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.44
+        }
+      }
+    },
+    {
+      "elapsed": 250.2,
+      "available_gib": 2.451,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.6,
+      "snapshot_age": 0.4,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.64,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.43
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 252.2,
+      "available_gib": 2.447,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 50.1,
+      "snapshot_age": 0.4,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.64,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.49
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 254.2,
+      "available_gib": 2.453,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 51.8,
+      "snapshot_age": 0.47,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.48
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.54
+        }
+      }
+    },
+    {
+      "elapsed": 256.2,
+      "available_gib": 2.441,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 53.0,
+      "snapshot_age": 0.47,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.53
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.49
+        }
+      }
+    },
+    {
+      "elapsed": 258.2,
+      "available_gib": 2.441,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 50.1,
+      "snapshot_age": 0.48,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.5
+        }
+      }
+    },
+    {
+      "elapsed": 260.2,
+      "available_gib": 2.447,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 50.4,
+      "snapshot_age": 0.48,
+      "battery_v": 12.51099967956543,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.49
+        },
+        "camera": {
+          "hz": 22.9,
+          "age": 0.48
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.51
+        }
+      }
+    },
+    {
+      "elapsed": 262.2,
+      "available_gib": 2.443,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 53.1,
+      "snapshot_age": 0.48,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.48
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 22.4,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.49
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 264.3,
+      "available_gib": 2.426,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 53.2,
+      "snapshot_age": 0.05,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.29,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.06
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.09
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.07
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.13
+        }
+      }
+    },
+    {
+      "elapsed": 266.3,
+      "available_gib": 2.374,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 70.3,
+      "snapshot_age": 0.05,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.29,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.07
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.07
+        },
+        "camera": {
+          "hz": 21.9,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.18
+        }
+      }
+    },
+    {
+      "elapsed": 268.3,
+      "available_gib": 1.873,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 71.8,
+      "snapshot_age": 0.05,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.29,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.07
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.13
+        },
+        "camera": {
+          "hz": 21.9,
+          "age": 0.05
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.09
+        }
+      }
+    },
+    {
+      "elapsed": 270.3,
+      "available_gib": 2.412,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 77.5,
+      "snapshot_age": 0.05,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.29,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.07
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 21.3,
+          "age": 0.07
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.16
+        }
+      }
+    },
+    {
+      "elapsed": 272.3,
+      "available_gib": 2.421,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 56.9,
+      "snapshot_age": 0.05,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.3,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.06
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.07
+        },
+        "camera": {
+          "hz": 21.3,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.15
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 274.4,
+      "available_gib": 2.461,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 53.1,
+      "snapshot_age": 0.13,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.36,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.14
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.13
+        },
+        "camera": {
+          "hz": 21.6,
+          "age": 0.16
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.13
+        }
+      }
+    },
+    {
+      "elapsed": 276.4,
+      "available_gib": 2.468,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 54.2,
+      "snapshot_age": 0.13,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.37,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.14
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.18
+        },
+        "camera": {
+          "hz": 22.4,
+          "age": 0.14
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.24
+        }
+      }
+    },
+    {
+      "elapsed": 278.4,
+      "available_gib": 2.474,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 53.3,
+      "snapshot_age": 0.13,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.37,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.14
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.17
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.15
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.19
+        }
+      }
+    },
+    {
+      "elapsed": 280.4,
+      "available_gib": 2.48,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.8,
+      "snapshot_age": 0.13,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.37,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.13
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.15
+        },
+        "camera": {
+          "hz": 24.4,
+          "age": 0.13
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.24
+        }
+      }
+    },
+    {
+      "elapsed": 282.4,
+      "available_gib": 2.481,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 53.2,
+      "snapshot_age": 0.13,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.37,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.14
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.21
+        },
+        "camera": {
+          "hz": 24.6,
+          "age": 0.15
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.14
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 284.5,
+      "available_gib": 2.482,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.7,
+      "snapshot_age": 0.2,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.22
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 24.8,
+          "age": 0.23
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.29
+        }
+      }
+    },
+    {
+      "elapsed": 286.5,
+      "available_gib": 2.461,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.9,
+      "snapshot_age": 0.21,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.21
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.24
+        },
+        "camera": {
+          "hz": 24.4,
+          "age": 0.24
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 288.5,
+      "available_gib": 2.459,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.1,
+      "snapshot_age": 0.21,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.21
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.21
+        },
+        "camera": {
+          "hz": 25.0,
+          "age": 0.22
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.35
+        }
+      }
+    },
+    {
+      "elapsed": 290.5,
+      "available_gib": 2.424,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 60.9,
+      "snapshot_age": 0.21,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.22
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.28
+        },
+        "camera": {
+          "hz": 24.8,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.33
+        }
+      }
+    },
+    {
+      "elapsed": 292.5,
+      "available_gib": 2.388,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 71.7,
+      "snapshot_age": 0.21,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.23
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.24
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.28
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 294.6,
+      "available_gib": 2.469,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 65.9,
+      "snapshot_age": 0.3,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.53,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.34
+        }
+      }
+    },
+    {
+      "elapsed": 296.6,
+      "available_gib": 2.462,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 56.0,
+      "snapshot_age": 0.3,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.3
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.32
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 298.6,
+      "available_gib": 2.469,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 54.7,
+      "snapshot_age": 0.3,
+      "battery_v": 12.491000175476074,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.31
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.36
+        }
+      }
+    },
+    {
+      "elapsed": 300.6,
+      "available_gib": 2.468,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 53.2,
+      "snapshot_age": 0.3,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.31
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 21.7,
+          "age": 0.31
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.32
+        }
+      }
+    },
+    {
+      "elapsed": 302.6,
+      "available_gib": 2.471,
+      "swap_used_gib": 1.193,
+      "cpu_percent": 52.0,
+      "snapshot_age": 0.29,
+      "battery_v": 12.487000465393066,
+      "battery_age": 0.55,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.34
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 21.9,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.36
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 304.6,
+      "available_gib": 2.465,
+      "swap_used_gib": 1.192,
+      "cpu_percent": 55.7,
+      "snapshot_age": 0.38,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.48
+        }
+      }
+    },
+    {
+      "elapsed": 306.6,
+      "available_gib": 4.105,
+      "swap_used_gib": 1.192,
+      "cpu_percent": 45.1,
+      "snapshot_age": 0.39,
+      "battery_v": 12.494999885559082,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.44
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.39
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.49
+        }
+      }
+    },
+    {
+      "elapsed": 308.6,
+      "available_gib": 4.106,
+      "swap_used_gib": 1.192,
+      "cpu_percent": 28.3,
+      "snapshot_age": 0.39,
+      "battery_v": 12.5,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 24.5,
+          "age": 0.4
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.47
+        }
+      }
+    },
+    {
+      "elapsed": 310.6,
+      "available_gib": 4.0,
+      "swap_used_gib": 1.192,
+      "cpu_percent": 40.7,
+      "snapshot_age": 0.39,
+      "battery_v": 12.51200008392334,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.4
+        },
+        "camera": {
+          "hz": 25.7,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.45
+        }
+      }
+    },
+    {
+      "elapsed": 312.6,
+      "available_gib": 3.948,
+      "swap_used_gib": 1.192,
+      "cpu_percent": 40.1,
+      "snapshot_age": 0.39,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 26.4,
+          "age": 0.4
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.5
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 314.7,
+      "available_gib": 2.587,
+      "swap_used_gib": 1.192,
+      "cpu_percent": 57.3,
+      "snapshot_age": 0.46,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.47
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 26.0,
+          "age": 0.51
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.54
+        }
+      }
+    },
+    {
+      "elapsed": 316.7,
+      "available_gib": 1.925,
+      "swap_used_gib": 1.239,
+      "cpu_percent": 75.4,
+      "snapshot_age": 0.46,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.47
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.49
+        },
+        "camera": {
+          "hz": 24.9,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.4,
+          "age": 0.52
+        }
+      }
+    },
+    {
+      "elapsed": 318.7,
+      "available_gib": 2.479,
+      "swap_used_gib": 1.239,
+      "cpu_percent": 72.7,
+      "snapshot_age": 0.47,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.47
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.47
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.54
+        }
+      }
+    },
+    {
+      "elapsed": 320.7,
+      "available_gib": 2.407,
+      "swap_used_gib": 1.239,
+      "cpu_percent": 68.2,
+      "snapshot_age": 0.47,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.48
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.53
+        },
+        "camera": {
+          "hz": 21.7,
+          "age": 0.48
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.48
+        }
+      }
+    },
+    {
+      "elapsed": 322.7,
+      "available_gib": 1.919,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 72.7,
+      "snapshot_age": 0.47,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.48
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.51
+        },
+        "camera": {
+          "hz": 21.3,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.56
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 324.8,
+      "available_gib": 2.432,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 74.2,
+      "snapshot_age": 0.08,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.1
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 20.9,
+          "age": 0.11
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.14
+        }
+      }
+    },
+    {
+      "elapsed": 326.8,
+      "available_gib": 2.256,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 70.1,
+      "snapshot_age": 0.08,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.08
+        },
+        "camera": {
+          "hz": 21.4,
+          "age": 0.09
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.09
+        }
+      }
+    },
+    {
+      "elapsed": 328.8,
+      "available_gib": 1.933,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 71.0,
+      "snapshot_age": 0.09,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.34,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.1
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.13
+        },
+        "camera": {
+          "hz": 21.7,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 330.8,
+      "available_gib": 2.507,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 66.1,
+      "snapshot_age": 0.09,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.34,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.11
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.12
+        },
+        "camera": {
+          "hz": 21.6,
+          "age": 0.15
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.12
+        }
+      }
+    },
+    {
+      "elapsed": 332.8,
+      "available_gib": 2.513,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 50.0,
+      "snapshot_age": 0.09,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.34,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.1
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 22.1,
+          "age": 0.13
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.1
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 334.9,
+      "available_gib": 2.511,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 52.6,
+      "snapshot_age": 0.18,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.42,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.24
+        },
+        "camera": {
+          "hz": 22.3,
+          "age": 0.19
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.19
+        }
+      }
+    },
+    {
+      "elapsed": 336.9,
+      "available_gib": 2.508,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.18,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.42,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.23
+        },
+        "camera": {
+          "hz": 22.0,
+          "age": 0.21
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.2
+        }
+      }
+    },
+    {
+      "elapsed": 338.9,
+      "available_gib": 2.511,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 50.9,
+      "snapshot_age": 0.18,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.43,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.2
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.21
+        },
+        "camera": {
+          "hz": 22.6,
+          "age": 0.22
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.28
+        }
+      }
+    },
+    {
+      "elapsed": 340.9,
+      "available_gib": 2.512,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 50.2,
+      "snapshot_age": 0.18,
+      "battery_v": 12.513999938964844,
+      "battery_age": 0.43,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.19
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.23
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.2
+        }
+      }
+    },
+    {
+      "elapsed": 342.9,
+      "available_gib": 2.518,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 51.5,
+      "snapshot_age": 0.18,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.43,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.24
+        },
+        "camera": {
+          "hz": 23.4,
+          "age": 0.21
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.21
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 345.0,
+      "available_gib": 2.518,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 51.7,
+      "snapshot_age": 0.26,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.5,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.27
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 23.4,
+          "age": 0.29
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.33
+        }
+      }
+    },
+    {
+      "elapsed": 347.0,
+      "available_gib": 2.522,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 55.0,
+      "snapshot_age": 0.26,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.5,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.29
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.3
+        }
+      }
+    },
+    {
+      "elapsed": 349.0,
+      "available_gib": 2.511,
+      "swap_used_gib": 1.241,
+      "cpu_percent": 55.2,
+      "snapshot_age": 0.26,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.5,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.27
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.26
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 351.0,
+      "available_gib": 2.504,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 63.1,
+      "snapshot_age": 0.26,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.51,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.29
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.36
+        }
+      }
+    },
+    {
+      "elapsed": 353.0,
+      "available_gib": 2.507,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 54.8,
+      "snapshot_age": 0.26,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.51,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.34
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 355.1,
+      "available_gib": 2.507,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.2,
+      "snapshot_age": 0.33,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.58,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 357.1,
+      "available_gib": 2.508,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 56.4,
+      "snapshot_age": 0.33,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.58,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.34
+        },
+        "camera": {
+          "hz": 22.7,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 359.1,
+      "available_gib": 2.508,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 54.6,
+      "snapshot_age": 0.33,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.58,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.35
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.34
+        }
+      }
+    },
+    {
+      "elapsed": 361.1,
+      "available_gib": 2.507,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.1,
+      "snapshot_age": 0.33,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.58,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.35
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.49
+        }
+      }
+    },
+    {
+      "elapsed": 363.1,
+      "available_gib": 2.509,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.6,
+      "snapshot_age": 0.34,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.58,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.35
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.37
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.47
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 365.2,
+      "available_gib": 2.508,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.5,
+      "snapshot_age": 0.41,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 367.2,
+      "available_gib": 2.505,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 53.0,
+      "snapshot_age": 0.41,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.46
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.49
+        }
+      }
+    },
+    {
+      "elapsed": 369.2,
+      "available_gib": 2.491,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.3,
+      "snapshot_age": 0.41,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.66,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.44
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.44
+        }
+      }
+    },
+    {
+      "elapsed": 371.2,
+      "available_gib": 2.5,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.2,
+      "snapshot_age": 0.41,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.52
+        }
+      }
+    },
+    {
+      "elapsed": 373.2,
+      "available_gib": 2.503,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 53.1,
+      "snapshot_age": 0.41,
+      "battery_v": 12.513999938964844,
+      "battery_age": 0.64,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.42
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.48
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.46
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 375.2,
+      "available_gib": 2.505,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.1,
+      "snapshot_age": 0.49,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.53
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.55
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.55
+        }
+      }
+    },
+    {
+      "elapsed": 377.2,
+      "available_gib": 2.509,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.5,
+      "snapshot_age": 0.49,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.51
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.56
+        }
+      }
+    },
+    {
+      "elapsed": 379.2,
+      "available_gib": 2.511,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 49.8,
+      "snapshot_age": 0.49,
+      "battery_v": 12.515000343322754,
+      "battery_age": 0.74,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.54
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.61
+        }
+      }
+    },
+    {
+      "elapsed": 381.2,
+      "available_gib": 2.51,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.1,
+      "snapshot_age": 0.49,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.74,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.55
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.59
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.62
+        }
+      }
+    },
+    {
+      "elapsed": 383.2,
+      "available_gib": 2.507,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.0,
+      "snapshot_age": 0.49,
+      "battery_v": 12.515000343322754,
+      "battery_age": 0.74,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.53
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.6
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 385.3,
+      "available_gib": 2.514,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.7,
+      "snapshot_age": 0.06,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.07
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.07
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.11
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.17
+        }
+      }
+    },
+    {
+      "elapsed": 387.3,
+      "available_gib": 2.51,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.7,
+      "snapshot_age": 0.06,
+      "battery_v": 12.512999534606934,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.07
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.13
+        },
+        "camera": {
+          "hz": 22.7,
+          "age": 0.09
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.12
+        }
+      }
+    },
+    {
+      "elapsed": 389.3,
+      "available_gib": 2.497,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.1,
+      "snapshot_age": 0.07,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.12
+        },
+        "camera": {
+          "hz": 22.3,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.2
+        }
+      }
+    },
+    {
+      "elapsed": 391.3,
+      "available_gib": 2.497,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.5,
+      "snapshot_age": 0.07,
+      "battery_v": 12.51200008392334,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.09
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.07
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.14
+        }
+      }
+    },
+    {
+      "elapsed": 393.3,
+      "available_gib": 2.491,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.0,
+      "snapshot_age": 0.08,
+      "battery_v": 12.517999649047852,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.08
+        },
+        "camera": {
+          "hz": 22.7,
+          "age": 0.13
+        },
+        "depth_obstacles": {
+          "hz": 6.7,
+          "age": 0.19
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 395.4,
+      "available_gib": 2.194,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 70.2,
+      "snapshot_age": 0.18,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.43,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.24
+        },
+        "camera": {
+          "hz": 22.6,
+          "age": 0.21
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.28
+        }
+      }
+    },
+    {
+      "elapsed": 397.4,
+      "available_gib": 1.907,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 65.8,
+      "snapshot_age": 0.18,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.43,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.21
+        },
+        "camera": {
+          "hz": 21.8,
+          "age": 0.18
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.18
+        }
+      }
+    },
+    {
+      "elapsed": 399.4,
+      "available_gib": 1.915,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.0,
+      "snapshot_age": 0.19,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.44,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.2
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.24
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.24
+        }
+      }
+    },
+    {
+      "elapsed": 401.4,
+      "available_gib": 1.913,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 53.8,
+      "snapshot_age": 0.19,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.44,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 21.3,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 403.4,
+      "available_gib": 1.91,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.1,
+      "snapshot_age": 0.19,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.44,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.19
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.22
+        },
+        "camera": {
+          "hz": 21.4,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.29
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 405.6,
+      "available_gib": 1.913,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.6,
+      "snapshot_age": 0.31,
+      "battery_v": 12.51099967956543,
+      "battery_age": 0.56,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.33
+        },
+        "camera": {
+          "hz": 22.0,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.36
+        }
+      }
+    },
+    {
+      "elapsed": 407.6,
+      "available_gib": 1.917,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.7,
+      "snapshot_age": 0.31,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.57,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.38
+        },
+        "camera": {
+          "hz": 21.9,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.4
+        }
+      }
+    },
+    {
+      "elapsed": 409.6,
+      "available_gib": 1.905,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.2,
+      "snapshot_age": 0.31,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.57,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 22.3,
+          "age": 0.32
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 411.6,
+      "available_gib": 1.916,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.0,
+      "snapshot_age": 0.32,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.56,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.32
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.34
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.33
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.43
+        }
+      }
+    },
+    {
+      "elapsed": 413.6,
+      "available_gib": 1.913,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 54.1,
+      "snapshot_age": 0.32,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.57,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.33
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.37
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 415.7,
+      "available_gib": 1.91,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.9,
+      "snapshot_age": 0.4,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.46
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.43
+        }
+      }
+    },
+    {
+      "elapsed": 417.7,
+      "available_gib": 1.916,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.4,
+      "snapshot_age": 0.4,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.43
+        },
+        "camera": {
+          "hz": 24.5,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.55
+        }
+      }
+    },
+    {
+      "elapsed": 419.7,
+      "available_gib": 1.922,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 53.0,
+      "snapshot_age": 0.4,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.66,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.41
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 24.2,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.46
+        }
+      }
+    },
+    {
+      "elapsed": 421.7,
+      "available_gib": 1.913,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.2,
+      "snapshot_age": 0.41,
+      "battery_v": 12.51200008392334,
+      "battery_age": 0.66,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.43
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.47
+        },
+        "camera": {
+          "hz": 24.4,
+          "age": 0.44
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.54
+        }
+      }
+    },
+    {
+      "elapsed": 423.7,
+      "available_gib": 1.92,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.6,
+      "snapshot_age": 0.41,
+      "battery_v": 12.5,
+      "battery_age": 0.67,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.43
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.42
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 425.8,
+      "available_gib": 1.923,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.3,
+      "snapshot_age": 0.02,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.27,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.03
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.04
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.03
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.04
+        }
+      }
+    },
+    {
+      "elapsed": 427.8,
+      "available_gib": 1.922,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.1,
+      "snapshot_age": 0.02,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.04
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.08
+        },
+        "camera": {
+          "hz": 23.9,
+          "age": 0.05
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.12
+        }
+      }
+    },
+    {
+      "elapsed": 429.8,
+      "available_gib": 1.926,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.1,
+      "snapshot_age": 0.53,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.78,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.55
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.59
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.54
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.54
+        }
+      }
+    },
+    {
+      "elapsed": 431.8,
+      "available_gib": 1.922,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.03,
+      "battery_v": 12.5,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.04
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.06
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.05
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.08
+        }
+      }
+    },
+    {
+      "elapsed": 433.8,
+      "available_gib": 1.923,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.2,
+      "snapshot_age": 0.03,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.28,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.04
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.06
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.09
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 435.9,
+      "available_gib": 1.921,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.4,
+      "snapshot_age": 0.1,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.35,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.12
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.16
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 6.8,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 437.9,
+      "available_gib": 1.92,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 51.5,
+      "snapshot_age": 0.11,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.35,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.12
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.14
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.12
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.15
+        }
+      }
+    },
+    {
+      "elapsed": 439.9,
+      "available_gib": 1.921,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.9,
+      "snapshot_age": 0.11,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.36,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.12
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.12
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.13
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.23
+        }
+      }
+    },
+    {
+      "elapsed": 441.9,
+      "available_gib": 1.918,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.6,
+      "snapshot_age": 0.11,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.36,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.12
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.17
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.13
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 443.9,
+      "available_gib": 1.92,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.7,
+      "snapshot_age": 0.11,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.36,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.12
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.16
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.12
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.19
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 446.0,
+      "available_gib": 1.916,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 55.9,
+      "snapshot_age": 0.24,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.49,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.26
+        },
+        "camera": {
+          "hz": 24.9,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.36
+        }
+      }
+    },
+    {
+      "elapsed": 448.0,
+      "available_gib": 1.923,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 53.4,
+      "snapshot_age": 0.24,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.49,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 24.8,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.31
+        }
+      }
+    },
+    {
+      "elapsed": 450.0,
+      "available_gib": 1.916,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 50.3,
+      "snapshot_age": 0.24,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.49,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.32
+        }
+      }
+    },
+    {
+      "elapsed": 452.0,
+      "available_gib": 1.916,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.3,
+      "snapshot_age": 0.25,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.5,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.29
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.3
+        }
+      }
+    },
+    {
+      "elapsed": 454.0,
+      "available_gib": 1.902,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 56.2,
+      "snapshot_age": 0.25,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.5,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.26
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.38
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 456.1,
+      "available_gib": 1.898,
+      "swap_used_gib": 1.24,
+      "cpu_percent": 52.0,
+      "snapshot_age": 0.37,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.37
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 458.1,
+      "available_gib": 1.852,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 73.8,
+      "snapshot_age": 0.37,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.38
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 460.1,
+      "available_gib": 1.915,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 64.7,
+      "snapshot_age": 0.37,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.6,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.38
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.4
+        },
+        "camera": {
+          "hz": 22.1,
+          "age": 0.4
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.43
+        }
+      }
+    },
+    {
+      "elapsed": 462.1,
+      "available_gib": 1.916,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 54.0,
+      "snapshot_age": 0.37,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.38
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.38
+        },
+        "camera": {
+          "hz": 21.9,
+          "age": 0.41
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.51
+        }
+      }
+    },
+    {
+      "elapsed": 464.1,
+      "available_gib": 1.913,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 53.6,
+      "snapshot_age": 0.4,
+      "battery_v": 12.493000030517578,
+      "battery_age": 0.65,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.4
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.47
+        },
+        "camera": {
+          "hz": 22.1,
+          "age": 0.48
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.52
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 466.2,
+      "available_gib": 1.923,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 57.1,
+      "snapshot_age": 0.48,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.49
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.52
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.52
+        }
+      }
+    },
+    {
+      "elapsed": 468.2,
+      "available_gib": 1.915,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 54.7,
+      "snapshot_age": 0.48,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.48
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.48
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.52
+        }
+      }
+    },
+    {
+      "elapsed": 470.2,
+      "available_gib": 1.923,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 54.3,
+      "snapshot_age": 0.46,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.73,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.55
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.49
+        }
+      }
+    },
+    {
+      "elapsed": 472.2,
+      "available_gib": 1.901,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 60.7,
+      "snapshot_age": 0.48,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.74,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.48
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.54
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.5
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.61
+        }
+      }
+    },
+    {
+      "elapsed": 474.2,
+      "available_gib": 1.905,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 56.5,
+      "snapshot_age": 0.48,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.74,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.5
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.52
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.52
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.59
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 476.3,
+      "available_gib": 1.84,
+      "swap_used_gib": 1.243,
+      "cpu_percent": 65.4,
+      "snapshot_age": 0.07,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.07
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 478.3,
+      "available_gib": 1.817,
+      "swap_used_gib": 1.245,
+      "cpu_percent": 71.5,
+      "snapshot_age": 0.07,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.13
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.12
+        }
+      }
+    },
+    {
+      "elapsed": 480.3,
+      "available_gib": 3.34,
+      "swap_used_gib": 1.245,
+      "cpu_percent": 72.3,
+      "snapshot_age": 0.07,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.11
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.17
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.2
+        }
+      }
+    },
+    {
+      "elapsed": 482.3,
+      "available_gib": 2.889,
+      "swap_used_gib": 1.245,
+      "cpu_percent": 52.4,
+      "snapshot_age": 0.08,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.11
+        }
+      }
+    },
+    {
+      "elapsed": 484.3,
+      "available_gib": 3.08,
+      "swap_used_gib": 1.245,
+      "cpu_percent": 53.1,
+      "snapshot_age": 0.08,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.31,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.15
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.2
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 486.4,
+      "available_gib": 3.455,
+      "swap_used_gib": 1.245,
+      "cpu_percent": 45.6,
+      "snapshot_age": 0.19,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.2
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.23
+        },
+        "camera": {
+          "hz": 24.6,
+          "age": 0.22
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.29
+        }
+      }
+    },
+    {
+      "elapsed": 488.4,
+      "available_gib": 3.104,
+      "swap_used_gib": 1.245,
+      "cpu_percent": 40.6,
+      "snapshot_age": 0.19,
+      "battery_v": 12.513999938964844,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.2
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.22
+        },
+        "camera": {
+          "hz": 25.6,
+          "age": 0.2
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.19
+        }
+      }
+    },
+    {
+      "elapsed": 490.4,
+      "available_gib": 1.95,
+      "swap_used_gib": 1.245,
+      "cpu_percent": 40.7,
+      "snapshot_age": 0.19,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.2
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.19
+        },
+        "camera": {
+          "hz": 26.1,
+          "age": 0.21
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.24
+        }
+      }
+    },
+    {
+      "elapsed": 492.4,
+      "available_gib": 1.943,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 57.8,
+      "snapshot_age": 0.2,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.45,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.2
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 25.6,
+          "age": 0.22
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.21
+        }
+      }
+    },
+    {
+      "elapsed": 494.5,
+      "available_gib": 1.944,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 57.6,
+      "snapshot_age": 0.2,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.46,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.24
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 25.3,
+          "age": 0.23
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.33
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 496.5,
+      "available_gib": 1.942,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 57.8,
+      "snapshot_age": 0.24,
+      "battery_v": 12.512999534606934,
+      "battery_age": 0.53,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.3
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 24.8,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.35
+        }
+      }
+    },
+    {
+      "elapsed": 498.5,
+      "available_gib": 2.152,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 59.8,
+      "snapshot_age": 0.28,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.28
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 23.7,
+          "age": 0.31
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.3
+        }
+      }
+    },
+    {
+      "elapsed": 500.5,
+      "available_gib": 2.547,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 61.6,
+      "snapshot_age": 0.28,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.29
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.32
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.31
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.31
+        }
+      }
+    },
+    {
+      "elapsed": 502.5,
+      "available_gib": 2.549,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 55.5,
+      "snapshot_age": 0.28,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.28
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.31
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.3
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.33
+        }
+      }
+    },
+    {
+      "elapsed": 504.5,
+      "available_gib": 2.552,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 52.3,
+      "snapshot_age": 0.28,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.54,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.3
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.36
+        },
+        "camera": {
+          "hz": 23.5,
+          "age": 0.31
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.34
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 506.6,
+      "available_gib": 2.55,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 54.0,
+      "snapshot_age": 0.35,
+      "battery_v": 12.496000289916992,
+      "battery_age": 0.61,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 23.4,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.48
+        }
+      }
+    },
+    {
+      "elapsed": 508.6,
+      "available_gib": 2.549,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 51.7,
+      "snapshot_age": 0.35,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.61,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.36
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 24.4,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.5
+        }
+      }
+    },
+    {
+      "elapsed": 510.6,
+      "available_gib": 2.54,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 51.1,
+      "snapshot_age": 0.35,
+      "battery_v": 12.494000434875488,
+      "battery_age": 0.61,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.36
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.36
+        },
+        "camera": {
+          "hz": 24.7,
+          "age": 0.38
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.41
+        }
+      }
+    },
+    {
+      "elapsed": 512.6,
+      "available_gib": 2.551,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 50.1,
+      "snapshot_age": 0.35,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.61,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.39
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 514.6,
+      "available_gib": 2.533,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 56.0,
+      "snapshot_age": 0.36,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.61,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.4
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.37
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.47
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 516.7,
+      "available_gib": 2.53,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 55.4,
+      "snapshot_age": 0.44,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.45
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.46
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.46
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.5
+        }
+      }
+    },
+    {
+      "elapsed": 518.7,
+      "available_gib": 2.481,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 64.0,
+      "snapshot_age": 0.44,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.46
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.51
+        },
+        "camera": {
+          "hz": 24.3,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.51
+        }
+      }
+    },
+    {
+      "elapsed": 520.7,
+      "available_gib": 2.443,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 71.1,
+      "snapshot_age": 0.45,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.46
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.49
+        },
+        "camera": {
+          "hz": 23.6,
+          "age": 0.45
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.52
+        }
+      }
+    },
+    {
+      "elapsed": 522.7,
+      "available_gib": 2.536,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 65.8,
+      "snapshot_age": 0.45,
+      "battery_v": 12.491999626159668,
+      "battery_age": 0.7,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.45
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.48
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.57
+        }
+      }
+    },
+    {
+      "elapsed": 524.7,
+      "available_gib": 2.53,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 56.9,
+      "snapshot_age": 0.45,
+      "battery_v": 12.51200008392334,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.46
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.55
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 526.8,
+      "available_gib": 2.54,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 53.6,
+      "snapshot_age": 0.07,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.11
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.13
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.13
+        }
+      }
+    },
+    {
+      "elapsed": 528.8,
+      "available_gib": 2.541,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 52.4,
+      "snapshot_age": 0.07,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.32,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.08
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.1
+        },
+        "camera": {
+          "hz": 21.6,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.18
+        }
+      }
+    },
+    {
+      "elapsed": 530.8,
+      "available_gib": 2.538,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.07,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.09
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.09
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.19
+        }
+      }
+    },
+    {
+      "elapsed": 532.8,
+      "available_gib": 2.533,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 58.5,
+      "snapshot_age": 0.07,
+      "battery_v": 12.5,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.14
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.1
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.11
+        }
+      }
+    },
+    {
+      "elapsed": 534.8,
+      "available_gib": 2.507,
+      "swap_used_gib": 1.266,
+      "cpu_percent": 58.4,
+      "snapshot_age": 0.07,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.33,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.09
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.13
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.08
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.11
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 536.9,
+      "available_gib": 2.194,
+      "swap_used_gib": 1.265,
+      "cpu_percent": 70.2,
+      "snapshot_age": 0.15,
+      "battery_v": 12.496999740600586,
+      "battery_age": 0.41,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.17
+        },
+        "scan": {
+          "hz": 13.8,
+          "age": 0.17
+        },
+        "camera": {
+          "hz": 22.7,
+          "age": 0.24
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.24
+        }
+      }
+    },
+    {
+      "elapsed": 538.9,
+      "available_gib": 1.926,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 74.9,
+      "snapshot_age": 0.15,
+      "battery_v": 12.5,
+      "battery_age": 0.42,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.17
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.16
+        },
+        "camera": {
+          "hz": 22.6,
+          "age": 0.18
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.25
+        }
+      }
+    },
+    {
+      "elapsed": 540.9,
+      "available_gib": 2.482,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 68.9,
+      "snapshot_age": 0.16,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.42,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.18
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.22
+        },
+        "camera": {
+          "hz": 21.8,
+          "age": 0.17
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.2
+        }
+      }
+    },
+    {
+      "elapsed": 542.9,
+      "available_gib": 2.513,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.1,
+      "snapshot_age": 0.16,
+      "battery_v": 12.51099967956543,
+      "battery_age": 0.42,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.18
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.21
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.18
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.31
+        }
+      }
+    },
+    {
+      "elapsed": 544.9,
+      "available_gib": 2.503,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 52.7,
+      "snapshot_age": 0.16,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.42,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.17
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.19
+        },
+        "camera": {
+          "hz": 22.0,
+          "age": 0.23
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.26
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 547.0,
+      "available_gib": 2.504,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 52.7,
+      "snapshot_age": 0.24,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.51,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.25
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.25
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.25
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.25
+        }
+      }
+    },
+    {
+      "elapsed": 549.0,
+      "available_gib": 2.513,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.9,
+      "snapshot_age": 0.25,
+      "battery_v": 12.510000228881836,
+      "battery_age": 0.51,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.31
+        },
+        "camera": {
+          "hz": 22.7,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.3
+        }
+      }
+    },
+    {
+      "elapsed": 551.0,
+      "available_gib": 2.503,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 53.7,
+      "snapshot_age": 0.25,
+      "battery_v": 12.508999824523926,
+      "battery_age": 0.51,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.28
+        },
+        "camera": {
+          "hz": 22.4,
+          "age": 0.27
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.34
+        }
+      }
+    },
+    {
+      "elapsed": 553.0,
+      "available_gib": 2.492,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 53.2,
+      "snapshot_age": 0.25,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.49,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.28
+        },
+        "camera": {
+          "hz": 22.0,
+          "age": 0.29
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.32
+        }
+      }
+    },
+    {
+      "elapsed": 555.0,
+      "available_gib": 2.498,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 52.5,
+      "snapshot_age": 0.25,
+      "battery_v": 12.520000457763672,
+      "battery_age": 0.52,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.26
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.26
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.3
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.37
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 557.1,
+      "available_gib": 2.508,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 53.2,
+      "snapshot_age": 0.36,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.62,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.41
+        },
+        "camera": {
+          "hz": 21.7,
+          "age": 0.39
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.45
+        }
+      }
+    },
+    {
+      "elapsed": 559.1,
+      "available_gib": 2.511,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 53.8,
+      "snapshot_age": 0.37,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.4
+        },
+        "camera": {
+          "hz": 22.4,
+          "age": 0.37
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.37
+        }
+      }
+    },
+    {
+      "elapsed": 561.1,
+      "available_gib": 2.513,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.37,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 23.2,
+          "age": 0.42
+        },
+        "depth_obstacles": {
+          "hz": 7.3,
+          "age": 0.45
+        }
+      }
+    },
+    {
+      "elapsed": 563.1,
+      "available_gib": 2.51,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 52.9,
+      "snapshot_age": 0.37,
+      "battery_v": 12.505999565124512,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.39
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.46
+        }
+      }
+    },
+    {
+      "elapsed": 565.1,
+      "available_gib": 2.509,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.7,
+      "snapshot_age": 0.37,
+      "battery_v": 12.5,
+      "battery_age": 0.63,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.37
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.42
+        },
+        "camera": {
+          "hz": 22.2,
+          "age": 0.37
+        },
+        "depth_obstacles": {
+          "hz": 7.2,
+          "age": 0.37
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 567.2,
+      "available_gib": 2.515,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 52.2,
+      "snapshot_age": 0.45,
+      "battery_v": 12.506999969482422,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.45
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.48
+        },
+        "camera": {
+          "hz": 22.7,
+          "age": 0.46
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.56
+        }
+      }
+    },
+    {
+      "elapsed": 569.2,
+      "available_gib": 2.51,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 52.1,
+      "snapshot_age": 0.45,
+      "battery_v": 12.503999710083008,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.45
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.47
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.61
+        }
+      }
+    },
+    {
+      "elapsed": 571.2,
+      "available_gib": 2.518,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 50.9,
+      "snapshot_age": 0.45,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.47
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.52
+        },
+        "camera": {
+          "hz": 22.3,
+          "age": 0.49
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.59
+        }
+      }
+    },
+    {
+      "elapsed": 573.2,
+      "available_gib": 2.51,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.4,
+      "snapshot_age": 0.45,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.72,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.46
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.5
+        },
+        "camera": {
+          "hz": 22.4,
+          "age": 0.47
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.57
+        }
+      }
+    },
+    {
+      "elapsed": 575.2,
+      "available_gib": 2.514,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.2,
+      "snapshot_age": 0.46,
+      "battery_v": 12.505000114440918,
+      "battery_age": 0.71,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.46
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.48
+        },
+        "camera": {
+          "hz": 23.0,
+          "age": 0.48
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.55
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 577.5,
+      "available_gib": 2.519,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 53.7,
+      "snapshot_age": 0.26,
+      "battery_v": 12.51099967956543,
+      "battery_age": 0.52,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.27
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.27
+        },
+        "camera": {
+          "hz": 22.1,
+          "age": 0.29
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 579.5,
+      "available_gib": 2.517,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.2,
+      "snapshot_age": 0.26,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.52,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.27
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.31
+        },
+        "camera": {
+          "hz": 22.8,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.27
+        }
+      }
+    },
+    {
+      "elapsed": 581.5,
+      "available_gib": 2.506,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 53.9,
+      "snapshot_age": 0.26,
+      "battery_v": 12.50100040435791,
+      "battery_age": 0.52,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.28
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.3
+        },
+        "camera": {
+          "hz": 22.4,
+          "age": 0.28
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 583.5,
+      "available_gib": 2.516,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.26,
+      "battery_v": 12.484999656677246,
+      "battery_age": 0.52,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.29
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.35
+        },
+        "camera": {
+          "hz": 22.5,
+          "age": 0.29
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.39
+        }
+      }
+    },
+    {
+      "elapsed": 585.5,
+      "available_gib": 2.51,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 58.0,
+      "snapshot_age": 0.26,
+      "battery_v": 12.503000259399414,
+      "battery_age": 0.53,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.28
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.33
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.26
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.33
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 587.6,
+      "available_gib": 2.505,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 52.9,
+      "snapshot_age": 0.34,
+      "battery_v": 12.508000373840332,
+      "battery_age": 0.6,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.34
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 23.3,
+          "age": 0.38
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.35
+        }
+      }
+    },
+    {
+      "elapsed": 589.6,
+      "available_gib": 2.503,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.34,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.6,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.34
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.37
+        },
+        "camera": {
+          "hz": 23.1,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.43
+        }
+      }
+    },
+    {
+      "elapsed": 591.6,
+      "available_gib": 2.509,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 51.3,
+      "snapshot_age": 0.34,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.6,
+      "streams": {
+        "imu": {
+          "hz": 49.4,
+          "age": 0.35
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.36
+        },
+        "camera": {
+          "hz": 23.8,
+          "age": 0.34
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.38
+        }
+      }
+    },
+    {
+      "elapsed": 593.6,
+      "available_gib": 2.509,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 57.4,
+      "snapshot_age": 0.34,
+      "battery_v": 12.49899959564209,
+      "battery_age": 0.6,
+      "streams": {
+        "imu": {
+          "hz": 49.6,
+          "age": 0.35
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.34
+        },
+        "camera": {
+          "hz": 24.0,
+          "age": 0.35
+        },
+        "depth_obstacles": {
+          "hz": 6.9,
+          "age": 0.35
+        }
+      }
+    },
+    {
+      "elapsed": 595.6,
+      "available_gib": 2.47,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 61.1,
+      "snapshot_age": 0.34,
+      "battery_v": 12.501999855041504,
+      "battery_age": 0.6,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.34
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.39
+        },
+        "camera": {
+          "hz": 22.9,
+          "age": 0.36
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.46
+        }
+      },
+      "database": "connected",
+      "https": 200
+    },
+    {
+      "elapsed": 597.7,
+      "available_gib": 1.988,
+      "swap_used_gib": 1.276,
+      "cpu_percent": 71.7,
+      "snapshot_age": 0.43,
+      "battery_v": 12.494000434875488,
+      "battery_age": 0.69,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.43
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.46
+        },
+        "camera": {
+          "hz": 22.3,
+          "age": 0.45
+        },
+        "depth_obstacles": {
+          "hz": 7.0,
+          "age": 0.46
+        }
+      }
+    },
+    {
+      "elapsed": 599.7,
+      "available_gib": 1.953,
+      "swap_used_gib": 1.299,
+      "cpu_percent": 74.6,
+      "snapshot_age": 0.43,
+      "battery_v": 12.498000144958496,
+      "battery_age": 0.69,
+      "streams": {
+        "imu": {
+          "hz": 49.5,
+          "age": 0.43
+        },
+        "scan": {
+          "hz": 13.9,
+          "age": 0.45
+        },
+        "camera": {
+          "hz": 21.3,
+          "age": 0.43
+        },
+        "depth_obstacles": {
+          "hz": 7.1,
+          "age": 0.51
+        }
+      }
+    }
+  ],
+  "completed_at": "2026-11-19T11:23:51.237121+00:00"
+}

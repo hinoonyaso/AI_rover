@@ -1,0 +1,101 @@
+[
+  {
+    "question": "SDK v2 인식 문제와 USB 권한 규칙은 같은 문제인가요?",
+    "sources": [
+      {
+        "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+        "offset": 640,
+        "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+      },
+      {
+        "source": "tools/voice/README.md",
+        "offset": 3200,
+        "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+      },
+      {
+        "source": "troubleshooting/001-stm32-firmware-hang.md",
+        "offset": 4800,
+        "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+      }
+    ],
+    "remote": {
+      "seconds": 28.13,
+      "status": 200,
+      "answer": "자료만 보면 **SDK v2 인식 문제와 USB 권한 규칙은 같은 문제라고 볼 수 없습니다.** 다만 “USB 권한 규칙” 자체에 대한 근거는 제시된 자료에 없어서, 두 문제가 같은지 다른지를 완전히 판정할 만큼 충분하지는 않습니다.\n\n- [1]의 Orbbec SDK v2 건은 `Invalid descriptor index: 0`, `Failed to query USB device serial number` 후 `(0)`으로 실패하는 문제로 기록되어 있고, 원인은 USB 권한/udev 규칙이 아니라 **시리얼이 없는 장치를 스캔 중 만나면 개별 장치를 건너뛰지 않고 열거 전체가 실패하는 업스트림 버그**로 설명됩니다. GitHub `orbbec/OrbbecSDK_v2` 이슈 #51도 같은 계열로 언급됩니다.\n- [3]은 STM32의 DTR/RTS와 NRST/BOOT0 배선, 물리 리셋 필요 여부에 관한 내용이라 SDK v2 인식 문제나 USB 권한 규칙과 직접 같은 문제라고 볼 근거는 없습니다.\n- [2]는 음성/LLM 관련 운영 문서로 이 질문과 직접 관련이 없습니다.\n\n따라서 “SDK v2 인식 문제”는 자료상 **업스트림 USB 열거 버그** 쪽이고, “USB 권한 규칙”은 **별개 범주일 가능성이 높지만**, 제공된 자료만으로는 권한 규칙 문제를 확인할 수 없으므로 **같다고 단정할 수 없고, 다르다고 단정할 근거도 부족합니다.**",
+      "usage": {
+        "completion_tokens": 568,
+        "prompt_tokens": 1030,
+        "total_tokens": 1598,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 8,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "reasoning_tokens": 297
+      },
+      "finish_reason": "stop"
+    },
+    "local": {
+      "skipped": "available_memory_below_3GiB",
+      "available_gib": 2.25
+    }
+  },
+  {
+    "question": "자이로 편향 후보를 계산할 때 이미 적용된 값은 어떻게 처리하나요?",
+    "sources": [
+      {
+        "source": "tools/ops/README.md",
+        "offset": 8000,
+        "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+      },
+      {
+        "source": "tools/voice/README.md",
+        "offset": 3200,
+        "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+      },
+      {
+        "source": "prd/dashboard-sensor-calibration.md",
+        "offset": 0,
+        "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+      }
+    ],
+    "remote": {
+      "seconds": 37.44,
+      "status": 200,
+      "answer": "자이로 편향 후보를 계산할 때 이미 적용된 값은 무시하지 않고, **이미 적용 중인 `/base_node`의 `gyro_bias`를 확인해 잔차에 더하는 방식**으로 처리한다고 계획 문서에 적혀 있습니다 [3]. 운영 문서도 자이로 bias가 설치된 `base.yaml`에 별도 적용된다고 설명합니다 [1].\n\n다만 이는 후보 계산·검토 단계의 내용이고, 실제 드라이버/설정에 자동 적용되는 것은 아닙니다. 적용 가능한 항목은 현재 설정·후보를 검토한 뒤 운영자가 별도로 적용합니다 [1][3]. 구체적인 부호나 계산식까지 이 자료만으로 확인되지는 않습니다.",
+      "usage": {
+        "completion_tokens": 837,
+        "prompt_tokens": 967,
+        "total_tokens": 1804,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 8,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "reasoning_tokens": 722
+      },
+      "finish_reason": "stop"
+    },
+    "local": {
+      "skipped": "available_memory_below_3GiB",
+      "available_gib": 2.26
+    }
+  },
+  {
+    "question": "제주도의 내일 버스 시간표를 알려줘",
+    "sources": [],
+    "remote": {
+      "skipped": "no_evidence"
+    },
+    "local": {
+      "skipped": "no_evidence"
+    },
+    "answer": "관련 근거를 찾지 못했습니다."
+  }
+]

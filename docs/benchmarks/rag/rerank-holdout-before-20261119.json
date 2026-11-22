@@ -1,0 +1,401 @@
+{
+  "positive_pass": 8,
+  "positive_total": 10,
+  "negative_pass": 3,
+  "negative_total": 4,
+  "cases": [
+    {
+      "question": "CH340 어댑터에서 누락된 리눅스 드라이버 이름은 무엇인가요?",
+      "expected_source": "troubleshooting/012-ch341-module-missing.md",
+      "expected_terms": [
+        "ch341"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 320,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 4480,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 2240,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 960,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        }
+      ],
+      "latency_ms": 1478
+    },
+    {
+      "question": "USB 재부팅 시 ttyUSB 이름이 달라지면 LiDAR 주소는 어떻게 유지하나요?",
+      "expected_source": "troubleshooting/012-ch341-module-missing.md",
+      "expected_terms": [
+        "by-path"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 1280,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7360,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 640,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 6720,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        }
+      ],
+      "latency_ms": 58
+    },
+    {
+      "question": "depth 비활성화 후 RGB 카메라만 고르면 SDK v2의 열거 실패가 사라지나요?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "똑같이 `(0)`으로 실패"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 640,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 12480,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 4480,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 960,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4160,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 68
+    },
+    {
+      "question": "시리얼 번호 없는 DaBai 센서 때문에 실패한 SDK의 주 버전은 무엇인가요?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "SDK v2"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 960,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 4800,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 0,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 63
+    },
+    {
+      "question": "여섯 자세 IMU 후보 측정에서 서로 다른 발행자 자료를 섞나요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "서로 다른 발행자의 측정은 합치지 않는다"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8000,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 640,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 7680,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 5120,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4800,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 52
+    },
+    {
+      "question": "카메라 내부 파라미터 보정은 깊이 정렬까지 자동으로 포함하나요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "depth 정렬"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 12800,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4160,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 640,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 54
+    },
+    {
+      "question": "펌웨어 장애 보고서가 STM32 정지의 정확한 이유를 확정했나요?",
+      "expected_source": "troubleshooting/001-stm32-firmware-hang.md",
+      "expected_terms": [
+        "확정하지 못했다"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 9600,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 3840,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 8640,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 960,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 13440,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        }
+      ],
+      "latency_ms": 55
+    },
+    {
+      "question": "센서 토픽은 마지막 데이터를 받은 뒤 몇 초까지 유효한가요?",
+      "expected_source": "tools/ops/README.md",
+      "expected_terms": [
+        "10초 미만"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 2560,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 640,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 640,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 640,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        }
+      ],
+      "latency_ms": 51
+    },
+    {
+      "question": "Whisper를 위한 입력 오디오는 모노인가요 스테레오인가요?",
+      "expected_source": "tools/voice/README.md",
+      "expected_terms": [
+        "16kHz 모노 16비트"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/voice/README.md",
+          "offset": 0,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 960,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 54
+    },
+    {
+      "question": "Piper의 한국어 KSS 음성은 상업적으로 제약이 있나요?",
+      "expected_source": "tools/voice/README.md",
+      "expected_terms": [
+        "비상업 라이선스"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/voice/README.md",
+          "offset": 2880,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 14720,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 1600,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 51
+    },
+    {
+      "question": "현재 LiDAR 토픽의 수신 주파수는 몇인가요?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7360,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8320,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 640,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 640,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 1280,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 52
+    },
+    {
+      "question": "지금 로봇 카메라는 연결되어 있나요?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 0
+    },
+    {
+      "question": "오늘 태양계 화성의 주유소 가격은?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 47
+    },
+    {
+      "question": "내일 제주도 비행기 출발 시각은?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 44
+    }
+  ]
+}

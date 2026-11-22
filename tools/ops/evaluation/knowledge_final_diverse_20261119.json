@@ -1,0 +1,18 @@
+[
+ {"q":"CH340 장치가 USB에 나오는데 커널에서 빠진 드라이버를 조회하는 방법은?","source":"troubleshooting/012-ch341-module-missing.md","terms":["modinfo ch341"]},
+ {"q":"바뀔 수 있는 LiDAR USB 이름을 고정 경로로 찾는 방법은?","source":"troubleshooting/012-ch341-module-missing.md","terms":["by-path"]},
+ {"q":"시리얼 없는 깊이 장치가 Orbbec SDK 검색에 어떤 영향을 주나요?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["스캔 전체가 실패"]},
+ {"q":"카메라 SDK의 문제를 USB 권한만 바꿔서 해결했나요?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["udev 규칙만으로는"]},
+ {"q":"가속도 후보는 센서 축들 사이의 상호 오차까지 보정하나요?","source":"prd/dashboard-sensor-calibration.md","terms":["교차축 오차 보정이 아니다"]},
+ {"q":"IMU 바이어스 측정 후 새 후보에 기존 설정은 어떻게 더하나요?","source":"prd/dashboard-sensor-calibration.md","terms":["잔차에 더한다"]},
+ {"q":"관제 화면은 별도 프로세스의 센서 드라이버를 중지할 수 있나요?","source":"prd/dashboard-sensor-connection.md","terms":["중지하거나 중복 기동하지 않는다"]},
+ {"q":"설비등 가상 카메라의 영상 부족 판정은 무엇으로 표시하나요?","source":"prd/gazebo-stack-light-test-plan.md","terms":["unknown"]},
+ {"q":"운영자 권한이 없어도 모의 임무를 시작할 수 있나요?","source":"tools/ops/README.md","terms":["모의 쓰기 요청은 운영자 계정"]},
+ {"q":"음성 모델 Qwen의 로컬 양자화 파일 이름은 무엇인가요?","source":"tools/voice/README.md","terms":["Qwen3-1.7B-Q4_K_M.gguf"]},
+ {"q":"현재 남은 배터리 충전율을 알려줘","source":null,"terms":[]},
+ {"q":"방금 로봇은 어디로 이동했어?","source":null,"terms":[]},
+ {"q":"로봇에 제빙기 부착 부품의 모델명을 알려줘","source":null,"terms":[]},
+ {"q":"로봇 팔에 설치된 의류 건조기 필터를 청소하는 방법은?","source":null,"terms":[]},
+ {"q":"다음 주 화성 공항 항공편은?","source":null,"terms":[]},
+ {"q":"내 자전거 도난 보험료는 얼마야?","source":null,"terms":[]}
+]

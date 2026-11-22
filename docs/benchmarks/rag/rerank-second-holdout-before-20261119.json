@@ -1,0 +1,355 @@
+{
+  "positive_pass": 6,
+  "positive_total": 8,
+  "negative_pass": 3,
+  "negative_total": 4,
+  "cases": [
+    {
+      "question": "커널 모듈이 없는 CH340 장치는 USB 트리에서 어떤 드라이버 상태로 표시됐나요?",
+      "expected_source": "troubleshooting/012-ch341-module-missing.md",
+      "expected_terms": [
+        "Driver=[none]"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 640,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 320,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 0,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 1420
+    },
+    {
+      "question": "CH340 설치 이후 확인된 RPLIDAR A1M8의 직렬 장치 번호는 무엇이었나요?",
+      "expected_source": "troubleshooting/012-ch341-module-missing.md",
+      "expected_terms": [
+        "ttyUSB1",
+        "A1M8"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 640,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 640,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8320,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 2240,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 61
+    },
+    {
+      "question": "DaBai 카메라 SDK v2에서 RGB 센서는 USB 시리얼 문자열이 있었나요?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "시리얼이 있다"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 640,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8320,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 5120,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 3840,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 4800,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 55
+    },
+    {
+      "question": "Orbbec 카메라용 C++ SDK 컴파일 시 시스템 전체가 멈춘 원인은?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "메모리 부족"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 2240,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 6720,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 1600,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 10240,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 4480,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 53
+    },
+    {
+      "question": "센서 보정 후보를 저장할 수 있는 사용자 권한은 무엇인가요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "운영자만 측정·저장"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8000,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 640,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 3520,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 49
+    },
+    {
+      "question": "IMU 보정할 때 다른 장소로 이동하는 것만으로 다시 보정해야 하나요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "장소 변경만으로 다시 보정할 필요는 없고"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 7680,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8000,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 640,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4800,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        }
+      ],
+      "latency_ms": 52
+    },
+    {
+      "question": "과거 펌웨어 멈춤에서 보드 전원을 껐다 켠 결과는?",
+      "expected_source": "troubleshooting/001-stm32-firmware-hang.md",
+      "expected_terms": [
+        "복구됨"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 9600,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 5120,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 960,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 2240,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 49
+    },
+    {
+      "question": "로봇 시스템 이력 지표는 며칠 뒤 삭제되나요?",
+      "expected_source": "tools/ops/README.md",
+      "expected_terms": [
+        "7일 보존"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 3520,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 11200,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 2240,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        }
+      ],
+      "latency_ms": 47
+    },
+    {
+      "question": "현재 로봇의 배터리 전압을 문서에서 알려줘",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 0
+    },
+    {
+      "question": "지금 로봇의 lidar 수신률은 얼마인가요?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": false,
+      "results": [
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 640,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 1600,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 11840,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 320,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 47
+    },
+    {
+      "question": "토성의 오늘 지하철 시간은?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 33
+    },
+    {
+      "question": "내 증권 계좌 보유 주식은?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 33
+    }
+  ]
+}

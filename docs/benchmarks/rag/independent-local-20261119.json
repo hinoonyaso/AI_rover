@@ -1,0 +1,46 @@
+[
+  {
+    "question": "SDK v2 인식 문제와 USB 권한 규칙은 같은 문제인가요?",
+    "sources": [
+      {
+        "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+        "offset": 640,
+        "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+      },
+      {
+        "source": "tools/voice/README.md",
+        "offset": 3200,
+        "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+      },
+      {
+        "source": "troubleshooting/001-stm32-firmware-hang.md",
+        "offset": 4800,
+        "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+      }
+    ],
+    "seconds": 108.1,
+    "answer": "SDK v2 인식 문제와 USB 권한 규칙은 **같은 문제**입니다. 이 두 문제가 연결되어 있으며, 그 원인은 **OrbbecSDK v2의 USB 열거 로직**에 있습니다.\n\n### 원인 분석\n- **SDK v2의 USB 열거 로직**은 시리얼 번호를 확인하는 과정에서 문제가 발생합니다. 특히, 시리얼 번호가 없는 장치(예: RGB 카메라)를 만나면 **전체 스캔이 실패**하게 됩니다.\n- 이는 **USB 권한 규칙**과 관련이 있습니다. SDK v2는 USB 장치를 열거할 때 **시리얼 번호를 확인**하는 과정에서 오류가 발생할 수 있으며, 이는 **USB 권한 규칙의 부재**로 인해 발생합니다.\n- 이 문제는 **업스트림 버그**로 간주됩니다. GitHub `orbbec/OrbbecSDK_v2` 이슈 #51에 기록된 DaBai 계열 카메라와 같은 문제는 **같은 원인**으로 설명됩니다.\n\n### 결론\nSDK v2 인"
+  },
+  {
+    "question": "자이로 편향 후보를 계산할 때 이미 적용된 값은 어떻게 처리하나요?",
+    "sources": [
+      {
+        "source": "tools/ops/README.md",
+        "offset": 8000,
+        "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+      },
+      {
+        "source": "tools/voice/README.md",
+        "offset": 3200,
+        "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+      },
+      {
+        "source": "prd/dashboard-sensor-calibration.md",
+        "offset": 0,
+        "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+      }
+    ],
+    "seconds": 102.07,
+    "answer": "자이로 편향 후보를 계산할 때 이미 적용된 값은 **후보 저장소에서 저장된 후보 값**으로 처리된다. 운영자가 후보를 적용할 때는 해당 후보 값을 기준으로 실제 장치에 적용한다. 적용 시에는 전용 백업을 생성하고, 이후 파일이 바뀌지 않았을 때 복원할 수 있다. 이 과정에서 **기존 적용된 값은 후보 저장소에서 기록된 값으로 간주**된다.\n\n[1]에서 설명된 방식과 일치하며, 후보 저장소는 기존 적용된 값과 함께 측정 결과를 저장하고, 운영자가 후보를 적용할 때는 해당 값을 기준으로 실제 장치에 적용한다.\n\n따라서, 이미 적용된 값은 **후보 저장소에서 기록된 값**으로 처리된다.\n\n[1] tools/ops/README.md"
+  }
+]

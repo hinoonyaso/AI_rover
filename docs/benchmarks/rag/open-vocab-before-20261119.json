@@ -1,0 +1,460 @@
+{
+  "positive_pass": 7,
+  "positive_total": 10,
+  "negative_pass": 5,
+  "negative_total": 8,
+  "cases": [
+    {
+      "question": "왜 카메라가 USB 검색 도중 장치 목록을 반환하지 못하나요?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "스캔 전체가 실패"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 640,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 10560,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 1280,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        }
+      ],
+      "latency_ms": 1958
+    },
+    {
+      "question": "카메라 시스템을 빌드할 때 메모리가 부족하면 어떻게 방지하나요?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "parallel-workers 1"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 2240,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4160,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 1920,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 7360,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 76
+    },
+    {
+      "question": "로봇 센서 후보를 저장한 직후에 장치가 저절로 수정되나요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "자동 적용하지 않는다"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 11840,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 2560,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4160,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 3840,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        }
+      ],
+      "latency_ms": 112
+    },
+    {
+      "question": "몸체를 새로운 곳으로 옮기면 센서 방향 교정이 의무인가요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "장소 변경만으로 다시 보정할 필요는 없고"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 11840,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 640,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 11200,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 11520,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 79
+    },
+    {
+      "question": "기계 고장의 정확한 이유가 입증되었나요?",
+      "expected_source": "troubleshooting/001-stm32-firmware-hang.md",
+      "expected_terms": [
+        "확정하지 못했다"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 2240,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8640,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 8640,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4800,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 2240,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        }
+      ],
+      "latency_ms": 78
+    },
+    {
+      "question": "바퀴를 구동하지 않고 관절 정보만 읽는 경로는 무엇인가요?",
+      "expected_source": "tools/ops/README.md",
+      "expected_terms": [
+        "팔 관절 읽기"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8640,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4800,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 7680,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 4800,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 640,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        }
+      ],
+      "latency_ms": 89
+    },
+    {
+      "question": "웹 UI의 카메라 화면은 연속 영상인가요 정지 이미지를 갱신하나요?",
+      "expected_source": "tools/ops/README.md",
+      "expected_terms": [
+        "정지 화면"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 3200,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3840,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 2240,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        }
+      ],
+      "latency_ms": 84
+    },
+    {
+      "question": "센서 드라이버 연결 여부와 측정값 유무는 구별하나요?",
+      "expected_source": "prd/dashboard-sensor-connection.md",
+      "expected_terms": [
+        "프로세스 실행과 데이터 수신을 구분"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7360,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 0,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4800,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        }
+      ],
+      "latency_ms": 83
+    },
+    {
+      "question": "가상 조명의 관측량이 부족할 때 검사는 성공인가요?",
+      "expected_source": "prd/gazebo-stack-light-test-plan.md",
+      "expected_terms": [
+        "unknown"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 6720,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 0,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 1920,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 4160,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 76
+    },
+    {
+      "question": "음성 인식의 오디오 파일은 어떤 샘플 형식이어야 하나요?",
+      "expected_source": "tools/voice/README.md",
+      "expected_terms": [
+        "16kHz 모노 16비트"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/voice/README.md",
+          "offset": 1280,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 14720,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 4800,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 1600,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 86
+    },
+    {
+      "question": "이 프로젝트의 무게가 30kg인 프린터의 토너 규격은?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 84
+    },
+    {
+      "question": "로봇용 바코드 프린터 용지 규격을 알려줘",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": false,
+      "results": [
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 640,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 80
+    },
+    {
+      "question": "탑재된 제빙기의 온도 조절법은?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8960,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8000,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 60
+    },
+    {
+      "question": "프로젝트 로봇이 배달할 피자의 도우 레시피는?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 3520,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 1600,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 4480,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 71
+    },
+    {
+      "question": "화성에서 비행기 표를 몇 장 팔았나?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 69
+    },
+    {
+      "question": "오늘 주차장에 빈자리가 몇 개인가?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 69
+    },
+    {
+      "question": "지금 카메라 화면에서 사람은 몇 명인가?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 0
+    },
+    {
+      "question": "방금 어떤 방향으로 이동했는지 알려줘",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 0
+    }
+  ]
+}

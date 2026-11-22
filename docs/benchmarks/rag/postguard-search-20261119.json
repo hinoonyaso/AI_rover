@@ -1,0 +1,489 @@
+{
+  "positive_pass": 9,
+  "positive_total": 12,
+  "negative_pass": 5,
+  "negative_total": 6,
+  "cases": [
+    {
+      "question": "USB 변환기 드라이버가 커널에 포함됐는지 확인하는 명령은 무엇인가요?",
+      "expected_source": "troubleshooting/012-ch341-module-missing.md",
+      "expected_terms": [
+        "modinfo ch341"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 320,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 320,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 320,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 6720,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        }
+      ],
+      "latency_ms": 1625
+    },
+    {
+      "question": "CH340 모듈을 빌드한 다음 커널 버전이 바뀌면 어떻게 해야 하나요?",
+      "expected_source": "troubleshooting/012-ch341-module-missing.md",
+      "expected_terms": [
+        "커널 업데이트 시 재빌드"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 640,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 2240,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 13440,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 1280,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        }
+      ],
+      "latency_ms": 78
+    },
+    {
+      "question": "깊이 카메라에서 시리얼 없는 USB 장치 때문에 열거가 일부만 실패하나요?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "스캔 전체가 실패"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 640,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 8960,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 3840,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        }
+      ],
+      "latency_ms": 83
+    },
+    {
+      "question": "카메라 오류의 원인을 udev 규칙만 추가하면 해결할 수 있나요?",
+      "expected_source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+      "expected_terms": [
+        "udev 규칙만으로는"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md",
+          "offset": 0,
+          "sha256": "110c42a819b785eb593cfd61be938fef5976b6c3e4d2e2c915682ee66778e06c"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 13760,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 4800,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 10240,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 11200,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 80
+    },
+    {
+      "question": "자이로 후보를 만들 때 기존에 적용한 보정은 어떻게 반영하나요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "잔차에 더한다"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8000,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        }
+      ],
+      "latency_ms": 79
+    },
+    {
+      "question": "측정된 센서 후보는 장치 설정에 즉시 적용되나요?",
+      "expected_source": "prd/dashboard-sensor-calibration.md",
+      "expected_terms": [
+        "자동 적용하지 않는다"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 11840,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 6080,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 7040,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        }
+      ],
+      "latency_ms": 70
+    },
+    {
+      "question": "사용자가 센서를 꺼두면 웹 화면에서 측정값을 추측해서 보여주나요?",
+      "expected_source": "tools/ops/README.md",
+      "expected_terms": [
+        "미확인"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 8000,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 640,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 2880,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 4480,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        }
+      ],
+      "latency_ms": 77
+    },
+    {
+      "question": "대시보드에서 조회자 계정도 센서 드라이버를 시작할 수 있나요?",
+      "expected_source": "prd/dashboard-sensor-connection.md",
+      "expected_terms": [
+        "조회자는 상태만 볼 수 있다"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 7680,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 2880,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        }
+      ],
+      "latency_ms": 81
+    },
+    {
+      "question": "경광등 가상 검사에서 1회 상태 전환은 깜빡임으로 분류되나요?",
+      "expected_source": "prd/gazebo-stack-light-test-plan.md",
+      "expected_terms": [
+        "1회 전환은 미확인"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 4480,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 2560,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 6080,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "troubleshooting/012-ch341-module-missing.md",
+          "offset": 0,
+          "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+        }
+      ],
+      "latency_ms": 75
+    },
+    {
+      "question": "대시보드 모의 임무의 실행 상태는 몇 초마다 갱신되나요?",
+      "expected_source": "tools/ops/README.md",
+      "expected_terms": [
+        "3초 간격"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 3200,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 3200,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 9280,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 2880,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/dashboard-sensor-connection.md",
+          "offset": 0,
+          "sha256": "42abc363dee23a40c28634b50fdec69713a73af93812199b568f2e3d02c6a13b"
+        }
+      ],
+      "latency_ms": 78
+    },
+    {
+      "question": "한국어 음성 합성에 사용하는 KSS 음성은 어떤 라이선스 제한이 있나요?",
+      "expected_source": "tools/voice/README.md",
+      "expected_terms": [
+        "비상업 라이선스"
+      ],
+      "pass": true,
+      "results": [
+        {
+          "source": "tools/voice/README.md",
+          "offset": 2560,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 14720,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 1600,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 77
+    },
+    {
+      "question": "예전 STM32 멈춤을 DTR을 단독으로 눌러 소프트웨어 복구할 수 있었나요?",
+      "expected_source": "troubleshooting/001-stm32-firmware-hang.md",
+      "expected_terms": [
+        "DTR도 STM32를 리셋시키지 않는다"
+      ],
+      "pass": false,
+      "results": [
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 3520,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "tools/ops/README.md",
+          "offset": 5440,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 3840,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        },
+        {
+          "source": "tools/voice/README.md",
+          "offset": 1280,
+          "sha256": "26f647648a9b32b27aee600abbcf8cb06d79cb2ad8eb0f538824d66c83a580df"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 5120,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        }
+      ],
+      "latency_ms": 89
+    },
+    {
+      "question": "지금 로봇이 얼마만큼 움직였는지 문서에서 알려줘",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 0
+    },
+    {
+      "question": "현재 로봇의 충전량은 얼마야?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 0
+    },
+    {
+      "question": "로봇에 붙인 스캐너의 잉크 카트리지 색은 뭐야?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": false,
+      "results": [
+        {
+          "source": "tools/ops/README.md",
+          "offset": 11840,
+          "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+        },
+        {
+          "source": "prd/gazebo-stack-light-test-plan.md",
+          "offset": 4480,
+          "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+        },
+        {
+          "source": "troubleshooting/001-stm32-firmware-hang.md",
+          "offset": 4480,
+          "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+        },
+        {
+          "source": "prd/dashboard-sensor-calibration.md",
+          "offset": 0,
+          "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+        },
+        {
+          "source": "prd/jetinspect-m-pipelines.md",
+          "offset": 5440,
+          "sha256": "76f48735eee574910987eeeea34e38516bb923eec28d3f55f9cfbeb9f9336d56"
+        }
+      ],
+      "latency_ms": 77
+    },
+    {
+      "question": "설치된 식기세척기 세제의 양은?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 69
+    },
+    {
+      "question": "내 택배가 어디 도착했는지 추적해줘",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 70
+    },
+    {
+      "question": "지구에서 내일 유니콘 열차가 언제 출발해?",
+      "expected_source": null,
+      "expected_terms": [],
+      "pass": true,
+      "results": [],
+      "latency_ms": 74
+    }
+  ]
+}

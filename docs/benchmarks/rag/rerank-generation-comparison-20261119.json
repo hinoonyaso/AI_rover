@@ -1,0 +1,80 @@
+[
+  {
+    "q": "CH340은 USB 목록에 있지만 리눅스에서 장치 파일이 없을 때 어떤 커널 모듈을 검사하나요?",
+    "sources": [
+      {
+        "source": "troubleshooting/012-ch341-module-missing.md",
+        "offset": 320,
+        "sha256": "8d3d7f9371e53a45b1797dd394d66cc0147f1b8a97355924343603e3b2fe46b8"
+      },
+      {
+        "source": "tools/ops/README.md",
+        "offset": 7680,
+        "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+      },
+      {
+        "source": "troubleshooting/001-stm32-firmware-hang.md",
+        "offset": 960,
+        "sha256": "a0bb55335d1d881b9d65ccddad4fe22ba5fc5d71b66dede85a33cd68126a8458"
+      }
+    ],
+    "exaone": {
+      "answer": "자료에 따르면, CH340 계열이 `lsusb`에는 보이지만 `lsusb -t`에서 `Driver=[none]`이고 `/dev/ttyUSB*`가 없을 때는 **`ch341` 커널 모듈을 검사**합니다. 관련 장애 기록에서 `modinfo ch341`이 `Module ch341 not found`를 반환했고, 해당 Tegra 커널에는 `cp210x`, `ftdi_sio`는 있으나 `ch341`이 없었다고 설명합니다. 또한 원인은 커널 설정 `# CONFIG_USB_SERIAL_CH341 is not set`으로 정리되어 있습니다[1].\n\n즉, 확인 대상은 **`ch341` 모듈(또는 `CONFIG_USB_SERIAL_CH341`)** 입니다.",
+      "finish_reason": "stop",
+      "seconds": 16.99
+    },
+    "local": {
+      "answer": "CH340 시리얼 변환기와 관련된 드라이버를 사용하기 위해 리눅스 커널에서 `ch341` 커널 모듈을 검사하나요. 그러나 `modinfo ch341` 명령어로 확인할 수 없는 경우, 다음과 같은 커널 모듈을 검사합니다:\n\n### 검사할 커널 모듈\n- **`cp210x`**: Tegra 커널에서 존재하며, CH340 시리얼 변환기의 드라이버로 사용됩니다.\n- **`ftdi_sio`**: Tegra 커널에서 존재하며, CH340 시리얼 변환기의 드라이버로 사용됩니다.\n\n### 원인\n`ch341` 커널 모듈이 설치되지 않았거나, 커널 설정에서 `CONFIG_USB_SERIAL_CH341` 옵션이 비활성화되어 있습니다. 이 경우, `cp210x` 또는 `ftdi_sio` 커널 모듈이 자동으로 로드됩니다.\n\n### 해결 방법\n- `CONFIG_USB_SERIAL_CH341` 옵션을",
+      "seconds": 107.69
+    }
+  },
+  {
+    "q": "가속도계 여섯 자세 보정에서 센서 교차축 오차도 측정하나요?",
+    "sources": [
+      {
+        "source": "prd/dashboard-sensor-calibration.md",
+        "offset": 0,
+        "sha256": "da29161c04e3bd85f67fdc19ee1e80646ba737d96582ad275e6820e751e38d35"
+      },
+      {
+        "source": "tools/ops/README.md",
+        "offset": 8000,
+        "sha256": "a03429481627244cb60026a99fcfa15797961c13093306ec34e47b5d169e8680"
+      },
+      {
+        "source": "prd/gazebo-stack-light-test-plan.md",
+        "offset": 11520,
+        "sha256": "c8209d2723e826dc131f1eac43102aa253eb46807e44b470dfc2a5f5c72b9127"
+      }
+    ],
+    "exaone": {
+      "answer": "자료 기준으로는 **가속도계 여섯 자세 보정에서 센서 교차축 오차를 별도로 측정한다고 확인되지 않습니다.**\n\n[1]의 계획은 여섯 자세의 가속도에 대해 **축별 오프셋·배율 후보**를 다루며, “가속도 후보는 축별 오프셋·배율만 추정하며 교차축 오차 보정이 아니다”라고 명시합니다. [2]도 센서 보정 후보 항목에서 “가속도 교차축 오차는 보정하지 않는다”고 설명합니다.\n\n따라서 **교차축 오차까지 측정·보정하는 항목으로 근거가 없고**, 자료상 범위는 축별 오프셋·배율 후보로 한정됩니다.",
+      "finish_reason": "stop",
+      "seconds": 19.16
+    },
+    "local": {
+      "answer": "가속도계 여섯 자세 보정에서 센서 교차축 오차를 측정하는 것은 **아니다**.\n\n### 근거:\n- **[1]**에서 설명된 내용에 따르면, 가속도계 여섯 자세 보정의 목표는 **축별 오프셋·배율 추정**을 수행하며, **교차축 오차 보정은 수행되지 않는다**.\n- **[2]**에서는 \"가속도 후보는 축별 오프셋·배율만 추정하며 교차축 오차 보정이 아니다\"라고 명시되어 있다.\n- **[3]**에서는 \"가속도 교차축 오차는 보정하지 않는다\"라고 명시되어 있다.\n\n따라서, 가속도계 여섯 자세 보정에서는 센서 교차축 오차를 측정하지 않는다.",
+      "seconds": 101.67
+    }
+  },
+  {
+    "q": "지금 로봇의 LiDAR 데이터는 몇 Hz야?",
+    "sources": [],
+    "local": {
+      "skipped": "no_evidence"
+    },
+    "exaone": {
+      "skipped": "no_evidence"
+    }
+  },
+  {
+    "q": "제주도 내일 일출 시각은?",
+    "sources": [],
+    "local": {
+      "skipped": "no_evidence"
+    },
+    "exaone": {
+      "skipped": "no_evidence"
+    }
+  }
+]

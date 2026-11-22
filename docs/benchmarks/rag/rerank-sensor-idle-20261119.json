@@ -1,0 +1,1 @@
+{"imu": {"samples": 30, "min": 49.5, "median": 49.5}, "scan": {"samples": 30, "min": 13.9, "median": 13.9}, "camera": {"samples": 30, "min": 28.5, "median": 29.1}, "depth_obstacles": {"samples": 30, "min": 7.4, "median": 7.4}}

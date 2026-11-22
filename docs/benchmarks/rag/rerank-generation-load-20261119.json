@@ -1,0 +1,605 @@
+{
+  "summary": {
+    "seconds": 94.6,
+    "exit_code": 0,
+    "samples": 45,
+    "snapshot_errors": 0,
+    "snapshot_stale": 0,
+    "missing": {
+      "imu": 0,
+      "scan": 0,
+      "camera": 0,
+      "depth_obstacles": 0
+    },
+    "cpu_peak": 98.3,
+    "memory_available_min_gib": 2.16,
+    "swap_peak_gib": 0.91
+  },
+  "samples": [
+    {
+      "elapsed": 0.0,
+      "available_gib": 3.82,
+      "swap_gib": 0.89,
+      "cpu": 36.8,
+      "snapshot_age": 0.33,
+      "stream_ages": {
+        "imu": 0.34,
+        "scan": 0.35,
+        "camera": 0.35,
+        "depth_obstacles": 0.36
+      }
+    },
+    {
+      "elapsed": 2.1,
+      "available_gib": 3.7,
+      "swap_gib": 0.89,
+      "cpu": 41.0,
+      "snapshot_age": -0.07,
+      "stream_ages": {
+        "imu": -0.05,
+        "scan": -0.0,
+        "camera": -0.03,
+        "depth_obstacles": -0.04
+      }
+    },
+    {
+      "elapsed": 4.2,
+      "available_gib": 3.17,
+      "swap_gib": 0.89,
+      "cpu": 37.5,
+      "snapshot_age": 0.04,
+      "stream_ages": {
+        "imu": 0.05,
+        "scan": 0.08,
+        "camera": 0.04,
+        "depth_obstacles": 0.04
+      }
+    },
+    {
+      "elapsed": 6.3,
+      "available_gib": 2.19,
+      "swap_gib": 0.89,
+      "cpu": 55.0,
+      "snapshot_age": 0.14,
+      "stream_ages": {
+        "imu": 0.15,
+        "scan": 0.16,
+        "camera": 0.15,
+        "depth_obstacles": 0.22
+      }
+    },
+    {
+      "elapsed": 8.4,
+      "available_gib": 2.17,
+      "swap_gib": 0.89,
+      "cpu": 50.9,
+      "snapshot_age": 0.24,
+      "stream_ages": {
+        "imu": 0.25,
+        "scan": 0.24,
+        "camera": 0.27,
+        "depth_obstacles": 0.3
+      }
+    },
+    {
+      "elapsed": 10.5,
+      "available_gib": 2.18,
+      "swap_gib": 0.9,
+      "cpu": 50.8,
+      "snapshot_age": 0.34,
+      "stream_ages": {
+        "imu": 0.35,
+        "scan": 0.39,
+        "camera": 0.35,
+        "depth_obstacles": 0.41
+      }
+    },
+    {
+      "elapsed": 12.6,
+      "available_gib": 2.18,
+      "swap_gib": 0.9,
+      "cpu": 50.8,
+      "snapshot_age": -0.06,
+      "stream_ages": {
+        "imu": -0.04,
+        "scan": -0.02,
+        "camera": -0.01,
+        "depth_obstacles": 0.02
+      }
+    },
+    {
+      "elapsed": 14.7,
+      "available_gib": 2.19,
+      "swap_gib": 0.9,
+      "cpu": 52.5,
+      "snapshot_age": 0.05,
+      "stream_ages": {
+        "imu": 0.06,
+        "scan": 0.05,
+        "camera": 0.07,
+        "depth_obstacles": 0.14
+      }
+    },
+    {
+      "elapsed": 16.8,
+      "available_gib": 2.19,
+      "swap_gib": 0.9,
+      "cpu": 51.7,
+      "snapshot_age": 0.15,
+      "stream_ages": {
+        "imu": 0.17,
+        "scan": 0.21,
+        "camera": 0.18,
+        "depth_obstacles": 0.28
+      }
+    },
+    {
+      "elapsed": 18.9,
+      "available_gib": 2.2,
+      "swap_gib": 0.9,
+      "cpu": 49.2,
+      "snapshot_age": 0.25,
+      "stream_ages": {
+        "imu": 0.27,
+        "scan": 0.29,
+        "camera": 0.26,
+        "depth_obstacles": 0.36
+      }
+    },
+    {
+      "elapsed": 21.0,
+      "available_gib": 2.19,
+      "swap_gib": 0.9,
+      "cpu": 69.5,
+      "snapshot_age": 0.35,
+      "stream_ages": {
+        "imu": 0.36,
+        "scan": 0.38,
+        "camera": 0.37,
+        "depth_obstacles": 0.37
+      }
+    },
+    {
+      "elapsed": 23.1,
+      "available_gib": 2.18,
+      "swap_gib": 0.9,
+      "cpu": 49.1,
+      "snapshot_age": -0.05,
+      "stream_ages": {
+        "imu": -0.03,
+        "scan": 0.02,
+        "camera": -0.02,
+        "depth_obstacles": 0.01
+      }
+    },
+    {
+      "elapsed": 25.2,
+      "available_gib": 2.19,
+      "swap_gib": 0.9,
+      "cpu": 49.1,
+      "snapshot_age": 0.06,
+      "stream_ages": {
+        "imu": 0.07,
+        "scan": 0.11,
+        "camera": 0.16,
+        "depth_obstacles": 0.09
+      }
+    },
+    {
+      "elapsed": 27.3,
+      "available_gib": 2.17,
+      "swap_gib": 0.9,
+      "cpu": 52.6,
+      "snapshot_age": 0.16,
+      "stream_ages": {
+        "imu": 0.16,
+        "scan": 0.19,
+        "camera": 0.17,
+        "depth_obstacles": 0.17
+      }
+    },
+    {
+      "elapsed": 29.4,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 46.4,
+      "snapshot_age": 0.26,
+      "stream_ages": {
+        "imu": 0.27,
+        "scan": 0.27,
+        "camera": 0.28,
+        "depth_obstacles": 0.32
+      }
+    },
+    {
+      "elapsed": 31.5,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 49.2,
+      "snapshot_age": 0.36,
+      "stream_ages": {
+        "imu": 0.37,
+        "scan": 0.42,
+        "camera": 0.36,
+        "depth_obstacles": 0.46
+      }
+    },
+    {
+      "elapsed": 33.6,
+      "available_gib": 2.18,
+      "swap_gib": 0.9,
+      "cpu": 54.2,
+      "snapshot_age": -0.04,
+      "stream_ages": {
+        "imu": -0.04,
+        "scan": -0.01,
+        "camera": -0.03,
+        "depth_obstacles": 0.07
+      }
+    },
+    {
+      "elapsed": 35.7,
+      "available_gib": 2.18,
+      "swap_gib": 0.9,
+      "cpu": 57.9,
+      "snapshot_age": 0.06,
+      "stream_ages": {
+        "imu": 0.07,
+        "scan": 0.08,
+        "camera": 0.08,
+        "depth_obstacles": 0.11
+      }
+    },
+    {
+      "elapsed": 37.8,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 47.5,
+      "snapshot_age": 0.17,
+      "stream_ages": {
+        "imu": 0.17,
+        "scan": 0.17,
+        "camera": 0.22,
+        "depth_obstacles": 0.19
+      }
+    },
+    {
+      "elapsed": 39.9,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 48.3,
+      "snapshot_age": 0.27,
+      "stream_ages": {
+        "imu": 0.27,
+        "scan": 0.32,
+        "camera": 0.27,
+        "depth_obstacles": 0.34
+      }
+    },
+    {
+      "elapsed": 42.0,
+      "available_gib": 2.17,
+      "swap_gib": 0.9,
+      "cpu": 55.7,
+      "snapshot_age": 0.37,
+      "stream_ages": {
+        "imu": 0.37,
+        "scan": 0.39,
+        "camera": 0.39,
+        "depth_obstacles": 0.45
+      }
+    },
+    {
+      "elapsed": 44.1,
+      "available_gib": 2.17,
+      "swap_gib": 0.9,
+      "cpu": 50.9,
+      "snapshot_age": -0.03,
+      "stream_ages": {
+        "imu": -0.01,
+        "scan": -0.02,
+        "camera": -0.01,
+        "depth_obstacles": 0.09
+      }
+    },
+    {
+      "elapsed": 46.2,
+      "available_gib": 2.17,
+      "swap_gib": 0.9,
+      "cpu": 63.2,
+      "snapshot_age": 0.07,
+      "stream_ages": {
+        "imu": 0.09,
+        "scan": 0.14,
+        "camera": 0.1,
+        "depth_obstacles": 0.17
+      }
+    },
+    {
+      "elapsed": 48.3,
+      "available_gib": 2.17,
+      "swap_gib": 0.9,
+      "cpu": 51.7,
+      "snapshot_age": 0.17,
+      "stream_ages": {
+        "imu": 0.18,
+        "scan": 0.19,
+        "camera": 0.18,
+        "depth_obstacles": 0.25
+      }
+    },
+    {
+      "elapsed": 50.4,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 50.0,
+      "snapshot_age": 0.28,
+      "stream_ages": {
+        "imu": 0.29,
+        "scan": 0.3,
+        "camera": 0.33,
+        "depth_obstacles": 0.33
+      }
+    },
+    {
+      "elapsed": 52.5,
+      "available_gib": 2.17,
+      "swap_gib": 0.9,
+      "cpu": 49.2,
+      "snapshot_age": 0.38,
+      "stream_ages": {
+        "imu": 0.4,
+        "scan": 0.45,
+        "camera": 0.41,
+        "depth_obstacles": 0.44
+      }
+    },
+    {
+      "elapsed": 54.6,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 50.8,
+      "snapshot_age": -0.02,
+      "stream_ages": {
+        "imu": -0.0,
+        "scan": 0.03,
+        "camera": -0.02,
+        "depth_obstacles": 0.01
+      }
+    },
+    {
+      "elapsed": 56.7,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 48.2,
+      "snapshot_age": 0.08,
+      "stream_ages": {
+        "imu": 0.1,
+        "scan": 0.12,
+        "camera": 0.09,
+        "depth_obstacles": 0.09
+      }
+    },
+    {
+      "elapsed": 58.9,
+      "available_gib": 2.18,
+      "swap_gib": 0.9,
+      "cpu": 47.4,
+      "snapshot_age": 0.18,
+      "stream_ages": {
+        "imu": 0.2,
+        "scan": 0.2,
+        "camera": 0.21,
+        "depth_obstacles": 0.21
+      }
+    },
+    {
+      "elapsed": 61.0,
+      "available_gib": 2.18,
+      "swap_gib": 0.9,
+      "cpu": 50.8,
+      "snapshot_age": 0.28,
+      "stream_ages": {
+        "imu": 0.3,
+        "scan": 0.36,
+        "camera": 0.29,
+        "depth_obstacles": 0.45
+      }
+    },
+    {
+      "elapsed": 63.1,
+      "available_gib": 2.16,
+      "swap_gib": 0.9,
+      "cpu": 49.2,
+      "snapshot_age": 0.39,
+      "stream_ages": {
+        "imu": 0.4,
+        "scan": 0.44,
+        "camera": 0.47,
+        "depth_obstacles": 0.5
+      }
+    },
+    {
+      "elapsed": 65.2,
+      "available_gib": 2.17,
+      "swap_gib": 0.9,
+      "cpu": 54.4,
+      "snapshot_age": -0.01,
+      "stream_ages": {
+        "imu": -0.01,
+        "scan": 0.03,
+        "camera": 0.03,
+        "depth_obstacles": 0.04
+      }
+    },
+    {
+      "elapsed": 67.3,
+      "available_gib": 2.18,
+      "swap_gib": 0.91,
+      "cpu": 98.3,
+      "snapshot_age": 0.09,
+      "stream_ages": {
+        "imu": 0.1,
+        "scan": 0.11,
+        "camera": 0.14,
+        "depth_obstacles": 0.25
+      }
+    },
+    {
+      "elapsed": 69.4,
+      "available_gib": 2.16,
+      "swap_gib": 0.91,
+      "cpu": 47.3,
+      "snapshot_age": 0.2,
+      "stream_ages": {
+        "imu": 0.2,
+        "scan": 0.27,
+        "camera": 0.2,
+        "depth_obstacles": 0.3
+      }
+    },
+    {
+      "elapsed": 71.5,
+      "available_gib": 2.17,
+      "swap_gib": 0.91,
+      "cpu": 51.7,
+      "snapshot_age": 0.3,
+      "stream_ages": {
+        "imu": 0.31,
+        "scan": 0.36,
+        "camera": 0.31,
+        "depth_obstacles": 0.38
+      }
+    },
+    {
+      "elapsed": 73.6,
+      "available_gib": 2.18,
+      "swap_gib": 0.91,
+      "cpu": 53.4,
+      "snapshot_age": 0.4,
+      "stream_ages": {
+        "imu": 0.4,
+        "scan": 0.45,
+        "camera": 0.46,
+        "depth_obstacles": 0.43
+      }
+    },
+    {
+      "elapsed": 75.7,
+      "available_gib": 2.19,
+      "swap_gib": 0.91,
+      "cpu": 54.2,
+      "snapshot_age": 0.0,
+      "stream_ages": {
+        "imu": 0.02,
+        "scan": 0.02,
+        "camera": 0.03,
+        "depth_obstacles": 0.06
+      }
+    },
+    {
+      "elapsed": 77.8,
+      "available_gib": 2.18,
+      "swap_gib": 0.91,
+      "cpu": 54.4,
+      "snapshot_age": 0.11,
+      "stream_ages": {
+        "imu": 0.12,
+        "scan": 0.18,
+        "camera": 0.11,
+        "depth_obstacles": 0.14
+      }
+    },
+    {
+      "elapsed": 79.9,
+      "available_gib": 2.18,
+      "swap_gib": 0.91,
+      "cpu": 55.9,
+      "snapshot_age": 0.21,
+      "stream_ages": {
+        "imu": 0.22,
+        "scan": 0.27,
+        "camera": 0.22,
+        "depth_obstacles": 0.22
+      }
+    },
+    {
+      "elapsed": 82.0,
+      "available_gib": 2.19,
+      "swap_gib": 0.91,
+      "cpu": 59.0,
+      "snapshot_age": 0.31,
+      "stream_ages": {
+        "imu": 0.33,
+        "scan": 0.34,
+        "camera": 0.33,
+        "depth_obstacles": 0.47
+      }
+    },
+    {
+      "elapsed": 84.1,
+      "available_gib": 2.16,
+      "swap_gib": 0.91,
+      "cpu": 57.8,
+      "snapshot_age": -0.09,
+      "stream_ages": {
+        "imu": -0.08,
+        "scan": -0.07,
+        "camera": -0.06,
+        "depth_obstacles": -0.06
+      }
+    },
+    {
+      "elapsed": 86.2,
+      "available_gib": 2.18,
+      "swap_gib": 0.91,
+      "cpu": 65.2,
+      "snapshot_age": 0.02,
+      "stream_ages": {
+        "imu": 0.02,
+        "scan": 0.09,
+        "camera": 0.02,
+        "depth_obstacles": 0.13
+      }
+    },
+    {
+      "elapsed": 88.3,
+      "available_gib": 2.16,
+      "swap_gib": 0.91,
+      "cpu": 60.3,
+      "snapshot_age": 0.12,
+      "stream_ages": {
+        "imu": 0.13,
+        "scan": 0.18,
+        "camera": 0.13,
+        "depth_obstacles": 0.14
+      }
+    },
+    {
+      "elapsed": 90.4,
+      "available_gib": 2.18,
+      "swap_gib": 0.91,
+      "cpu": 50.8,
+      "snapshot_age": 0.22,
+      "stream_ages": {
+        "imu": 0.23,
+        "scan": 0.26,
+        "camera": 0.25,
+        "depth_obstacles": 0.28
+      }
+    },
+    {
+      "elapsed": 92.5,
+      "available_gib": 2.19,
+      "swap_gib": 0.91,
+      "cpu": 54.2,
+      "snapshot_age": 0.32,
+      "stream_ages": {
+        "imu": 0.33,
+        "scan": 0.34,
+        "camera": 0.33,
+        "depth_obstacles": 0.36
+      }
+    }
+  ]
+}

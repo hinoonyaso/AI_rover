@@ -1,0 +1,111 @@
+[
+  {
+    "question": "시리얼 변환기 포트 번호는 재부팅 후에도 고정인가?",
+    "sources": [
+      {
+        "source": "troubleshooting/012-ch341-module-missing.md",
+        "offset": 0,
+        "additional_offset": null
+      },
+      {
+        "source": "troubleshooting/001-stm32-firmware-hang.md",
+        "offset": 4800,
+        "additional_offset": 1280
+      },
+      {
+        "source": "tools/ops/README.md",
+        "offset": 11520,
+        "additional_offset": 9600
+      }
+    ],
+    "result": {
+      "answer": "제공된 자료만으로는 **재부팅 후에도 시리얼 변환기 포트 번호가 고정인지 알 수 없습니다.**\n\n- [1]에는 CH340 변환기 2개(`1a86:7523`)가 `lsusb`에 보이지만 `ch341` 커널 모듈이 없어 `/dev/ttyUSB*`가 없던 장애 기록이 있습니다. 또한 out-of-tree 모듈 빌드와 “재부팅 후 자동 로드 확인”은 언급되지만, **`/dev/ttyUSB0`, `/dev/ttyUSB1` 같은 포트 번호가 재부팅 후에도 동일하게 유지되는지는 확인·기록되어 있지 않습니다** [1].\n- [2]에는 `/dev/ttyACM0`, `/dev/ttyACM1`이 등장하지만, 이는 특정 시험·연결 시점의 관찰이며 **재부팅 후 번호 고정 여부를 검증한 내용은 아닙니다** [2].\n- [3]도 서비스 자동 시작, 재부팅 후 기동 검증 미비 등을 다룰 뿐 시리얼 변환기 포트 번호의 지속성과는 직접 관련이 없습니다 [3].\n\n따라서 “재부팅 후에도 고정이다/아니다”를 이 자료들로는 확정할 수 없습니다.",
+      "finish_reason": "stop",
+      "seconds": 38.16
+    }
+  },
+  {
+    "question": "센서 캘리브레이션 후보의 저장 권한은 운영자와 조회자 중 누구에게 있나?",
+    "sources": [
+      {
+        "source": "tools/ops/README.md",
+        "offset": 8000,
+        "additional_offset": 11520
+      },
+      {
+        "source": "prd/dashboard-sensor-calibration.md",
+        "offset": 0,
+        "additional_offset": null
+      },
+      {
+        "source": "prd/dashboard-sensor-connection.md",
+        "offset": 0,
+        "additional_offset": null
+      }
+    ],
+    "result": {
+      "answer": "센서 캘리브레이션 후보의 저장 권한은 **운영자**에게 있습니다.  \n[1]에 따르면 측정 결과는 후보로 저장되며, 적용 가능한 항목은 현재 설정·후보를 검토한 후 **운영자가 별도로 적용**하고, **조회자는 읽기만 가능**합니다. [2]도 **운영자만 측정·저장하고 조회자는 결과만 볼 수 있다**고 명시합니다. 따라서 저장은 운영자, 조회자는 조회만 가능합니다.",
+      "finish_reason": "stop",
+      "seconds": 9.86
+    }
+  },
+  {
+    "question": "가상 경광등의 영상 표본이 부족하면 어떤 결과가 나와야 하나?",
+    "sources": [
+      {
+        "source": "prd/gazebo-stack-light-test-plan.md",
+        "offset": 0,
+        "additional_offset": 1280
+      },
+      {
+        "source": "tools/ops/README.md",
+        "offset": 6720,
+        "additional_offset": 2240
+      },
+      {
+        "source": "tools/voice/README.md",
+        "offset": 3520,
+        "additional_offset": 4480
+      }
+    ],
+    "result": {
+      "error": "RuntimeError",
+      "message": "EXAONE이 답변을 반환하지 않았습니다.",
+      "seconds": 43.3
+    }
+  },
+  {
+    "question": "방금 로봇이 어디로 움직였어?",
+    "sources": [],
+    "result": {
+      "skipped": "no_evidence"
+    }
+  },
+  {
+    "question": "이 로봇에 장착된 바코드 프린터의 모델명은?",
+    "sources": [],
+    "result": {
+      "skipped": "no_evidence"
+    }
+  },
+  {
+    "question": "탑재된 제빙기의 온도 조절법은?",
+    "sources": [
+      {
+        "source": "tools/ops/README.md",
+        "offset": 8960,
+        "additional_offset": null
+      },
+      {
+        "source": "troubleshooting/001-stm32-firmware-hang.md",
+        "offset": 8000,
+        "additional_offset": null
+      }
+    ],
+    "result": {
+      "answer": "제공된 참고 자료 [1], [2]에는 **탑재된 제빙기의 온도 조절법**에 관한 내용이 없습니다. 따라서 자료에 근거해 답할 수 없으며, **모른다**고 답해야 합니다.",
+      "finish_reason": "stop",
+      "seconds": 9.63
+    }
+  }
+]

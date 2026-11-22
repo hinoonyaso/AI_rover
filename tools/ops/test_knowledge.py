@@ -61,9 +61,31 @@ class KnowledgeTests(unittest.TestCase):
         self.assertIn('필요한인접근거', results[0]['text'])
         self.assertNotIn('색인후비공개변경', results[0]['text'])
 
+    def test_additional_passage_is_same_revision_and_reaches_prompt(self):
+        from types import SimpleNamespace
+        self.db.rebuild()
+        def item(offset, digest, text, score):
+            return SimpleNamespace(score=score, payload={'source':'safe.md', 'classification':'시험',
+                'modified':0, 'offset':offset, 'text':text, 'sha256':digest})
+        primary = item(0, 'revision-a', '라이다 센서 연결 기본 확인', 0.9)
+        secondary = item(1280, 'revision-a', '라이다 센서 다른 위치의 추가 근거', 0.8)
+        old = item(2560, 'revision-b', '라이다 센서 오래된 비공개 내용', 0.9)
+        with patch.object(self.db.client, 'query_points', return_value=SimpleNamespace(points=[primary, secondary, old])):
+            rows = self.db.search('라이다 센서')
+        self.assertEqual(rows[0]['additional_offset'], 1280)
+        self.assertIn('추가 근거', rows[0]['text'])
+        self.assertIn('추가 근거', knowledge.prompt_excerpt(rows[0]))
+        self.assertNotIn('오래된 비공개', rows[0]['text'])
+
+    def test_semantic_only_unrelated_results_are_not_presented_as_evidence(self):
+        self.db.rebuild()
+        # The test embedder returns identical vectors for any text.
+        # 한글: 시험 임베더는 모든 입력에 같은 벡터를 반환한다.
+        self.assertEqual(self.db.search('바코드 프린터 모델명'), [])
+
     def test_current_readings_are_not_answered_from_documents(self):
         self.db.rebuild()
-        for question in ('현재 배터리 전압은?', '지금 로봇 위치는?'):
+        for question in ('현재 배터리 전압은?', '지금 로봇 위치는?', '지금 로봇의 LiDAR 데이터는 몇 Hz야?', '방금 로봇이 어디로 움직였어?', '현재 로봇의 충전량은 얼마야?', 'What is the current lidar frequency?', 'battery voltage now?'):
             self.assertEqual(self.db.search(question), [])
             self.assertIn('실시간 상태', self.db.answer(question, []))
 
@@ -95,6 +117,7 @@ class KnowledgeApiTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual((await client.get('/api/knowledge/status')).status_code, 401)
                     with patch('access_control.session_role', return_value='viewer'):
                         self.assertEqual((await client.post('/api/knowledge/rebuild')).status_code, 403)
+                        self.assertEqual((await client.post('/api/knowledge/backup')).status_code, 403)
                         response = await client.get('/api/knowledge/search', params={'q': '라이다'})
                         self.assertEqual(response.status_code, 200)
                         self.assertEqual(response.json()['results'][0]['source'], 'safe.md')
@@ -103,5 +126,37 @@ class KnowledgeApiTests(unittest.IsolatedAsyncioTestCase):
                         self.assertIn('라이다 수신을 확인하세요', answer.json()['answer'])
                         invalid = await client.get('/api/knowledge/answer', params={'q': '라이다', 'mode': 'invalid'})
                         self.assertEqual(invalid.status_code, 422)
+                    with patch('access_control.session_role', return_value='operator'), patch.object(knowledge_routes, 'BACKUP_DIR', root / 'backups'):
+                        saved = await client.post('/api/knowledge/backup')
+                        self.assertEqual(saved.status_code, 200)
+                        self.assertEqual(saved.json()['points'], 1)
+                        self.assertTrue((root / 'backups' / saved.json()['backup']).is_file())
             db.client.close()
         tmp.cleanup()
+
+class KnowledgeArchiveTests(KnowledgeTests):
+    def test_archive_roundtrip_and_corruption(self):
+        import json
+        from knowledge_archive import export_index, restore_index
+        self.db.rebuild()
+        archive = self.root / 'backup.json'
+        original = self.db.search('라이다')
+        self.assertEqual(export_index(self.db, archive)['points'], 1)
+        with self.assertRaises(FileExistsError):
+            export_index(self.db, archive)
+        target = self.root / 'restored'
+        restore_index(archive, target)
+        clone = knowledge.Knowledge(target, self.root, Embedder())
+        try:
+            self.assertEqual(clone.status()['chunks'], 1)
+            self.assertEqual(clone.search('라이다')[0]['text'], original[0]['text'])
+        finally:
+            clone.client.close()
+        with self.assertRaises(FileExistsError):
+            restore_index(archive, target)
+        data = json.loads(archive.read_text())
+        data['data']['points'][0]['payload']['text'] = 'tampered'
+        archive.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError, '무결성'):
+            restore_index(archive, self.root / 'bad')
+        self.assertFalse((self.root / 'bad').exists())

@@ -1,0 +1,16 @@
+[
+ {"q":"CH340은 USB 목록에 있지만 리눅스에서 장치 파일이 없을 때 어떤 커널 모듈을 검사하나요?","source":"troubleshooting/012-ch341-module-missing.md","terms":["modinfo ch341"]},
+ {"q":"USB 직렬 포트가 재부팅마다 번호가 바뀔 때 LiDAR는 어떤 경로로 구별하나요?","source":"troubleshooting/012-ch341-module-missing.md","terms":["by-path"]},
+ {"q":"DaBai depth 기기의 USB 시리얼 번호가 SDK 장치 열거에 미치는 영향은?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["스캔 전체가 실패"]},
+ {"q":"Orbbec 카메라의 시리얼 열거 문제를 우회하려고 사용한 SDK 계열은 무엇인가요?","source":"troubleshooting/013-orbbec-sdk-v2-no-serial-bug.md","terms":["SDK v1"]},
+ {"q":"IMU 보정 후보가 자동으로 드라이버 설정에 반영되나요?","source":"prd/dashboard-sensor-calibration.md","terms":["자동 적용하지 않는다"]},
+ {"q":"가속도계 여섯 자세 보정에서 센서 교차축 오차도 측정하나요?","source":"prd/dashboard-sensor-calibration.md","terms":["교차축 오차 보정이 아니다"]},
+ {"q":"기존 STM32 펌웨어에서 다른 태스크가 멈춰도 watchdog이 리셋하지 않을 수 있는 이유는?","source":"troubleshooting/001-stm32-firmware-hang.md","terms":["app_task"]},
+ {"q":"로봇 펌웨어 정지 문제의 원인이 지금 확정됐나요?","source":"troubleshooting/001-stm32-firmware-hang.md","terms":["확정하지 못했다"]},
+ {"q":"대시보드 센서 자료의 유효 수신 시간과 모니터 스냅샷 제한은?","source":"tools/ops/README.md","terms":["스냅샷은 8초"]},
+ {"q":"로컬 음성 인식의 whisper.cpp 모델 이름은?","source":"tools/voice/README.md","terms":["ggml-base.bin"]},
+ {"q":"지금 로봇의 LiDAR 데이터는 몇 Hz야?","source":null,"terms":[]},
+ {"q":"오늘 배터리 전압과 실시간 온도는 얼마인가요?","source":null,"terms":[]},
+ {"q":"제주도 내일 일출 시각은?","source":null,"terms":[]},
+ {"q":"내 개인 은행 잔액은?","source":null,"terms":[]}
+]
