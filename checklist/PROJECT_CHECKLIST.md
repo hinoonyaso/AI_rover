@@ -651,6 +651,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [x] STT 교체(2026-11-22): whisper.cpp CUDA 빌드 + small 모델 상시 서버(`jetrover-whisper` 사용자 서비스, 루프백), 서버 실패 시 CPU base CLI 대체. 전사 2.0초 → 0.25~0.46초, 정확 일치 4/13 → 6/13(힌트 시 10/13). 실기 Hello Hiwonder → 상태·문서(EXAONE)·모의 시작·확인 4단계 통과(가짜 임무 저장소). 메모리 약 1.2GB.
 - [~] 음성 → 실제 임무 연결: `prd/voice-mission-control.md`(2026-11-22 승인: 첫 임무 출발점 복귀, 확인은 버튼·음성, 운영자만, 정지→재개/종료), 시험 `prd/voice-mission-control-test-plan.md`.
   - [~] V1 Gazebo 출발점 복귀 + 음성 정지·재개·종료: 임무 종류·시험 스크립트·작업자·API·화면·음성 의도 구현, L0 시험 통과. 격리 Gazebo에서 일시정지→재개→두 구간 완료 `returned_to_start` 확인(시간 제한 수정 후 1회, [065](../troubleshooting/065-gazebo-jetson-slow-realtime.md)). 실제 마이크 음성 종단 시험 남음.
+  - [ ] Gazebo 주행 안정화(2026-11-22 발견, [065](../troubleshooting/065-gazebo-jetson-slow-realtime.md)): 시뮬 MPPI 변형이 10-11 옛 설정, 현재 공식 설정으로는 Gazebo 맵에서 경로 실패, 복귀 구간 BT 중단, depth 지연 정지. 호스트 PC(`~/AI_rover`) 실행 환경 준비됨.
   - [ ] V2 실기 게이트(실기 허용 스위치 10분, 로봇 준비, 미해결 안전 이슈 차단) 구현과 거부 시험.
   - [ ] V2 실기 출발점 저장·복귀: 061 해결과 별도 실기 승인 후.
 - [ ] 모의/Gazebo 통합 검증. 실제 로봇 제어·실물 설비 연결은 주행 안전 대책과 별도 시험 이후.
