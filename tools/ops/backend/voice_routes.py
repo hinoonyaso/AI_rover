@@ -34,7 +34,7 @@ def interpret_text(payload: Transcript):
     return {'transcript': payload.text, **interpret(payload.text)}
 
 
-def _run_stt(raw):
+def _run_stt(raw, prompt=None):
     # The worker owns the lock and temporary WAV even if the client disconnects.
     # 한글: 클라이언트 연결이 끊겨도 워커가 잠금과 임시 WAV를 종료까지 소유한다.
     try:
@@ -42,7 +42,8 @@ def _run_stt(raw):
             path = Path(directory) / 'voice.wav'
             path.write_bytes(raw)
             env = os.environ.copy(); env.pop('PYTHONPATH', None)
-            return subprocess.run([str(PYTHON), str(VOICE), 'stt', str(path)], env=env,
+            extra = ['--prompt', prompt] if prompt else []
+            return subprocess.run([str(PYTHON), str(VOICE), 'stt', str(path), *extra], env=env,
                                   capture_output=True, text=True, timeout=120, check=True)
     finally:
         LOCK.release()
@@ -90,3 +91,75 @@ async def transcribe(request: Request):
     finally:
         if not scheduled:
             LOCK.release()
+
+
+# Allowed robot commands as a Whisper hint. Safe here because the wake word comes from the
+# R818 board, not from the transcript; a biased guess can at most create a pending simulated
+# action that still needs confirmation.
+# 한글: 허용 명령 어휘를 Whisper 힌트로 준다. 호출어는 R818 보드가 판단하므로 안전하며, 잘못 유도돼도
+# 확인이 필요한 모의 동작 대기까지만 생긴다.
+COMMAND_PROMPT = ('배터리 상태 알려줘. 라이다 연결 상태 알려줘. 카메라 수신 상태 알려줘. '
+                  '모의 점검 시작해. 모의 임무 취소해. 임무 상태 알려줘. 확인. 취소.')
+
+
+def transcribe_wav(raw):
+    """Synchronous local STT shared with the robot microphone worker.
+
+    한글: 로봇 마이크 작업자와 같은 잠금을 쓰는 동기 로컬 전사.
+    """
+    if not LOCK.acquire(blocking=False):
+        raise RuntimeError('stt_busy')
+    return _run_stt(raw, COMMAND_PROMPT).stdout  # _run_stt releases LOCK / 잠금은 _run_stt가 해제
+
+
+_robot = None
+_robot_guard = threading.Lock()
+
+
+def robot(request):
+    """Create the robot-microphone worker bound to this app. / 이 앱에 묶인 로봇 마이크 작업자."""
+    global _robot
+    with _robot_guard:
+        if _robot is None:
+            from robot_voice import RobotVoice
+            import knowledge_routes
+            app = request.app
+            status = getattr(app.state, 'robot_status', None)
+            _robot = RobotVoice(
+                missions=lambda: getattr(app.state, 'mission_manager', None),
+                status=lambda: {'robot': status()} if status else {},
+                knowledge=lambda q: knowledge_routes.manager().search(q, limit=3),
+                transcribe=transcribe_wav)
+        return _robot
+
+
+def shutdown_robot():
+    """Stop the worker on server shutdown. / 서버 종료 시 작업자를 멈춘다."""
+    if _robot is not None:
+        _robot.stop()
+
+
+@router.get('/robot')
+def robot_state(request: Request):
+    """Report robot-microphone voice state. / 로봇 마이크 음성 상태."""
+    return robot(request).snapshot()
+
+
+@router.post('/robot/{command}')
+def robot_command(command: str, request: Request):
+    """Start/stop listening or confirm/dismiss a pending simulated action.
+
+    한글: 듣기 시작·중지, 대기 중인 모의 동작의 확인·취소.
+    """
+    worker = robot(request)
+    if command == 'start':
+        worker.start()
+    elif command == 'stop':
+        worker.stop()
+    elif command == 'confirm':
+        return {'reply': worker.confirm(), **worker.snapshot()}
+    elif command == 'dismiss':
+        worker.dismiss()
+    else:
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    return worker.snapshot()

@@ -21,7 +21,7 @@ from calibration_routes import router as calibration_router
 from sensor_services import router as sensor_services_router
 from knowledge_routes import router as knowledge_router
 from inspection_video_routes import router as inspection_video_router
-from voice_routes import router as voice_router
+from voice_routes import router as voice_router, shutdown_robot
 from page_cursor import decode_cursor, encode_cursor
 from pathlib import Path
 
@@ -138,9 +138,11 @@ async def lifespan(app):
                     app.state.mission_manager = None
                     gazebo = None
 
+    app.state.robot_status = ros_status
     task = asyncio.create_task(loop())
     simulation_task = asyncio.create_task(simulate())
     yield
+    await asyncio.to_thread(shutdown_robot)
     simulation_task.cancel()
     try:
         await simulation_task

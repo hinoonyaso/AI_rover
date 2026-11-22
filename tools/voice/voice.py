@@ -23,10 +23,12 @@ SPEAK = ROOT / 'tools/audio/speak.sh'
 ENV_FILE = Path(__file__).with_name('.env')
 
 
-def transcribe(path):
+def transcribe(path, prompt=None):
     """Transcribe a 16 kHz mono WAV locally; keep the output temporary.
 
+    ``prompt`` biases Whisper toward expected words (e.g. the allowed voice commands).
     한글: 16kHz 모노 WAV를 로컬에서 인식하며 결과 파일은 임시로만 둔다.
+    ``prompt``는 예상 단어(허용 음성 명령 등) 쪽으로 Whisper를 유도한다.
     """
     with wave.open(str(path), 'rb') as f:
         if (f.getnchannels() != 1 or f.getsampwidth() != 2 or
@@ -34,8 +36,9 @@ def transcribe(path):
             raise ValueError('STT 입력은 16kHz 16비트 모노 PCM WAV여야 합니다')
     with tempfile.TemporaryDirectory(prefix='jetrover-stt-') as directory:
         output = Path(directory) / 'result'
+        extra = ['--prompt', prompt[:300]] if prompt else []
         subprocess.run([str(WHISPER), '-m', str(WHISPER_MODEL), '-f', str(path),
-                        '-l', 'ko', '-t', '4', '-otxt', '-of', str(output), '-np'],
+                        '-l', 'ko', '-t', '4', '-otxt', '-of', str(output), '-np', *extra],
                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True,
                        timeout=180)
         return output.with_suffix('.txt').read_text(encoding='utf-8').strip()
@@ -123,6 +126,7 @@ def main():
     commands = p.add_subparsers(dest='command', required=True)
     stt = commands.add_parser('stt', help='transcribe a 16 kHz mono WAV')
     stt.add_argument('wav', type=Path)
+    stt.add_argument('--prompt', help='expected vocabulary hint for Whisper')
     chat = commands.add_parser('chat', help='generate one text reply')
     chat.add_argument('prompt')
     chat.add_argument('--backend', choices=('local', 'cloud', 'auto'), default='local')
@@ -141,7 +145,7 @@ def main():
         command.add_argument('--route', choices=('auto', 'local', 'cloud', 'vision'), default='auto')
     a = p.parse_args()
     if a.command == 'stt':
-        print(transcribe(a.wav))
+        print(transcribe(a.wav, a.prompt))
     elif a.command == 'chat':
         print(auto_reply(a.prompt, a) if a.backend == 'auto' else cloud_reply(a.prompt) if a.backend == 'cloud' else local_reply(a.prompt))
     elif a.command == 'tts':

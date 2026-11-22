@@ -24,6 +24,11 @@ try {
     color_reasons: {red: 'fixture_not_found'},
   }}));
   for (const value of ['수신 영상 12개', '시각 오류 2개', '시험판의 위치']) assert.ok(diagnosticHtml.includes(value), value);
+  const {RobotMicrophone} = await vite.ssrLoadModule('/src/Voice.jsx');
+  const robotOperator = renderToStaticMarkup(React.createElement(RobotMicrophone, {role: 'operator'}));
+  const robotViewer = renderToStaticMarkup(React.createElement(RobotMicrophone, {role: 'viewer'}));
+  assert.ok(robotOperator.includes('Hello Hiwonder') && robotOperator.includes('>듣기 시작</button>'));
+  assert.ok(!robotViewer.includes('>듣기 시작</button>') && robotViewer.includes('운영자만'));
   const missionPage = render({page: 'missions'});
   for (const label of ['임무 관리', '시뮬레이션 전용', '임무 생성']) assert.ok(missionPage.includes(label), label);
   const robotPage = render({page: 'robot'});

@@ -62,6 +62,18 @@ class VoiceApiTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result.status_code, 200)
             self.assertEqual(result.json()['intent'], 'simulation_start')
 
+    async def test_robot_microphone_routes_are_operator_only(self):
+        fake = Mock(); fake.snapshot.return_value = {'running': False, 'stage': 'off'}
+        with patch.object(voice_routes, '_robot', fake):
+            with patch('access_control.session_role', return_value='viewer'):
+                self.assertEqual((await self.client.get('/api/voice/robot')).status_code, 200)
+                self.assertEqual((await self.client.post('/api/voice/robot/start')).status_code, 403)
+                fake.start.assert_not_called()
+            with patch('access_control.session_role', return_value='operator'):
+                self.assertEqual((await self.client.post('/api/voice/robot/start')).status_code, 200)
+                fake.start.assert_called_once()
+                self.assertEqual((await self.client.post('/api/voice/robot/drive')).status_code, 404)
+
     async def test_stt_does_not_block_event_loop_and_busy_is_reported(self):
         started = asyncio.Event()
         @self.app.get('/health')

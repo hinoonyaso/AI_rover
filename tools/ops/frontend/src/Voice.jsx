@@ -9,6 +9,35 @@ async function call(path, options = {}) {
   return data;
 }
 
+
+// Robot-microphone panel: the R818 board detects "Hello Hiwonder", the server records and handles the command.
+// 한글: 로봇 마이크 패널. R818 보드가 "Hello Hiwonder"를 감지하면 서버가 명령을 녹음·처리한다.
+const robotStages = {off:'꺼짐', waiting_wake:'호출어 대기', recording:'명령 듣는 중', transcribing:'음성 인식 중', speaking:'응답 중', error:'오류'};
+const intentLabels = {status:'상태 조회', knowledge:'문서 질문', mission_status:'임무 상태', simulation_start:'모의 점검 요청', simulation_cancel:'모의 취소 요청', confirm:'확인', dismiss:'취소', wake:'호출만', unsupported:'지원 안 함', no_speech:'명령 없음', stt_error:'인식 실패'};
+export function RobotMicrophone({role}) {
+  const [state, setState] = useState(null), [error, setError] = useState(''), [reply, setReply] = useState('');
+  useEffect(() => {
+    let live = true;
+    const load = () => call('/api/voice/robot').then(data => { if (live) { setState(data); setError(''); } }).catch(e => live && setError(e.message));
+    load(); const timer = setInterval(load, 1500);
+    return () => { live = false; clearInterval(timer); };
+  }, []);
+  async function send(command) {
+    setError('');
+    try { const data = await call(`/api/voice/robot/${command}`, {method:'POST', headers:jsonHeaders, body:'{}'}); setState(data); if (data.reply) setReply(data.reply); }
+    catch (e) { setError(e.message); }
+  }
+  const running = state?.running, operator = role === 'operator';
+  return <section className="panel"><div className="panel-head"><div><h3>로봇 마이크 · Hello Hiwonder</h3><p>로봇의 마이크 보드가 호출어를 감지하면 삐 소리 후 명령을 듣고 로봇 스피커로 답합니다</p></div><span className={state?.stage === 'error' ? 'pill neutral' : running ? 'pill online' : 'pill neutral'} role="status">{robotStages[state?.stage] || '확인 중'}</span></div>
+    {operator ? <button type="button" onClick={() => send(running ? 'stop' : 'start')}>{running ? '듣기 중지' : '듣기 시작'}</button> : <p>듣기 시작·중지와 모의 임무 확인은 운영자만 할 수 있습니다.</p>}
+    <p className="record-note">사용법: “Hello Hiwonder” → 삐 → “배터리 상태 알려줘”, “라이다 연결 방법 알려줘”, “모의 점검 시작해”. 모의 임무는 다시 호출해 “확인”이라고 말하거나 아래 버튼으로 확인합니다. 실제 주행·팔 동작은 하지 않습니다.</p>
+    {state?.error && <p className="warning" role="alert">장치 오류: {state.error}</p>}{error && <p className="warning" role="alert">{error}</p>}
+    {state?.pending && <div className="warning" role="status"><b>확인 필요: {state.pending.label}</b> <small>({Math.ceil(state.pending.expires_in)}초 남음)</small><p>실제 로봇은 움직이지 않습니다.</p>{operator && <><button type="button" onClick={() => send('confirm')}>확인</button> <button type="button" onClick={() => send('dismiss')}>취소</button></>}</div>}
+    {reply && <p><b>응답:</b> {reply}</p>}
+    {state?.history?.length ? <div className="table-wrap"><table><thead><tr><th>시각</th><th>방향(기기)</th><th>인식 문장</th><th>해석</th><th>응답</th></tr></thead><tbody>{[...state.history].reverse().map((item, i) => <tr key={i}><td>{new Date(item.at * 1000).toLocaleTimeString()}</td><td>{Math.round(item.angle)}°</td><td>{item.transcript || '-'}</td><td>{intentLabels[item.intent] || item.intent}</td><td>{item.reply || '-'}</td></tr>)}</tbody></table></div> : <p className="record-note">아직 호출 기록이 없습니다.</p>}
+  </section>;
+}
+
 export default function Voice({role}) {
   const [listening, setListening] = useState(false), [stage, setStage] = useState('꺼짐');
   const [transcript, setTranscript] = useState(''), [reply, setReply] = useState(''), [error, setError] = useState('');
@@ -121,8 +150,9 @@ export default function Voice({role}) {
     try { const result = await call('/api/voice/interpret', {method:'POST',headers:jsonHeaders,body:JSON.stringify({text})}); await handle(result); }
     catch (e) { setError(e.message); } finally { busy.current = false; setStage(audio.current ? '듣는 중' : '꺼짐'); }
   }
-  return <div className="content"><header className="page-header"><div><p className="eyebrow">VOICE ASSISTANT</p><h1>음성 관제<span className="title-dot">.</span></h1><p className="subtitle">호출어를 포함해 상태·문서·모의 점검을 요청합니다.</p></div></header>
-    <section className="panel"><div className="panel-head"><div><h3>마이크</h3><p>현재 사용 중인 PC의 마이크 · 음성은 이 서버에서 로컬 인식</p></div><span className="pill neutral" role="status">{stage}</span></div>
+  return <div className="content"><header className="page-header"><div><p className="eyebrow">VOICE ASSISTANT</p><h1>음성 관제<span className="title-dot">.</span></h1><p className="subtitle">“Hello Hiwonder”로 로봇을 부른 뒤 상태·문서·모의 점검을 요청합니다.</p></div></header>
+    <RobotMicrophone role={role}/>
+    <section className="panel"><div className="panel-head"><div><h3>브라우저 마이크 (실험)</h3><p>현재 사용 중인 PC의 마이크 · 음성은 이 서버에서 로컬 인식</p></div><span className="pill neutral" role="status">{stage}</span></div>
     {role !== 'operator' ? <p>음성 인식과 모의 명령은 운영자만 사용할 수 있습니다.</p> : <><button type="button" onClick={listening ? closeMicrophone : startMicrophone}>{listening ? '마이크 끄기' : '마이크 켜기'}</button> <label><input type="checkbox" checked={speakEnabled} onChange={e => setSpeakEnabled(e.target.checked)}/> 이 PC에서 음성 응답</label><p className="record-note">예: “로버 배터리 상태 알려줘”, “로버 모의 점검 시작해”. 호출어만 말한 뒤에는 요청할 때 호출어를 다시 말해 주세요.</p><p className="record-note">발화 구간은 인식을 위해 이 서버로 전송됩니다. 음성 응답 중에는 입력을 무시하지만 완전한 에코 제거는 아닙니다.</p>
     <form onSubmit={submitText}><label htmlFor="voice-text">인식 문장 직접 시험</label><div><input id="voice-text" value={text} maxLength={300} onChange={e => setText(e.target.value)} placeholder="로버 모의 점검 시작해"/></div><button type="submit" disabled={!text.trim()}>문장 해석</button></form></>}
     {error && <p className="warning" role="alert">{error}</p>}{transcript && <p><b>인식:</b> {transcript}</p>}{reply && <p style={{whiteSpace:'pre-wrap'}}><b>응답:</b> {reply}</p>}

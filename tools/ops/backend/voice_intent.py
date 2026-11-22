@@ -16,7 +16,17 @@ def interpret(transcript):
     match = WAKE.match(transcript)
     if not match:
         return {'intent': 'sleep', 'command': ''}
-    raw_command = transcript[match.end():].strip()
+    return classify(transcript[match.end():])
+
+
+def classify(raw_command):
+    """Classify a command whose wake word was already detected (e.g. by the R818 board).
+
+    한글: 호출어가 이미 확인된 명령(예: R818 보드 깨우기 후 발화)을 분류한다.
+    """
+    if not isinstance(raw_command, str) or len(raw_command) > 300:
+        raise ValueError('invalid_transcript')
+    raw_command = raw_command.strip()
     question = raw_command.endswith('?')
     text = raw_command.strip(' .,!?')
     compact = re.sub(r'\s+', '', text.lower())
