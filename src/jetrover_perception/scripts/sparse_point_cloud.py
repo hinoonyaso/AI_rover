@@ -51,6 +51,7 @@ collision_monitor가 source_timeout 후 로봇을 세운다(잘못된 기준으�
 import os
 import time
 import hashlib
+from collections import deque
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
@@ -60,6 +61,23 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import CameraInfo, Image, JointState, PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
+from tf2_ros import Buffer, TransformException, TransformListener
+
+
+def floor_aware_masks(depth, background, height, reference_height, margin_mm):
+    """Separate near-floor returns from raised objects in the driving lane."""
+    present = (depth > 0) & (background > 0)
+    delta = background.astype(np.int32) - depth.astype(np.int32)
+    reference_floor = present & (np.abs(reference_height) <= 0.025)
+    samples = height[reference_floor & (np.abs(height) <= 0.025)]
+    if samples.size < 30:
+        return None
+    floor = np.median(samples)
+    raised = height - floor >= 0.02
+    obstacle = present & raised & ((delta > margin_mm) | (reference_floor & (delta > 10)))
+    free = present & (np.abs(delta) <= margin_mm) & ~obstacle & ~(
+        reference_floor & raised)
+    return obstacle, free
 
 
 class SparsePointCloud(Node):
@@ -67,6 +85,13 @@ class SparsePointCloud(Node):
         super().__init__('sparse_point_cloud')
         # 한글: stride=8이면 640x360 depth에서 최대 약 3600점(전체는 약 23만점). 3D 투영 연산을 점 수가 적은 단계에서만 한다.
         self.declare_parameter('stride', 8)
+        self.declare_parameter('floor_aware', False)
+        self.floor_aware = self.get_parameter('floor_aware').value
+        if self.floor_aware:
+            self.tf_buffer = Buffer()
+            self.tf_listener = TransformListener(self.tf_buffer, self)
+            self.pending_depth = deque(maxlen=8)
+            self.create_timer(0.02, self._process_pending_depth)
         # 한글: 발행 속도를 4프레임에 1번으로 낮춘다(원격 RViz에서 TF 타이밍 경쟁 방지).
         # Publishing at the full depth rate (~25-30Hz) meant a remote viewer
         # (RViz over WiFi) sometimes couldn't resolve the full TF chain in
@@ -203,6 +228,36 @@ class SparsePointCloud(Node):
         self._count += 1
         if self._count % self.every_nth != 0:
             return
+        if self.floor_aware:
+            self.pending_depth.append((time.monotonic(), msg))
+            return
+        self._process_depth(msg)
+
+    def _process_pending_depth(self):
+        # Wait for the transform at the image timestamp without blocking TF callbacks.
+        # 한글: TF 수신을 막지 않고, 영상 시각의 변환을 짧게 기다린다.
+        while self.pending_depth:
+            received, msg = self.pending_depth[0]
+            stamp = rclpy.time.Time.from_msg(msg.header.stamp)
+            if time.monotonic() - received > 0.25:
+                self.pending_depth.popleft()
+                try:
+                    self.tf_buffer.lookup_transform('base_footprint', msg.header.frame_id, stamp)
+                    reason = 'transform now available'
+                except TransformException as exc:
+                    reason = str(exc)
+                self.get_logger().warn(
+                    f'Floor filter timed out waiting for depth TF: {reason}', throttle_duration_sec=5.0)
+                continue
+            try:
+                transform = self.tf_buffer.lookup_transform(
+                    'base_footprint', msg.header.frame_id, stamp).transform
+            except TransformException:
+                return
+            self.pending_depth.popleft()
+            self._process_depth(msg, transform)
+
+    def _process_depth(self, msg, transform=None):
         # A raw depth frame must not be compared with a color-aligned background.
         # 한글: 미정합 깊이를 컬러 정합 기준 영상과 비교하지 않는다.
         if self.expected_depth_frame and (msg.header.frame_id != self.expected_depth_frame or self.intrinsics_frame != self.expected_depth_frame):
@@ -262,12 +317,26 @@ class SparsePointCloud(Node):
         valid = (
             (depth_sparse > 0) & (bg > 0) &
             (depth_sparse.astype(np.int32) < bg.astype(np.int32) - self.background_margin_mm))
+        free = (depth_sparse > 0) & (bg > 0) & (
+            np.abs(depth_sparse.astype(np.int32) - bg.astype(np.int32)) <= self.background_margin_mm)
+        if self.floor_aware:
+            q = transform.rotation
+            vertical_ray = (
+                2 * (q.x * q.z - q.y * q.w) * (us - cx) / fx
+                + 2 * (q.y * q.z + q.x * q.w) * (vs - cy) / fy
+                + 1 - 2 * (q.x ** 2 + q.y ** 2))
+            offset = transform.translation.z
+            masks = floor_aware_masks(
+                depth_sparse, bg, offset + vertical_ray * z,
+                offset + vertical_ray * bg / 1000.0, self.background_margin_mm)
+            if masks is None:
+                self.get_logger().warn('Floor reference unavailable', throttle_duration_sec=5.0)
+                return
+            valid, free = masks
         if self.pub_clear is not None:
             # Free floor = within the margin of the background. Sub-sampled: the rays only
             # need to cover the area. 한글: 기준과 margin 안으로 같은 픽셀 = 빈 바닥, 더 성기게.
             k = self.clear_step
-            diff = np.abs(depth_sparse.astype(np.int32) - bg.astype(np.int32))
-            free = (depth_sparse > 0) & (bg > 0) & (diff <= self.background_margin_mm)
             sub = np.zeros_like(free)
             sub[::k, ::k] = True
             free &= sub
@@ -286,7 +355,13 @@ class SparsePointCloud(Node):
             layers = [points]
             d = self.extrude_step
             while d <= self.extrude_depth + 1e-6:
-                layers.append(points + rays * d)  # 같은 시선 위의 더 먼 점들
+                extended = points + rays * d
+                if self.floor_aware:
+                    # Keep synthetic returns above the nominal base_footprint floor.
+                    # Extrusion along a downward ray can pass under the floor.
+                    extended_height = offset + vertical_ray[valid] * extended[:, 2]
+                    extended = extended[extended_height >= 0.02]
+                layers.append(extended)
                 d += self.extrude_step
             points = np.concatenate(layers, axis=0)
 

@@ -105,6 +105,7 @@ def launch_setup(context):
         # depth/points_clear를 쓴다(troubleshooting/053).
         # Defaults switched on after the real tests (was off / 0.15 m); depth_clear needs them.
         parameters=[{
+            'floor_aware': LaunchConfiguration('depth_floor_aware').perform(context) == 'true',
             'home_pose_rad': _arm_home_pose(),
             'expected_depth_frame': camera_name + '_color_optical_frame',
             **cloud_extra,
@@ -143,6 +144,8 @@ def generate_launch_description():
             'depth_publish_clearing', default_value='true',
             description='sparse_point_cloud: also publish free-floor points on '
                         'depth/points_clear (clearing-only source)'),
+        DeclareLaunchArgument('depth_floor_aware', default_value='false',
+                              description='Enable experimental floor-aware obstacle detection'),
         DeclareLaunchArgument(
             'depth_lidar_filter', default_value='false',
             description='run depth_scan_filter: depth/points_low without points the LiDAR sees'),
