@@ -129,6 +129,29 @@ class MissionApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(self.manager.advance_active())
         self.assertEqual(self.manager.get(mission['id'])['state'], 'queued')
 
+    async def test_pause_resume_only_for_driving_gazebo(self):
+        payload = {'request_id': str(uuid4()), 'mode': 'gazebo', 'kind': 'return_to_start', 'parameters': {}}
+        status, mission = await self.request('POST', '/api/missions', payload)
+        self.assertEqual(status, 201)
+        mid = mission['id']
+        status, _ = await self.request('POST', f'/api/missions/{mid}/pause', {})
+        self.assertEqual(status, 409, 'not running yet')
+        with self.manager._transaction() as conn:
+            conn.execute("UPDATE missions SET state='running', stage='gazebo_returning' WHERE id=?", (mid,))
+        status, _ = await self.request('POST', f'/api/missions/{mid}/pause', {})
+        self.assertEqual(status, 503, 'no worker')
+        sent = []
+        self.app.state.gazebo_worker = type('W', (), {'send_motion': lambda self, i, c: sent.append((i, c)) or True})()
+        status, body = await self.request('POST', f'/api/missions/{mid}/pause', {})
+        self.assertEqual((status, body['requested']), (202, 'pause'))
+        status, _ = await self.request('POST', f'/api/missions/{mid}/resume', {})
+        self.assertEqual(status, 409, 'resume needs a paused stage')
+        with self.manager._transaction() as conn:
+            conn.execute("UPDATE missions SET stage='gazebo_paused' WHERE id=?", (mid,))
+        status, _ = await self.request('POST', f'/api/missions/{mid}/resume', {})
+        self.assertEqual(status, 202)
+        self.assertEqual(sent, [(mid, 'pause'), (mid, 'resume')])
+
     async def test_cancel_needs_simulator_ack(self):
         payload = {'request_id': str(uuid4()), 'mode': 'simulation', 'kind': 'inspection_demo', 'parameters': {}}
         _, mission = await self.request('POST', '/api/missions', payload)

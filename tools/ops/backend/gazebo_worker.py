@@ -37,7 +37,7 @@ class GazeboWorker:
             env['GZ_PARTITION'] = 'jetinspect_dashboard_' + uuid4().hex
             command = 'set -e; source /opt/ros/jazzy/setup.bash; source "$1"; exec /usr/bin/python3 "$2" "$3"'
         else:
-            command = 'set -e; source /opt/ros/jazzy/setup.bash; source "$1"; args=(--managed); if [ "$3" = inspect_stack_light ]; then args+=(--inspect); fi; exec /usr/bin/python3 "$2" "${args[@]}"'
+            command = 'set -e; source /opt/ros/jazzy/setup.bash; source "$1"; args=(--managed); if [ "$3" = inspect_stack_light ]; then args+=(--inspect); fi; if [ "$3" = return_to_start ]; then args+=(--return); fi; exec /usr/bin/python3 "$2" "${args[@]}"'
         setup = Path(__file__).resolve().parents[3] / 'install/setup.bash'
         self.output = tempfile.TemporaryFile(mode='w+t', encoding='utf-8')
         self.process = subprocess.Popen(['/bin/bash', '-c', command, 'gazebo-worker', str(setup), str(script), self.kind],
@@ -91,6 +91,9 @@ class GazeboWorker:
                     self.manager.mark_gazebo_navigation(self.mission_id)
                 if line == b'MISSION_STAGE gazebo_inspection':
                     self.manager.mark_gazebo_inspection(self.mission_id)
+                for stage in (b'gazebo_returning', b'gazebo_paused', b'gazebo_navigation'):
+                    if line == b'MISSION_STAGE ' + stage:
+                        self.manager.mark_gazebo_motion(self.mission_id, stage.decode())
             self.read_offset += complete + 1
             if len(chunk) < 65536:
                 break
@@ -123,6 +126,23 @@ class GazeboWorker:
         # Retain the result until it is persisted; a transient DB failure must not lose it.
         # 한글: 일시적 DB 오류로 결과가 유실되지 않도록 저장될 때까지 보관한다.
         self.tick()
+
+    def send_motion(self, mission_id, command):
+        """Forward pause/resume to the running trial of this mission. / 해당 임무 시험에 일시정지·재개 전달.
+
+        Returns False when no matching mission process is running.
+        한글: 해당 임무의 프로세스가 없으면 False를 반환한다.
+        """
+        if command not in ('pause', 'resume'):
+            raise ValueError('invalid command')
+        if self.process is None or self.mission_id != mission_id or self.cancel_sent or self.process.poll() is not None:
+            return False
+        try:
+            self.process.stdin.write(command + '\n')
+            self.process.stdin.flush()
+            return True
+        except (BrokenPipeError, OSError, ValueError):
+            return False
 
     def request_stop(self):
         """Request child cancellation without reporting success. / 취소 완료로 가정하지 않고 하위 프로세스에 요청한다."""

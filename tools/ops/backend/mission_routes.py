@@ -135,14 +135,31 @@ def mission_events(mission_id: str, request: Request):
 async def mission_command(mission_id: str, command: str, request: Request):
     """Start or cancel a simulated mission. / 모의 임무의 시작 또는 취소를 요청한다."""
     try:
-        if command not in ('start', 'cancel'):
+        if command not in ('start', 'cancel', 'pause', 'resume'):
             return response_error('not_found', 404)
         if await payload(request) != {}:
             raise ContractError('invalid_request')
         service = manager(request)
         mission_id = valid_id(mission_id)
+        if command in ('pause', 'resume'):
+            return motion_command(request, service, mission_id, command)
         row, changed = service.start(mission_id, include_changed=True) if command == 'start' else service.cancel(mission_id, include_changed=True)
         accepted = changed and (command == 'start' or row['state'] == 'cancel_requested')
         return JSONResponse(serialize(row), status_code=202 if accepted else 200)
     except (ContractError, sqlite3.Error, pymysql.Error) as exc:
         return handle(exc)
+
+
+def motion_command(request, service, mission_id, command):
+    """Pause or resume a driving Gazebo mission (the goal is kept while paused).
+
+    한글: 주행 중인 Gazebo 임무를 일시정지하거나 재개한다(일시정지 중 목표는 유지).
+    """
+    row = service.get(mission_id)
+    wanted = ('gazebo_navigation', 'gazebo_returning') if command == 'pause' else ('gazebo_paused',)
+    if row['mode'] != 'gazebo' or row['state'] != 'running' or row['stage'] not in wanted:
+        return response_error('invalid_transition', 409)
+    worker = getattr(request.app.state, 'gazebo_worker', None)
+    if worker is None or not worker.send_motion(mission_id, command):
+        return response_error('manager_unavailable', 503)
+    return JSONResponse({**serialize(row), 'requested': command}, status_code=202)

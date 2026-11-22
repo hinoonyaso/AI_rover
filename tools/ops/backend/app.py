@@ -115,6 +115,7 @@ async def lifespan(app):
         pass
 
     gazebo = GazeboWorker(app.state.mission_manager) if app.state.mission_manager is not None else None
+    app.state.gazebo_worker = gazebo
 
     async def simulate():
         nonlocal gazebo
@@ -124,6 +125,7 @@ async def lifespan(app):
                 try:
                     app.state.mission_manager = await asyncio.to_thread(MySQLMissionManager, SOCKET, legacy_path=directory / 'missions.sqlite3')
                     gazebo = GazeboWorker(app.state.mission_manager)
+                    app.state.gazebo_worker = gazebo
                 except (OSError, ValueError, ContractError, sqlite3.Error, pymysql.Error):
                     continue
             if app.state.mission_manager is not None:
@@ -137,6 +139,7 @@ async def lifespan(app):
                     await asyncio.to_thread(app.state.mission_manager.close)
                     app.state.mission_manager = None
                     gazebo = None
+                    app.state.gazebo_worker = None
 
     app.state.robot_status = ros_status
     task = asyncio.create_task(loop())

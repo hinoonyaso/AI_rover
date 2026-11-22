@@ -48,9 +48,12 @@ def stop_group(process):
 
 def check_cancel():
     """Treat an explicit cancel or closed parent pipe as cancellation. / 취소 또는 부모 연결 종료를 처리한다."""
+    # Pause/resume before driving starts mean nothing; only cancel (or EOF) stops preparation.
+    # 한글: 주행 전 일시정지·재개는 의미가 없어 무시하고, 취소(또는 입력 종료)만 준비를 멈춘다.
     if select.select([sys.stdin], [], [], 0)[0]:
-        sys.stdin.readline()
-        raise Canceled()
+        line = sys.stdin.readline()
+        if not line or line.strip() not in ('pause', 'resume'):
+            raise Canceled()
 
 
 def wait_log(path, text, process, timeout):
@@ -106,7 +109,7 @@ def inspection_nav_params(directory):
 def main():
     """Prepare, run, and clean up an isolated Gazebo mission. / 격리 Gazebo 임무를 준비·실행·정리한다."""
     require_simulation()
-    if len(sys.argv) != 2 or sys.argv[1] not in ('navigate_demo', 'inspect_stack_light'):
+    if len(sys.argv) != 2 or sys.argv[1] not in ('navigate_demo', 'inspect_stack_light', 'return_to_start'):
         raise ValueError('unsupported simulated mission')
     env = os.environ.copy()
     if not env.get('GZ_PARTITION', '').startswith('jetinspect_dashboard_'):
@@ -153,6 +156,8 @@ def main():
                 args = ['/usr/bin/python3', str(ROOT / 'tools/mission/gazebo_nav_trial.py'), '--managed']
                 if sys.argv[1] == 'inspect_stack_light':
                     args.append('--inspect')
+                if sys.argv[1] == 'return_to_start':
+                    args.append('--return')
                 trial = subprocess.Popen(args, cwd=ROOT, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                          stderr=subprocess.STDOUT, start_new_session=True)
                 cancel_sent = False
@@ -160,10 +165,13 @@ def main():
                 while trial.poll() is None or select.select([trial.stdout], [], [], 0)[0]:
                     ready, _, _ = select.select([trial.stdout, sys.stdin], [], [], .2)
                     if sys.stdin in ready and not cancel_sent:
-                        sys.stdin.readline()
-                        cancel_sent = True
+                        # Forward pause/resume; anything else (or EOF) is a single cancel.
+                        # 한글: 일시정지·재개는 그대로 전달하고, 그 밖의 입력(또는 종료)은 취소 한 번으로 보낸다.
+                        line = sys.stdin.readline()
+                        command = line.strip() if line and line.strip() in ('pause', 'resume') else 'cancel'
+                        cancel_sent = command == 'cancel'
                         try:
-                            trial.stdin.write(b'cancel\n')
+                            trial.stdin.write(command.encode() + b'\n')
                             trial.stdin.flush()
                         except (BrokenPipeError, OSError):
                             pass

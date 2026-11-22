@@ -96,3 +96,4 @@
 
 - [063 음성 호출어 오인식](063-voice-wake-recognition.md) — 보드 호출어 `hello hi wonder`로 해결, 로봇 마이크 경로 연결·비프 잔향 오인식 수정. 오탐률·소음 인식률은 남음.
 - [064 RAG 조사 붙은 질문 유보](064-rag-korean-particle-abstain.md) — "라이다가…"가 근거 없음 처리; 끝 조사 제거 + 일반어 제외로 해결.
+- [065 Jetson Gazebo 임무 시간 초과](065-gazebo-jetson-slow-realtime.md) — 과부하로 Gazebo 약 1/5 실시간; 구간 제한을 시뮬 시간으로, START_OCCUPIED 1회 재시도.

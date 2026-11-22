@@ -220,6 +220,26 @@ class SimulationManager:
                             VALUES (?, ?, 'running', 'running', 'gazebo_navigation', ?, 'gazebo')''',
                          (mission_id, version, utc_now()))
 
+    MOTION_STAGES = ('gazebo_navigation', 'gazebo_returning', 'gazebo_paused')
+
+    def mark_gazebo_motion(self, mission_id, stage):
+        """Record a driving/paused/returning stage change reported by the trial.
+
+        한글: 시험 프로세스가 알린 주행·일시정지·복귀 단계 변화를 기록한다.
+        """
+        if stage not in self.MOTION_STAGES:
+            raise ContractError('invalid_stage')
+        with self._transaction() as conn:
+            row = self._row(conn, mission_id)
+            if (row['mode'] != 'gazebo' or row['state'] != 'running' or row['stage'] == stage
+                    or row['stage'] not in self.MOTION_STAGES):
+                return
+            version = row['version'] + 1
+            conn.execute('UPDATE missions SET stage=?, version=? WHERE id=?', (stage, version, mission_id))
+            conn.execute('''INSERT INTO mission_events (mission_id, version, previous_state, state, stage, recorded_at, source)
+                            VALUES (?, ?, 'running', 'running', ?, ?, 'gazebo')''',
+                         (mission_id, version, stage, utc_now()))
+
     def mark_gazebo_inspection(self, mission_id):
         """Record the confirmed inspection stage once. / 확인된 점검 단계 진입을 한 번 기록한다."""
         with self._transaction() as conn:

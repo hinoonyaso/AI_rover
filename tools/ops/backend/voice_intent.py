@@ -36,6 +36,18 @@ def classify(raw_command):
         return {'intent': 'confirm', 'command': text}
     if compact in ('아니', '아니요', '취소', '취소해', '안해', '그만'):
         return {'intent': 'dismiss', 'command': text}
+    # Mission motion control. Stopping words are checked first so "멈춰" always wins.
+    # The execution mode (Gazebo now, real robot later) is chosen by the server, never by voice.
+    # 한글: 임무 주행 제어. 정지 단어를 먼저 검사해 "멈춰"가 항상 우선한다. 실행 모드는 음성이 아니라 서버가 정한다.
+    if any(word in compact for word in ('멈춰', '멈추', '정지', '스톱', 'stop', '잠깐')):
+        return {'intent': 'pause', 'command': text}
+    if any(word in compact for word in ('종료', '끝내', '그만가')):
+        return {'intent': 'end', 'command': text}
+    if any(word in compact for word in ('계속', '재개', '다시가', '다시출발')):
+        return {'intent': 'resume', 'command': text}
+    if (any(word in compact for word in ('출발점', '처음위치', '원래위치', '복귀'))
+            and not any(word in compact for word in ('실제', '실기', '로봇팔', '그리퍼'))):
+        return {'intent': 'return_home', 'command': text}
     # Never turn an ambiguous real-world motion request into a simulated one.
     # 한글: 실기 이동·팔 동작이 섞인 요청은 모의 요청으로 바꾸지 않는다.
     if any(word in compact for word in ('실제', '실기', 'gazebo', '가제보', '주행', '전진', '후진', '로봇팔', '그리퍼', '바퀴', '모터', '운전')):

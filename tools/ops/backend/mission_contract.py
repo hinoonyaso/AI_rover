@@ -65,7 +65,7 @@ def validate_create_request(payload):
         raise ContractError('invalid_request_id') from None
     if payload['mode'] not in ('simulation', 'gazebo'):
         raise ContractError('mode_unavailable')
-    supported = {'simulation': ('inspection_demo',), 'gazebo': ('navigate_demo', 'inspect_stack_light')}[payload['mode']]
+    supported = {'simulation': ('inspection_demo',), 'gazebo': ('navigate_demo', 'inspect_stack_light', 'return_to_start')}[payload['mode']]
     if payload['kind'] not in supported:
         raise ContractError('unsupported_kind')
     if payload['parameters'] != {} or not isinstance(payload['parameters'], dict):

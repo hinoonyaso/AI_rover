@@ -53,7 +53,7 @@ class FakeMissions:
 
     def create(self, payload):
         self.calls.append(('create', payload['mode'], payload['kind']))
-        row = {'id': 'a' * 32, 'mode': 'simulation', 'state': 'created'}
+        row = {'id': 'a' * 32, 'mode': payload['mode'], 'kind': payload['kind'], 'state': 'created'}
         self.rows.append(row)
         return row, True
 
@@ -161,6 +161,56 @@ class HandleTests(unittest.TestCase):
         self.assertIn('지원하지 않는', voice.handle({'intent': 'unsupported', 'command': '앞으로 주행'}))
         voice.handle({'intent': 'simulation_start', 'command': '모의 점검 시작'})
         self.assertIn('연결되지 않았습니다', voice.confirm())
+
+
+class MotionTests(unittest.TestCase):
+    """Return-to-start, stop/resume/end by voice (Gazebo). / 음성 출발점 복귀·정지·재개·종료."""
+    def setUp(self):
+        self.sent = []
+        self.ok = True
+
+    def make(self, rows=()):
+        missions = FakeMissions(rows)
+        voice, _ = worker(missions)
+        voice.motion = lambda mission_id, command: self.sent.append((mission_id, command)) or self.ok
+        return voice, missions
+
+    def test_return_home_needs_confirmation(self):
+        voice, missions = self.make()
+        self.assertIn('시작할까요', voice.handle({'intent': 'return_home', 'command': '출발점으로 돌아와'}))
+        self.assertEqual(missions.calls, [])
+        self.assertIn('출발점 복귀 임무를 시작', voice.confirm())
+        self.assertEqual(missions.calls, [('create', 'gazebo', 'return_to_start'), ('start', 'a' * 32)])
+
+    def test_stop_words_pause_a_driving_mission_without_confirmation(self):
+        row = {'id': 'g' * 32, 'mode': 'gazebo', 'state': 'running', 'stage': 'gazebo_returning'}
+        for intent in ('pause', 'dismiss'):  # "멈춰"/"정지" and "취소"
+            voice, _ = self.make([row])
+            self.assertIn('정지했습니다', voice.handle({'intent': intent, 'command': '멈춰'}))
+        self.assertEqual(self.sent, [('g' * 32, 'pause')] * 2)
+
+    def test_dismiss_without_driving_clears_pending(self):
+        voice, missions = self.make()
+        voice.handle({'intent': 'return_home', 'command': '출발점 복귀'})
+        self.assertIn('취소했습니다', voice.handle({'intent': 'dismiss', 'command': '취소'}))
+        self.assertIsNone(voice.snapshot()['pending'])
+        self.assertEqual(self.sent, [])
+
+    def test_resume_and_end(self):
+        row = {'id': 'p' * 32, 'mode': 'gazebo', 'state': 'running', 'stage': 'gazebo_paused'}
+        voice, missions = self.make([row])
+        self.assertIn('계속합니다', voice.handle({'intent': 'resume', 'command': '계속해'}))
+        self.assertEqual(self.sent, [('p' * 32, 'resume')])
+        self.assertIn('종료합니다', voice.handle({'intent': 'end', 'command': '종료'}))
+        self.assertEqual(missions.calls[-1], ('cancel', 'p' * 32))
+
+    def test_nothing_to_stop_and_failed_forwarding(self):
+        voice, _ = self.make()
+        self.assertIn('없습니다', voice.handle({'intent': 'pause', 'command': '멈춰'}))
+        self.assertIn('없습니다', voice.handle({'intent': 'resume', 'command': '계속해'}))
+        self.ok = False
+        voice, _ = self.make([{'id': 'g' * 32, 'mode': 'gazebo', 'state': 'running', 'stage': 'gazebo_navigation'}])
+        self.assertIn('화면에서 임무를 취소', voice.handle({'intent': 'pause', 'command': '멈춰'}))
 
 
 class LoopTests(unittest.TestCase):

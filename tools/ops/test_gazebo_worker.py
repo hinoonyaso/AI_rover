@@ -218,6 +218,37 @@ class GazeboWorkerTests(unittest.TestCase):
                          ['gazebo_navigation', 'gazebo_inspection', 'gazebo_inspection'])
         self.assertEqual([event['state'] for event in events[-3:]], ['running', 'running', 'failed'])
 
+    def test_return_mission_pause_resume_stages_and_forwarding(self):
+        item = self.manager.create({'request_id': str(uuid4()), 'mode': 'gazebo',
+                                    'kind': 'return_to_start', 'parameters': {}})[0]
+        self.manager.start(item['id'])
+        self.worker._launch = lambda: self.launch_dummy(
+            'MISSION_STAGE gazebo_navigation\nMISSION_STAGE gazebo_paused\nMISSION_STAGE gazebo_navigation\n'
+            'MISSION_STAGE gazebo_returning\nMISSION_RESULT {"state":"succeeded","reason":"returned_to_start"}')
+        self.worker.tick()
+        self.finish()
+        stages = [event['stage'] for event in self.manager.events(item['id'])]
+        self.assertEqual(stages[-5:], ['gazebo_navigation', 'gazebo_paused', 'gazebo_navigation',
+                                       'gazebo_returning', 'gazebo_returning'])
+        self.assertEqual(self.manager.get(item['id'])['state'], 'succeeded')
+        self.assertFalse(self.worker.send_motion(item['id'], 'pause'), 'no process after finish')
+        with self.assertRaises(ValueError):
+            self.worker.send_motion(item['id'], 'drive')
+
+    def test_send_motion_writes_command_to_running_child(self):
+        item = self.manager.create({'request_id': str(uuid4()), 'mode': 'gazebo',
+                                    'kind': 'return_to_start', 'parameters': {}})[0]
+        self.worker.mission_id = item['id']
+        self.worker.process = subprocess.Popen(['/bin/cat'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+        try:
+            self.assertTrue(self.worker.send_motion(item['id'], 'pause'))
+            self.assertFalse(self.worker.send_motion('x' * 32, 'pause'), 'other mission')
+            self.worker.process.stdin.close()
+            self.assertEqual(self.worker.process.stdout.read(), 'pause\n')
+        finally:
+            self.worker.process.wait(5)
+            self.worker.process = None
+
     def test_stage_does_not_reverse_cancel_request(self):
         item = self.manager.create({'request_id': str(uuid4()), 'mode': 'gazebo',
                                     'kind': 'inspect_stack_light', 'parameters': {}})[0]

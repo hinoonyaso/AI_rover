@@ -29,8 +29,11 @@ try {
   const robotViewer = renderToStaticMarkup(React.createElement(RobotMicrophone, {role: 'viewer'}));
   assert.ok(robotOperator.includes('Hello Hiwonder') && robotOperator.includes('>듣기 시작</button>'));
   assert.ok(!robotViewer.includes('>듣기 시작</button>') && robotViewer.includes('운영자만'));
+  const {stageLabel} = await vite.ssrLoadModule('/src/Missions.jsx');
+  assert.equal(stageLabel('gazebo_paused'), '일시정지(목표 유지)');
+  assert.equal(stageLabel('gazebo_returning'), '출발점으로 복귀 중');
   const missionPage = render({page: 'missions'});
-  for (const label of ['임무 관리', '시뮬레이션 전용', '임무 생성']) assert.ok(missionPage.includes(label), label);
+  for (const label of ['임무 관리', '시뮬레이션 전용', '임무 생성', 'Gazebo 출발점 복귀']) assert.ok(missionPage.includes(label), label);
   const robotPage = render({page: 'robot'});
   for (const label of ['카메라 미리보기', '저장된 지도', '실제 로봇 임무 관리자는 연결되지 않았습니다']) assert.ok(robotPage.includes(label), label);
   const normal = render({});

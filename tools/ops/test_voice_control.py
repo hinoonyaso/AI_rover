@@ -35,7 +35,8 @@ class IntentTests(unittest.TestCase):
                  '로버 전진하고 모의 점검 시작해':'unsupported', '로버 가제보 주행 시작해':'unsupported',
                  '로버 배터리 상태 알려줘':'status', '로버 배터리 선택 알려줘':'status', '로버 임무 상태 알려줘':'mission_status',
                  '로버 카메라 연결 방법 알려줘':'knowledge', '로버 확인':'confirm', '로버 취소해':'dismiss',
-                 '로버 조명을 켜줘':'unsupported', '제트 로버, 배터리 상태 알려줘':'status', '제트로버 확인':'confirm'}
+                 '로버 조명을 켜줘':'unsupported', '로버 멈춰':'pause', '로버 정지':'pause', '로버 계속해':'resume',
+                 '로버 주행 종료해':'end', '로버 출발점으로 돌아와':'return_home', '로버 실제 로봇 출발점 복귀':'unsupported', '제트 로버, 배터리 상태 알려줘':'status', '제트로버 확인':'confirm'}
         for text, expected in cases.items():
             with self.subTest(text=text): self.assertEqual(interpret(text)['intent'], expected)
 

@@ -149,9 +149,12 @@ class RobotVoice:
     한글: 시리얼 포트·마이크와 제한된 동작 흐름을 소유한다.
     """
 
-    def __init__(self, *, missions, status, knowledge, transcribe,
+    def __init__(self, *, missions, status, knowledge, transcribe, motion=None,
                  open_serial=None, record=None, speak=None, beep=None, clock=time.monotonic):
         self.missions, self.status, self.knowledge = missions, status, knowledge
+        # motion(mission_id, 'pause'|'resume') -> bool, forwarded to the Gazebo worker.
+        # 한글: 일시정지·재개를 Gazebo 작업자에 전달하는 함수.
+        self.motion = motion
         self.transcribe = transcribe
         self.open_serial = open_serial or self._open_serial
         self.record = record or (lambda: ArecordFrames())
@@ -320,6 +323,32 @@ class RobotVoice:
     def handle(self, result):
         """Return the spoken reply for one classified command. / 분류된 명령의 응답 문장."""
         intent, command = result['intent'], result.get('command', '')
+        # Stopping comes first: "멈춰"/"정지"/"취소" pause a driving mission immediately.
+        # 한글: 정지가 최우선이다. 주행 중이면 "멈춰"·"정지"·"취소"는 즉시 일시정지한다.
+        if intent in ('pause', 'dismiss'):
+            driving = self._gazebo_mission(('gazebo_navigation', 'gazebo_returning'))
+            if driving is not None:
+                if self.motion and self.motion(driving['id'], 'pause'):
+                    return '정지했습니다. 계속하려면 계속해, 끝내려면 종료라고 말해 주세요.'
+                return '정지 요청을 보내지 못했습니다. 화면에서 임무를 취소해 주세요.'
+            if intent == 'pause':
+                return '주행 중인 임무가 없습니다.'
+        if intent == 'resume':
+            paused = self._gazebo_mission(('gazebo_paused',))
+            if paused is None:
+                return '멈춰 있는 임무가 없습니다.'
+            if self.motion and self.motion(paused['id'], 'resume'):
+                return '주행을 계속합니다.'
+            return '재개 요청을 보내지 못했습니다.'
+        if intent == 'end':
+            active = self._gazebo_mission(('gazebo_preparing', 'gazebo_navigation', 'gazebo_returning', 'gazebo_paused'))
+            if active is None:
+                return '종료할 주행 임무가 없습니다.'
+            try:
+                self.missions().cancel(active['id'])
+            except Exception:
+                return '종료 요청을 처리하지 못했습니다. 화면에서 확인해 주세요.'
+            return '주행 임무를 종료합니다.'
         if intent == 'confirm':
             return self.confirm()
         if intent == 'dismiss':
@@ -331,7 +360,7 @@ class RobotVoice:
             return '네, 말씀하세요. 다시 호출한 뒤 요청해 주세요.'
         with self.lock:
             busy = self.pending is not None
-        if busy and intent in ('simulation_start', 'simulation_cancel'):
+        if busy and intent in ('simulation_start', 'simulation_cancel', 'return_home'):
             return '먼저 대기 중인 요청을 확인하거나 취소해 주세요.'
         if intent == 'status':
             return self._status_reply()
@@ -342,6 +371,12 @@ class RobotVoice:
             if active is None:
                 return '임무 저장소에 연결되지 않았습니다.'
             return f'진행 가능한 모의 임무가 {len(active)}개 있습니다.' if active else '진행 중인 모의 임무가 없습니다.'
+        if intent == 'return_home':
+            if self._gazebo_mission(('gazebo_preparing', 'gazebo_navigation', 'gazebo_returning', 'gazebo_paused')):
+                return '이미 진행 중인 주행 임무가 있습니다.'
+            self._set_pending({'kind': 'gazebo_return', 'label': 'Gazebo 출발점 복귀 임무 생성 및 실행'})
+            return ('Gazebo에서 출발점 복귀 임무를 시작할까요? 다시 호출한 뒤 확인이라고 말하거나 '
+                    '화면에서 확인해 주세요. 실제 로봇은 움직이지 않습니다.')
         if intent == 'simulation_start':
             self._set_pending({'kind': 'start', 'label': '모의 점검 임무 생성 및 실행'})
             return '모의 점검을 시작할까요? 다시 호출한 뒤 확인이라고 말하거나 화면에서 확인해 주세요.'
@@ -371,6 +406,12 @@ class RobotVoice:
         if manager is None:
             return '임무 저장소에 연결되지 않았습니다.'
         try:
+            if action['kind'] == 'gazebo_return':
+                row, _ = manager.create({'request_id': str(uuid.uuid4()), 'mode': 'gazebo',
+                                         'kind': 'return_to_start', 'parameters': {}})
+                manager.start(row['id'])
+                return (f"Gazebo 출발점 복귀 임무를 시작했습니다. 임무 번호 {row['id'][:8]}. "
+                        '멈추려면 호출한 뒤 멈춰라고 말해 주세요.')
             if action['kind'] == 'start':
                 row, _ = manager.create({'request_id': str(uuid.uuid4()), 'mode': 'simulation',
                                          'kind': 'inspection_demo', 'parameters': {}})
@@ -388,6 +429,18 @@ class RobotVoice:
         with self.lock:
             had, self.pending = self.pending is not None, None
         return had
+
+    def _gazebo_mission(self, stages):
+        """The running Gazebo mission in one of ``stages``, or None. / 해당 단계의 Gazebo 임무."""
+        manager = self.missions()
+        if manager is None:
+            return None
+        try:
+            rows = manager.list_recent(limit=20)
+        except Exception:
+            return None
+        return next((r for r in rows if r['mode'] == 'gazebo' and r['state'] == 'running'
+                     and r.get('stage') in stages), None)
 
     def _active_simulations(self):
         manager = self.missions()

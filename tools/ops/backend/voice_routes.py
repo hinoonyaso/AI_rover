@@ -160,6 +160,9 @@ def robot(request):
                 missions=lambda: getattr(app.state, 'mission_manager', None),
                 status=lambda: {'robot': status()} if status else {},
                 knowledge=knowledge_routes.ask_with_fallback,
+                motion=lambda mission_id, command: bool(
+                    getattr(app.state, 'gazebo_worker', None)
+                    and app.state.gazebo_worker.send_motion(mission_id, command)),
                 transcribe=transcribe_wav)
         return _robot
 
