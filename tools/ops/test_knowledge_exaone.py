@@ -60,5 +60,40 @@ class ExaoneTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn('secret', str(payload))
 
 
+
+class AskFallbackTests(unittest.TestCase):
+    """EXAONE-first answers with a local fallback. / EXAONE 우선, 로컬 대체."""
+    def setUp(self):
+        self.store = Mock()
+        self.store.answer.return_value = '로컬 근거 답변'
+        self.rows = [{'source': 'troubleshooting/012-ch341.md', 'classification': '기록', 'text': 'x'}]
+
+    def run_ask(self, rows, provider='exaone', generate=None):
+        self.store.search.return_value = rows
+        with patch.object(knowledge_routes, 'manager', return_value=self.store), \
+             patch.object(knowledge_exaone, 'preferred_provider', return_value=provider), \
+             patch.object(knowledge_exaone, 'generate', side_effect=generate) as send:
+            return knowledge_routes.ask_with_fallback('라이다 연결 방법'), send
+
+    def test_exaone_first(self):
+        result, send = self.run_ask(self.rows, generate=lambda q, r: {'answer': 'EXAONE 답', 'finish_reason': 'stop'})
+        self.assertEqual((result['provider'], result['sent'], result['answer']), ('exaone', True, 'EXAONE 답'))
+        send.assert_called_once()
+
+    def test_no_evidence_is_never_sent(self):
+        result, send = self.run_ask([])
+        self.assertEqual((result['provider'], result['fallback_reason'], result['sent']), ('local', 'no_evidence', False))
+        send.assert_not_called()
+
+    def test_failure_and_local_setting_fall_back(self):
+        def fail(q, r):
+            raise RuntimeError('EXAONE 응답을 받지 못했습니다.')
+        result, _ = self.run_ask(self.rows, generate=fail)
+        self.assertEqual((result['provider'], result['fallback_reason'], result['answer']), ('local', 'exaone_error', '로컬 근거 답변'))
+        result, send = self.run_ask(self.rows, provider='local')
+        self.assertEqual(result['fallback_reason'], 'local_selected')
+        send.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

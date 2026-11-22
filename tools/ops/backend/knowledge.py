@@ -146,6 +146,17 @@ class Knowledge:
             # 한글: 의미 검색에 장치 별칭과 기술 식별자의 직접 일치도를 더한다.
             candidates = self.client.query_points(name, query=vector, limit=1000, with_payload=True).points
             tokens = [t.lower() for t in re.findall(r'[A-Za-z0-9_]+|[가-힣]{2,}', query)]
+            # Korean attaches particles to nouns ("라이다가", "카메라를"); strip one trailing particle
+            # so the term and its alias still match. 한글: 조사가 붙은 명사도 일치하도록 끝 조사 하나를 뗀다.
+            particles = ('에서', '으로', '에게', '한테', '부터', '까지', '처럼', '이랑', '하고',
+                         '이', '가', '은', '는', '을', '를', '에', '의', '로', '도', '만', '와', '과', '랑')
+            tokens = [next((t[:-len(p)] for p in particles
+                            if re.fullmatch(r'[가-힣]+', t) and t.endswith(p) and len(t) - len(p) >= 2), t)
+                      for t in tokens]
+            # Words present in nearly every project document carry no evidence on their own.
+            # 한글: 거의 모든 문서에 있는 일반어는 근거 일치로 세지 않는다.
+            generic = {'로봇', '제트로버', 'jetrover', '프로젝트', '시스템', '기능', '사용', '방법'}
+            tokens = [t for t in tokens if t not in generic]
             # Score rare query bigrams against passage text, not repeated source paths.
             # 한글: 문서 경로에 반복되는 단어 대신 문단에서 드문 질의 글자쌍을 우대한다.
             def bigrams(value):

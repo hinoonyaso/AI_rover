@@ -14,9 +14,9 @@ try {
   const {default: Knowledge} = await vite.ssrLoadModule('/src/Knowledge.jsx');
   const operatorKnowledge = renderToStaticMarkup(React.createElement(Knowledge, {role: 'operator'}));
   const viewerKnowledge = renderToStaticMarkup(React.createElement(Knowledge, {role: 'viewer'}));
-  assert.ok(operatorKnowledge.includes('EXAONE 외부 답변'));
+  assert.ok(operatorKnowledge.includes('답변 (EXAONE 우선)'));
   assert.ok(operatorKnowledge.includes('색인 백업'));
-  assert.ok(!viewerKnowledge.includes('EXAONE 외부 답변'));
+  assert.ok(viewerKnowledge.includes('답변 (EXAONE 우선)'));
   assert.ok(!viewerKnowledge.includes('색인 백업'));
   const {InspectionDiagnostics} = await vite.ssrLoadModule('/src/Missions.jsx');
   const diagnosticHtml = renderToStaticMarkup(React.createElement(InspectionDiagnostics, {diagnostics: {

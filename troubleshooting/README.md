@@ -95,3 +95,4 @@
 - [062 관제 센서 복구와 깊이 장애물 데이터 미수신](062-dashboard-sensor-recovery.md) — 카메라 복구 확인, LiDAR 첫 재시작 초기화 정체 원인 미확정.
 
 - [063 음성 호출어 오인식](063-voice-wake-recognition.md) — 보드 호출어 `hello hi wonder`로 해결, 로봇 마이크 경로 연결·비프 잔향 오인식 수정. 오탐률·소음 인식률은 남음.
+- [064 RAG 조사 붙은 질문 유보](064-rag-korean-particle-abstain.md) — "라이다가…"가 근거 없음 처리; 끝 조사 제거 + 일반어 제외로 해결.

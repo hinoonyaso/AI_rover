@@ -133,3 +133,42 @@ def exaone_answer(request: ExaoneRequest):
         return JSONResponse({'error': 'EXAONE 답변을 생성하지 못했습니다. 서비스 상태를 확인하세요.'}, status_code=503)
     finally:
         _answer_lock.release()
+
+
+def ask_with_fallback(q):
+    """EXAONE-first answer with a local evidence fallback (shared with the robot voice).
+
+    Only the question and up to three retrieved excerpts are sent, and only when evidence
+    exists. Returns which provider answered and why a fallback happened.
+    한글: EXAONE 우선 답변과 로컬 근거 답변 대체(로봇 음성과 공유). 근거가 있을 때만 질문과
+    최대 세 문단을 보내며, 어떤 제공자가 답했는지와 대체 사유를 함께 반환한다.
+    """
+    store = manager()
+    rows = store.search(q)
+    fallback = None
+    if not rows:
+        fallback = 'no_evidence'
+    elif knowledge_exaone.preferred_provider() != 'exaone':
+        fallback = 'local_selected'
+    else:
+        try:
+            response = knowledge_exaone.generate(q, rows)
+            return {**response, 'mode': 'exaone', 'provider': 'exaone', 'sent': True,
+                    'fallback_reason': None, 'results': rows[:3]}
+        except RuntimeError as exc:
+            fallback = 'no_key' if 'API 키' in str(exc) else 'exaone_error'
+    return {'answer': store.answer(q, rows, 'evidence'), 'mode': 'evidence', 'provider': 'local',
+            'sent': False, 'fallback_reason': fallback, 'results': rows}
+
+
+@router.get('/ask')
+def ask(q: str = Query(min_length=2, max_length=300)):
+    """Default dashboard answer: EXAONE first, local evidence fallback. / 기본 답변 경로."""
+    if not _answer_lock.acquire(blocking=False):
+        return JSONResponse({'error': '다른 AI 답변을 생성 중입니다'}, status_code=409)
+    try:
+        return ask_with_fallback(q)
+    except Exception as exc:
+        return failure(exc)
+    finally:
+        _answer_lock.release()
