@@ -1,4 +1,0 @@
-#!/bin/sh
-set -eu
-voice_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-exec env -u PYTHONPATH "$HOME/.local/share/jetrover-voice/venv/bin/python" "$voice_dir/voice.py" "$@"

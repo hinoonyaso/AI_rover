@@ -1,9 +1,0 @@
-# Verified on Ubuntu arm64 / Python 3.12, 2026-11-11.
-# 한글: 2026-11-11 Jetson Ubuntu arm64 / Python 3.12에서 확인한 버전.
-flatbuffers==25.12.19
-numpy==2.5.4
-onnxruntime==1.31.1
-packaging==26.3
-pathvalidate==3.3.1
-piper-tts==1.8.0
-protobuf==7.36.2
