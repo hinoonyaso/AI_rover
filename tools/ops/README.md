@@ -84,6 +84,10 @@ gz service -s /world/jetrover_room/set_pose --reqtype gz.msgs.Pose --reptype gz.
 
 점검 임무는 카메라 시야 확보를 위해 일반 주행보다 엄격한 위치 0.03 m·방향 0.08 rad 도착 허용 오차를 적용한다. 더 엄격한 조건으로 주행이 오래 걸리거나 완료되지 않을 수 있다. 점검 결과가 없거나 영상이 불충분하면 성공하지 않는다. 화면과 이력에 주행과 점검 단계를 구분해 표시한다. 현재 색상 탐색은 가상 시험판 전용이며 개선 후 새 Gazebo에서 점검 성공 2회, 점검 중 브라우저 취소 1회를 확인했다. 실제 설비의 판정과 장시간 반복 성능은 검증되지 않았다. 시험 과정은 `prd/gazebo-stack-light-test-plan.md`에 기록했다.
 
+2026-11-19: 가상 경광등 관측이 실패하면 수신 영상 수·유효 표본·시각 오류·표본 초기화·형식 오류와 색상별 판정 불가 사유를 임무 결과에 기록하고 화면에 표시한다. 이전 이력과 해당 진단이 없는 실패는 기존 방식으로 표시한다. 격리 ROS 영상 중단, 격리 DB·작업자 및 Firefox 화면 시험으로 확인했다. 실제 설비나 카메라 판정 정확도는 검증하지 않았다. 녹화 영상 오프라인 시험은 `tools/mission/README.md`를 참조한다.
+
+임무 관리의 **경광등 녹화 영상 시험**에서 운영자가 최대 8MB·1280×720 영상을 선택하고 빨강·노랑·초록 영역을 원본 영상 픽셀 `x,y,너비,높이`로 지정하면 처음 3초를 관측해 색상별 결과와 첫·마지막 표본을 볼 수 있다. 영상과 결과는 임시 처리 후 저장하지 않는다. 조회자 사용 불가, 동일 출처·로그인이 필요하며 동시 실행은 하나로 제한한다. 가상 시험판용 분류기를 사용하므로 실제 설비 판정에 사용해서는 안 된다. 합성 영상의 API·Firefox 검증만 완료했고 실제 영상 성능 및 임무 이력 연결은 미검증이다.
+
 ## 데이터베이스 탐색
 
 대시보드의 WORKSPACE에서 **데이터베이스**를 선택하면 `jetinspect`의 `system_metrics`, `robot_events`, `missions`, `mission_events` 테이블을 페이지당 50행씩 읽을 수 있다. 새로고침과 이전/다음 페이지를 제공한다. 시스템 지표와 운영 이벤트의 DB 기록 시각 시간대는 미확인이다. 행의 상세 버튼에서 긴 값 전체를 확인하고 복사할 수 있다. 임의 SQL 실행 및 편집은 제공하지 않는다.
@@ -136,8 +140,10 @@ env -u PYTHONPATH ~/.local/share/jetinspect-ops/venv/bin/python ~/jetrover_ws/to
 # 수동 rosbag 기록 (종료 Ctrl-C; 디스크 사용량 직접 확인)
 ~/jetrover_ws/tools/ops/record_rosbag.sh
 # 60분 상태 시험 (예: 30초 간격, 자체적으로 로봇 기능을 켜지 않음)
-/usr/bin/python3 ~/jetrover_ws/tools/ops/soak.py --minutes 60 --interval 30
+/usr/bin/python3 ~/jetrover_ws/tools/ops/soak.py --minutes 60 --interval 30 --url https://172.30.1.82:8765 --ca-file ~/.local/share/jetinspect-ops/tls/dashboard.crt --username <계정>
 ```
+
+상태 시험은 실행 시 비밀번호를 숨겨 입력받으며, 세션 유효기간 때문에 최대 470분이다. URL과 CA 파일은 실제 서버 주소와 신뢰 설정에 맞게 지정한다.
 
 ROS bag은 `~/.local/share/jetinspect-ops/bags`, 시험 JSONL은 `soak`, DB 백업은 `backups`. bag 자동 시작·용량 제한·자동 정리와 DB 백업 자동화는 미구현이다. 서비스 장애 시 systemd가 재시작을 시도하며, UI는 DB 연결 실패를 표시한다. 백업은 별도 장치에 복사하지 않으면 디스크 고장에 대비되지 않는다.
 
@@ -186,3 +192,37 @@ WORKSPACE의 **지식 검색**에서 허용된 프로젝트 문서를 검색하�
 2026-11-18: 지식 검색의 기본 답변은 LLM 요약 대신 검색된 원문과 출처를 직접 표시한다. **AI 생성 답변 · 느림**은 기존 로컬 모델을 선택적으로 실행하며 문서 밖 설명이 포함될 수 있다. 실시간 상태를 묻는 일부 표현은 관제 화면 확인을 안내한다. 30개 고정 질문의 출처 Hit@5 25/25, 무관·실시간 질문 거부 5/5 및 실제 지연은 `docs/benchmarks/rag/knowledge-evaluation-20261118.md` 참조. 이는 문단 수준 정답률이나 생성형 답변의 정확도 보증은 아니다.
 
 검색 결과는 한국어 부분 문자열과 벡터 유사도를 함께 사용하며 선택된 청크의 앞뒤에 있는 같은 색인 버전의 문맥을 덧붙인다. 센서 실시간 질의와 관련 없는 질의의 구분은 규칙 기반이므로 항상 정확하지 않다. 개선 후 실제 서버 평가는 `docs/benchmarks/rag/knowledge-search-improvement-20261118.md` 참조.
+
+### 지식 색인 백업과 EXAONE 선택 답변
+
+운영자는 지식 검색 화면에서 **색인 백업**을 누를 수 있다. 백업은 `~/.local/share/jetinspect-ops/backups/`에 소유자 전용 JSON으로 저장된다. 활성 세대와 문단·벡터·모델 식별자에 대한 SHA-256 무결성 검사를 포함한다. 원본 백업을 별도 저장장치에도 보관해야 디스크 고장에 대비할 수 있다. 이 해시는 백업의 출처를 인증하는 서명이 아니다.
+
+복원은 기존 색인을 덮어쓰지 않는 **새 디렉터리**에만 가능하다. 실제 운영 색인을 교체하지 않으며, 복원본의 상태와 검색 결과를 확인한 뒤 별도의 운영 절차가 필요하다. 이미 존재하는 경로 또는 손상된 백업은 거부한다.
+
+```bash
+# 사용 중인 대시보드에서 백업 버튼을 사용하거나, 색인이 사용 중이지 않을 때 CLI 백업
+~/.local/share/jetinspect-ops/venv/bin/python ~/jetrover_ws/tools/ops/knowledge_backup.py backup ~/.local/share/jetinspect-ops/backups/knowledge-manual.json
+# 새 경로에만 복원
+~/.local/share/jetinspect-ops/venv/bin/python ~/jetrover_ws/tools/ops/knowledge_backup.py restore ~/.local/share/jetinspect-ops/backups/knowledge-manual.json /tmp/knowledge-restored
+```
+
+**EXAONE 외부 답변**은 운영자가 외부 전송을 확인한 경우에만 질문과 검색된 최대 3개 결과의 기본·추가 관련 문단을 전송한다. 근거가 없거나 실시간 질문이면 호출하지 않는다. API 키는 Git 제외 `tools/ops/.env`의 `EXAONE_API_KEY` 또는 환경변수에 둔다. 제공자 요청 제한과 답변 오류가 발생할 수 있으며 기본값은 원문 근거 답변이다. 2026-11-19의 17개 질문 평가와 2개 모델 비교는 `docs/benchmarks/rag/independent-evaluation-20261119.md`에 기록했다.
+
+2026-11-19 추가: 문단 본문에 나타나는 드문 질의 글자쌍을 순위에 반영하고, 같은 문서·색인 버전의 떨어진 관련 문단 하나를 추가할 수 있으며 영어 `LiDAR` 실시간 질문을 유보한다. EXAONE 확인 시 각 결과의 추가 문단도 외부로 보낼 수 있다. 최종 별도 질문의 근거 8/10은 그대로였고 무관·실시간 유보는 3/4→4/4였다. 로컬 생성 중 카메라 주기가 낮아진 단일 시험을 포함해 상세와 한계는 `docs/benchmarks/rag/rerank-evaluation-20261119.md` 참조.
+
+2026-11-19 추가 평가에서 실시간 이동·충전량 및 일부 영어 현재 상태 질문과 문서 단어/장치 별칭이 하나도 일치하지 않는 의미 검색 결과는 근거 부족으로 유보하도록 보완했다. 표현이 다른 실제 질문도 유보될 수 있고 일부 무관한 질문은 여전히 자료를 반환할 수 있다. 최종 별도 16문항은 근거 8/10, 무관 유보 5/6이었다. 센서와 함께 10분간 로컬 생성을 시험한 결과와 조건은 `docs/benchmarks/rag/extended-evaluation-20261119.md`에 기록했다.
+
+생성 부하 재시험은 별도 경로로 복원한 색인과 개인 경로를 사용한다. 장치 전압과 메모리를 관찰하므로 센서가 연결된 정지 상태에서 실행한다. 지정 출력과 입력은 덮어쓰지 않는다.
+
+```bash
+~/.local/share/jetinspect-ops/venv/bin/python ~/jetrover_ws/tools/ops/evaluation/prepare_generation_stability.py --store /tmp/knowledge-restored --output /tmp/rag-stability-inputs.json
+~/.local/share/jetinspect-ops/venv/bin/python ~/jetrover_ws/tools/ops/evaluation/evaluate_generation_stability.py --inputs /tmp/rag-stability-inputs.json --output ~/.local/share/jetinspect-ops/soak/rag-stability-new.json --seconds 600
+```
+
+### 음성 관제 시제품
+
+운영자로 로그인한 뒤 **음성 관제 → 마이크 켜기**를 선택하고 브라우저의 마이크 권한을 허용한다. 접속 PC의 HTTPS 인증서가 신뢰되어야 마이크를 사용할 수 있다. 화면을 벗어나거나 마이크를 끄면 입력이 중단된다. `로버 배터리 상태 알려줘`, `로버 카메라 연결 방법 알려줘`, `로버 모의 점검 시작해`, `로버 모의 임무 취소해`처럼 발화마다 호출어를 붙인다. 호출어만 말했다면 다음 요청에도 호출어를 붙인다. `인식 문장 직접 시험`으로 마이크 없이 명령 분류를 확인할 수 있다.
+
+모의 임무 시작과 취소는 인식한 내용을 화면에서 확인하거나 `로버 확인`이라고 말해야 요청된다. 취소 대상이 모의 임무 하나로 확정되지 않으면 임무 화면에서 선택한다. 실제 로봇과 Gazebo의 주행·팔 동작은 음성 명령으로 실행하지 않는다. 조회 결과나 생성형 답변은 제어 명령으로 실행되지 않는다.
+
+마이크가 켜진 동안 브라우저의 간단한 음량 기준 VAD가 발화 구간을 잘라 서버로 보내고, 서버의 Whisper가 호출어 검사 **전에** 로컬 전사한다. 녹음 구간은 임시 파일에서 처리 후 삭제된다. 오디오 응답은 기본 꺼짐이며 선택 시 PC의 브라우저/OS 음성 합성을 사용한다. 응답 재생 중 입력을 무시하지만 완전한 에코 제거는 아니다. 초기 합성 음성 시험에서 호출어 오인식이 발생했으며 실제 사람 음성·소음 환경의 정확도는 아직 검증하지 않았다. 호출어가 틀리게 인식되면 명령이 무시될 수 있으므로 화면의 인식 문장을 확인한다.

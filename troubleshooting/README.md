@@ -89,3 +89,9 @@
 - [059 팔 보정 자세 수집 서보 응답 미확인](059-arm-observation-snapshot-age.md) — 스냅샷 2초 주기와 1.5초 신선도 제한 충돌; 0.5초로 변경 후 실제 TF 수집 3회 확인.
 
 - [060 GitHub Actions 정적 검사와 ROS 서식 실패](060-ci-python-and-uncrustify.md) — Python 구문 및 C++ 서식 수정, GitHub Actions 세 작업 통과.
+
+- [061 바닥 필터 TF 지연과 깊이 장애물 데이터 중단](061-floor-filter-tf-stalls.md) — 미해결; 실기 주행 준비 미완료.
+
+- [062 관제 센서 복구와 깊이 장애물 데이터 미수신](062-dashboard-sensor-recovery.md) — 카메라 복구 확인, LiDAR 첫 재시작 초기화 정체 원인 미확정.
+
+- [063 음성 호출어 오인식](063-voice-wake-recognition.md) — 전사 호출어 미탐(프롬프트 시 오탐); 내장 "Hello Hiwonder" 전환 결정, 보드가 깨우기 이벤트를 보내지 않음(미해결).
