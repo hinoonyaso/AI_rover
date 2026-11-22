@@ -411,11 +411,47 @@ class RobotVoice:
         return f'{battery}입니다. {streams}입니다.'
 
     def _knowledge_reply(self, question):
+        """Speak a short answer: EXAONE text when it answered, else the local source name.
+
+        한글: EXAONE이 답하면 그 답을 짧게, 아니면 로컬 근거 문서 이름을 말한다.
+        """
+        # EXAONE answers take ~20-35 s (mandatory reasoning); announce the wait while it runs.
+        # 한글: EXAONE 답변은 필수 추론 때문에 약 20~35초 걸려 그동안 대기 안내를 먼저 말한다.
+        notice = threading.Thread(target=self.speak_text,
+                                  args=('문서를 확인하고 있습니다. 잠시만 기다려 주세요.',), daemon=True)
+        self._set('answering')
+        notice.start()
         try:
-            rows = self.knowledge(question)
+            result = self.knowledge(question)
         except Exception:
+            result = None
+        finally:
+            notice.join(15)  # never overlap the final reply / 최종 응답과 겹치지 않게 한다
+        if result is None:
             return '문서 검색을 사용할 수 없습니다.'
+        if isinstance(result, list):  # plain search rows (tests/older callers)
+            result = {'provider': 'local', 'results': result}
+        rows = result.get('results') or []
         if not rows:
             return '관련 문서 근거를 찾지 못했습니다.'
+        if result.get('provider') == 'exaone' and result.get('answer'):
+            return spoken_summary(result['answer'])
         source = rows[0]['source'].rsplit('/', 1)[-1]
         return f'문서 근거를 찾았습니다. {source}. 화면에서 원문을 확인해 주세요.'
+
+
+def spoken_summary(text, limit=180):
+    """Make a generated answer speakable: drop citations/markdown, keep the first sentences.
+
+    한글: 생성 답변을 말하기 좋게 출처 번호·마크다운을 빼고 앞 문장만 남긴다.
+    """
+    text = re.sub(r'\[\d+(?:[,\s]*\d+)*\]', '', text)
+    text = re.sub(r'[*#`>|_]+', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r'\s+([.,!?])', r'\1', text)
+    out = ''
+    for sentence in re.split(r'(?<=[.!?다요])\s+', text):
+        if out and len(out) + len(sentence) + 1 > limit:
+            break
+        out = (out + ' ' + sentence).strip()
+    return out[:limit] or '답변을 화면에서 확인해 주세요.'

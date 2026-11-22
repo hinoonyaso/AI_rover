@@ -10,7 +10,7 @@ import time
 import unittest
 
 sys.path.insert(0, str(Path(__file__).parent / 'backend'))
-from robot_voice import hallucinated, RobotVoice, segment_command  # noqa: E402
+from robot_voice import hallucinated, RobotVoice, segment_command, spoken_summary  # noqa: E402
 from r818_doa import SYNC  # noqa: E402
 
 
@@ -94,6 +94,19 @@ class SegmentTests(unittest.TestCase):
         # beep echo inside the skipped window, then a 5-frame click: not a command
         # 한글: 건너뛰는 구간의 비프 잔향과 5프레임 잡음은 명령이 아니다.
         self.assertIsNone(segment_command([loud] * 6 + [b'\0' * 640] * 5 + [loud] * 5 + [b'\0' * 640] * 80))
+
+    def test_exaone_answer_is_spoken_short(self):
+        voice, _ = worker()
+        voice.knowledge = lambda q: {'provider': 'exaone', 'answer': '**ttyUSB1**을 씁니다 [1]. CH340 드라이버를 설치합니다 [2]. ' + '추가 설명. ' * 40,
+                                     'results': [{'source': 'a.md'}]}
+        spoken = []
+        voice.speak_text = spoken.append
+        reply = voice.handle({'intent': 'knowledge', 'command': '라이다 장치 번호'})
+        self.assertEqual(spoken, ['문서를 확인하고 있습니다. 잠시만 기다려 주세요.'])
+        self.assertTrue(reply.startswith('ttyUSB1을 씁니다.'))
+        self.assertNotIn('[1]', reply)
+        self.assertLessEqual(len(reply), 180)
+        self.assertEqual(spoken_summary(''), '답변을 화면에서 확인해 주세요.')
 
     def test_hallucination_filter(self):
         for text in ('[구독]', '(박수)', '-뭐야. -뭐야. -뭐야. -뭐야.', '  '):

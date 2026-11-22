@@ -83,3 +83,11 @@ CPU, 25W, ROS 전체 통합 없이: Piper 합성 문장 “안녕하세요. 로�
 Jetson 로컬 텍스트 실행에서 초기 분류기가 인사를 vision으로 잘못 분류했다. 흔한 인사를 규칙으로 우선 처리한 후 `안녕하세요`가 local로 분기하고 답변을 생성함을 확인했다. 다른 표현에 대한 정확도와 생성 답변 품질은 추가 평가가 필요하다.
 
 2026-11-12 Groq 실제 연결: 계정 키로 텍스트 모델 응답(서울) 확인. 기존 VLM `qwen/qwen3.6-27b`는 이 계정에서 `model_not_found`(404)였고 모델 목록에 있는 `qwen/qwen3.8-27b`로 교체 후 합성 이미지의 빨간 도형을 올바르게 인식했다. 실제 카메라와 음성 왕복은 아직 미검증이다. 모델 가용성은 계정과 시점에 따라 달라질 수 있다.
+
+## 상시 STT 서버 (whisper.cpp small + CUDA, 2026-11-22)
+
+- 빌드: `~/.local/share/jetrover-voice/src/whisper.cpp`에서 `cmake -B build-cuda -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=87 -DCMAKE_BUILD_TYPE=Release && cmake --build build-cuda -j4 --target whisper-cli whisper-server`(CUDA 13.2, Orin Nano 약 50분). 기존 CPU 빌드 `build/`는 대체용으로 유지.
+- 모델: `~/.local/share/jetrover-voice/models/ggml-small.bin`(huggingface `ggerganov/whisper.cpp`, SHA-256 `1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b`).
+- 서비스: `tools/voice/systemd/jetrover-whisper.service`를 `~/.config/systemd/user/`에 복사 후 `systemctl --user enable --now jetrover-whisper`. `127.0.0.1:8178`만 연다. 메모리 RSS 약 1.2GB(GPU 모델 487MB 포함).
+- 대시보드 음성(`tools/ops/backend/voice_routes.py`)은 서버를 먼저 쓰고, 연결이 안 되면 기존 CPU CLI(base)로 대체한다(`JETROVER_STT_URL`, 빈 값이면 서버 미사용).
+- 측정(합성 10 + 실제 로봇 마이크 3문장): 힌트 없이 정확 일치 base(CPU) 4/13 → small(GPU) 6/13. 서버+명령 어휘 힌트 10/13. 1문장 전사 시간 CLI base 약 2.0초 → 서버 small 0.25~0.46초. 합성 음성(Piper KSS) 비중이 커서 실제 사람 발화 인식률로 보지 않는다. 자유 질문 단어("보정", "로봇팔")는 여전히 틀릴 수 있다.

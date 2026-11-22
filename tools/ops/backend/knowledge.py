@@ -133,6 +133,8 @@ class Knowledge:
 
     def search(self, query, limit=5):
         """Search active vectors with source metadata. / 활성 벡터에서 출처와 함께 검색한다."""
+        # Common STT spellings of project device names (voice questions). / 음성 전사의 장치명 오표기 보정.
+        query = re.sub(r'라이더', '라이다', query)
         if self.live_question(query):
             return []
         if not self.lock.acquire(blocking=False):

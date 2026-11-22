@@ -34,10 +34,41 @@ def interpret_text(payload: Transcript):
     return {'transcript': payload.text, **interpret(payload.text)}
 
 
+# Persistent local whisper-server (CUDA, small model; tools/voice/systemd/jetrover-whisper.service).
+# Keeps the model loaded, so a command costs inference time only. Empty to disable.
+# 한글: 상시 실행 로컬 whisper-server(CUDA, small 모델). 모델을 계속 올려 두어 추론 시간만 든다.
+STT_URL = os.environ.get('JETROVER_STT_URL', 'http://127.0.0.1:8178/inference')
+
+
+def _server_stt(raw, prompt):
+    """Return text from the local server, or None when it is not reachable.
+
+    한글: 로컬 서버의 전사 문장을 반환하고, 서버에 연결할 수 없으면 None을 반환한다.
+    """
+    if not STT_URL:
+        return None
+    import httpx
+    try:
+        with httpx.Client(timeout=httpx.Timeout(30.0, connect=0.5), trust_env=False) as client:
+            response = client.post(STT_URL, files={'file': ('voice.wav', raw, 'audio/wav')},
+                                   data={'language': 'ko', 'response_format': 'text',
+                                         'prompt': prompt or '', 'temperature': '0.0'})
+    except httpx.HTTPError:
+        return None
+    if response.status_code != 200:
+        return None
+    return response.text
+
+
 def _run_stt(raw, prompt=None):
     # The worker owns the lock and temporary WAV even if the client disconnects.
     # 한글: 클라이언트 연결이 끊겨도 워커가 잠금과 임시 WAV를 종료까지 소유한다.
     try:
+        text = _server_stt(raw, prompt)
+        if text is not None:
+            return subprocess.CompletedProcess(['whisper-server'], 0, stdout=text.strip() + '\n', stderr='')
+        # Fallback: one-shot CPU CLI (loads the base model every call).
+        # 한글: 서버가 없으면 기존 CPU CLI(매번 base 모델 로드)로 처리한다.
         with tempfile.TemporaryDirectory(prefix='jetinspect-stt-') as directory:
             path = Path(directory) / 'voice.wav'
             path.write_bytes(raw)
@@ -128,7 +159,7 @@ def robot(request):
             _robot = RobotVoice(
                 missions=lambda: getattr(app.state, 'mission_manager', None),
                 status=lambda: {'robot': status()} if status else {},
-                knowledge=lambda q: knowledge_routes.manager().search(q, limit=3),
+                knowledge=knowledge_routes.ask_with_fallback,
                 transcribe=transcribe_wav)
         return _robot
 

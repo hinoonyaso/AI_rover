@@ -12,7 +12,7 @@ async function call(path, options = {}) {
 
 // Robot-microphone panel: the R818 board detects "Hello Hiwonder", the server records and handles the command.
 // 한글: 로봇 마이크 패널. R818 보드가 "Hello Hiwonder"를 감지하면 서버가 명령을 녹음·처리한다.
-const robotStages = {off:'꺼짐', waiting_wake:'호출어 대기', recording:'명령 듣는 중', transcribing:'음성 인식 중', speaking:'응답 중', error:'오류'};
+const robotStages = {off:'꺼짐', waiting_wake:'호출어 대기', recording:'명령 듣는 중', transcribing:'음성 인식 중', answering:'문서 답변 준비 중', speaking:'응답 중', error:'오류'};
 const intentLabels = {status:'상태 조회', knowledge:'문서 질문', mission_status:'임무 상태', simulation_start:'모의 점검 요청', simulation_cancel:'모의 취소 요청', confirm:'확인', dismiss:'취소', wake:'호출만', unsupported:'지원 안 함', no_speech:'명령 없음', stt_error:'인식 실패'};
 export function RobotMicrophone({role}) {
   const [state, setState] = useState(null), [error, setError] = useState(''), [reply, setReply] = useState('');

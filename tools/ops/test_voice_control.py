@@ -40,10 +40,25 @@ class IntentTests(unittest.TestCase):
             with self.subTest(text=text): self.assertEqual(interpret(text)['intent'], expected)
 
 
+class SttServerTests(unittest.TestCase):
+    def test_server_text_is_used_and_unreachable_server_returns_none(self):
+        voice_routes.LOCK.acquire()
+        with patch.object(voice_routes, '_server_stt', return_value='배터리 상태 알려줘.'), \
+             patch.object(voice_routes.subprocess, 'run') as cli:
+            self.assertEqual(voice_routes._run_stt(b'wav', 'hint').stdout, '배터리 상태 알려줘.\n')
+            cli.assert_not_called()
+        self.assertTrue(voice_routes.LOCK.acquire(blocking=False)); voice_routes.LOCK.release()
+        with patch.object(voice_routes, 'STT_URL', 'http://127.0.0.1:9/inference'):
+            begin = time.monotonic()
+            self.assertIsNone(voice_routes._server_stt(b'wav', None))
+            self.assertLess(time.monotonic() - begin, 2.0)
+
+
 class VoiceApiTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.app = FastAPI(); self.app.middleware('http')(access_guard); self.app.include_router(voice_routes.router)
-        self.guards = [patch('access_control.request_allowed', return_value=True), patch('access_control.same_origin', return_value=True)]
+        self.guards = [patch('access_control.request_allowed', return_value=True), patch('access_control.same_origin', return_value=True),
+                       patch.object(voice_routes, '_server_stt', return_value=None)]  # use the CLI path / CLI 경로 시험
         for guard in self.guards: guard.start()
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url='http://test')
 
