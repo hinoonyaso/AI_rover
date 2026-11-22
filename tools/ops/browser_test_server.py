@@ -12,6 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from mission_routes import router
 from mission_simulator import SimulationManager
 from gazebo_worker import GazeboWorker
+from inspection_video_routes import router as inspection_video_router
+from voice_routes import router as voice_router
 
 
 class TestGazeboWorker(GazeboWorker):
@@ -59,5 +61,20 @@ def test_session():
     """Provide a disposable operator session. / 격리 시험용 운영자 세션을 제공한다."""
     return {'role': 'operator'}
 
+@app.get('/api/status')
+def test_status():
+    """Provide synthetic robot observations for browser tests. / 브라우저 시험용 가상 센서 상태를 제공한다."""
+    return {'host': None, 'database': 'connected', 'robot': {'status': 'monitoring', 'battery_voltage': 12.3,
+        'streams': {name: {'age_seconds': 0.5} for name in ('imu', 'scan', 'camera')}}}
+
+
+@app.get('/api/knowledge/answer')
+def test_knowledge_answer(q: str):
+    """Provide synthetic document evidence for browser tests. / 브라우저 시험용 가상 문서 근거를 제공한다."""
+    return {'answer': '시험 문서 원문입니다.', 'results': [{'source': 'test/sensor.md', 'text': '시험 문서 원문입니다.'}]}
+
+
 app.include_router(router)
+app.include_router(inspection_video_router)
+app.include_router(voice_router)
 app.mount('/', StaticFiles(directory=Path(__file__).parent / 'frontend/dist', html=True), name='dashboard')

@@ -20,6 +20,8 @@ from mission_routes import router as mission_router
 from calibration_routes import router as calibration_router
 from sensor_services import router as sensor_services_router
 from knowledge_routes import router as knowledge_router
+from inspection_video_routes import router as inspection_video_router
+from voice_routes import router as voice_router
 from page_cursor import decode_cursor, encode_cursor
 from pathlib import Path
 
@@ -174,6 +176,8 @@ app.include_router(mission_router)
 app.include_router(calibration_router)
 app.include_router(sensor_services_router)
 app.include_router(knowledge_router)
+app.include_router(inspection_video_router)
+app.include_router(voice_router)
 
 
 import battery_settings
@@ -201,7 +205,7 @@ def ros_status():
         if not isinstance(voltage, (int, float)) or not math.isfinite(voltage) or voltage <= 0:
             battery_age = None
         streams = {}
-        for name in ('imu', 'scan', 'camera'):
+        for name in ('imu', 'scan', 'camera', 'depth_obstacles'):
             sample = data.get('streams', {}).get(name, {})
             stamp = sample.get('received_at')
             age = observation_age(stamp)
