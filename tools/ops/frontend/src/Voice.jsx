@@ -30,11 +30,11 @@ export function RobotMicrophone({role}) {
   const running = state?.running, operator = role === 'operator';
   return <section className="panel"><div className="panel-head"><div><h3>로봇 마이크 · Hello Hiwonder</h3><p>로봇의 마이크 보드가 호출어를 감지하면 삐 소리 후 명령을 듣고 로봇 스피커로 답합니다</p></div><span className={state?.stage === 'error' ? 'pill neutral' : running ? 'pill online' : 'pill neutral'} role="status">{robotStages[state?.stage] || '확인 중'}</span></div>
     {operator ? <button type="button" onClick={() => send(running ? 'stop' : 'start')}>{running ? '듣기 중지' : '듣기 시작'}</button> : <p>듣기 시작·중지와 모의 임무 확인은 운영자만 할 수 있습니다.</p>}
-    <p className="record-note">사용법: “Hello Hiwonder” → 삐 → “배터리 상태 알려줘”, “라이다 연결 방법 알려줘”, “모의 점검 시작해”. 모의 임무는 다시 호출해 “확인”이라고 말하거나 아래 버튼으로 확인합니다. 실제 주행·팔 동작은 하지 않습니다.</p>
+    <p className="record-note">사용법: “Hello Hiwonder” → 삐 → “배터리 상태 알려줘”, “라이다 연결 방법 알려줘”, “모의 점검 시작해”. 모의 임무는 다시 호출해 “확인”이라고 말하거나 아래 버튼으로 확인합니다. 실제 주행·팔 동작은 하지 않습니다.</p><p className="record-note">방향은 2026-11-22 4방향 보정값(정면 0°, 왼쪽 +)으로 환산한 대략값이며 오차 약 15°까지 확인됐습니다. 로봇 회전·주행에는 쓰지 않습니다.</p>
     {state?.error && <p className="warning" role="alert">장치 오류: {state.error}</p>}{error && <p className="warning" role="alert">{error}</p>}
     {state?.pending && <div className="warning" role="status"><b>확인 필요: {state.pending.label}</b> <small>({Math.ceil(state.pending.expires_in)}초 남음)</small><p>실제 로봇은 움직이지 않습니다.</p>{operator && <><button type="button" onClick={() => send('confirm')}>확인</button> <button type="button" onClick={() => send('dismiss')}>취소</button></>}</div>}
     {reply && <p><b>응답:</b> {reply}</p>}
-    {state?.history?.length ? <div className="table-wrap"><table><thead><tr><th>시각</th><th>방향(기기)</th><th>인식 문장</th><th>해석</th><th>응답</th></tr></thead><tbody>{[...state.history].reverse().map((item, i) => <tr key={i}><td>{new Date(item.at * 1000).toLocaleTimeString()}</td><td>{Math.round(item.angle)}°</td><td>{item.transcript || '-'}</td><td>{intentLabels[item.intent] || item.intent}</td><td>{item.reply || '-'}</td></tr>)}</tbody></table></div> : <p className="record-note">아직 호출 기록이 없습니다.</p>}
+    {state?.history?.length ? <div className="table-wrap"><table><thead><tr><th>시각</th><th>방향(로봇 기준)</th><th>인식 문장</th><th>해석</th><th>응답</th></tr></thead><tbody>{[...state.history].reverse().map((item, i) => <tr key={i}><td>{new Date(item.at * 1000).toLocaleTimeString()}</td><td>{item.direction ? `${item.direction} ${item.bearing > 0 ? '+' : ''}${item.bearing}°` : '-'} <small>(기기 {Math.round(item.angle)}°)</small></td><td>{item.transcript || '-'}</td><td>{intentLabels[item.intent] || item.intent}</td><td>{item.reply || '-'}</td></tr>)}</tbody></table></div> : <p className="record-note">아직 호출 기록이 없습니다.</p>}
   </section>;
 }
 

@@ -28,7 +28,20 @@ from voice_intent import classify
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'tools/audio'))
-from r818_doa import ack_frame, DEFAULT_PORT, FrameReader, wake_angle  # noqa: E402
+from r818_doa import ack_frame, bearing_label, DEFAULT_PORT, FrameReader, robot_bearing, wake_angle  # noqa: E402
+import json  # noqa: E402
+
+CALIBRATION = ROOT / 'tools/audio/r818_wake_calibration.json'
+
+
+def load_calibration(path=CALIBRATION):
+    """Read the wake-angle calibration, or None. / 깨우기 각도 보정값을 읽는다."""
+    try:
+        data = json.loads(Path(path).read_text(encoding='utf-8'))
+        float(data['device_front_deg']), int(data['direction'])
+        return data
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
 
 MIC_DEVICE = os.environ.get('JETROVER_MIC_DEVICE', 'plughw:CARD=XFMDPV0018,DEV=0')
 SPEAKER_DEVICE = os.environ.get('JETROVER_AUDIO_DEVICE', 'plughw:CARD=Device,DEV=0')
@@ -145,6 +158,7 @@ class RobotVoice:
         self.speak_text = speak or self._speak
         self.beep = beep or self._beep
         self.clock = clock
+        self.calibration = load_calibration()
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
         self.thread = None
@@ -171,6 +185,12 @@ class RobotVoice:
 
     def _log(self, **entry):
         entry['at'] = time.time()
+        # Robot-frame bearing from the measured calibration (rough, see r818_wake_calibration.json).
+        # 한글: 측정한 보정값으로 로봇 기준 방위를 덧붙인다(대략값).
+        if self.calibration and entry.get('angle') is not None:
+            bearing = robot_bearing(entry['angle'], self.calibration)
+            entry['bearing'] = round(bearing)
+            entry['direction'] = bearing_label(bearing)
         with self.lock:
             self.history = (self.history + [entry])[-20:]
 

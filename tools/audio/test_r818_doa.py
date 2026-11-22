@@ -55,3 +55,13 @@ def test_real_board_nested_ivw_info():
     data = {'content': {'arg1': 1, 'arg2': 0, 'eventType': 4, 'info': info,
                         'result': 'xiao3 huan4 xiao3 huan4'}, 'type': 'aiui_event'}
     assert wake_angle(json.dumps(data).encode()) == 88.0
+
+
+def test_robot_bearing_from_calibration():
+    from r818_doa import bearing_label, robot_bearing
+    cal = {'device_front_deg': 146, 'direction': 1}
+    assert robot_bearing(146, cal) == 0
+    assert robot_bearing(234, cal) == 88
+    assert robot_bearing(70, cal) == -76
+    assert robot_bearing(326, cal) == 180
+    assert [bearing_label(robot_bearing(a, cal)) for a in (146, 234, 70, 341)] == ['정면', '왼쪽', '오른쪽', '뒤']

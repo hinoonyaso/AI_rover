@@ -95,6 +95,25 @@ def wake_angle(payload):
         return None
 
 
+def robot_bearing(device_deg, calibration):
+    """Convert a device wake angle to robot yaw in (-180, 180], CCW positive.
+
+    한글: 기기 깨우기 각도를 로봇 기준 방위(반시계 +, 정면 0, -180~180)로 바꾼다.
+    """
+    value = calibration['direction'] * (device_deg - calibration['device_front_deg'])
+    value = (value + 180.0) % 360.0 - 180.0
+    return 180.0 if value == -180.0 else value
+
+
+def bearing_label(bearing):
+    """Coarse Korean direction label. / 대략적인 방향 이름."""
+    if abs(bearing) <= 45:
+        return '정면'
+    if abs(bearing) >= 135:
+        return '뒤'
+    return '왼쪽' if bearing > 0 else '오른쪽'
+
+
 def main():
     """Run an explicit, time-limited device test and print device-frame angles only.
 

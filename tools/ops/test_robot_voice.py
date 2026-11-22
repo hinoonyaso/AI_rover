@@ -164,6 +164,8 @@ class LoopTests(unittest.TestCase):
         history = voice.snapshot()['history']
         self.assertEqual(history[0]['intent'], 'status')
         self.assertEqual(history[0]['angle'], 45.0)
+        # 45° device = 45-146 = -101° robot (right) with the 2026-11-22 calibration
+        self.assertEqual((history[0]['bearing'], history[0]['direction']), (-101, '오른쪽'))
         self.assertIn('배터리 전압은 12.3 볼트', spoken[0])
         self.assertTrue(port.written, 'frames must be acknowledged')
         self.assertEqual(voice.snapshot()['stage'], 'off')

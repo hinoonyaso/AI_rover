@@ -1,0 +1,9 @@
+{
+  "frame": "base_link yaw, counterclockwise positive (front 0, left +90), degrees",
+  "device_front_deg": 146,
+  "direction": 1,
+  "measured": "2026-11-22, 1 m, one room, wake word hello hi wonder",
+  "samples_device_deg": {"front": [146, 149, 147, 143], "left": [238, 230], "right": [71, 70], "back": [341]},
+  "residual_deg": {"left": -2, "right": 14, "back": "about 10-15"},
+  "note": "Few samples; reflections and distance not tested. Do not drive or turn the robot from this alone."
+}
