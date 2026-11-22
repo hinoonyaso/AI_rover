@@ -27,3 +27,31 @@ env -u ROS_STATIC_PEERS -u ROS_DISCOVERY_SERVER -u FASTRTPS_DEFAULT_PROFILES_FIL
 `--inspection-bridge-loss`는 점검 중 실제 영상 수신을 확인한 뒤 해당 시험의 ROS-Gazebo 브리지를 종료해 실패 처리를 검증한다. 이때 카메라 외 `/clock` 등도 중단된다. `diagnose_nav2_restarts.py`는 주행 명령 없이 Gazebo와 위치 추정 관리자의 기동 및 노드 정리를 3회 확인하고 `/tmp`에 로그를 보존한다. 이 시험만으로 전체 Nav2 주행 관리자의 준비를 보장하지 않으며 기존 간헐 오류 원인은 아직 확정되지 않았다.
 
 임무 통합 시험은 초기 위치 설정 후 위치 추정·주행 라이프사이클 관리자 양쪽의 활성화를 확인하며 실패 시 `/tmp/jetinspect-mission-failure-*`에 로그와 노드 상태를 보존한다. 간헐적으로 라이프사이클 서비스 응답 전송 시간 초과가 재현됐으나 원인은 아직 확정되지 않았다.
+
+## 경광등 녹화 영상 관측 (실험)
+
+실물 경광등 없이 기존 녹화 영상의 색상별 영역을 지정해 관측기를 시험할 수 있다. 좌표는 영상 픽셀의 `x,y,너비,높이`이며 빨강·노랑·초록 각각에 대해 지정한다.
+
+```bash
+/usr/bin/python3 tools/mission/inspect_stack_light_video.py /path/to/video.mp4 \
+  --red 10,20,20,20 --yellow 10,45,20,20 --green 10,70,20,20 \
+  --start 0 --duration 3 --interval 0.5
+```
+
+출력은 색상별 `on`, `off`, `blinking`, `unknown`과 판정 이유, 표본 수·관측 시간을 포함한다. `--evidence-dir /path/to/existing-directory`를 지정하면 판정 영역을 표시한 첫·마지막 표본을 새 하위 폴더에 저장한다. 기존 파일은 덮어쓰지 않는다. 영상은 최대 1280×720, 표본은 최대 40개로 제한한다. 영상이 짧거나 시야가 가려져 근거가 부족하면 `unknown`이다. 이것은 기존 **가상 시험판용 임계값**을 녹화 영상에 적용하는 오프라인 진단이며, 실제 설비 판정 정확도·대시보드 연동 또는 로봇 주행 검증이 아니다. 원본 영상은 수정하지 않는다.
+
+검증: `source /opt/ros/jazzy/setup.bash && /usr/bin/python3 -m pytest -q tools/mission/test_stack_light_video.py src/jetrover_perception/test/test_stack_light.py`
+
+### 출처별 정답 비교
+
+JSON 파일의 `cases`에 각 영상의 `id`, `source`(`synthetic` / `gazebo` / `real`), `video`, `regions`, `expected`를 적는다. 동영상 경로는 JSON 파일 기준 상대 경로나 절대 경로다. 다음은 형식 예시이며 실제 평가 결과가 아니다.
+
+```json
+{"cases": [{"id": "sample-1", "source": "synthetic", "video": "sample.mp4",
+  "regions": {"red": [10, 20, 20, 20], "yellow": [10, 45, 20, 20], "green": [10, 70, 20, 20]},
+  "expected": {"red": "on", "yellow": "off", "green": "on"}}]}
+```
+
+`/usr/bin/python3 tools/mission/evaluate_stack_light_videos.py /path/to/cases.json`으로 실행하면 출처별 일치 수·판정 유보·파일 오류를 분리해 출력한다. `source`는 사용자가 입력한 라벨이며 영상의 실제 출처를 자동 검증하지 않는다. 실제 영상이 준비되지 않으면 실제 성능은 평가하지 않는다.
+
+합성 정상·깜빡임·짧은 영상·가림·모호한 밝기 사례는 `/usr/bin/python3 tools/mission/evaluate_stack_light_synthetic.py`로 재현할 수 있다. 이 결과는 합성 예제의 회귀 확인이며 실제 설비 정확도가 아니다.

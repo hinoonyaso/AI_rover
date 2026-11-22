@@ -48,6 +48,26 @@ class MySQLMissionTests(unittest.TestCase):
             self.assertEqual(len(self.manager.list_recent()), 1)
             self.assertTrue(legacy.exists())
 
+    def test_failed_inspection_diagnostics_round_trip(self):
+        import json
+        self.manager = MySQLMissionManager(self.socket, self.db)
+        payload = {'request_id': str(uuid4()), 'mode': 'gazebo',
+                   'kind': 'inspect_stack_light', 'parameters': {}}
+        row, _ = self.manager.create(payload)
+        queued = self.manager.start(row['id'])
+        self.manager.begin_gazebo(row['id'], queued['version'])
+        diagnostic = {'received': 4, 'invalid_time': 1, 'gap_resets': 0,
+                      'invalid_format': 0, 'window_frames': 3,
+                      'color_reasons': {'red': 'fixture_not_found'}}
+        self.manager.finish_gazebo(row['id'], 'failed', 'inspection_unconfirmed',
+                                   diagnostics=diagnostic)
+        saved = self.manager.get(row['id'])
+        self.assertEqual(saved['state'], 'failed')
+        self.assertEqual(json.loads(saved['result'])['diagnostics'], diagnostic)
+        self.manager.close()
+        self.manager = MySQLMissionManager(self.socket, self.db)
+        self.assertEqual(json.loads(self.manager.get(row['id'])['result'])['diagnostics'], diagnostic)
+
     def test_atomic_rollback_and_page(self):
         self.manager = MySQLMissionManager(self.socket, self.db)
         items = []

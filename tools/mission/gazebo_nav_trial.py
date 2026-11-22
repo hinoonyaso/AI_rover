@@ -84,8 +84,9 @@ def main():
             return False
         ready, _, _ = select.select([sys.stdin], [], [], 0)
         return bool(ready)
-    def emit(state, reason, colors=None):
-        print('MISSION_RESULT ' + json.dumps({'state': state, 'reason': reason, 'colors': colors}), flush=True)
+    def emit(state, reason, colors=None, diagnostics=None):
+        print('MISSION_RESULT ' + json.dumps({'state': state, 'reason': reason, 'colors': colors,
+                                               'diagnostics': diagnostics}), flush=True)
     import rclpy
     from rclpy.action import ActionClient
     from rclpy.parameter import Parameter
@@ -234,7 +235,7 @@ def main():
                 elif observation['status'] == 'canceled':
                     emit('canceled', 'inspection_canceled')
                 else:
-                    emit('failed', 'inspection_unconfirmed')
+                    emit('failed', 'inspection_unconfirmed', diagnostics=observation.get('diagnostics'))
         elif result.status == GoalStatus.STATUS_CANCELED:
             emit('canceled' if canceled_by_user else 'failed', 'cancel_confirmed' if canceled_by_user else 'timeout_cancel_confirmed')
             if not managed:

@@ -49,6 +49,7 @@ def main():
         server = subprocess.Popen([str(PYTHON), '-m', 'uvicorn', 'browser_test_server:app', '--host', '127.0.0.1', '--port', '18765'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         driver = subprocess.Popen(['geckodriver', '--host', '127.0.0.1', '--port', '18444'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         session = None
+        upload_tmp = None
         try:
             wait_for(lambda: call('http://127.0.0.1:18765/api/missions'))
             wait_for(lambda: call('http://127.0.0.1:18444/status')['value']['ready'])
@@ -96,8 +97,44 @@ def main():
                            (json.dumps({'source': 'gazebo', 'simulated': True, 'colors': colors}), inspection['id']))
             text = wait_for(lambda: (body if all(value in (body := content()) for value in ('관측 완료', '빨강', '노랑', '초록', '켜짐', '꺼짐', '깜빡임')) else None))
             assert '가상 경광등 관측 결과' in text
-            print('Firefox: mock lifecycle, Gazebo selection, inspection creation, empty and color results passed')
+            diagnostics = {'received': 8, 'window_frames': 3, 'invalid_time': 2,
+                           'gap_resets': 1, 'invalid_format': 0,
+                           'color_reasons': {'red': 'fixture_not_found'}}
+            with sqlite3.connect(Path(tmp) / 'missions.db') as db:
+                db.execute("UPDATE missions SET state='failed', reason='inspection_unconfirmed', result=? WHERE id=?",
+                           (json.dumps({'source': 'gazebo', 'simulated': True,
+                                        'diagnostics': diagnostics}), inspection['id']))
+            wait_for(lambda: (body if all(value in (body := content()) for value in
+                                        ('관측 진단', '수신 영상 8개', '시각 오류 2개', '시험판의 위치')) else None))
+            # Upload only a generated synthetic clip to the disposable server.
+            # 한글: 격리 서버에 합성 영상만 업로드한다.
+            # Firefox snap has a private /tmp; use a temporary visible home directory.
+            # 한글: Firefox snap은 /tmp가 격리되므로 홈의 임시 폴더를 사용한다.
+            upload_tmp = tempfile.TemporaryDirectory(prefix='jetinspect-browser-', dir=Path.home() / 'Documents')
+            video = Path(upload_tmp.name) / 'lights.avi'
+            code = ("import cv2,numpy as np,sys; "
+                    "w=cv2.VideoWriter(sys.argv[1],cv2.VideoWriter_fourcc(*'MJPG'),10,(48,16)); "
+                    "h=np.zeros((16,48,3),np.uint8); "
+                    "h[:,:16]=(0,255,220); h[:,16:32]=(27,255,40); h[:,32:]=(60,255,220); "
+                    "b=cv2.cvtColor(h,cv2.COLOR_HSV2BGR); "
+                    "[w.write(b) for _ in range(40)]; w.release()")
+            subprocess.run(['/usr/bin/python3', '-c', code, str(video)], check=True, timeout=10)
+            video_input = wait_for(lambda: element("//input[@id='inspection-video']"))
+            try:
+                call(base + '/element/' + video_input + '/value', 'POST', {'text': str(video)})
+            except HTTPError as exc:
+                raise RuntimeError('Firefox file input failed: ' + exc.read().decode(errors='replace')) from exc
+            for label, value in [('빨강', '0,0,16,16'), ('노랑', '16,0,16,16'), ('초록', '32,0,16,16')]:
+                field = element(f"//input[@aria-label='{label} 영역']")
+                call(base + '/element/' + field + '/value', 'POST', {'text': value})
+            click('영상 검토')
+            wait_for(lambda: (body if all(value in (body := content()) for value in
+                                        ('실제 성능 미검증', '빨강: 켜짐', '노랑: 꺼짐', '초록: 켜짐')) else None), 40)
+            assert element("//img[@alt='첫 관측 표본과 판정 영역']")
+            print('Firefox: mock lifecycle, inspection diagnostics and synthetic video review passed')
         finally:
+            if upload_tmp:
+                upload_tmp.cleanup()
             if session:
                 try:
                     call(f'http://127.0.0.1:18444/session/{session}', 'DELETE')

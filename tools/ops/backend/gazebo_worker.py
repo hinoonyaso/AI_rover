@@ -49,7 +49,8 @@ class GazeboWorker:
         if self.pending_result is not None:
             result = self.pending_result
             try:
-                self.manager.finish_gazebo(self.mission_id, result['state'], result['reason'], result.get('colors'))
+                self.manager.finish_gazebo(self.mission_id, result['state'], result['reason'],
+                                           result.get('colors'), result.get('diagnostics'))
             except ContractError as error:
                 if error.code != 'stale_result':
                     raise
@@ -118,7 +119,7 @@ class GazeboWorker:
         if not isinstance(result, dict) or result.get('state') not in ('succeeded', 'failed', 'canceled', 'interrupted'):
             result = {'state': 'interrupted', 'reason': 'gazebo_result_unconfirmed'}
         self.pending_result = {'state': result['state'], 'reason': str(result.get('reason', 'unknown'))[:128],
-                               'colors': result.get('colors')}
+                               'colors': result.get('colors'), 'diagnostics': result.get('diagnostics')}
         # Retain the result until it is persisted; a transient DB failure must not lose it.
         # 한글: 일시적 DB 오류로 결과가 유실되지 않도록 저장될 때까지 보관한다.
         self.tick()

@@ -87,3 +87,20 @@ def valid_inspection_result(result):
                 not math.isfinite(value['duration_s']) or value['duration_s'] < 2):
             return False
     return True
+
+
+def valid_inspection_diagnostics(value):
+    """Validate bounded, non-sensitive simulated inspection evidence.
+
+    한글: 제한된 가상 점검 진단값만 저장하도록 검증한다.
+    """
+    counts = {'received', 'invalid_time', 'gap_resets', 'invalid_format', 'window_frames'}
+    reasons = {'insufficient_observation', 'target_not_visible', 'ambiguous_brightness',
+               'incomplete_cycle', 'invalid_region', 'fixture_not_found'}
+    if not isinstance(value, dict) or set(value) != counts | {'color_reasons'}:
+        return False
+    if any(type(value[k]) is not int or not 0 <= value[k] <= 1000000 for k in counts):
+        return False
+    colors = value['color_reasons']
+    return (isinstance(colors, dict) and set(colors) <= {'red', 'yellow', 'green'} and
+            all(isinstance(reason, str) and reason in reasons for reason in colors.values()))

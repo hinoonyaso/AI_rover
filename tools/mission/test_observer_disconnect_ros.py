@@ -54,7 +54,7 @@ def main():
         result = observe(observer_node, lambda: False, timeout=4)
         thread.join(timeout=5)
         print(f'published={len(sent)} received={len(received)} result={result}', flush=True)
-        if len(sent) != 4 or len(received) < 3 or result != {'status': 'unavailable', 'reason': 'inspection_unconfirmed'}:
+        if len(sent) != 4 or len(received) < 3 or result.get('status') != 'unavailable' or result.get('reason') != 'inspection_unconfirmed':
             raise RuntimeError('camera disconnect was not handled as unconfirmed')
     finally:
         thread.join(timeout=5)

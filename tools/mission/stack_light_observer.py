@@ -67,6 +67,19 @@ class ObservationWindow:
             self.frames.clear()
         self.frames.append((received_at, image))
 
+    def diagnostics(self, color_reasons):
+        """Summarize bounded observation evidence. / 제한된 관측 근거를 요약한다."""
+        allowed = {'insufficient_observation', 'target_not_visible', 'ambiguous_brightness',
+                   'incomplete_cycle', 'invalid_region', 'fixture_not_found'}
+        return {'received': min(self.received, 1000000),
+                'invalid_time': min(self.invalid_time, 1000000),
+                'gap_resets': min(self.gap_resets, 1000000),
+                'invalid_format': min(self.invalid_format, 1000000),
+                'window_frames': min(len(self.frames), 1000000),
+                'color_reasons': {name: reason if reason in allowed else 'fixture_not_found'
+                                  for name, reason in color_reasons.items()
+                                  if name in HUE_RANGES and reason is not None}}
+
     def result(self, now):
         """Return color observations without claiming mission success. / 임무 성공으로 추정하지 않고 색상 관측만 반환한다."""
         regions = fixture_regions(self.frames[-1][1]) if self.frames else None
@@ -92,6 +105,7 @@ def observe(node, stop_requested, timeout=20):
         stamp = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9
         now = node.get_clock().now().nanoseconds / 1e9
         if msg.encoding != 'rgb8' or msg.step != msg.width * 3 or len(msg.data) != msg.height * msg.step:
+            window.received += 1
             window.invalid_format += 1
             window.frames.clear()
             return
@@ -113,6 +127,7 @@ def observe(node, stop_requested, timeout=20):
         print(f'INSPECTION_DIAGNOSTIC received={window.received} invalid_time={window.invalid_time} '
               f'gap_resets={window.gap_resets} invalid_format={window.invalid_format} '
               f'window_frames={len(window.frames)} color_reasons={last_reasons}', flush=True)
-        return {'status': 'unavailable', 'reason': 'inspection_unconfirmed'}
+        return {'status': 'unavailable', 'reason': 'inspection_unconfirmed',
+                'diagnostics': window.diagnostics(last_reasons)}
     finally:
         node.destroy_subscription(subscription)

@@ -30,6 +30,17 @@ class ObservationTests(unittest.TestCase):
         self.assertEqual([window.result(3)[name]['state'] for name in ('red', 'yellow', 'green')],
                          ['off', 'on', 'off'])
 
+    def test_diagnostics_filter_untrusted_reasons(self):
+        window = ObservationWindow()
+        window.received = 4
+        window.invalid_time = 1
+        diagnostic = window.diagnostics({'red': "'red'", 'yellow': 'ambiguous_brightness',
+                                         'unrelated': 'private information'})
+        self.assertEqual(diagnostic['received'], 4)
+        self.assertEqual(diagnostic['invalid_time'], 1)
+        self.assertEqual(diagnostic['color_reasons'],
+                         {'red': 'fixture_not_found', 'yellow': 'ambiguous_brightness'})
+
     def test_stale_or_repeated_stamp_clears_window(self):
         window = ObservationWindow()
         image = np.zeros((360, 640, 3), dtype=np.uint8)

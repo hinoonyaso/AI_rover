@@ -11,7 +11,7 @@ import sqlite3
 import threading
 from uuid import uuid4
 
-from mission_contract import ContractError, validate_create_request, validate_transition, valid_inspection_result
+from mission_contract import ContractError, validate_create_request, validate_transition, valid_inspection_result, valid_inspection_diagnostics
 
 
 TERMINAL = frozenset(('succeeded', 'failed', 'canceled', 'interrupted'))
@@ -234,7 +234,7 @@ class SimulationManager:
                             VALUES (?, ?, 'running', 'running', 'gazebo_inspection', ?, 'gazebo')''',
                          (mission_id, version, utc_now()))
 
-    def finish_gazebo(self, mission_id, outcome, reason, colors=None):
+    def finish_gazebo(self, mission_id, outcome, reason, colors=None, diagnostics=None):
         """Record a confirmed Gazebo result or interruption. / Gazebo 결과 또는 확인 불가 중단을 기록한다."""
         if outcome not in ('succeeded', 'failed', 'canceled', 'interrupted'):
             raise ContractError('invalid_outcome')
@@ -250,6 +250,9 @@ class SimulationManager:
             result = {'source': 'gazebo', 'simulated': True} if outcome == 'succeeded' else None
             if result is not None and row['kind'] == 'inspect_stack_light':
                 result['colors'] = colors
+            if (row['kind'] == 'inspect_stack_light' and outcome == 'failed' and
+                    reason == 'inspection_unconfirmed' and valid_inspection_diagnostics(diagnostics)):
+                result = {'source': 'gazebo', 'simulated': True, 'diagnostics': diagnostics}
             return dict(self._transition(conn, row, outcome, stage=row['stage'], reason=reason, result=result, source='gazebo'))
 
     def get(self, mission_id):

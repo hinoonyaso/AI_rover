@@ -176,6 +176,35 @@ class GazeboWorkerTests(unittest.TestCase):
             else:
                 self.assertIsNone(item['result'])
 
+    def test_unconfirmed_inspection_preserves_bounded_diagnostics(self):
+        evidence = {'received': 7, 'invalid_time': 2, 'gap_resets': 1,
+                    'invalid_format': 0, 'window_frames': 3,
+                    'color_reasons': {'red': 'fixture_not_found'}}
+        item = self.manager.create({'request_id': str(uuid4()), 'mode': 'gazebo',
+                                    'kind': 'inspect_stack_light', 'parameters': {}})[0]
+        self.manager.start(item['id'])
+        output = {'state': 'failed', 'reason': 'inspection_unconfirmed', 'diagnostics': evidence}
+        self.worker._launch = lambda: self.launch_dummy('MISSION_RESULT ' + json.dumps(output))
+        self.worker.tick()
+        self.finish()
+        result = self.manager.get(item['id'])
+        self.assertEqual(result['state'], 'failed')
+        self.assertEqual(json.loads(result['result'])['diagnostics'], evidence)
+        self.assertEqual(self.manager.events(item['id'])[-1]['reason'], 'inspection_unconfirmed')
+
+    def test_invalid_inspection_diagnostics_are_not_persisted(self):
+        item = self.manager.create({'request_id': str(uuid4()), 'mode': 'gazebo',
+                                    'kind': 'inspect_stack_light', 'parameters': {}})[0]
+        self.manager.start(item['id'])
+        output = {'state': 'failed', 'reason': 'inspection_unconfirmed',
+                  'diagnostics': {'received': '<untrusted>'}}
+        self.worker._launch = lambda: self.launch_dummy('MISSION_RESULT ' + json.dumps(output))
+        self.worker.tick()
+        self.finish()
+        result = self.manager.get(item['id'])
+        self.assertEqual(result['state'], 'failed')
+        self.assertIsNone(result['result'])
+
     def test_inspection_stage_is_persisted_before_terminal_result(self):
         item = self.manager.create({'request_id': str(uuid4()), 'mode': 'gazebo',
                                     'kind': 'inspect_stack_light', 'parameters': {}})[0]

@@ -327,6 +327,11 @@ def main():
                                         print('CHILD_LOG ' + child_log.read_text(errors='replace')[-5000:], flush=True)
                                     else:
                                         print('CHILD_LOG unavailable', flush=True)
+                                if bridge_loss and mission['state'] == 'failed':
+                                    diagnostic = (mission.get('result') or {}).get('diagnostics')
+                                    if not isinstance(diagnostic, dict) or not isinstance(diagnostic.get('received'), int):
+                                        raise RuntimeError('inspection failure diagnostics were not persisted')
+                                    print('INSPECTION_FAILURE_EVIDENCE ' + json.dumps(diagnostic), flush=True)
                                 if inspection and mission['state'] == 'succeeded':
                                     colors = mission['result']['colors']
                                     expected_colors = ['off', 'on', 'off'] if inverted_inspection else ['on', 'off', 'on']

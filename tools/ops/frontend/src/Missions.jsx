@@ -11,6 +11,63 @@ const colorNames = {red: '빨강', yellow: '노랑', green: '초록'};
 const colorStates = {on: '켜짐', off: '꺼짐', blinking: '깜빡임', unknown: '미확인'};
 export const stageLabel = stage => ({simulated_inspection: '모의 점검', gazebo_preparing: 'Gazebo 환경 준비 중', gazebo_navigation: 'Gazebo 주행', gazebo_inspection: '경광등 점검'}[stage] || '—');
 
+const diagnosticReasons = {insufficient_observation: '관측 시간이 부족합니다.', target_not_visible: '대상 색상 영역이 보이지 않습니다.', ambiguous_brightness: '밝기가 경계 범위에 있어 판정할 수 없습니다.', incomplete_cycle: '상태 변화가 한 번만 관측되어 깜빡임을 확인할 수 없습니다.', invalid_region: '판정 영역이 유효하지 않습니다.', fixture_not_found: '가상 경광등 시험판의 위치를 확인하지 못했습니다.'};
+
+export function InspectionDiagnostics({diagnostics}) {
+  if (!diagnostics) return null;
+  const colorReasons = Object.entries(diagnostics.color_reasons || {});
+  return <div className="record-note"><b>관측 진단</b>
+    <p>수신 영상 {diagnostics.received}개 · 현재 유효 표본 {diagnostics.window_frames}개</p>
+    <p>시각 오류 {diagnostics.invalid_time}개 · 영상 간격 초기화 {diagnostics.gap_resets}회 · 형식 오류 {diagnostics.invalid_format}개</p>
+    {colorReasons.length ? colorReasons.map(([color, reason]) => <p key={color}>{colorNames[color] || color}: {diagnosticReasons[reason] || '원인을 확인할 수 없습니다.'}</p>) : <p>색상별 판정에 필요한 관측이 완료되지 않았습니다.</p>}
+  </div>;
+}
+
+export function InspectionVideoReview({role}) {
+  const [file, setFile] = useState(null), [url, setUrl] = useState('');
+  const [regions, setRegions] = useState({red: '', yellow: '', green: ''});
+  const [result, setResult] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!file) { setUrl(''); return undefined; }
+    const next = URL.createObjectURL(file); setUrl(next);
+    return () => URL.revokeObjectURL(next);
+  }, [file]);
+  async function review(event) {
+    event.preventDefault(); setError(''); setResult(null);
+    if (!file || file.size > 8 * 1024 * 1024) { setError('8MB 이하의 영상을 선택해 주세요.'); return; }
+    if (!Object.values(regions).every(value => /^\d{1,4},\d{1,4},\d{1,4},\d{1,4}$/.test(value))) {
+      setError('각 영역을 x,y,너비,높이 형식으로 입력해 주세요.'); return;
+    }
+    setBusy(true);
+    try {
+      const query = new URLSearchParams(regions);
+      const response = await fetch('/api/inspection/video-review?' + query, {
+        method: 'POST', headers: {'Content-Type': 'application/octet-stream'}, body: file,
+        signal: AbortSignal.timeout(35000),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(({video_too_large: '영상이 8MB를 넘습니다.', review_busy: '다른 영상 검토가 진행 중입니다.', video_review_timeout: '영상 처리 시간이 초과됐습니다.', video_review_failed: '영상을 읽지 못했거나 지원하지 않는 형식입니다.'})[data.detail] || '영상 검토를 완료하지 못했습니다. 영역과 영상 형식을 확인해 주세요.');
+      setResult(data);
+    } catch (failure) { setError(failure.message || '영상 검토에 실패했습니다.'); }
+    finally { setBusy(false); }
+  }
+  return <section className="panel" style={{marginBottom: 20}}><div className="panel-head"><div><h3>경광등 녹화 영상 시험</h3><p>영상의 처음 3초를 지정 영역으로 검토합니다.</p></div></div>
+    <p className="record-note">가상 시험판용 판정 기준입니다. 실제 설비 판정으로 사용하지 마세요. 업로드 영상과 결과는 저장되지 않습니다.</p>
+    {role !== 'operator' ? <p className="record-note">영상 검토는 운영자 계정이 필요합니다.</p> : <form onSubmit={review}>
+      <label htmlFor="inspection-video">영상 파일 · 최대 8MB, 1280×720</label><input id="inspection-video" type="file" accept="video/*" onChange={event => {setFile(event.target.files?.[0] || null); setResult(null);}}/>
+      {url && <video controls src={url} style={{display: 'block', maxWidth: '100%', maxHeight: 280, marginTop: 10}}/>}
+      <p className="record-note">영상 원본 픽셀 기준으로 각 색상 영역을 x,y,너비,높이 형식으로 입력하세요.</p>
+      {Object.entries(colorNames).map(([key, label]) => <label key={key} style={{display: 'inline-block', marginRight: 12}}>{label} <input aria-label={label + ' 영역'} placeholder="100,50,20,20" value={regions[key]} onChange={event => setRegions({...regions, [key]: event.target.value.replace(/\s/g, '')})}/></label>)}
+      <button className="db-button" type="submit" disabled={busy || !file}>{busy ? '영상 분석 중…' : '영상 검토'}</button>
+    </form>}
+    {error && <p className="warning" role="alert">{error}</p>}
+    {result && <div className="inspection-results"><h4>관측 결과 · 실제 성능 미검증</h4><p>표본 {result.frames_sampled}개 · 관측 {result.observed_duration_s}초</p>
+      {Object.entries(colorNames).map(([key, label]) => <p key={key}>{label}: {colorStates[result.states?.[key]?.state] || '미확인'}{result.states?.[key]?.reason ? ` · ${diagnosticReasons[result.states[key].reason] || '판정 근거 부족'}` : ''}</p>)}
+      {result.evidence_images?.map((image, index) => <img key={index} src={'data:image/png;base64,' + image} alt={index === 0 ? '첫 관측 표본과 판정 영역' : '마지막 관측 표본과 판정 영역'} style={{maxWidth: '48%', marginRight: '2%'}}/>)}
+    </div>}
+  </section>;
+}
+
 async function call(path, options = {}) {
   const response = await fetch(path, {cache: 'no-store', ...options});
   const data = await response.json();
@@ -77,7 +134,8 @@ export default function Missions({role = 'operator'}) {
     {mode === 'gazebo_inspection' && <p className="record-note">Gazebo와 가상 경광등 시험판을 자동으로 준비합니다. 준비에 시간이 걸릴 수 있습니다.</p>}
     {refreshError && <p className="warning" role="status">임무 목록을 갱신하지 못했습니다. {refreshError}</p>}
     {error && <p className="warning" role="alert">{error} <button type="button" className="dismiss-error" onClick={() => setError('')}>닫기</button></p>}
+    <InspectionVideoReview role={role}/>
     <div className="mission-layout"><section className="panel"><div className="panel-head"><div><h3>시뮬레이션 임무 목록</h3><p>종류 선택 → 임무 생성 → 상세에서 실행 · 페이지당 50건</p></div><div className="mission-create"><label htmlFor="mission-mode">임무 종류</label><select id="mission-mode" value={mode} disabled={busy} onChange={event => setMode(event.target.value)}><option value="simulation">모의 점검</option><option value="gazebo">Gazebo 주행</option><option value="gazebo_inspection">Gazebo 경광등 점검</option></select><button className="db-button" type="button" disabled={busy || role !== 'operator'} onClick={create}>+ 임무 생성</button></div></div>
       {missions === null ? <p className="empty-state">임무를 불러오는 중입니다.</p> : missions.length === 0 ? <p className="empty-state">생성된 시뮬레이션 임무가 없습니다.</p> : <div className="mission-list">{missions.map(item => <button type="button" key={item.id} className={item.id === selected ? 'mission-item active' : 'mission-item'} onClick={() => select(item.id)}><span><b>{missionName(item)}</b><small>{item.id.slice(0, 8)} · {new Date(item.created_at).toLocaleString('ko-KR')}</small></span><span className="pill neutral">{missionLabel(item.state, item.mode) || '상태 미확인'}</span></button>)}</div>}<div className="mission-actions"><button className="db-button" type="button" disabled={pageNumber === 0} onClick={() => page(pageNumber - 1, cursors[pageNumber - 1])}>이전</button><button className="db-button" type="button" disabled={nextCursor === null} onClick={nextPage}>다음</button></div></section>
-      <section className="panel"><div className="panel-head"><div><h3>임무 상세</h3><p>상태와 단계별 기록</p></div>{mission && <span className="pill neutral">{mission.mode === 'gazebo' ? 'GAZEBO' : 'SIMULATION'}</span>}</div>{!mission ? <p className="empty-state">목록에서 임무를 선택하거나 새 임무를 생성하세요.</p> : <><div className="mission-details"><div><span>상태</span><b>{missionLabel(mission.state, mission.mode) || '미확인'}</b></div><div><span>현재 단계</span><b>{stageLabel(mission.stage)}</b></div><div><span>임무 ID</span><b className="mission-id">{mission.id}</b></div><div><span>결과 / 사유</span><b>{(mission.reason ? (reasons[mission.reason] || mission.reason) : null) || (mission.state === 'succeeded' ? (mission.mode === 'gazebo' ? 'Gazebo 주행 완료' : '모의 완료') : '—')}</b></div></div>{['interrupted', 'failed', 'canceled'].includes(mission.state) && <p className="record-note">다시 실행하려면 임무 종류를 선택하고 새 임무를 생성해 주세요.</p>}{mission.kind === 'inspect_stack_light' && <div className="inspection-results"><h4>가상 경광등 관측 결과</h4>{inspectionColors ? <div className="inspection-colors">{Object.entries(colorNames).map(([key, label]) => <div className="inspection-color" key={key}><span className={`inspection-lamp ${key} ${inspectionColors[key]?.state || 'unknown'}`} aria-hidden="true"/><span>{label}</span><b>{colorStates[inspectionColors[key]?.state] || '미확인'}</b></div>)}</div> : <p className="record-note">{mission.state === 'succeeded' ? '점검 결과를 확인할 수 없습니다.' : '확인된 점검 결과가 없습니다.'}</p>}</div>}<div className="mission-actions"><button className="db-button" type="button" disabled={busy || role !== 'operator' || mission.state !== 'created'} onClick={() => command('start')}>{mission.mode === 'gazebo' ? 'Gazebo 실행' : '모의 실행'}</button><button className="db-button" type="button" disabled={busy || role !== 'operator' || !['created', 'queued', 'running'].includes(mission.state)} onClick={() => command('cancel')}>{mission.mode === 'gazebo' ? 'Gazebo 취소' : '모의 취소'}</button></div><h4 className="mission-history-title">상태 이력</h4>{events.length ? <div className="mission-history">{events.map(event => <div key={event.version}><span className="event-dot"/><b>{missionLabel(event.state, mission.mode) || event.state}{event.stage ? ` · ${stageLabel(event.stage)}` : ''}</b><time>{new Date(event.recorded_at).toLocaleString('ko-KR')}</time></div>)}</div> : <p className="record-note">이력을 불러오는 중입니다.</p>}</>}</section></div></div>;
+      <section className="panel"><div className="panel-head"><div><h3>임무 상세</h3><p>상태와 단계별 기록</p></div>{mission && <span className="pill neutral">{mission.mode === 'gazebo' ? 'GAZEBO' : 'SIMULATION'}</span>}</div>{!mission ? <p className="empty-state">목록에서 임무를 선택하거나 새 임무를 생성하세요.</p> : <><div className="mission-details"><div><span>상태</span><b>{missionLabel(mission.state, mission.mode) || '미확인'}</b></div><div><span>현재 단계</span><b>{stageLabel(mission.stage)}</b></div><div><span>임무 ID</span><b className="mission-id">{mission.id}</b></div><div><span>결과 / 사유</span><b>{(mission.reason ? (reasons[mission.reason] || mission.reason) : null) || (mission.state === 'succeeded' ? (mission.mode === 'gazebo' ? 'Gazebo 주행 완료' : '모의 완료') : '—')}</b></div></div>{['interrupted', 'failed', 'canceled'].includes(mission.state) && <p className="record-note">다시 실행하려면 임무 종류를 선택하고 새 임무를 생성해 주세요.</p>}{mission.kind === 'inspect_stack_light' && <div className="inspection-results"><h4>가상 경광등 관측 결과</h4>{inspectionColors ? <div className="inspection-colors">{Object.entries(colorNames).map(([key, label]) => <div className="inspection-color" key={key}><span className={`inspection-lamp ${key} ${inspectionColors[key]?.state || 'unknown'}`} aria-hidden="true"/><span>{label}</span><b>{colorStates[inspectionColors[key]?.state] || '미확인'}</b></div>)}</div> : <p className="record-note">{mission.state === 'succeeded' ? '점검 결과를 확인할 수 없습니다.' : '확인된 점검 결과가 없습니다.'}</p>}<InspectionDiagnostics diagnostics={mission.state === 'failed' ? mission.result?.diagnostics : null}/></div>}<div className="mission-actions"><button className="db-button" type="button" disabled={busy || role !== 'operator' || mission.state !== 'created'} onClick={() => command('start')}>{mission.mode === 'gazebo' ? 'Gazebo 실행' : '모의 실행'}</button><button className="db-button" type="button" disabled={busy || role !== 'operator' || !['created', 'queued', 'running'].includes(mission.state)} onClick={() => command('cancel')}>{mission.mode === 'gazebo' ? 'Gazebo 취소' : '모의 취소'}</button></div><h4 className="mission-history-title">상태 이력</h4>{events.length ? <div className="mission-history">{events.map(event => <div key={event.version}><span className="event-dot"/><b>{missionLabel(event.state, mission.mode) || event.state}{event.stage ? ` · ${stageLabel(event.stage)}` : ''}</b><time>{new Date(event.recorded_at).toLocaleString('ko-KR')}</time></div>)}</div> : <p className="record-note">이력을 불러오는 중입니다.</p>}</>}</section></div></div>;
 }
