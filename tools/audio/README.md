@@ -113,3 +113,11 @@ python3 tools/audio/r818_set_wake_word.py --keyword "hello hi wonder" --threshol
 ```
 
 보드가 `vtn/res.bin`을 다시 만들고 약 30초 뒤 음성 엔진을 재시작한다. 키워드는 엔진 사전 단어여야 한다(`hiwonder`는 인식 안 됨, 발화는 "Hello Hiwonder" 그대로). 실행 전 보드 `vtn/res.bin`을 백업한다. 2026-11-22 설정 상태·원래 자원 백업 위치는 `troubleshooting/063`.
+
+## 깨우기 확인음
+
+```bash
+python3 tools/audio/r818_wake_listener.py --seconds 300
+```
+
+R818 보드는 깨어나도 소리·LED 반응이 없다. 이 도구는 깨우기 이벤트마다 로봇 스피커(`plughw:CARD=Device,DEV=0`, `JETROVER_AUDIO_DEVICE`로 변경)에 0.15초 비프음을 내고 기기 기준 각도와 점수를 출력한다. 2026-11-22 사용자 확인: 발화마다 비프음 정상.

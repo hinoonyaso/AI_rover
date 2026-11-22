@@ -33,4 +33,5 @@
 - **백업**: 원래 자원 `~/backup_r818_20261122/res.bin.xiaohuan`(MD5 `80e34bc0a970c434cbec0fe1c9b8f6da`) 및 보드 `/data/build/vtn/res.bin.xiaohuan-20261122`, `vtn.ini`·`user_cfg.ini`. 복구: 보드에서 `cp -p vtn/res.bin.xiaohuan-20261122 vtn/res.bin` 후 `demo` 재시작, 또는 설정 도구로 키워드 재설정.
 - **이벤트 형식(실측)**: type 0x04, `{"type":"aiui_event","content":{"eventType":4,"info":"{\"ivw\":{\"angle\":..,\"score\":..,\"power\":..,\"beam\":..,\"keyword\":\"hello hi wonder\"}}","result":"hello hi wonder"}}`. 각도는 `info` 문자열 안 `ivw.angle`. 기존 `r818_doa.wake_angle`이 `info.angle`만 읽어 실제 이벤트를 놓치던 버그를 수정했다.
 - **문턱값**: 900에서는 미검출, 500에서 검출. 수신된 점수 505~786. 두 번의 90/75초 시험에서 이벤트 6개·3개였으나 사용자의 정확한 발화 횟수가 기록되지 않아 미탐·오탐률은 미측정. 점수 505·507에 음량(power) 4.2·11.0인 이벤트는 오탐 의심. 보드 자체의 비프·LED 반응은 없고 시리얼 이벤트로만 확인된다.
+- 2026-11-22 추가: 120초 5회 요청 시험에서 이벤트 4개(점수 506~845). 보드에 표시가 없어 사용자가 "인식 안 됨"으로 판단했던 것이므로 깨우기 확인음 도구 `tools/audio/r818_wake_listener.py`를 추가했고 사용자가 발화마다 비프음을 확인했다.
 - **남은 검증**: 정해진 횟수 발화 + 호출어 없는 일상 대화·TV 소음 구간으로 미탐/오탐 측정 후 문턱값(예 500~600) 결정, 각도 영점·방향 보정, 웹 음성 관제와 연결(현재 웹 경로는 브라우저 마이크+전사 호출어).
