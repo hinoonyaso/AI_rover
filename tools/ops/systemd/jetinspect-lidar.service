@@ -1,10 +1,15 @@
 [Unit]
-Description=JetInspect LiDAR sensor driver (manual start)
+Description=JetInspect LiDAR sensor driver (manual start, stall watchdog)
 
 [Service]
 Type=simple
 Environment=ROS_DOMAIN_ID=25
-ExecStart=/bin/bash -c 'source /opt/ros/jazzy/setup.bash && source %h/jetrover_ws/install/setup.bash && exec ros2 launch jetrover_bringup lidar.launch.py'
+# The watchdog restarts the driver when /scan never starts (startup handshake stall,
+# troubleshooting/062) or stops; it exits with failure after 3 restarts.
+# 한글: /scan이 시작되지 않거나 끊기면 드라이버를 재시작하고, 3회 후에는 실패로 종료한다.
+ExecStart=/bin/bash -c 'source /opt/ros/jazzy/setup.bash && source %h/jetrover_ws/install/setup.bash && exec python3 %h/jetrover_ws/tools/lidar/lidar_watchdog.py'
+KillSignal=SIGTERM
+TimeoutStopSec=15
 Restart=no
 NoNewPrivileges=true
 

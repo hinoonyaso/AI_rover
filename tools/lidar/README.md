@@ -8,3 +8,7 @@
 - `/scan` 약 14 Hz: 어댑터가 모터를 최대 속도로 돌려서 실제 회전이 14 Hz다 (드라이버에 속도 파라미터 없음). 각도 해상도 약 0.64°.
 - 스캔 −72°~+90°(로봇 뒤쪽 약 160°)는 로봇팔 기둥/몸체에 가려 반환이 없다.
 - 포트는 by-path로 지정 (`ttyUSB0/1` 번호는 재부팅마다 바뀜). `drivers/ch341/`의 모듈이 필요하다.
+
+## 드라이버 감시기 (2026-11-22)
+
+`lidar_watchdog.py`는 `ros2 launch jetrover_bringup lidar.launch.py`를 자식으로 실행하고 `/scan`이 15초 안에 시작되지 않거나 5초 끊기면 재시작한다(최대 3회). `jetinspect-lidar.service`가 이것을 쓴다. 옵션 `--start-timeout`, `--gap-timeout`, `--max-restarts`, 드라이버 명령은 `--` 뒤에 지정. 시험: `python3 -m pytest -q tools/lidar/test_lidar_watchdog.py`(가짜 프로세스, ROS 불필요). 배경은 `troubleshooting/062`.
