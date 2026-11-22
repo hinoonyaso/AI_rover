@@ -61,6 +61,7 @@ class OperationsTests(unittest.TestCase):
             result = module.ros_status()
             self.assertEqual(result['battery_age_seconds'], 6.0)
             self.assertEqual(result['streams']['imu']['hz'], 10.0)
+            self.assertIsNone(result['streams']['depth_obstacles']['age_seconds'])
             self.assertIsNone(result['streams']['scan']['age_seconds'])
             self.assertEqual(result['streams']['camera']['age_seconds'], 1.0)
             self.assertIsNone(result['streams']['camera']['hz'])

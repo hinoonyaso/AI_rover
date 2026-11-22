@@ -18,7 +18,7 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.parameter_client import AsyncParameterClient
 from diagnostic_msgs.msg import DiagnosticArray
-from sensor_msgs.msg import BatteryState, CameraInfo, Image, Imu, JointState, LaserScan
+from sensor_msgs.msg import BatteryState, CameraInfo, Image, Imu, JointState, LaserScan, PointCloud2
 from nav_msgs.msg import Odometry
 from camera_info_status import camera_info_snapshot
 from arm_observation import arm_observation, valid_mapping
@@ -30,7 +30,7 @@ class SensorMonitor(Node):
     """Track recent topic counts and battery voltage. / 최근 토픽 수신율과 배터리 전압을 추적한다."""
     def __init__(self):
         super().__init__('jetinspect_ops_monitor')
-        self.samples = {name: [] for name in ('imu', 'scan', 'camera')}
+        self.samples = {name: [] for name in ('imu', 'scan', 'camera', 'depth_obstacles')}
         self.battery = None
         self.battery_time = 0.0
         self.camera_info = {'color': None, 'depth': None}
@@ -42,12 +42,14 @@ class SensorMonitor(Node):
         self.arm_diagnostics, self.arm_diagnostics_at = {}, 0.0
         self.arm_parameters = AsyncParameterClient(self, '/base_node')
         self.arm_parameter_future = None
+        self.arm_parameter_started = 0.0
         self.bridge = CvBridge()
         self.last_preview = 0.0
         self.pair_color = None
         self.pair_saved_stamp = None
         for name, topic, message_type in (('imu', '/imu/data_raw', Imu), ('scan', '/scan', LaserScan)):
             self.create_subscription(message_type, topic, lambda message, name=name: self.received(name), qos_profile_sensor_data)
+        self.create_subscription(PointCloud2, '/depth_cam/depth/points_sparse', lambda msg: self.received('depth_obstacles'), qos_profile_sensor_data)
         self.create_subscription(Image, '/depth_cam/color/image_raw', self.camera_received, qos_profile_sensor_data)
         self.create_subscription(Image, '/depth_cam/depth/image_raw', self.depth_received, qos_profile_sensor_data)
         self.create_subscription(BatteryState, '/battery_state', self.battery_received, qos_profile_sensor_data)
@@ -151,14 +153,24 @@ class SensorMonitor(Node):
         한글: 실행 중인 base 노드의 대응표만 읽으며 파라미터를 변경하지 않는다.
         """
         if self.arm_parameter_future is not None and not self.arm_parameter_future.done():
-            return
+            if time.monotonic() - self.arm_parameter_started < 5.0:
+                return
+            # A restarted service may never answer an in-flight request; drop it before retrying.
+            # 한글: 서비스 재시작으로 응답 없는 요청을 폐기하고 다음 조회를 허용한다.
+            expired = self.arm_parameter_future
+            self.arm_parameter_future = None
+            self.arm_mapping, self.arm_mapping_at, self.arm_offsets = {}, 0.0, {}
+            expired.cancel()
         if not self.arm_parameters.services_are_ready():
             return
         self.arm_parameter_future = self.arm_parameters.get_parameters(['arm_joint_names', 'arm_servo_ids', 'arm_joint_offsets_rad'])
+        self.arm_parameter_started = time.monotonic()
         self.arm_parameter_future.add_done_callback(self.arm_mapping_received)
 
     def arm_mapping_received(self, future):
         """Accept only a complete one-to-one mapping. / 일대일 대응표만 수락한다."""
+        if future is not self.arm_parameter_future:
+            return
         try:
             values = future.result().values
             names = list(values[0].string_array_value)

@@ -13,6 +13,7 @@ ROS domain 25의 센서를 구독하는 모니터가 2초마다 `~/.local/share/
 | 배터리 | `/battery_state`의 양의 유한 전압 V → `robot.battery_voltage` | 모니터는 마지막 수신 후 10초 미만일 때만 전압을 내보낸다. `battery_received_at`은 Unix epoch 초, `battery_age_seconds`는 API 조회 시 경과 초다. 시각이 없거나 미래·만료면 값은 null이다. |
 | IMU·LiDAR·카메라 | `/imu/data_raw`, `/scan`, `/depth_cam/color/image_raw`; `robot.streams.{imu,scan,camera}.hz` Hz 및 `age_seconds` 초 | 최근 10초 수신 표본 중 두 개 이상으로 빈도 계산; 그렇지 않으면 Hz null. 나이는 마지막 수신 기준이며 없으면 null. `received_at`은 Unix epoch 초이고 화면은 경과 시간을 표시한다. 카메라 항목은 영상이 아닌 토픽 수신율이다. |
 | DB·이력 | `database`: `connected` 또는 `unavailable`; `/api/metrics.samples` 최대 120건, `/api/events.events` 최대 50건 | 장애 시 각 이력 API는 `database: unavailable`, 빈 배열 반환. 이벤트 화면은 이력별 DB 장애와 빈 결과를 구분한다. |
+| 깊이 장애물 데이터 | `/depth_cam/depth/points_sparse`; `robot.streams.depth_obstacles` | 컬러 영상과 별도로 최근 10초 토픽 수신을 표시한다. 메시지 수신은 실제 장애물 검출을 보증하지 않는다. 이전 모니터에는 미확인으로 표시한다. |
 | 서버 연결 | 브라우저의 HTTP 요청 | 상태 요청 실패 시 기존 데이터는 남고 경고를 표시한다. 상태·이벤트·이력 요청의 실패를 개별 표시하며 기존 센서 값은 경과 시간에 따라 만료된다. |
 
 수신 시각과 호스트 시각은 현재 벽시계 기반이다. 이력 DB `recorded_at`은 DB가 생성하는 시간이며 타임존 표기가 API에서 보장되지 않는다. 정확한 시간대 변환은 DB 세션 설정 확인 전 단정하지 않는다.
