@@ -145,6 +145,12 @@
 | **되돌림 (2026-10-28 같은 날)** costmap depth 토픽 `points_low`→**`points_sparse`**, `depth_lidar_filter` 기본 true→**false**, sim `SIM_DEPTH_LIDAR_FILTER` 기본 1→**0** | Smac `tolerance` 0.05는 유지 | 2026-10-28 | **안전 사고**: 필터가 다리 아래 발 점(z 0.05~0.11 m)을 지워 실기 `bags/real_dir3/trial_D01`에서 로봇이 사람 옆을 지나가며 발을 밟음(troubleshooting/056) |
 | bt_navigator `error_code_names` | 기본 2개 → **+ `precise_approach_error_code`** (sim 변형 `nav2_params_sim_tol05.yaml`도 같게) | 2026-10-28 | 정밀 도착 BT(`navigate_to_pose_precise.xml`, 9.2)의 정밀 접근 실패 이유(9101 시작 거리 초과/9102 시간 초과/9103 위치 없음)를 NavigateToPose 결과 `error_code`로 전달. 주행 동작은 안 바뀜. sim 확인: 강제 시간 초과에서 결과 9102 | 체크리스트 9.4 |
 
+## 2026-11-23 (대시보드 Gazebo 임무, troubleshooting/065)
+
+| 날짜 | 대상 | 변경 | 이유 |
+|---|---|---|---|
+| 2026-11-23 | 대시보드 Gazebo 주행 임무(navigate_demo·return_to_start) | Nav2 설정 `ab_params/nav2_params_mppi.yaml`(10-11 생성, git 제외) → `ab_params/nav2_params_sim_tol05.yaml`(추적, 시뮬 검증). return_to_start 시작 자세 (1.02,0.37)→(1.30,0.40), 왕복점 (1.00,1.45)→(1.00,1.25) | 옛 설정이 공식 변경을 반영 안 함, 벽 옆 시작·목표에서 DirStop 교착(troubleshooting/065). 실기 설정 변경 없음 |
+
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).
 - 값들은 서로 얽혀 있다(속도 ↔ 감지 거리 ↔ inflation ↔ footprint ↔ collision_monitor). 하나를 바꾸면 baseline이 무효가 되므로, baseline 시험 중에는 변경하지 않는다.

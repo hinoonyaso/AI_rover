@@ -40,6 +40,18 @@ def require_simulation():
         raise RuntimeError('requires localhost discovery or the verified loopback UDP profile')
 
 
+# Spawn poses (map x, y, yaw). Return missions start at a clear spot: the default spawn sits next
+# to the wall (global cost 88) and runs from there hugged the wall or deadlocked in DirStop
+# (troubleshooting/065, 2026-11-23). Must match gazebo_managed_session.py RETURN_SPAWN.
+# 한글: 시작 자세. 기본 시작점은 벽 옆(전역 비용 88)이라 복귀 임무는 여유 있는 지점에서 시작한다.
+DEFAULT_START = (1.02, 0.37, 1.45)
+RETURN_START = (1.30, 0.40, 1.45)
+
+
+def start_pose():
+    return RETURN_START if '--return' in sys.argv else DEFAULT_START
+
+
 def verify_gazebo_pose(resume=False):
     """Require the fixed simulated start pose before initializing AMCL.
 
@@ -58,7 +70,8 @@ def verify_gazebo_pose(resume=False):
         if resume:
             valid = math.hypot(x - 1.0, y - 1.45) < .40
         else:
-            valid = math.hypot(x - 1.02, y - .37) < .15 and abs(math.atan2(math.sin(yaw - 1.45), math.cos(yaw - 1.45))) < .35
+            sx, sy, syaw = start_pose()
+            valid = math.hypot(x - sx, y - sy) < .15 and abs(math.atan2(math.sin(yaw - syaw), math.cos(yaw - syaw))) < .35
         if not valid:
             raise RuntimeError('gazebo_start_pose_mismatch')
     except RuntimeError:
@@ -151,10 +164,11 @@ def main():
         pose = PoseWithCovarianceStamped()
         pose.header.frame_id = 'map'
         pose.header.stamp = node.get_clock().now().to_msg()
-        pose.pose.pose.position.x = 1.02
-        pose.pose.pose.position.y = 0.37
-        pose.pose.pose.orientation.z = math.sin(1.45 / 2)
-        pose.pose.pose.orientation.w = math.cos(1.45 / 2)
+        sx, sy, syaw = start_pose()
+        pose.pose.pose.position.x = sx
+        pose.pose.pose.position.y = sy
+        pose.pose.pose.orientation.z = math.sin(syaw / 2)
+        pose.pose.pose.orientation.w = math.cos(syaw / 2)
         pose.pose.covariance[0] = pose.pose.covariance[7] = 0.01
         pose.pose.covariance[35] = 0.02
         deadline = time.monotonic() + 15
@@ -177,7 +191,7 @@ def main():
             rclpy.spin_once(node, timeout_sec=.2)
             try:
                 position = buffer.lookup_transform('map', 'base_footprint', rclpy.time.Time()).transform.translation
-                expected_x, expected_y = (1.0, 1.45) if resume else (1.02, .37)
+                expected_x, expected_y = (1.0, 1.45) if resume else start_pose()[:2]
                 if math.hypot(position.x - expected_x, position.y - expected_y) < (.30 if resume else .20):
                     localized = True
                     break
@@ -200,9 +214,18 @@ def main():
             return
         legs = [(1.0, 1.45, math.pi / 2, 'gazebo_navigation')]
         if '--return' in sys.argv:
+            # The demo point is ~0.2 m from the wall ahead; turning back from there deadlocked:
+            # the controller moved, collision_monitor DirStop (LiDAR) stopped it, "Failed to make
+            # progress", the wait BT retried forever (2 of 4 host trials, 2026-11-23, troubleshooting/065).
+            # Return missions therefore use an outbound point 0.2 m further from the wall.
+            # 한글: 시범 지점은 앞 벽에서 약 0.2 m라 되돌아설 때 DirStop 정지 → 진행 실패 → 대기 재시도가 반복되며
+            # 멈췄다. 복귀 임무의 왕복 지점은 벽에서 0.2 m 더 떨어진 곳으로 한다.
+            legs = [(1.0, 1.25, math.pi / 2, 'gazebo_navigation')]
             # Out to the demo point, then back to the spawn pose (start point).
             # 한글: 시범 지점까지 갔다가 시작 지점(출발점)으로 돌아온다.
-            legs.append((1.02, 0.37, 1.45, 'gazebo_returning'))
+            # Return to the actual spawn pose (a clear spot for return missions, see RETURN_START).
+            # 한글: 실제 시작 자세로 돌아온다(복귀 임무는 여유 있는 시작점에서 출발).
+            legs.append((*RETURN_START, 'gazebo_returning'))
         def send(x, y, yaw):
             goal = NavigateToPose.Goal()
             goal.pose.header.frame_id = 'map'

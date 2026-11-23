@@ -38,5 +38,21 @@ class ManagedSessionTests(unittest.TestCase):
         self.assertIn('gazebo_environment_busy', output.getvalue())
 
 
+    def test_navigation_params_use_this_checkout(self):
+        # Tracked sim variants hard-code /home/sang/jetrover_ws/install; a clone elsewhere must not
+        # load another checkout's BT XML. 한글: 다른 위치 복제본도 자기 install의 BT XML을 쓴다.
+        import tempfile, yaml
+        config = {'bt_navigator': {'ros__parameters': {
+            'default_nav_to_pose_bt_xml': '/home/sang/jetrover_ws/install/jetrover_navigation/share/x.xml',
+            'other': 'keep', 'items': ['/home/other/jetrover_ws/install/a/b']}}}
+        out = session.workspace_paths(config)['bt_navigator']['ros__parameters']
+        self.assertEqual(out['default_nav_to_pose_bt_xml'], str(session.ROOT / 'install/jetrover_navigation/share/x.xml'))
+        self.assertEqual(out['other'], 'keep')
+        self.assertEqual(out['items'], [str(session.ROOT / 'install/a/b')])
+        with tempfile.TemporaryDirectory() as folder:
+            written = yaml.safe_load(session.navigation_nav_params(__import__('pathlib').Path(folder)).read_text())
+        self.assertIn('controller_server', written)
+
+
 if __name__ == '__main__':
     unittest.main()

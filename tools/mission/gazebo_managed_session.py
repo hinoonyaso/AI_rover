@@ -91,6 +91,42 @@ def run_checked(command, env, log, timeout):
         stop_group(process)
 
 
+SIM_NAV_PARAMS = 'tools/nav/ab_params/nav2_params_sim_tol05.yaml'
+# Clear spawn for return missions; must match gazebo_nav_trial.py RETURN_START (troubleshooting/065).
+# 한글: 복귀 임무용 여유 있는 시작점. gazebo_nav_trial.py RETURN_START와 같아야 한다.
+RETURN_SPAWN = (1.30, 0.40, 1.45)
+
+
+def workspace_paths(config):
+    """Point absolute ``.../jetrover_ws/install/...`` paths at this checkout's install.
+
+    Tracked variants hard-code ``/home/sang/jetrover_ws/install`` (BT XML); a clone elsewhere
+    (host ``~/AI_rover``) would otherwise load another checkout's files.
+    한글: 추적 변형의 절대 경로(BT XML)를 현재 체크아웃의 install로 바꾼다. 다른 위치의 복제본이
+    다른 체크아웃의 파일을 읽지 않게 한다.
+    """
+    if isinstance(config, dict):
+        return {key: workspace_paths(value) for key, value in config.items()}
+    if isinstance(config, list):
+        return [workspace_paths(value) for value in config]
+    if isinstance(config, str) and '/jetrover_ws/install/' in config:
+        return str(ROOT / 'install') + '/' + config.split('/jetrover_ws/install/', 1)[1]
+    return config
+
+
+def navigation_nav_params(directory):
+    """Sim-validated Nav2 variant for navigation missions (2026-11-22, troubleshooting/065).
+
+    The dashboard used ``nav2_params_mppi.yaml`` generated on 2026-10-11, before the official
+    parameters changed; ``nav2_params_sim_tol05.yaml`` is the latest variant validated in Gazebo.
+    한글: 주행 임무용 시뮬 검증 변형. 예전 10-11 생성 MPPI 파일 대신 Gazebo에서 검증한 최신 변형을 쓴다.
+    """
+    config = workspace_paths(yaml.safe_load((ROOT / SIM_NAV_PARAMS).read_text()))
+    target = directory / 'navigation_nav.yaml'
+    target.write_text(yaml.safe_dump(config, sort_keys=False))
+    return target
+
+
 def inspection_nav_params(directory):
     """Limit simulated inspection pose error for camera visibility.
 
@@ -132,7 +168,9 @@ def main():
                 raise RuntimeError('gazebo_environment_busy')
             check_cancel()
             with (directory / 'gazebo.log').open('w+') as gzlog, (directory / 'nav.log').open('w+') as navlog, (directory / 'setup.log').open('w+') as setup:
-                gazebo = subprocess.Popen(['ros2', 'launch', 'jetrover_gazebo', 'sim.launch.py', 'gui:=false', 'depth_obstacles:=true'],
+                spawn = ([f'x:={RETURN_SPAWN[0]}', f'y:={RETURN_SPAWN[1]}', f'yaw:={RETURN_SPAWN[2]}']
+                         if sys.argv[1] == 'return_to_start' else [])
+                gazebo = subprocess.Popen(['ros2', 'launch', 'jetrover_gazebo', 'sim.launch.py', 'gui:=false', 'depth_obstacles:=true', *spawn],
                                           cwd=ROOT, env=env, stdout=gzlog, stderr=subprocess.STDOUT, start_new_session=True)
                 wait_log(directory / 'gazebo.log', 'Configured and activated mecanum_drive_controller', gazebo, 100)
                 if sys.argv[1] == 'inspect_stack_light':
@@ -147,7 +185,7 @@ def main():
                     if 'data: true' not in (directory / 'setup.log').read_text(errors='replace'):
                         raise RuntimeError('gazebo_fixture_unavailable')
                 nav_params = (inspection_nav_params(directory) if sys.argv[1] == 'inspect_stack_light'
-                              else ROOT / 'tools/nav/ab_params/nav2_params_mppi.yaml')
+                              else navigation_nav_params(directory))
                 nav = subprocess.Popen(['ros2', 'launch', 'jetrover_navigation', 'nav2.launch.py', 'use_sim_time:=true',
                                         f'params_file:={nav_params}', 'precise_approach:=false'],
                                        cwd=ROOT, env=env, stdout=navlog, stderr=subprocess.STDOUT, start_new_session=True)
@@ -203,6 +241,14 @@ def main():
                     stop_group(process)
             except RuntimeError:
                 result = {'state': 'interrupted', 'reason': 'gazebo_cleanup_unconfirmed'}
+            # Optional diagnostics: keep the session logs before the temporary folder is removed.
+            # 한글: 진단용 선택 기능. 임시 폴더가 지워지기 전에 세션 로그를 지정 폴더로 복사한다.
+            keep = os.environ.get('JETINSPECT_SESSION_LOG_DIR')
+            if keep:
+                target = Path(keep) / time.strftime('%Y%m%d_%H%M%S')
+                target.mkdir(parents=True, exist_ok=True)
+                for log in directory.glob('*.log'):
+                    (target / log.name).write_bytes(log.read_bytes())
         print('MISSION_RESULT ' + json.dumps(result), flush=True)
 
 

@@ -28,3 +28,16 @@ Jetson에서 Gazebo+Nav2+센서 서비스+대시보드+MySQL+STT 서버가 함�
 - 호스트에서 현재 공식 설정으로 만든 파일(`nav2_params_mppi.current.yaml`로 보관): 첫 계획 "no valid path", 재개 후 2초 만에 BT 중단.
 - Jetson과 같은 옛 파일 사용: 출발 → 일시정지 → 재개 → 1구간 도착 성공(시뮬 21초, 벽시계 약 46초), **복귀 구간은 8초 만에 BT 중단**. 호스트에서도 collision_monitor가 "depth 데이터 지연(invalid source)"으로 반복 정지했다. 호스트 load average 약 3(12코어)으로 CPU 부족은 아니며, 실시간 비율이 1보다 낮은 원인(센서 렌더링 등)은 미확인.
 - 결론: 일시정지·재개 자체는 Jetson·호스트 모두 동작했다. **Gazebo 주행 안정성(특히 복귀 구간, depth 지연, 현재 공식 설정과 Gazebo 맵의 불일치)은 별도 과제**이며 음성 기능과 분리해 다룬다.
+
+## 원인 확정과 해결 (2026-11-23, 호스트)
+
+1. **복귀 목표가 벽 옆**: Gazebo 시작 자세 (1.02, 0.37)는 전역 비용 88, 왼쪽 10 cm가 내접 영역(costmap_probe). 검증된 시뮬 설정(`nav2_params_sim_tol05.yaml`, 여유 포함 외곽)은 이 점을 목표로 받지 못한다.
+2. **DirStop 교착**: 벽에서 약 0.2~0.3 m 안의 지점(시범 지점 앞 벽, 시작점 옆 벽)에서 되돌아서거나 다가갈 때 → 제어기가 움직임 → collision_monitor DirStop(LiDAR, 앞 0.33·옆 0.25·뒤 0.29 m)이 즉시 정지 → "Failed to make progress" → 대기 BT가 무한 재시도. BT가 포기하지 않아 180초(시뮬) 시간 초과로만 끝났다. 같은 DirStop이 **공식 실기 설정에도 있어 실기에서도 벽 가까이 목표는 같은 교착이 날 수 있다**(V2 착수 전 확인 필요).
+3. 시작점 옆 벽 때문에 출발 직후 경로가 벽을 따라가다 내접 영역으로 들어가 NO_VALID_PATH(208)로 끝난 경우도 있었다.
+
+**조치**
+- 대시보드 Gazebo 주행 임무(`navigate_demo`, `return_to_start`)의 Nav2 설정을 10-11 생성 `nav2_params_mppi.yaml` → 추적되는 시뮬 검증 변형 `nav2_params_sim_tol05.yaml`로 변경. BT XML 등 `.../jetrover_ws/install/...` 절대 경로는 실행 중인 체크아웃의 install로 바꿔 임시 파일로 쓴다(`gazebo_managed_session.workspace_paths`). 경광등 점검 임무는 시야 보정 때문에 기존 설정 유지(후속).
+- `return_to_start`만 시작 자세를 모든 벽에서 0.35 m 이상인 **(1.30, 0.40, 1.45)**로 두고, 왕복 지점을 (1.00, 1.25)로(앞 벽에서 0.2 m 더), 복귀 목표를 그 시작 자세로 한다.
+- 진단용 `JETINSPECT_SESSION_LOG_DIR`(세션 로그 보존), 재사용 시험 도구 `tools/mission/gazebo_return_pause_trial.py`.
+
+**결과(호스트, 실시간 비율 약 0.45)**: `return_to_start` 일시정지·재개 2/2, 일시정지 없음 1/1 성공(각 약 110초). `navigate_demo` 2/2 성공(각 약 50초). 변경 전 같은 조건 복귀 성공 2/7.
