@@ -242,3 +242,13 @@ API: `GET /api/voice/robot`(상태·최근 20건), `POST /api/voice/robot/{start
 
 `GET /api/knowledge/ask`가 기본 답변 경로다(대시보드 **답변 (EXAONE 우선)**, 로봇 음성 문서 질문). 검색 근거가 있으면 질문과 상위 문단 최대 3개를 EXAONE으로 보내 답을 받고, 근거 없음·키 없음·EXAONE 오류 시 로컬 근거 답변으로 대체하며 화면에 사유를 표시한다. 근거가 없으면 외부로 보내지 않는다. 로컬만 쓰려면 `tools/ops/.env`에 `KNOWLEDGE_ANSWER_PROVIDER=local`. 로봇 음성은 EXAONE 답에서 출처 번호·마크다운을 빼고 앞 문장(최대 180자)만 읽는다.
 - EXAONE(K-EXAONE 2.5)은 항상 추론 후 답하므로 `max_tokens`에 추론 토큰이 포함된다. 1024에서는 실제 근거 질문에 추론만 하고 빈 답(`finish_reason: length`)을 내 로컬로 대체됐다 → 4096으로 올렸다. 응답 시간 실측 20~33초라, 로봇 음성은 먼저 "문서를 확인하고 있습니다"라고 안내한다. 음성 전사의 "라이더"는 "라이다"로 고쳐 검색한다.
+
+## Gazebo 임무는 호스트 PC에서 (2026-11-23)
+
+사용자 결정: Gazebo는 호스트 PC(172.30.1.50)에서만 돌린다. 대시보드 작업자(`backend/gazebo_worker.py`)가 Gazebo 임무를 `ssh sang@172.30.1.50`(키 기반, BatchMode)로 호스트 `~/AI_rover`에서 `tools/mission/gazebo_managed_session.py <종류>`로 실행한다.
+
+- 격리 설정(ROS 도메인 31, 루프백 Fast DDS, 고유 `GZ_PARTITION`)은 호스트에서 같게 적용한다. 일시정지·재개·취소와 `MISSION_*` 줄은 SSH 표준 입출력으로 그대로 오간다. SSH가 끊기면 세션 입력이 닫혀 취소·정리된다(네트워크 단절은 `ServerAliveInterval` 5초 × 3회로 감지).
+- 대시보드 지도 위치는 시험 스크립트가 1초마다 보내는 `MISSION_POSE`를 작업자가 `run/gazebo-pose.json`에 써서 표시한다(기존 `/api/gazebo/pose` 그대로). 그래서 Jetson의 `jetinspect-gazebo-pose.service`는 쓰지 않는다.
+- **호스트 준비**: `cd ~/AI_rover && git pull && colcon build --symlink-install --packages-up-to jetrover_gazebo jetrover_navigation jetrover_bringup`. Jetson과 커밋이 다르면 동작이 달라질 수 있다(세션 시작 시 `MISSION_INFO host_commit=...`를 기록).
+- 설정: `JETINSPECT_GAZEBO_HOST`(기본 `sang@172.30.1.50`, `local`이면 예전처럼 Jetson에서 실행), `JETINSPECT_GAZEBO_ROOT`(기본 `~/AI_rover`).
+- 2026-11-23 확인: 실제 작업자 코드로 Jetson → SSH → 호스트 `return_to_start` 일시정지·재개 포함 성공(143초), 위치 파일 갱신, 종료 후 호스트 Gazebo 잔여 0.

@@ -90,7 +90,7 @@ DWB vs MPPI 비교는 완료됐고, 팔 MVP는 경로 A를 사용하며 `ros2_co
 | `src/jetrover_interfaces/` | 인터페이스 정의만(코드 없음): `action/Grasp.action`(접촉 파지), `srv/Release.srv`(파지 해제). 2026-10-14 신설(PRD `prd/arm-control-path.md` R5/R6). `jetrover_base`가 의존하므로 CI 빌드 목록 맨 앞에 있어야 한다 |
 | `src/jetrover_nav_plugins/` | Nav2 플러그인(C++). MPPI `LateralRatioCritic`(메카넘 대각 45° 제한, PRD `prd/mppi-lateral-ratio-critic.md`), gtest |
 | `src/jetrover_manipulation/` | MoveIt2 설정(팔 joint1~5 + 그리퍼), 궤적 브리지(base_node `arm/command_timed`), SRDF(Setup Assistant 충돌 행렬 병합). `~/AI_secretary_robot`의 Humble 설정을 Jazzy로 옮김 |
-| `src/jetrover_gazebo/` | Gazebo Harmonic 시뮬레이션(**실행은 host PC**, PRD `prd/gazebo-sim.md`): sim xacro(ros2_control 메카넘, LiDAR/RGB-D/IMU), 지도→월드 생성기, 디지털 트윈 모델 자리(`models/room_lap2`, Git LFS). 사용법 `src/jetrover_gazebo/README.md` |
+| `src/jetrover_gazebo/` | Gazebo Harmonic 시뮬레이션(**실행은 host PC** — 2026-11-23 사용자 결정으로 대시보드 Gazebo 임무도 Jetson이 SSH로 호스트 `~/AI_rover`에서 실행한다. 호스트 복제본은 같은 커밋으로 pull·빌드해 둘 것, `tools/ops/README.md`. Jetson에서 직접 돌리면 실시간의 약 1/5(troubleshooting/065), PRD `prd/gazebo-sim.md`): sim xacro(ros2_control 메카넘, LiDAR/RGB-D/IMU), 지도→월드 생성기, 디지털 트윈 모델 자리(`models/room_lap2`, Git LFS). 사용법 `src/jetrover_gazebo/README.md` |
 | `tools/viz/` | `snapshot.py`: 스캔/지도/TF를 위에서 본 PNG로 저장 (사용자는 host PC RViz로 실시간으로 본다(`ROS_DOMAIN_ID=25`, `rviz.launch.py`) — PNG는 에이전트 확인/문서 기록용), `tf_pair_rates.py`: /tf 프레임 쌍별 Hz(033) |
 | `src/jetrover_perception/` | 카메라(Orbbec DaBai DCW) launch/설정, depth 장애물 점(`sparse_point_cloud.py`: 기준 depth 차분 + 홈 자세 게이트). 이후 YOLO/3D 인식 |
 | `src/OrbbecSDK_ROS2/` | Orbbec 카메라 드라이버 소스(vendor, `main` 브랜치=SDK v1). 같은 이름(`orbbec_camera`)으로 apt 버전을 오버레이한다 |

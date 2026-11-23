@@ -1,12 +1,60 @@
 """Supervise a simulation-only Gazebo subprocess. / Gazebo 시뮬레이션 전용 하위 프로세스를 관리한다."""
 import json
+import math
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import tempfile
+import time
 from uuid import uuid4
 
 from mission_contract import ContractError
+
+
+# Gazebo runs on the host PC (user decision 2026-11-23; the loaded Jetson ran it at ~1/5 real time,
+# troubleshooting/065). The session runs over key-based SSH in a clone of this repository there;
+# stdin/stdout carry pause/resume/cancel and MISSION_* lines unchanged, and losing the connection
+# closes the session's stdin, which it treats as cancel. JETINSPECT_GAZEBO_HOST=local runs here.
+# 한글: Gazebo는 호스트 PC에서 돌린다(2026-11-23 사용자 결정). 세션을 키 기반 SSH로 호스트의 저장소 복제본에서
+# 실행하며, 표준 입출력으로 명령과 MISSION_* 줄을 그대로 주고받는다. 연결이 끊기면 세션 입력이 닫혀 취소로 처리된다.
+GAZEBO_HOST = os.environ.get('JETINSPECT_GAZEBO_HOST', 'sang@172.30.1.50')
+GAZEBO_ROOT = os.environ.get('JETINSPECT_GAZEBO_ROOT', '~/AI_rover')
+POSE_FILE = Path.home() / '.local/share/jetinspect-ops/run/gazebo-pose.json'
+
+
+def remote_command(kind):
+    """SSH argv that runs the managed session on the Gazebo host. / 호스트에서 관리 세션을 실행하는 SSH 명령."""
+    if kind not in ('navigate_demo', 'inspect_stack_light', 'return_to_start'):
+        raise ValueError('unsupported kind')
+    root = GAZEBO_ROOT if GAZEBO_ROOT.startswith('~/') else shlex.quote(GAZEBO_ROOT)
+    script = (
+        'set -e; unset ROS_STATIC_PEERS ROS_DISCOVERY_SERVER FASTDDS_DEFAULT_PROFILES_FILE CYCLONEDDS_URI '
+        'PYTHONPATH FASTDDS_BUILTIN_TRANSPORTS ROS_LOCALHOST_ONLY; '
+        f'cd {root}; echo "MISSION_INFO host_commit=$(git rev-parse --short HEAD 2>/dev/null)"; '
+        'export ROS_DOMAIN_ID=31 ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET RMW_IMPLEMENTATION=rmw_fastrtps_cpp '
+        'GZ_IP=127.0.0.1 FASTRTPS_DEFAULT_PROFILES_FILE="$PWD/tools/mission/fastdds-loopback.xml" '
+        f'GZ_PARTITION=jetinspect_dashboard_{uuid4().hex}; '
+        'source /opt/ros/jazzy/setup.bash; source install/setup.bash; '
+        f'exec /usr/bin/python3 tools/mission/gazebo_managed_session.py {kind}')
+    return ['ssh', '-T', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', '-o', 'ServerAliveInterval=5',
+            '-o', 'ServerAliveCountMax=3', GAZEBO_HOST, 'bash -c ' + shlex.quote(script)]
+
+
+def write_pose(line):
+    """Store a MISSION_POSE line as the dashboard's Gazebo pose file. / MISSION_POSE 줄을 위치 파일로 저장한다."""
+    try:
+        data = json.loads(line[len(b'MISSION_POSE '):])
+        pose = {'timestamp': time.time(), 'source': 'gazebo', 'frame': 'map',
+                'x': float(data['x']), 'y': float(data['y']), 'yaw': float(data['yaw'])}
+        if not all(math.isfinite(pose[k]) for k in ('x', 'y', 'yaw')):
+            return
+        POSE_FILE.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        temp = POSE_FILE.with_suffix('.tmp')
+        temp.write_text(json.dumps(pose))
+        os.replace(temp, POSE_FILE)
+    except (ValueError, KeyError, TypeError, OSError):
+        pass
 
 
 class GazeboWorker:
@@ -40,6 +88,10 @@ class GazeboWorker:
             command = 'set -e; source /opt/ros/jazzy/setup.bash; source "$1"; args=(--managed); if [ "$3" = inspect_stack_light ]; then args+=(--inspect); fi; if [ "$3" = return_to_start ]; then args+=(--return); fi; exec /usr/bin/python3 "$2" "${args[@]}"'
         setup = Path(__file__).resolve().parents[3] / 'install/setup.bash'
         self.output = tempfile.TemporaryFile(mode='w+t', encoding='utf-8')
+        if self.auto_start and GAZEBO_HOST != 'local':
+            self.process = subprocess.Popen(remote_command(self.kind), stdin=subprocess.PIPE, stdout=self.output,
+                                            stderr=subprocess.STDOUT, text=True, close_fds=True)
+            return
         self.process = subprocess.Popen(['/bin/bash', '-c', command, 'gazebo-worker', str(setup), str(script), self.kind],
                                         env=env, stdin=subprocess.PIPE, stdout=self.output,
                                         stderr=subprocess.STDOUT, text=True, close_fds=True)
@@ -91,6 +143,8 @@ class GazeboWorker:
                     self.manager.mark_gazebo_navigation(self.mission_id)
                 if line == b'MISSION_STAGE gazebo_inspection':
                     self.manager.mark_gazebo_inspection(self.mission_id)
+                if line.startswith(b'MISSION_POSE '):
+                    write_pose(line)
                 for stage in (b'gazebo_returning', b'gazebo_paused', b'gazebo_navigation'):
                     if line == b'MISSION_STAGE ' + stage:
                         self.manager.mark_gazebo_motion(self.mission_id, stage.decode())

@@ -12,6 +12,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).parent / 'backend'))
+import gazebo_worker
 from gazebo_worker import GazeboWorker
 from mission_contract import ContractError
 from mission_simulator import SimulationManager
@@ -51,7 +52,7 @@ class GazeboWorkerTests(unittest.TestCase):
     def test_auto_launch_owns_unique_partition(self):
         self.worker.auto_start = True
         self.worker.kind = 'inspect_stack_light'
-        with patch('gazebo_worker.subprocess.Popen') as spawn:
+        with patch('gazebo_worker.GAZEBO_HOST', 'local'), patch('gazebo_worker.subprocess.Popen') as spawn:
             self.worker._launch()
             args = spawn.call_args.args[0]
             env = spawn.call_args.kwargs['env']
@@ -61,6 +62,34 @@ class GazeboWorkerTests(unittest.TestCase):
             self.worker.output.close()
             self.worker.output = None
             self.worker.process = None
+
+    def test_remote_launch_runs_session_on_gazebo_host_over_ssh(self):
+        # Default: Gazebo on the host PC (2026-11-23). 한글: 기본은 호스트 PC의 Gazebo.
+        self.worker.auto_start = True
+        self.worker.kind = 'return_to_start'
+        with patch('gazebo_worker.GAZEBO_HOST', 'sang@host'), patch('gazebo_worker.subprocess.Popen') as spawn:
+            self.worker._launch()
+            args = spawn.call_args.args[0]
+            self.assertEqual(args[0], 'ssh')
+            self.assertIn('BatchMode=yes', args)
+            self.assertIn('sang@host', args)
+            remote = args[-1]
+            for part in ('ROS_DOMAIN_ID=31', 'GZ_IP=127.0.0.1', 'GZ_PARTITION=jetinspect_dashboard_',
+                         'gazebo_managed_session.py return_to_start', 'fastdds-loopback.xml'):
+                self.assertIn(part, remote)
+            self.worker.output.close()
+            self.worker.output = None
+            self.worker.process = None
+        with self.assertRaises(ValueError):
+            gazebo_worker.remote_command('rm -rf /')
+
+    def test_pose_lines_are_written_for_the_dashboard(self):
+        with tempfile.TemporaryDirectory() as folder, patch('gazebo_worker.POSE_FILE', Path(folder) / 'pose.json'):
+            gazebo_worker.write_pose(b'MISSION_POSE {"x": 1.3, "y": 0.4, "yaw": 1.45}')
+            pose = json.loads((Path(folder) / 'pose.json').read_text())
+            self.assertEqual((pose['source'], pose['frame'], pose['x'], pose['yaw']), ('gazebo', 'map', 1.3, 1.45))
+            gazebo_worker.write_pose(b'MISSION_POSE {"x": NaN, "y": 0, "yaw": 0}')
+            self.assertEqual(json.loads((Path(folder) / 'pose.json').read_text())['x'], 1.3, 'NaN ignored')
 
     def launch_dummy(self, output):
         self.worker.output = tempfile.TemporaryFile(mode='w+t', encoding='utf-8')

@@ -49,7 +49,9 @@ RETURN_START = (1.30, 0.40, 1.45)
 
 
 def start_pose():
-    return RETURN_START if '--return' in sys.argv else DEFAULT_START
+    # Dashboard sessions pass --clear-start for every kind (2026-11-23: inspection from the wall-side
+    # spawn also failed with "no valid path"). 한글: 대시보드 세션은 모든 종류에 여유 있는 시작점을 쓴다.
+    return RETURN_START if ('--return' in sys.argv or '--clear-start' in sys.argv) else DEFAULT_START
 
 
 def verify_gazebo_pose(resume=False):
@@ -86,7 +88,8 @@ def main():
     한글: 시뮬레이션 하드웨어 확인 후 알려진 시뮬레이션 목표 한 개를 전송한다.
     """
     require_simulation()
-    if (any(arg not in ('--resume', '--managed', '--inspect', '--prepare-only', '--return') for arg in sys.argv[1:]) or
+    if (any(arg not in ('--resume', '--managed', '--inspect', '--prepare-only', '--return', '--clear-start')
+            for arg in sys.argv[1:]) or
             len(set(sys.argv[1:])) != len(sys.argv[1:]) or
             ('--prepare-only' in sys.argv and len(sys.argv) != 2) or
             ('--inspect' in sys.argv and '--return' in sys.argv)):
@@ -265,9 +268,22 @@ def main():
             wall_start = time.monotonic()
             next_report = 10
             occupied_retry = True
+            next_pose = 0.0
             while True:
                 rclpy.spin_once(node, timeout_sec=.2)
                 now = time.monotonic()
+                if now >= next_pose:
+                    # Relay the map pose for the dashboard (Gazebo may run on another host).
+                    # 한글: 대시보드용 지도 위치를 전달한다(Gazebo가 다른 컴퓨터에서 돌 수 있다).
+                    next_pose = now + 1.0
+                    try:
+                        tf = buffer.lookup_transform('map', 'base_footprint', rclpy.time.Time()).transform
+                        q = tf.rotation
+                        print('MISSION_POSE ' + json.dumps({
+                            'x': round(tf.translation.x, 3), 'y': round(tf.translation.y, 3),
+                            'yaw': round(math.atan2(2 * q.w * q.z, 1 - 2 * q.z * q.z), 3)}), flush=True)
+                    except TransformException:
+                        pass
                 sim = sim_now()
                 if paused_at is None:
                     active_time += max(0.0, sim - last)
