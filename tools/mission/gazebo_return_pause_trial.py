@@ -27,7 +27,7 @@ def main():
     parser.add_argument('--pause-after', type=float, default=6.0, help='seconds into leg 1 (0 = no pause)')
     parser.add_argument('--hold', type=float, default=8.0, help='seconds paused before resume')
     parser.add_argument('--timeout', type=float, default=900.0)
-    parser.add_argument('--kind', choices=('return_to_start', 'navigate_demo'), default='return_to_start')
+    parser.add_argument('--kind', choices=('return_to_start', 'navigate_demo', 'inspect_stack_light'), default='return_to_start')
     args = parser.parse_args()
     env = os.environ.copy()
     for key in ('ROS_STATIC_PEERS', 'ROS_DISCOVERY_SERVER', 'FASTRTPS_DEFAULT_PROFILES_FILE',

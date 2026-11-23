@@ -92,6 +92,7 @@ def run_checked(command, env, log, timeout):
 
 
 SIM_NAV_PARAMS = 'tools/nav/ab_params/nav2_params_sim_tol05.yaml'
+INSPECT_NAV_PARAMS = 'tools/nav/ab_params/nav2_params_sim_inspect.yaml'
 # Clear spawn for return missions; must match gazebo_nav_trial.py RETURN_START (troubleshooting/065).
 # 한글: 복귀 임무용 여유 있는 시작점. gazebo_nav_trial.py RETURN_START와 같아야 한다.
 RETURN_SPAWN = (1.30, 0.40, 1.45)
@@ -132,8 +133,11 @@ def inspection_nav_params(directory):
 
     한글: 카메라 시야 확보를 위해 시뮬레이션 점검의 도착 오차를 제한한다.
     """
-    source = ROOT / 'tools/nav/ab_params/nav2_params_mppi.yaml'
-    config = yaml.safe_load(source.read_text())
+    # Inspection keeps the MPPI variant it was validated with (now tracked as nav2_params_sim_inspect.yaml):
+    # the DWB sim variant with a 3 cm tolerance found no valid trajectory in front of the fixture
+    # (troubleshooting/065, 2026-11-23). 한글: 점검은 검증된 MPPI 설정을 쓴다(이제 git 추적). DWB 시뮬 변형 + 3 cm로는
+    # 픽스처 앞에서 유효 궤적이 없어 진행하지 못했다.
+    config = workspace_paths(yaml.safe_load((ROOT / INSPECT_NAV_PARAMS).read_text()))
     goal = config['controller_server']['ros__parameters']['general_goal_checker']
     goal['xy_goal_tolerance'] = 0.03
     goal['yaw_goal_tolerance'] = 0.08
@@ -168,8 +172,10 @@ def main():
                 raise RuntimeError('gazebo_environment_busy')
             check_cancel()
             with (directory / 'gazebo.log').open('w+') as gzlog, (directory / 'nav.log').open('w+') as navlog, (directory / 'setup.log').open('w+') as setup:
-                spawn = ([f'x:={RETURN_SPAWN[0]}', f'y:={RETURN_SPAWN[1]}', f'yaw:={RETURN_SPAWN[2]}']
-                         if sys.argv[1] == 'return_to_start' else [])
+                # Every dashboard mission starts at the clear spawn; the wall-side default made
+                # planning from the start fail intermittently (troubleshooting/065).
+                # 한글: 모든 대시보드 임무는 여유 있는 시작점에서 출발한다(벽 옆 기본값은 간헐적으로 경로 실패).
+                spawn = [f'x:={RETURN_SPAWN[0]}', f'y:={RETURN_SPAWN[1]}', f'yaw:={RETURN_SPAWN[2]}']
                 gazebo = subprocess.Popen(['ros2', 'launch', 'jetrover_gazebo', 'sim.launch.py', 'gui:=false', 'depth_obstacles:=true', *spawn],
                                           cwd=ROOT, env=env, stdout=gzlog, stderr=subprocess.STDOUT, start_new_session=True)
                 wait_log(directory / 'gazebo.log', 'Configured and activated mecanum_drive_controller', gazebo, 100)
@@ -196,6 +202,8 @@ def main():
                     args.append('--inspect')
                 if sys.argv[1] == 'return_to_start':
                     args.append('--return')
+                else:
+                    args.append('--clear-start')
                 trial = subprocess.Popen(args, cwd=ROOT, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                          stderr=subprocess.STDOUT, start_new_session=True)
                 cancel_sent = False

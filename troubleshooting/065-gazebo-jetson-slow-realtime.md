@@ -41,3 +41,10 @@ Jetson에서 Gazebo+Nav2+센서 서비스+대시보드+MySQL+STT 서버가 함�
 - 진단용 `JETINSPECT_SESSION_LOG_DIR`(세션 로그 보존), 재사용 시험 도구 `tools/mission/gazebo_return_pause_trial.py`.
 
 **결과(호스트, 실시간 비율 약 0.45)**: `return_to_start` 일시정지·재개 2/2, 일시정지 없음 1/1 성공(각 약 110초). `navigate_demo` 2/2 성공(각 약 50초). 변경 전 같은 조건 복귀 성공 2/7.
+
+## 호스트 이전과 점검 임무 (2026-11-23)
+
+- 사용자 결정: Gazebo는 호스트 PC에서만. 대시보드 작업자가 SSH로 호스트 `~/AI_rover`에서 세션을 실행하고 위치는 `MISSION_POSE` 줄로 받는다(`tools/ops/README.md`). Jetson의 `jetinspect-gazebo-pose.service`는 중지·비활성화.
+- 점검 임무를 시뮬 검증 변형(DWB, sim_tol05)+3 cm 허용으로 바꾸자 픽스처 앞에서 `No valid trajectories`로 진행 불가(시간 초과). 점검은 검증된 MPPI 설정을 유지하되 git 제외 파일을 **추적 파일 `nav2_params_sim_inspect.yaml`**로 고정(내용은 10-11 `nav2_params_mppi.yaml` 그대로).
+- 같은 설정으로도 벽 옆 기본 시작점에서는 "no valid path"로 실패 → **모든 대시보드 Gazebo 임무가 (1.30, 0.40)에서 시작**(`--clear-start`). 점검 결과는 도착 자세만 영향을 받는다.
+- 호스트 결과: 점검 2/2(빨강 켜짐·노랑 꺼짐·초록 켜짐 관측), navigate_demo 1/1, 실제 작업자 → SSH → 호스트 return_to_start 일시정지·재개 1/1.
