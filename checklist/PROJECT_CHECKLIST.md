@@ -653,6 +653,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [~] 음성 → 실제 임무 연결: `prd/voice-mission-control.md`(2026-11-22 승인: 첫 임무 출발점 복귀, 확인은 버튼·음성, 운영자만, 정지→재개/종료), 시험 `prd/voice-mission-control-test-plan.md`.
   - [~] V1 Gazebo 출발점 복귀 + 음성 정지·재개·종료: 임무 종류·시험 스크립트·작업자·API·화면·음성 의도 구현, L0 시험 통과. 격리 Gazebo에서 일시정지→재개→두 구간 완료 `returned_to_start` 확인(시간 제한 수정 후 1회, [065](../troubleshooting/065-gazebo-jetson-slow-realtime.md)). 실제 마이크 음성 종단 시험 남음.
   - [x] Gazebo 주행 안정화(2026-11-23, [065](../troubleshooting/065-gazebo-jetson-slow-realtime.md)): 원인은 옛 시뮬 Nav2 설정 + 벽 옆 시작·목표의 DirStop 교착. 주행 임무를 `nav2_params_sim_tol05.yaml`로, return_to_start 시작점을 (1.30,0.40)으로 변경. 호스트에서 복귀 3/3(일시정지 2), navigate_demo 2/2. 이어서 대시보드 Gazebo 실행을 호스트 PC(SSH)로 이전(사용자 결정), 점검은 추적 MPPI 설정 + 모든 임무 여유 시작점 → 점검 2/2·주행 1/1·원격 복귀 1/1. 남은 것: 실기 DirStop 교착 확인(V2 전).
+  - [~] DirStop 교착 조건(2026-11-25 sim): 벽 앞 출발 자체는 교착 아님(빈 목표 40.7초 도착). 시작점·목표가 장애물 0.3 m 이내일 때 발생 → V2 출발점·목표에 0.35 m 여유 확인 기능 필요(계획). 실기 확인은 승인 후. 도구 `tools/sim/wall_escape_run.sh`, `costmap_probe_run.sh`.
+  - [ ] 5 cm 낮은 장애물(061): sim은 메쉬 바닥 요철(5~6 cm) 때문에 판별 불가 → 실기 정지 상태(L2)로 바닥 오검출 높이 측정(`depth_fp_survey.py`) 후 depth 최소 높이 0.06→약 0.03 가능 여부 또는 floor-aware 필터 TF 정체 수정 결정.
   - [ ] V2 실기 게이트(실기 허용 스위치 10분, 로봇 준비, 미해결 안전 이슈 차단) 구현과 거부 시험.
   - [ ] V2 실기 출발점 저장·복귀: 061 해결과 별도 실기 승인 후.
 - [ ] 모의/Gazebo 통합 검증. 실제 로봇 제어·실물 설비 연결은 주행 안전 대책과 별도 시험 이후.
