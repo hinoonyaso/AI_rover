@@ -27,6 +27,8 @@ def main():
     ap.add_argument('--wait', type=float, default=6.0)
     ap.add_argument('--half', type=float, default=0.2)
     ap.add_argument('--box', type=float, nargs=2, default=None, help='box centre (default: parked under the floor)')
+    ap.add_argument('--clearance', action='store_true',
+                    help='also print each point\'s distance to the nearest lethal global-costmap cell (tools/nav/goal_clearance.py)')
     # 2026-10-29 troubleshooting/056: 사람 발이 코스트맵에 찍히는지 / are the person's feet marked
     ap.add_argument('--person', type=float, nargs=3, default=None, help='person_0 x y yaw_deg (default: parked)')
     args = ap.parse_args()
@@ -74,6 +76,19 @@ def main():
                         v = m.data[iy * info.width + ix] if 0 <= ix < info.width and 0 <= iy < info.height else -2
                         row.append(f'{v:4d}')
                     print('  ' + ''.join(row) + (f'   y {py + j * 0.05:.2f}'))
+        if args.clearance and cost.get('global') is not None:
+            # Same rule the start-point/goal check uses (troubleshooting/065). 한글: 출발점·목표 여유 확인과 같은 규칙.
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'nav'))
+            from goal_clearance import MapClearance, MIN_CLEARANCE_M
+            g = cost['global']
+            mc = MapClearance.from_grid(g.info.width, g.info.height, g.info.resolution,
+                                        (g.info.origin.position.x, g.info.origin.position.y), g.data)
+            for p in args.points:
+                px, py = (float(v) for v in p.split(','))
+                ok, value = mc.check(px, py)
+                near = mc.nearest(px, py)
+                print(f'clearance ({px:.2f}, {py:.2f}) {value:.2f} m, nearest lethal {near[0]:.2f}, {near[1]:.2f} -> '
+                      f'{"OK" if ok else f"TOO CLOSE (< {MIN_CLEARANCE_M} m)"}')
     finally:
         gt.stop()
         node.destroy_node()

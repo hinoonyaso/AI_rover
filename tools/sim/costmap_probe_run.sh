@@ -22,4 +22,6 @@ sleep 35
 setsid ros2 run ros_gz_bridge parameter_bridge /world/jetrover_room/set_pose@ros_gz_interfaces/srv/SetEntityPose > "$LOG/br.log" 2>&1 & B=$!
 setsid ros2 launch jetrover_navigation nav2.launch.py use_sim_time:=true auto_localize:=false precise_approach:=false params_file:=$P > "$LOG/nav.log" 2>&1 & N=$!
 sleep 40
-timeout 150 python3 tools/sim/costmap_probe.py "$@"
+# PROBE_CMD overrides the probe (e.g. "python3 tools/nav/goal_clearance.py --live 1.30 0.40").
+# 한글: PROBE_CMD를 주면 costmap_probe 대신 그 명령을 실행한다.
+if [ -n "${PROBE_CMD:-}" ]; then timeout 150 bash -c "$PROBE_CMD"; else timeout 150 python3 tools/sim/costmap_probe.py "$@"; fi
