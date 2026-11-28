@@ -55,10 +55,10 @@
 - [x] UART1(ISP/flashing) 포트 특정 — 보드 라벨 "USB serial port 1/flashing download"로 확인, `/dev/ttyACM1`. **실제 ROM 부트로더 응답 검증 완료(2026-09-27)**: 0x7F→ACK, GET(부트로더 v0x31, Read/Write/Erase 등 지원), GET ID(`0x0413`=STM32F40x/41x, 예상과 일치)
 - [x] RDP 상태 확인 + 전체 flash 백업 — RDP 없음(512KB 전부 읽기 성공), `firmware_source/RosRobotControllerM4_dumped_backup.bin`에 저장. **`firmware_source/RosRobotControllerM4.hex`와 79,857바이트(약 15%) 다름**(리셋벡터 SP부터 다른 빌드) — 사용자 요청으로 이 vendor hex로 재플래시(mass erase+write+검증 성공, 512KB 바이트 일치). RST로 재부팅 확인, 부저/OLED/IMU/배터리/바퀴 모터/로봇팔 서보 6개(관절1~5+그리퍼10) 전부 정상 동작 확인(2026-09-27)
 - [ ] STM32 hang 근본 원인 규명 — 원인 규명 대신 **자체 펌웨어 재작성으로 방향 전환** (아래 참고)
-- [ ] MCU 자체 motor command timeout (현재 없음, 13초 확인)
-- [ ] task-health 기반 watchdog
+- [x] MCU 자체 motor command timeout — vendor 펌웨어엔 없음(13초 확인). **자체 펌웨어 rrc_m4에 1,000 ms 구현·실기 E3 검증(2026-10-11)**, AGENTS.md 확정 사실 (2026-11-28 갱신)
+- [~] task-health 기반 watchdog — rrc_m4 supervisor가 control/imu/comm_rx/ui heartbeat를 모두 확인할 때만 IWDG를 먹임(`firmware/rrc_m4/app/src/tasks.c`). 태스크 정지 주입 시험 기록은 아래 117행 항목 참고 (2026-11-28 갱신)
 - [ ] UART DMA recovery
-- [ ] encoder feedback packet (공식 프로토콜에 없음 → 펌웨어 개발 필요. 보드 사양상 모터는 물리적으로 "4채널 인코더 모터"라 엔코더 자체는 있고 펌웨어가 내부 폐루프 속도제어에 쓰고 있을 가능성이 높지만(추정), host로는 여전히 안 옴 — 재플래시 후에도 동일 확인)
+- [x] (2026-11-28 갱신: rrc_m4 확장 프레임 0x21로 바퀴 rps+누적 카운트 송신, 3,996 ticks/rev 실측 2026-10-10) encoder feedback packet (공식 프로토콜에 없음 → 펌웨어 개발 필요. 보드 사양상 모터는 물리적으로 "4채널 인코더 모터"라 엔코더 자체는 있고 펌웨어가 내부 폐루프 속도제어에 쓰고 있을 가능성이 높지만(추정), host로는 여전히 안 옴 — 재플래시 후에도 동일 확인)
 - 가장 중요한 미해결 문제는 STM32 firmware hang이다. host 측은 감지·정지 시도까지만 가능하고,
   STM32 자체가 먹통이면 정지 명령을 처리하지 못하므로 완전한 fail-safe가 아니다. RST 버튼 복구는 사람이 있어야 한다.
 
@@ -178,7 +178,7 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 - [x] robot_state_publisher (`jetrover_description/launch/description.launch.py`, `base.launch.py`에 포함) — xacro 처리로 전환 후 재검증 완료(`/robot_description` 정상 발행, 에러 없음)
 - [~] RViz RobotModel 검증 — host Ubuntu 24.04 + RViz2(ROS_DOMAIN_ID=25)로 띄움, 실제 메쉬 반영 확인은 사용자 몫
 - [x] TF tree 검증: `check_urdf`로 전체 트리(29개 링크) 확인 완료. `odom→lidar_link`, `odom→imu_link`, `base_link→link1~5`(실제 서보 각도), `base_link→depth_cam_*`(2026-10-04) 전부 실측 확인됨
-- [ ] 실측 footprint(바퀴/차체 치수를 줄자로 재검증 — 지금은 전부 Hiwonder 공식값)
+- [x] 실측 footprint(바퀴/차체 치수를 줄자로 재검증) — 2026-10-09 완료(`docs/ROADMAP.md` 1-3). (2026-11-28 체크리스트 갱신)
 
 ## 5. LiDAR (RPLIDAR A1, 사용자 확인)
 - [x] USB/serial 인식 — `drivers/ch341/`의 모듈을 설치해서 `/dev/ttyUSB*` 생성, **재부팅 후에도 자동 로드 확인**. `ttyUSB0/1` 번호는 재부팅마다 바뀌므로 by-path(`...usb-0:2.1.4:1.0-port0`)로 지정 (GET_INFO로 A1M8 fw 1.29 확인, 헬스 Good)
@@ -497,10 +497,10 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 
 ## 18. FastAPI Backend (React → REST/WebSocket → FastAPI → ROS2 Bridge → Robot)
 개발 순서(9단계, 전체 통합 이후)상 아직 착수 안 함. 상세: `prd/jetinspect-m.md` 17절, `prd/jetinspect-m-pipelines.md` 18절.
-- [ ] FastAPI project
-- [ ] /api/status, /api/mission, /api/navigation/goal, /api/mission/cancel, /api/robot/stop
-- [ ] WebSocket
-- [ ] ROS2 bridge, ROS2 Action Client
+- [x] FastAPI project — `tools/ops/backend/app.py`(관제 대시보드 서비스 `jetinspect-dashboard`, 로그인·권한 포함) (2026-11-28 갱신)
+- [~] /api/status·/api/missions(생성·취소·일시정지·재개·이벤트)·/api/events·/api/metrics 구현(모의·Gazebo만). **실기 `/api/navigation/goal`·`/api/robot/stop` 없음** — 실기 임무 모드 자체가 없음(`mission_contract.py`는 simulation·gazebo만) (2026-11-28 갱신)
+- [ ] WebSocket — 없음, 대시보드는 폴링 (2026-11-28 확인)
+- [~] ROS2 bridge — `ros_monitor.py`(읽기 전용 센서 구독). 실기 Nav2/팔 Action Client 없음, Gazebo는 SSH 작업자(`gazebo_worker.py`) (2026-11-28 갱신)
 - [ ] Diagnostics aggregation
 - FastAPI가 직접 PWM이나 motor packet을 보내지는 않는다.
 
@@ -548,8 +548,8 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
 ## 21. Database (초기 MySQL → 최종 PostgreSQL + VectorDB — 2026-09-28 확정, `prd/jetinspect-m.md` 17절)
 **신뢰수준: 계획.** SQLite 단일DB안(직전 결정)은 폐기. 초기 개발은 MySQL + SQLAlchemy로 빠르게 가고,
 최종 단계에서 PostgreSQL로 이전 + RAG용 별도 VectorDB를 붙인다(제품 미정 — 24번 섹션).
-- [ ] MySQL로 초기 스키마 구현: missions, robot_events, detections, system_metrics, alerts
-- [ ] locations, documents, document_chunks
+- [~] MySQL로 초기 스키마 구현: missions·mission_events·robot_events·system_metrics **구현**(`jetinspect-mysql` 서비스). detections·alerts 없음 (2026-11-28 갱신)
+- [ ] locations, documents, document_chunks — 없음(문서 청크는 Qdrant에 있음, 24번) (2026-11-28 확인)
 - [ ] (최종 단계) PostgreSQL로 마이그레이션
 
 ## 22. Semantic Map (desk, charger, door, delivery_station, storage)
@@ -570,12 +570,12 @@ STM32가 encoder feedback을 보내지 않으므로 실제 이동거리가 아�
   - [~] 대시보드 질의·벡터 DB 탐색·색인 관리 (빌드 통과; 브라우저 실사용 검증 대기)
   - [~] 대표 질의·통합·동시 부하 평가: 30개 고정 질문 출처 및 거부 평가 완료, 문맥 확장·부분 일치 이후 기존 15개 질문의 엄격 문구 포함 12/15, 새 질문 7/8; 이전 생성형 2건 부정확, 센서 동시 약 159초 관측; 독립 평가·장시간 부하·음성/이력 연계 미완료
 자료: JetRover manual, STM32 protocol, STM32 hang NOTES, Nav2 config, MoveIt setup, Camera/LiDAR manual, Troubleshooting, Calibration 기록
-- [ ] Document loader, Chunker, Embedding
-- [ ] **VectorDB 제품 조사·결정** — PostgreSQL `pgvector` 확장으로 21번 DB 안에 통합할지, Qdrant/Milvus/Chroma 등 독립 VectorDB로 분리할지 미정(계획)
-- [ ] Metadata, Retrieval
+- [x] Document loader, Chunker, Embedding — `tools/ops/backend/knowledge.py`, 허용목록 9개 문서/195청크, 다국어 임베딩 (2026-11-28 갱신)
+- [x] (2026-11-28 갱신: **Qdrant 로컬로 구현·운영 중**, pgvector 통합은 PostgreSQL 이전 때 재검토) **VectorDB 제품 조사·결정** — PostgreSQL `pgvector` 확장으로 21번 DB 안에 통합할지, Qdrant/Milvus/Chroma 등 독립 VectorDB로 분리할지 미정(계획)
+- [x] Metadata, Retrieval — 출처·신뢰 메타데이터, 조사 제거 검색(troubleshooting/064) (2026-11-28 갱신)
 - [ ] Reranking 필요 여부 검토
-- [ ] RAG API
-- [ ] 관제 UI Chat
+- [x] RAG API — `/api/knowledge/search|answer|ask`, EXAONE 우선·로컬 대체(`knowledge_routes.py`) (2026-11-28 갱신)
+- [~] 관제 UI 질의 화면(`Knowledge.jsx`, 단발 질의·출처 표시). 대화형 Chat(이전 문맥 유지)은 없음 (2026-11-28 갱신)
 
 ## 25. Robot Memory
 - [ ] Mission memory, Detection memory, Object-location memory
