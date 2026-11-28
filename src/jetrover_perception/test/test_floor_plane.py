@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts'))
 pytest.importorskip('rclpy')
-from sparse_point_cloud import fit_floor_plane, floor_plane_points  # noqa: E402, I100
+from sparse_point_cloud import extrude_along_rays, fit_floor_plane, floor_plane_points  # noqa: E402, I100
 
 W, H = 96, 54
 INTR = (110.0, 110.0, W / 2, H / 2)          # fx, fy, cx, cy
@@ -85,3 +85,15 @@ def test_no_floor_visible_returns_none():
     background, us, vs = render(camera_rotation(TRUE_PITCH))
     wall = np.full_like(background, 300)       # something covers the whole view
     assert floor_plane_points(wall, background, us, vs, INTR, camera_rotation(TRUE_PITCH), CAM, 60) is None
+
+
+def test_extrusion_stays_in_the_shadow_above_the_floor():
+    # Box top at 0.6 m, 5.5 cm high, camera 0.35 m high: the ray reaches 2 cm at ~0.68 m.
+    # 한글: 시선 방향 확장은 그림자 안(바닥 위 2 cm까지)에서 멈춘다.
+    origin = np.array([0.16, 0.0, 0.35])
+    top = np.array([[0.60, 0.0, 0.055]])
+    out = extrude_along_rays(top, origin, 0.25, 0.05, 0.02)
+    assert out[:, 2].min() >= 0.02
+    assert out[:, 0].max() < 0.68
+    assert len(out) > 1
+    assert extrude_along_rays(top, origin, 0.0, 0.05, 0.02) is top

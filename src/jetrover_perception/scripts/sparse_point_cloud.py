@@ -147,6 +147,29 @@ def floor_plane_points(depth, background, us, vs, intrinsics, rotation, translat
     return obstacle, free, now, plane
 
 
+def extrude_along_rays(points, origin, depth_m, step_m, min_height_m):
+    """Push copies of obstacle points along their viewing rays, keeping those above min_height_m.
+
+    2026-11-28 (real robot): extruding horizontally at the face height put marks past the farthest
+    visible floor (~0.81 m ahead), where no clearing ray reaches, and they stayed after the box was
+    removed. Along the viewing ray the copies stay inside the object's shadow, which the camera sees
+    again (and clears) once the object leaves. Heights are above the floor plane; origin is the camera.
+    한글: 앞면 높이로 수평 확장하면 보이는 바닥 끝(약 0.81 m) 너머에 표시가 생겨 상자를 치워도 안 지워졌다.
+    시선 방향으로 늘리면 물체 그림자 안에만 남고, 물체가 떠나면 카메라가 그 바닥을 다시 봐서 지운다.
+    """
+    if depth_m <= 0.0 or not len(points):
+        return points
+    rays = points - origin
+    rays /= np.maximum(np.linalg.norm(rays, axis=1, keepdims=True), 1e-6)
+    layers = [points]
+    d = step_m
+    while d <= depth_m + 1e-6:
+        extended = points + rays * d
+        layers.append(extended[extended[:, 2] >= min_height_m])
+        d += step_m
+    return np.concatenate(layers, axis=0)
+
+
 class SparsePointCloud(Node):
     def __init__(self):
         super().__init__('sparse_point_cloud')
@@ -336,7 +359,11 @@ class SparsePointCloud(Node):
             self.get_logger().warn('floor plane unavailable; cloud withheld', throttle_duration_sec=5.0)
             return
         obstacle, free, points_base, plane = result
-        self._publish_origin(cam)
+        # Ray origin = camera height above the fitted floor, consistent with the point heights.
+        # 한글: 광선 원점 높이도 맞춘 바닥 평면 기준(점 높이와 같은 기준).
+        camera = cam.copy()
+        camera[2] -= plane[0] * cam[0] + plane[1] * cam[1] + plane[2]
+        self._publish_origin(camera)
         origin = self.origin_xyz
         header = Header(stamp=msg.header.stamp, frame_id=FLOOR_ORIGIN_FRAME)
         if self.pub_clear is not None:
@@ -345,20 +372,8 @@ class SparsePointCloud(Node):
             sub[::k, ::k] = True
             self.pub_clear.publish(point_cloud2.create_cloud(
                 header, self._fields(), points_base[free & sub] - origin))
-        points = points_base[obstacle]
-        if self.extrude_depth > 0.0 and len(points) > 0:
-            # Extrude horizontally away from the camera at the face height (the box body is behind
-            # the face at the same height). 한글: 앞면 높이 그대로 카메라에서 먼 쪽 수평으로 늘린다.
-            away = points[:, :2] - origin[:2]
-            away /= np.maximum(np.linalg.norm(away, axis=1, keepdims=True), 1e-6)
-            layers = [points]
-            d = self.extrude_step
-            while d <= self.extrude_depth + 1e-6:
-                extended = points.copy()
-                extended[:, :2] += away * d
-                layers.append(extended)
-                d += self.extrude_step
-            points = np.concatenate(layers, axis=0)
+        points = extrude_along_rays(points_base[obstacle], origin, self.extrude_depth,
+                                    self.extrude_step, self.floor_raised)
         self.pub.publish(point_cloud2.create_cloud(header, self._fields(), points - origin))
 
     def _process_depth(self, msg):

@@ -150,7 +150,7 @@
 | 날짜 | 대상 | 변경 | 이유 |
 |---|---|---|---|
 | 2026-11-23 | 대시보드 Gazebo 주행 임무(navigate_demo·return_to_start) | Nav2 설정 `ab_params/nav2_params_mppi.yaml`(10-11 생성, git 제외) → `ab_params/nav2_params_sim_tol05.yaml`(추적, 시뮬 검증). return_to_start 시작 자세 (1.02,0.37)→(1.30,0.40), 왕복점 (1.00,1.45)→(1.00,1.25) | 옛 설정이 공식 변경을 반영 안 함, 벽 옆 시작·목표에서 DirStop 교착(troubleshooting/065). 실기 설정 변경 없음 |
-| 2026-11-28 | `sparse_point_cloud` `floor_aware`(기본 꺼짐) | 영상 시각 TF 대기 → 최신 TF, 중앙값 바닥 오프셋 → 프레임별 바닥 평면 기준 높이, 발행 프레임 카메라 광학 → 정적 `depth_floor_origin`, 새 파라미터 `floor_raised_m` 0.02 | 팔 끝 카메라 TF 약 7° 오차로 5 cm 상자가 9 cm, TF 누락 67%(troubleshooting/061). 실기 정지 L2만, 공식 경로·코스트맵 설정 변경 없음 |
+| 2026-11-28 | `sparse_point_cloud` `floor_aware`(기본 꺼짐) | 영상 시각 TF 대기 → 최신 TF, 중앙값 바닥 오프셋 → 프레임별 바닥 평면 기준 높이, 발행 프레임 카메라 광학 → 정적 `depth_floor_origin`, 새 파라미터 `floor_raised_m` 0.02. 같은 날 확장: 수평(앞면 높이) → 시선 방향 + 바닥 위 2 cm 이상만(수평은 보이는 바닥 끝 0.81 m 너머 흔적이 안 지워짐) | 팔 끝 카메라 TF 약 7° 오차로 5 cm 상자가 9 cm, TF 누락 67%(troubleshooting/061). 실기 정지 L2만, 공식 경로·코스트맵 설정 변경 없음 |
 
 ## 해석 시 주의
 - 위 표의 이유 중 **"추정"** 표시는 실제로 검증되지 않았다 (특히 모터 데드존 가설).
