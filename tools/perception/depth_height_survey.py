@@ -48,6 +48,8 @@ def main():
     ap.add_argument('--seconds', type=float, default=20.0)
     ap.add_argument('--label', default='survey')
     ap.add_argument('--json', default=None, help='write counts and per-frame maxima to this file')
+    # e.g. a floor-aware test node remapped to /depth_cam/depth/points_floor. / 다른 토픽(시험 노드) 지정.
+    ap.add_argument('--topic', default='/depth_cam/depth/points_sparse')
     args = ap.parse_args()
 
     import rclpy
@@ -59,7 +61,7 @@ def main():
     rclpy.init()
     node = Node('depth_height_survey')
     clouds = []
-    node.create_subscription(PointCloud2, '/depth_cam/depth/points_sparse', clouds.append, 10)
+    node.create_subscription(PointCloud2, args.topic, clouds.append, 10)
     buf = tf2_ros.Buffer()
     tf2_ros.TransformListener(buf, node)
     end = time.time() + args.seconds
@@ -70,7 +72,7 @@ def main():
     while time.time() < settle:
         rclpy.spin_once(node, timeout_sec=0.05)
     if not clouds:
-        print('no /depth_cam/depth/points_sparse (home-pose gate closed or camera off)')
+        print(f'no {args.topic} (home-pose gate closed or camera off)')
         return 1
     total = np.zeros((len(HEIGHTS) - 1, len(RANGES) - 1), dtype=int)
     frame_low_max = []   # per frame: highest point below 0.12 m within 1.2 m ahead / 프레임별 낮은 점 최고 높이

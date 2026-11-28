@@ -51,7 +51,6 @@ collision_monitor가 source_timeout 후 로봇을 세운다(잘못된 기준으�
 import os
 import time
 import hashlib
-from collections import deque
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
@@ -59,25 +58,93 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
+from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import CameraInfo, Image, JointState, PointCloud2, PointField
 from sensor_msgs_py import point_cloud2
-from tf2_ros import Buffer, TransformException, TransformListener
+from std_msgs.msg import Header
+from tf2_ros import Buffer, StaticTransformBroadcaster, TransformException, TransformListener
+
+# Static frame at the camera position with base_footprint's axes (floor-aware mode). The voxel layer
+# raytraces from the cloud frame's origin, so it must stay at the camera (rays to the floor behind a
+# low box pass above it, S4); a static frame also means the costmap needs no arm TF at the image stamp.
+# 한글: 카메라 위치에 base_footprint 축 방향의 정적 프레임. voxel 층은 점군 프레임 원점에서 광선을 쏘므로
+# 원점이 카메라에 있어야 하고(S4), 정적이라 코스트맵이 영상 시각의 팔 TF를 기다리지 않는다.
+FLOOR_ORIGIN_FRAME = 'depth_floor_origin'
 
 
-def floor_aware_masks(depth, background, height, reference_height, margin_mm):
-    """Separate near-floor returns from raised objects in the driving lane."""
+def quat_to_matrix(q):
+    """Rotation matrix of a geometry_msgs Quaternion. / 쿼터니언 -> 회전 행렬."""
+    x, y, z, w = q.x, q.y, q.z, q.w
+    return np.array([
+        [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+        [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+        [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
+
+
+def fit_floor_plane(points, min_samples=30, inlier_m=0.01, min_inlier_fraction=0.5):
+    """Least-squares plane z = a*x + b*y + c, refit once on the inliers (drops a low object's top).
+
+    한글: 최소제곱 평면 z = ax + by + c. 한 번 맞춘 뒤 잔차 inlier_m 안의 점으로 다시 맞춘다(낮은 물체 윗면 제거).
+    """
+    if len(points) < min_samples:
+        return None
+    a = np.column_stack((points[:, 0], points[:, 1], np.ones(len(points))))
+    coef = np.linalg.lstsq(a, points[:, 2], rcond=None)[0]
+    keep = np.abs(a @ coef - points[:, 2]) <= inlier_m
+    # Most candidates must lie on the plane, otherwise it is not the floor. / 대부분이 평면 위여야 바닥이다.
+    if keep.sum() < max(min_samples, min_inlier_fraction * len(points)):
+        return None
+    return np.linalg.lstsq(a[keep], points[keep, 2], rcond=None)[0]
+
+
+def floor_plane_points(depth, background, us, vs, intrinsics, rotation, translation, margin_mm,
+                       raised_m=0.02, max_tilt_rad=0.21, max_offset_m=0.10, window_m=0.08):
+    """Obstacle/free masks and base_footprint points whose z is the height above the floor seen now.
+
+    2026-11-25 (troubleshooting/061): the camera is on the arm, so a small error between the joint
+    readings and the real arm pose (servo backlash) tilts the camera TF and a 5 cm box read 2..9 cm
+    high. The floor visible in the same frame (pixels that still match the background and lie near
+    the nominal floor) is fitted with a plane and heights are measured from it, which cancels that
+    tilt. Real robot 2026-11-28: the fitted floor was 6.8 deg tilted and 5.0 cm low at the robot
+    centre in the TF's base_footprint, so the limits (12 deg, 10 cm, +-8 cm candidate window) leave
+    room for that. Returns None when the floor is not visible enough or the plane is implausible.
+    한글: 카메라가 팔에 달려 관절 읽기값과 실제 자세의 작은 차이(백래시)로 카메라 TF가 기울어 5 cm 상자가
+    2~9 cm로 읽혔다. 같은 프레임에 보이는 바닥(기준과 같고 명목 바닥 근처인 픽셀)으로 평면을 맞추고
+    높이를 그 평면에서 잰다. 실기(11-28): TF 기준 바닥이 6.8° 기울고 로봇 중심에서 5.0 cm 낮아
+    한계를 12°/10 cm/±8 cm로 둔다. 바닥이 충분히 안 보이거나 평면이 비정상이면 None.
+    """
+    fx, fy, cx, cy = intrinsics
     present = (depth > 0) & (background > 0)
     delta = background.astype(np.int32) - depth.astype(np.int32)
-    reference_floor = present & (np.abs(reference_height) <= 0.025)
-    samples = height[reference_floor & (np.abs(height) <= 0.025)]
-    if samples.size < 30:
+
+    def to_base(depth_mm):
+        z = depth_mm.astype(np.float32) / 1000.0
+        cam = np.stack(((us - cx) * z / fx, (vs - cy) * z / fy, z), axis=-1)
+        return cam @ rotation.T + translation
+
+    now = to_base(depth)
+    ref = to_base(background)
+    candidates = present & (np.abs(delta) <= margin_mm) & (np.abs(ref[..., 2]) <= window_m) & (
+        np.abs(now[..., 2]) <= window_m)
+    plane = fit_floor_plane(now[candidates])
+    if plane is None:
         return None
-    floor = np.median(samples)
-    raised = height - floor >= 0.02
+    if np.arctan(np.hypot(plane[0], plane[1])) > max_tilt_rad or abs(plane[2]) > max_offset_m:
+        return None
+
+    def above(points):
+        return points[..., 2] - (plane[0] * points[..., 0] + plane[1] * points[..., 1] + plane[2])
+
+    height = above(now)
+    reference_floor = present & (np.abs(above(ref)) <= 0.025)
+    raised = height >= raised_m
+    # A raised pixel is an obstacle if it is closer than the background by the margin, or (where the
+    # background is floor) by only 10 mm: a low object barely changes the depth at a grazing angle.
+    # 한글: 기준보다 margin 이상 가깝거나, 기준이 바닥인 곳에선 10 mm만 가까워도 높이가 있으면 장애물.
     obstacle = present & raised & ((delta > margin_mm) | (reference_floor & (delta > 10)))
-    free = present & (np.abs(delta) <= margin_mm) & ~obstacle & ~(
-        reference_floor & raised)
-    return obstacle, free
+    free = present & (np.abs(delta) <= margin_mm) & ~obstacle & ~(reference_floor & raised)
+    now[..., 2] = height
+    return obstacle, free, now, plane
 
 
 class SparsePointCloud(Node):
@@ -87,11 +154,17 @@ class SparsePointCloud(Node):
         self.declare_parameter('stride', 8)
         self.declare_parameter('floor_aware', False)
         self.floor_aware = self.get_parameter('floor_aware').value
+        # floor_aware (2026-11-25): uses the LATEST camera TF instead of waiting for the image stamp.
+        # The arm is static whenever the home-pose gate is open, and joint_states (5 Hz) left the TF
+        # at the image stamp missing for 30..65% of frames. 한글: 영상 시각 대신 최신 카메라 TF를 쓴다.
+        # 게이트가 열려 있으면 팔은 정지 상태이고, 5 Hz joint_states 때문에 영상 시각 TF가 30~65% 없었다.
+        self.declare_parameter('floor_raised_m', 0.02)
+        self.floor_raised = float(self.get_parameter('floor_raised_m').value)
         if self.floor_aware:
             self.tf_buffer = Buffer()
             self.tf_listener = TransformListener(self.tf_buffer, self)
-            self.pending_depth = deque(maxlen=8)
-            self.create_timer(0.02, self._process_pending_depth)
+            self.static_tf = StaticTransformBroadcaster(self)
+            self.origin_xyz = None
         # 한글: 발행 속도를 4프레임에 1번으로 낮춘다(원격 RViz에서 TF 타이밍 경쟁 방지).
         # Publishing at the full depth rate (~25-30Hz) meant a remote viewer
         # (RViz over WiFi) sometimes couldn't resolve the full TF chain in
@@ -228,36 +301,67 @@ class SparsePointCloud(Node):
         self._count += 1
         if self._count % self.every_nth != 0:
             return
-        if self.floor_aware:
-            self.pending_depth.append((time.monotonic(), msg))
-            return
         self._process_depth(msg)
 
-    def _process_pending_depth(self):
-        # Wait for the transform at the image timestamp without blocking TF callbacks.
-        # 한글: TF 수신을 막지 않고, 영상 시각의 변환을 짧게 기다린다.
-        while self.pending_depth:
-            received, msg = self.pending_depth[0]
-            stamp = rclpy.time.Time.from_msg(msg.header.stamp)
-            if time.monotonic() - received > 0.25:
-                self.pending_depth.popleft()
-                try:
-                    self.tf_buffer.lookup_transform('base_footprint', msg.header.frame_id, stamp)
-                    reason = 'transform now available'
-                except TransformException as exc:
-                    reason = str(exc)
-                self.get_logger().warn(
-                    f'Floor filter timed out waiting for depth TF: {reason}', throttle_duration_sec=5.0)
-                continue
-            try:
-                transform = self.tf_buffer.lookup_transform(
-                    'base_footprint', msg.header.frame_id, stamp).transform
-            except TransformException:
-                return
-            self.pending_depth.popleft()
-            self._process_depth(msg, transform)
+    def _publish_origin(self, translation):
+        # Re-broadcast the static origin only when the camera moved (>1 cm). Point heights are
+        # computed relative to the published origin, so its exact value does not change them.
+        # 한글: 카메라가 1 cm 넘게 움직였을 때만 다시 알린다. 점 높이는 알린 원점 기준이라 영향 없다.
+        if self.origin_xyz is not None and np.max(np.abs(self.origin_xyz - translation)) <= 0.01:
+            return
+        self.origin_xyz = translation.copy()
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = 'base_footprint'
+        t.child_frame_id = FLOOR_ORIGIN_FRAME
+        t.transform.translation.x, t.transform.translation.y, t.transform.translation.z = (
+            float(v) for v in translation)
+        t.transform.rotation.w = 1.0
+        self.static_tf.sendTransform(t)
+        self.get_logger().info(f'{FLOOR_ORIGIN_FRAME} at {np.round(translation, 3).tolist()} in base_footprint')
 
-    def _process_depth(self, msg, transform=None):
+    def _process_floor_aware(self, msg, depth_sparse, us, vs):
+        try:
+            tf = self.tf_buffer.lookup_transform(
+                'base_footprint', msg.header.frame_id, rclpy.time.Time()).transform
+        except TransformException as exc:
+            self.get_logger().warn(f'floor filter: no camera TF: {exc}', throttle_duration_sec=5.0)
+            return
+        rotation = quat_to_matrix(tf.rotation)
+        cam = np.array([tf.translation.x, tf.translation.y, tf.translation.z])
+        result = floor_plane_points(
+            depth_sparse, self.background_sparse, us, vs, self.intrinsics, rotation, cam,
+            self.background_margin_mm, self.floor_raised)
+        if result is None:
+            self.get_logger().warn('floor plane unavailable; cloud withheld', throttle_duration_sec=5.0)
+            return
+        obstacle, free, points_base, plane = result
+        self._publish_origin(cam)
+        origin = self.origin_xyz
+        header = Header(stamp=msg.header.stamp, frame_id=FLOOR_ORIGIN_FRAME)
+        if self.pub_clear is not None:
+            k = self.clear_step
+            sub = np.zeros_like(free)
+            sub[::k, ::k] = True
+            self.pub_clear.publish(point_cloud2.create_cloud(
+                header, self._fields(), points_base[free & sub] - origin))
+        points = points_base[obstacle]
+        if self.extrude_depth > 0.0 and len(points) > 0:
+            # Extrude horizontally away from the camera at the face height (the box body is behind
+            # the face at the same height). 한글: 앞면 높이 그대로 카메라에서 먼 쪽 수평으로 늘린다.
+            away = points[:, :2] - origin[:2]
+            away /= np.maximum(np.linalg.norm(away, axis=1, keepdims=True), 1e-6)
+            layers = [points]
+            d = self.extrude_step
+            while d <= self.extrude_depth + 1e-6:
+                extended = points.copy()
+                extended[:, :2] += away * d
+                layers.append(extended)
+                d += self.extrude_step
+            points = np.concatenate(layers, axis=0)
+        self.pub.publish(point_cloud2.create_cloud(header, self._fields(), points - origin))
+
+    def _process_depth(self, msg):
         # A raw depth frame must not be compared with a color-aligned background.
         # 한글: 미정합 깊이를 컬러 정합 기준 영상과 비교하지 않는다.
         if self.expected_depth_frame and (msg.header.frame_id != self.expected_depth_frame or self.intrinsics_frame != self.expected_depth_frame):
@@ -307,6 +411,9 @@ class SparsePointCloud(Node):
         vs, us = np.indices(depth_sparse.shape)
         us = us * self.stride
         vs = vs * self.stride
+        if self.floor_aware:
+            self._process_floor_aware(msg, depth_sparse, us, vs)
+            return
         # 한글: mm → m
         z = depth_sparse.astype(np.float32) / 1000.0  # mm -> m
 
@@ -319,20 +426,6 @@ class SparsePointCloud(Node):
             (depth_sparse.astype(np.int32) < bg.astype(np.int32) - self.background_margin_mm))
         free = (depth_sparse > 0) & (bg > 0) & (
             np.abs(depth_sparse.astype(np.int32) - bg.astype(np.int32)) <= self.background_margin_mm)
-        if self.floor_aware:
-            q = transform.rotation
-            vertical_ray = (
-                2 * (q.x * q.z - q.y * q.w) * (us - cx) / fx
-                + 2 * (q.y * q.z + q.x * q.w) * (vs - cy) / fy
-                + 1 - 2 * (q.x ** 2 + q.y ** 2))
-            offset = transform.translation.z
-            masks = floor_aware_masks(
-                depth_sparse, bg, offset + vertical_ray * z,
-                offset + vertical_ray * bg / 1000.0, self.background_margin_mm)
-            if masks is None:
-                self.get_logger().warn('Floor reference unavailable', throttle_duration_sec=5.0)
-                return
-            valid, free = masks
         if self.pub_clear is not None:
             # Free floor = within the margin of the background. Sub-sampled: the rays only
             # need to cover the area. 한글: 기준과 margin 안으로 같은 픽셀 = 빈 바닥, 더 성기게.
@@ -356,11 +449,6 @@ class SparsePointCloud(Node):
             d = self.extrude_step
             while d <= self.extrude_depth + 1e-6:
                 extended = points + rays * d
-                if self.floor_aware:
-                    # Keep synthetic returns above the nominal base_footprint floor.
-                    # Extrusion along a downward ray can pass under the floor.
-                    extended_height = offset + vertical_ray[valid] * extended[:, 2]
-                    extended = extended[extended_height >= 0.02]
                 layers.append(extended)
                 d += self.extrude_step
             points = np.concatenate(layers, axis=0)

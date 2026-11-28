@@ -18,6 +18,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_stack_light test/test_stack_light.py)
   ament_add_pytest_test(test_depth_scan_filter test/test_depth_scan_filter.py)
   ament_add_pytest_test(test_depth_source_guard test/test_depth_source_guard.py)
+  ament_add_pytest_test(test_floor_plane test/test_floor_plane.py)
 endif()
 
 ament_package()
